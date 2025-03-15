@@ -18,17 +18,21 @@ class TaskController extends GetxController {
     super.onInit();
   }
 
-  Future<void> fetchTasks() async {
-    isLoading(true);
-    try {
-      var snapshot = await firestore.collection("tasks").get();
-      tasks.value =
-          snapshot.docs.map((doc) => Task.fromMap(doc.data())).toList();
-    } catch (e) {
-      Get.snackbar("Error", "Failed to fetch tasks");
-    } finally {
-      isLoading(false);
-    }
+  void fetchTasks() {
+    FirebaseFirestore.instance
+        .collection("tasks")
+        .snapshots()
+        .listen((snapshot) {
+      tasks.value = snapshot.docs.map((doc) {
+        return {
+          "id": doc.id,
+          "title": doc["title"],
+          "description": doc["description"],
+          "assignedReporter": doc["assignedReporter"],
+          "assignedCameraman": doc["assignedCameraman"],
+        };
+      }).toList();
+    });
   }
 
   Future<void> createTask(
@@ -80,31 +84,44 @@ class TaskController extends GetxController {
     }
   }
 
-  Future<void> sendNotification(String token, String title, String body) async {
-    const String serverKey =
-        "YOUR_SERVER_KEY"; // Replace with your Firebase Server Key
-    const String fcmUrl = "https://fcm.googleapis.com/fcm/send";
-
+  Future<void> assignTask(String taskId, String userId) async {
     try {
-      await http.post(
-        Uri.parse(fcmUrl),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "key=$serverKey",
-        },
-        body: jsonEncode({
-          "to": token,
-          "notification": {
-            "title": title,
-            "body": body,
-          }
-        }),
-      );
-    } catch (e) {
-      if (kDebugMode) {
-        print("Error sending notification: $e");
+      await firestore
+          .collection("tasks")
+          .doc(taskId)
+          .update({"assignedTo": userId});
+
+      // Fetch FCM token of the assigned user
+      var userDoc = await firestore.collection("users").doc(userId).get();
+      String? fcmToken = userDoc.data()?["fcmToken"];
+
+      if (fcmToken != null) {
+        sendPushNotification(fcmToken, "New Task Assigned",
+            "You have been assigned a new task!");
       }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to assign task");
     }
+  }
+
+  Future<void> sendPushNotification(
+      String token, String title, String body) async {
+    const String serverKey = "YOUR_FIREBASE_SERVER_KEY";
+
+    await http.post(
+      Uri.parse("https://fcm.googleapis.com/fcm/send"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "key=$serverKey",
+      },
+      body: jsonEncode({
+        "to": token,
+        "notification": {
+          "title": title,
+          "body": body,
+        }
+      }),
+    );
   }
 
   Future<void> markTaskAsCompleted(
