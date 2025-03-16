@@ -1,56 +1,58 @@
 // service/fcm_service.dart
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:get/get.dart';
+import 'dart:convert';
 
-class FCMService {
-  static final FirebaseMessaging _firebaseMessaging =
-      FirebaseMessaging.instance;
-  static final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 
-  static Future<void> initNotifications() async {
-    // Request permissions
-    NotificationSettings settings =
-        await _firebaseMessaging.requestPermission();
-    if (settings.authorizationStatus == AuthorizationStatus.denied) {
-      Get.snackbar("Error", "Notifications are disabled");
-      return;
-    }
+Future<void> sendTaskNotification(
+    String assignedUserId, String taskTitle) async {
+  DocumentSnapshot userDoc = await FirebaseFirestore.instance
+      .collection("users")
+      .doc(assignedUserId)
+      .get();
+  String? fcmToken = userDoc["fcmToken"];
 
-    // Get the FCM token
-    String? token = await _firebaseMessaging.getToken();
-    if (token != null) {
-      if (kDebugMode) {
-        print("FCM Token: $token");
-      }
-    }
+  if (fcmToken != null) {
+    String serverKey =
+        "YOUR_FIREBASE_SERVER_KEY"; // Replace with your server key
 
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _showLocalNotification(message);
-    });
-
-    // Handle background and terminated messages
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      Get.toNamed("/taskListScreen");
-    });
-  }
-
-  static void _showLocalNotification(RemoteMessage message) {
-    var androidDetails = const AndroidNotificationDetails(
-      'task_channel',
-      'Task Notifications',
-      importance: Importance.high,
-    );
-    var platformDetails = NotificationDetails(android: androidDetails);
-
-    _localNotifications.show(
-      message.messageId.hashCode,
-      message.notification?.title,
-      message.notification?.body,
-      platformDetails,
+    await http.post(
+      Uri.parse("https://fcm.googleapis.com/fcm/send"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "key=$serverKey",
+      },
+      body: jsonEncode({
+        "to": fcmToken,
+        "notification": {
+          "title": "New Task Assigned",
+          "body": "You have been assigned a new task: $taskTitle",
+          "sound": "default", // 🔊 Enable notification sound
+        },
+        "android": {
+          "notification": {
+            "sound": "default",
+            "default_vibrate_timings": true, // 📳 Enable vibration
+          }
+        },
+        "apns": {
+          "payload": {
+            "aps": {"sound": "default"}
+          }
+        }
+      }),
     );
   }
+
+  // Store notification in Firestore
+  await FirebaseFirestore.instance
+      .collection("users")
+      .doc(assignedUserId)
+      .collection("notifications")
+      .add({
+    "title": "New Task Assigned",
+    "message": "You have been assigned a new task: $taskTitle",
+    "timestamp": FieldValue.serverTimestamp(),
+    "isRead": false,
+  });
 }
