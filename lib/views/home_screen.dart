@@ -2,11 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/notification_controller.dart';
+import '../controllers/auth_controller.dart';
 
 class HomeScreen extends StatelessWidget {
-  final NotificationController notificationController = Get.find();
+  final NotificationController notificationController =
+      Get.put(NotificationController(), permanent: true);
+  final AuthController authController = Get.find<AuthController>();
 
-   HomeScreen({super.key});
+  HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +54,18 @@ class HomeScreen extends StatelessWidget {
               )),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {}, // Add logout function here
+            onPressed: () {
+              authController.logout();
+            },
           ),
         ],
       ),
-      body: const Center(child: Text("Welcome to the Assignment Logging App!")),
+      body: const Center(
+        child: Text(
+          "Welcome to the Assignment Logging App!",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }

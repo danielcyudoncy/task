@@ -14,49 +14,77 @@ class ProfileUpdateScreen extends StatefulWidget {
 
 class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   File? _image;
-  final AuthController authController = Get.find();
+  final AuthController authController = Get.find<AuthController>();
 
+  // Function to pick an image from the gallery
   Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+    try {
+      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _image = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to pick an image: ${e.toString()}");
     }
   }
+
+  // Function to upload the selected image
+  Future<void> _uploadImage() async {
+    if (_image == null) {
+      Get.snackbar("Error", "Please select an image first.");
+      return;
+    }
+
+    await authController.uploadProfilePicture(_image!);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text("Update Profile Picture")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Upload Profile Picture",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            _image == null
-                ? const Icon(Icons.person, size: 100, color: Colors.grey)
-                : Image.file(_image!,
-                    height: 100, width: 100, fit: BoxFit.cover),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _pickImage,
-              child: const Text("Choose Image"),
+            const Text(
+              "Upload Profile Picture",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
+
+            // Profile Image Preview
+            _image == null
+                ? const CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, size: 50, color: Colors.white),
+                  )
+                : CircleAvatar(
+                    radius: 50,
+                    backgroundImage: FileImage(_image!),
+                  ),
+
+            const SizedBox(height: 20),
+
+            // Button to Pick Image
+            ElevatedButton.icon(
+              onPressed: _pickImage,
+              icon: const Icon(Icons.image),
+              label: const Text("Choose Image"),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Upload Button with Loading Indicator
             Obx(() => authController.isLoading.value
                 ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: () {
-                      if (_image != null) {
-                        authController.uploadProfilePicture(_image!);
-                      } else {
-                        Get.snackbar("Error", "Please select an image");
-                      }
-                    },
-                    child: const Text("Upload"),
+                : ElevatedButton.icon(
+                    onPressed: _uploadImage,
+                    icon: const Icon(Icons.upload),
+                    label: const Text("Upload"),
                   )),
           ],
         ),

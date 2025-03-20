@@ -6,39 +6,30 @@ import 'package:http/http.dart' as http;
 import '../models/task_model.dart';
 
 class TaskController extends GetxController {
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
 
   @override
   void onInit() {
-    fetchTasks();
     super.onInit();
+    fetchTasks();
   }
 
-  // Fetch all tasks from Firestore in real-time
+  // Fetch tasks in real-time
   void fetchTasks() {
-    firestore.collection("tasks").snapshots().listen((snapshot) {
-      tasks.value = snapshot.docs.map((doc) {
-        return Task(
-          taskId: doc.id,
-          title: doc["title"],
-          description: doc["description"],
-          assignedReporter: doc["assignedReporter"] ?? "",
-          assignedCameraman: doc["assignedCameraman"] ?? "",
-          createdBy: doc["createdBy"],
-          status: doc["status"] ?? "Pending",
-          comments: List<Map<String, dynamic>>.from(doc["comments"] ?? []),
-        );
-      }).toList();
-    });
+    tasks.bindStream(
+      _firestore.collection("tasks").snapshots().map((snapshot) {
+        return snapshot.docs.map((doc) => Task.fromMap(doc.data())).toList();
+      }),
+    );
   }
 
   // Create a new task
-  Future<void> createTask(
-      String title, String description, String createdBy) async {
+  Future<void> createTask(String title, String description, String createdBy) async {
     try {
-      String taskId = firestore.collection("tasks").doc().id;
+      isLoading(true);
+      String taskId = _firestore.collection("tasks").doc().id;
       Task newTask = Task(
         taskId: taskId,
         title: title,
@@ -46,63 +37,35 @@ class TaskController extends GetxController {
         createdBy: createdBy,
       );
 
-      await firestore.collection("tasks").doc(taskId).set(newTask.toMap());
-      tasks.add(newTask);
+      await _firestore.collection("tasks").doc(taskId).set(newTask.toMap());
       Get.snackbar("Success", "Task Created Successfully");
     } catch (e) {
       Get.snackbar("Error", "Failed to create task: ${e.toString()}");
+    } finally {
+      isLoading(false);
     }
   }
 
   // Assign Task to Reporter
   Future<void> assignTaskToReporter(String taskId, String reporterId) async {
-    try {
-      await firestore.collection("tasks").doc(taskId).update({
-        "assignedReporter": reporterId,
-      });
-
-      // Get FCM Token
-      String? fcmToken = await getUserFCMToken(reporterId);
-      if (fcmToken != null) {
-        sendTaskNotification(fcmToken, "You have been assigned a task.");
-      }
-
-      Get.snackbar("Success", "Reporter Assigned & Notified");
-    } catch (e) {
-      Get.snackbar("Error", "Failed to assign reporter: ${e.toString()}");
-    }
+    await _assignTask(taskId, reporterId, "assignedReporter");
   }
 
   // Assign Task to Cameraman
   Future<void> assignTaskToCameraman(String taskId, String cameramanId) async {
-    try {
-      await firestore.collection("tasks").doc(taskId).update({
-        "assignedCameraman": cameramanId,
-      });
-
-      // Get FCM Token
-      String? fcmToken = await getUserFCMToken(cameramanId);
-      if (fcmToken != null) {
-        sendTaskNotification(fcmToken, "You have been assigned a task.");
-      }
-
-      Get.snackbar("Success", "Cameraman Assigned & Notified");
-    } catch (e) {
-      Get.snackbar("Error", "Failed to assign cameraman: ${e.toString()}");
-    }
+    await _assignTask(taskId, cameramanId, "assignedCameraman");
   }
 
-  // Assign Task to a General User (Reporter or Cameraman)
-  Future<void> assignTask(String taskId, String userId) async {
+  // General method to assign a task
+  Future<void> _assignTask(String taskId, String userId, String roleField) async {
     try {
-      await firestore.collection("tasks").doc(taskId).update({
-        "assignedTo": userId,
+      await _firestore.collection("tasks").doc(taskId).update({
+        roleField: userId,
       });
 
-      // Get FCM Token
-      String? fcmToken = await getUserFCMToken(userId);
+      String? fcmToken = await _getUserFCMToken(userId);
       if (fcmToken != null) {
-        sendTaskNotification(fcmToken, "You have been assigned a new task!");
+        _sendTaskNotification(fcmToken, "You have been assigned a task.");
       }
 
       Get.snackbar("Success", "Task Assigned & Notification Sent");
@@ -111,10 +74,10 @@ class TaskController extends GetxController {
     }
   }
 
-  // Fetch FCM Token for user
-  Future<String?> getUserFCMToken(String userId) async {
+  // Get User's FCM Token
+  Future<String?> _getUserFCMToken(String userId) async {
     try {
-      var userDoc = await firestore.collection("users").doc(userId).get();
+      var userDoc = await _firestore.collection("users").doc(userId).get();
       return userDoc.data()?["fcmToken"];
     } catch (e) {
       return null;
@@ -122,9 +85,8 @@ class TaskController extends GetxController {
   }
 
   // Send Push Notification via FCM
-  Future<void> sendTaskNotification(String fcmToken, String message) async {
-    String serverKey =
-        "YOUR_FIREBASE_SERVER_KEY"; // Replace with actual Firebase server key
+  Future<void> _sendTaskNotification(String fcmToken, String message) async {
+    const String serverKey = "YOUR_FIREBASE_SERVER_KEY"; // Replace with actual Firebase server key
 
     await http.post(
       Uri.parse("https://fcm.googleapis.com/fcm/send"),
@@ -141,8 +103,7 @@ class TaskController extends GetxController {
       }),
     );
 
-    // Save notification in Firestore
-    await firestore.collection("notifications").add({
+    await _firestore.collection("notifications").add({
       "title": "New Task Assigned",
       "message": message,
       "timestamp": FieldValue.serverTimestamp(),
@@ -151,10 +112,9 @@ class TaskController extends GetxController {
   }
 
   // Mark Task as Completed
-  Future<void> markTaskAsCompleted(
-      String taskId, String comment, String userId) async {
+  Future<void> markTaskAsCompleted(String taskId, String comment, String userId) async {
     try {
-      var taskRef = firestore.collection("tasks").doc(taskId);
+      var taskRef = _firestore.collection("tasks").doc(taskId);
       var snapshot = await taskRef.get();
 
       List<Map<String, dynamic>> existingComments =
@@ -170,14 +130,10 @@ class TaskController extends GetxController {
         "comments": existingComments,
       });
 
-      // Update UI
-      tasks.firstWhere((task) => task.taskId == taskId).status = "Completed";
       tasks.refresh();
-
       Get.snackbar("Success", "Task Marked as Completed");
     } catch (e) {
-      Get.snackbar(
-          "Error", "Failed to mark task as completed: ${e.toString()}");
+      Get.snackbar("Error", "Failed to mark task as completed: ${e.toString()}");
     }
   }
 }

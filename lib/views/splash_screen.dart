@@ -2,7 +2,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'signup_screen.dart'; // Import signup screen
+import 'package:firebase_auth/firebase_auth.dart';
+import 'signup_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,8 +17,17 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _navigateToNextScreen();
+  }
+
+  void _navigateToNextScreen() {
     Timer(const Duration(seconds: 3), () {
-      Get.off(() => SignUpScreen()); // Navigate to Signup Screen
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Get.off(() => HomeScreen()); // Navigate to Home if logged in
+      } else {
+        Get.off(() => SignUpScreen()); // Navigate to Signup if not logged in
+      }
     });
   }
 
