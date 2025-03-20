@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/user_controller.dart';
-// Ensure the correct model is imported
 
 class TaskAssignmentScreen extends StatelessWidget {
-  final TaskController taskController = Get.find();
-  final UserController userController = Get.find();
+  final TaskController taskController = Get.put(TaskController());
+  final UserController userController = Get.put(UserController());
 
   TaskAssignmentScreen({super.key});
 
@@ -17,7 +16,12 @@ class TaskAssignmentScreen extends StatelessWidget {
       appBar: AppBar(title: const Text("Assign Tasks")),
       body: Obx(() {
         if (taskController.tasks.isEmpty) {
-          return const Center(child: Text("No tasks available"));
+          return const Center(
+            child: Text(
+              "No tasks available",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          );
         }
         return ListView.builder(
           itemCount: taskController.tasks.length,
@@ -27,8 +31,10 @@ class TaskAssignmentScreen extends StatelessWidget {
               elevation: 3,
               margin: const EdgeInsets.all(10),
               child: ListTile(
-                title: Text(task.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(
+                  task.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text(task.description),
                 trailing: ElevatedButton(
                   onPressed: () => _showAssignmentDialog(context, task.taskId),
@@ -57,8 +63,10 @@ class TaskAssignmentScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Assign Task",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Assign Task",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
 
             // Assign to Reporter Dropdown
@@ -67,12 +75,13 @@ class TaskAssignmentScreen extends StatelessWidget {
                 return const Text("No reporters available");
               }
               return DropdownButtonFormField<String>(
-                decoration:
-                    const InputDecoration(labelText: "Assign to Reporter"),
+                decoration: const InputDecoration(labelText: "Assign to Reporter"),
                 items: userController.reporters
                     .map<DropdownMenuItem<String>>((reporter) {
                   return DropdownMenuItem<String>(
-                      value: reporter["id"], child: Text(reporter["name"]));
+                    value: reporter["id"],
+                    child: Text(reporter["name"]),
+                  );
                 }).toList(),
                 onChanged: (value) {
                   selectedReporter = value;
@@ -88,12 +97,13 @@ class TaskAssignmentScreen extends StatelessWidget {
                 return const Text("No cameramen available");
               }
               return DropdownButtonFormField<String>(
-                decoration:
-                    const InputDecoration(labelText: "Assign to Cameraman"),
+                decoration: const InputDecoration(labelText: "Assign to Cameraman"),
                 items: userController.cameramen
                     .map<DropdownMenuItem<String>>((cameraman) {
                   return DropdownMenuItem<String>(
-                      value: cameraman["id"], child: Text(cameraman["name"]));
+                    value: cameraman["id"],
+                    child: Text(cameraman["name"]),
+                  );
                 }).toList(),
                 onChanged: (value) {
                   selectedCameraman = value;
@@ -103,15 +113,14 @@ class TaskAssignmentScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
+            // Assign Task Button
             ElevatedButton(
               onPressed: () {
                 if (selectedReporter != null) {
-                  taskController.assignTaskToReporter(
-                      taskId, selectedReporter!);
+                  taskController.assignTaskToReporter(taskId, selectedReporter!);
                 }
                 if (selectedCameraman != null) {
-                  taskController.assignTaskToCameraman(
-                      taskId, selectedCameraman!);
+                  taskController.assignTaskToCameraman(taskId, selectedCameraman!);
                 }
                 Get.back();
               },

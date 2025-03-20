@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserController extends GetxController {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   var reporters = <Map<String, dynamic>>[].obs;
   var cameramen = <Map<String, dynamic>>[].obs;
 
@@ -13,27 +15,39 @@ class UserController extends GetxController {
     fetchCameramen();
   }
 
+  // Fetch all Reporters in real-time
   void fetchReporters() {
-    FirebaseFirestore.instance
-        .collection("users")
-        .where("role", isEqualTo: "Reporter")
-        .snapshots()
-        .listen((snapshot) {
-      reporters.value = snapshot.docs.map((doc) {
-        return {"id": doc.id, "name": doc["name"]};
-      }).toList();
-    });
+    reporters.bindStream(
+      _firestore
+          .collection("users")
+          .where("role", isEqualTo: "Reporter")
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          return {
+            "id": doc.id,
+            "name": doc["name"] ?? "Unknown",
+          };
+        }).toList();
+      }),
+    );
   }
 
+  // Fetch all Cameramen in real-time
   void fetchCameramen() {
-    FirebaseFirestore.instance
-        .collection("users")
-        .where("role", isEqualTo: "Cameraman")
-        .snapshots()
-        .listen((snapshot) {
-      cameramen.value = snapshot.docs.map((doc) {
-        return {"id": doc.id, "name": doc["name"]};
-      }).toList();
-    });
+    cameramen.bindStream(
+      _firestore
+          .collection("users")
+          .where("role", isEqualTo: "Cameraman")
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          return {
+            "id": doc.id,
+            "name": doc["name"] ?? "Unknown",
+          };
+        }).toList();
+      }),
+    );
   }
 }
