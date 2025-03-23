@@ -50,6 +50,8 @@ class AuthController extends GetxController {
       String fullName, String email, String password, String role) async {
     try {
       isLoading(true);
+      print("🚀 Starting Sign Up...");
+
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -58,7 +60,10 @@ class AuthController extends GetxController {
 
       User? user = userCredential.user;
       if (user != null) {
+        print("✅ Firebase Auth Success!");
+
         String? fcmToken = await FirebaseMessaging.instance.getToken();
+        print("📂 Saving user data in Firestore...");
 
         await _firebaseService.saveUserData(user.uid, {
           "uid": user.uid,
@@ -69,15 +74,18 @@ class AuthController extends GetxController {
           "fcmToken": fcmToken ?? "",
         });
 
-        this.fullName.value = fullName; // ✅ Set Full Name
-        Get.toNamed("/profile-update");
+        print("✅ Firestore Save Success! Navigating to Profile Update...");
+        isLoading(false); // ✅ Ensure isLoading is set to false
+        Get.offNamed("/profile-update"); // ✅ Ensure this route exists
       }
     } catch (e) {
-      Get.snackbar("Error", "Signup failed.");
+      print("❌ Error during signup: $e");
+      Get.snackbar("Error", "Signup failed: ${e.toString()}");
     } finally {
       isLoading(false);
     }
   }
+
 
   // ✅ Upload Profile Picture
   Future<void> uploadProfilePicture(File imageFile) async {
