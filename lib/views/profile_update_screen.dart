@@ -19,14 +19,15 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   // Function to pick an image from the gallery
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final pickedFile =
+          await ImagePicker().pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         setState(() {
           _image = File(pickedFile.path);
         });
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to pick an image: ${e.toString()}");
+      Get.snackbar("Error", "Failed to pick an image.");
     }
   }
 
@@ -43,29 +44,35 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Update Profile Picture")),
+      appBar: AppBar(title: const Text("Update Profile")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Upload Profile Picture",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+            // ✅ Display User's Full Name
+            Obx(() => Text(
+                  "Welcome, ${authController.fullName.value}!",
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold),
+                )),
             const SizedBox(height: 20),
 
-            // Profile Image Preview
-            _image == null
-                ? const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 50, color: Colors.white),
-                  )
-                : CircleAvatar(
-                    radius: 50,
-                    backgroundImage: FileImage(_image!),
-                  ),
+            // ✅ Profile Image Preview (From Firestore or Selected File)
+            Obx(() {
+              String profilePic =
+                  authController.auth.currentUser?.photoURL ?? "";
+              return CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.grey,
+                backgroundImage: _image != null
+                    ? FileImage(_image!) as ImageProvider
+                    : (profilePic.isNotEmpty ? NetworkImage(profilePic) : null),
+                child: _image == null && profilePic.isEmpty
+                    ? const Icon(Icons.person, size: 50, color: Colors.white)
+                    : null,
+              );
+            }),
 
             const SizedBox(height: 20),
 

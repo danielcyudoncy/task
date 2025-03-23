@@ -4,17 +4,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:task/service/firebase_service.dart';
 import 'dart:io';
 
 class AuthController extends GetxController {
   static AuthController instance = Get.find<AuthController>();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
-   FirebaseAuth get auth => _auth;
+  final FirebaseService _firebaseService = FirebaseService();
+
+  FirebaseAuth get auth => _auth;
 
   var isLoading = false.obs;
+  var fullName = "".obs; // ✅ Store Full Name
   var selectedRole = ''.obs;
 
   final List<String> userRoles = [
@@ -25,101 +28,135 @@ class AuthController extends GetxController {
     "Admin"
   ];
 
-  // Register New User
-  Future<void> signUp(String email, String password, String role) async {
+  // ✅ Fetch user data from Firestore after login/signup
+  Future<void> loadUserData() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        DocumentSnapshot? userData =
+            await _firebaseService.getUserData(user.uid);
+        if (userData != null && userData.exists) {
+          fullName.value =
+              userData["fullName"] ?? "User"; // ✅ Store fetched name
+        }
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load user data.");
+    }
+  }
+
+  // ✅ Register New User (Includes Full Name)
+  Future<void> signUp(
+      String fullName, String email, String password, String role) async {
     try {
       isLoading(true);
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       User? user = userCredential.user;
       if (user != null) {
-        await _firestore.collection("users").doc(user.uid).set({
+        String? fcmToken = await FirebaseMessaging.instance.getToken();
+
+        await _firebaseService.saveUserData(user.uid, {
           "uid": user.uid,
+          "fullName": fullName, // ✅ Store Full Name
           "email": email,
           "role": role,
           "profilePic": "",
-          "fcmToken": await FirebaseMessaging.instance.getToken(),
+          "fcmToken": fcmToken ?? "",
         });
 
+        this.fullName.value = fullName; // ✅ Set Full Name
         Get.toNamed("/profile-update");
       }
-    } on FirebaseAuthException catch (e) {
-      String message = "An error occurred";
-      if (e.code == 'email-already-in-use') {
-        message = "Email is already in use.";
-      } else if (e.code == 'weak-password') {
-        message = "Password should be at least 6 characters.";
-      }
-      Get.snackbar("Error", message);
     } catch (e) {
-      Get.snackbar("Error", "Registration failed: ${e.toString()}");
+      Get.snackbar("Error", "Signup failed.");
     } finally {
       isLoading(false);
     }
   }
 
-  // Upload Profile Picture
+  // ✅ Upload Profile Picture
   Future<void> uploadProfilePicture(File imageFile) async {
     try {
       isLoading(true);
+      print("🚀 Uploading profile picture...");
+
       String uid = _auth.currentUser!.uid;
       Reference ref = _storage.ref().child("profile_pics/$uid.jpg");
-      await ref.putFile(imageFile);
-      String downloadUrl = await ref.getDownloadURL();
 
-      await _firestore.collection("users").doc(uid).update({"profilePic": downloadUrl});
+      UploadTask uploadTask = ref.putFile(imageFile);
+      TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
+
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      await _firebaseService.updateUserData(uid, {"profilePic": downloadUrl});
+      print("✅ Upload success: $downloadUrl");
+
       Get.snackbar("Success", "Profile picture updated successfully.");
     } catch (e) {
-      Get.snackbar("Error", "Failed to upload image: ${e.toString()}");
+      print("❌ Upload failed: $e");
+      Get.snackbar("Error", "Failed to upload image.");
     } finally {
       isLoading(false);
     }
   }
 
-  // Save Firebase Cloud Messaging (FCM) Token
+  // ✅ Save Firebase Cloud Messaging (FCM) Token
   Future<void> saveFCMToken() async {
     try {
       String? token = await FirebaseMessaging.instance.getToken();
       if (token != null && _auth.currentUser != null) {
-        await _firestore.collection("users").doc(_auth.currentUser!.uid).update({"fcmToken": token});
+        await _firebaseService
+            .updateUserData(_auth.currentUser!.uid, {"fcmToken": token});
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to save FCM Token: ${e.toString()}");
+      Get.snackbar("Error", "Failed to save FCM Token.");
     }
   }
 
-  // User Login
+  // ✅ User Login (Loads Full Name)
   Future<void> login(String email, String password) async {
     try {
       isLoading(true);
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      await saveFCMToken();
+      await loadUserData(); // ✅ Load Full Name after login
+      await saveFCMToken(); // ✅ Ensure FCM Token is saved
       Get.offAllNamed("/home");
     } on FirebaseAuthException catch (e) {
-      String message = "Login failed";
-      if (e.code == 'user-not-found') {
-        message = "No user found with this email.";
-      } else if (e.code == 'wrong-password') {
-        message = "Incorrect password.";
-      }
-      Get.snackbar("Error", message);
-    } catch (e) {
-      Get.snackbar("Error", "Login failed: ${e.toString()}");
+      Get.snackbar("Error", _handleAuthError(e));
     } finally {
       isLoading(false);
     }
   }
 
-  // User Logout
+  // ✅ User Logout
   Future<void> logout() async {
     try {
       await _auth.signOut();
+      fullName.value = ""; // ✅ Clear Full Name
       Get.offAllNamed("/signup");
     } catch (e) {
-      Get.snackbar("Error", "Logout failed: ${e.toString()}");
+      Get.snackbar("Error", "Logout failed.");
+    }
+  }
+
+  // ✅ Handle FirebaseAuth Errors
+  String _handleAuthError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return "Email is already in use.";
+      case 'weak-password':
+        return "Password should be at least 6 characters.";
+      case 'user-not-found':
+        return "No user found with this email.";
+      case 'wrong-password':
+        return "Incorrect password.";
+      default:
+        return "An error occurred. Please try again.";
     }
   }
 }
