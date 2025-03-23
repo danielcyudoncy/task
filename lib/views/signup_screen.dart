@@ -6,6 +6,9 @@ import '../controllers/auth_controller.dart';
 class SignUpScreen extends StatelessWidget {
   final AuthController authController = Get.put(AuthController());
 
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -19,94 +22,140 @@ class SignUpScreen extends StatelessWidget {
       appBar: AppBar(title: const Text("Sign Up")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Create an Account",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Create an Account",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
 
-            // Email Field
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
+              // ✅ Full Name Field
+              TextFormField(
+                controller: fullNameController,
+                keyboardType: TextInputType.name,
+                decoration: const InputDecoration(labelText: "Full Name"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Full Name cannot be empty";
+                  }
+                  return null;
+                },
+              ),
 
-            // Password Field
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Password"),
-            ),
+              const SizedBox(height: 10),
 
-            // Confirm Password Field
-            TextField(
-              controller: confirmPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Confirm Password"),
-            ),
+              // ✅ Email Field
+              TextFormField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: "Email"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Email cannot be empty";
+                  }
+                  if (!GetUtils.isEmail(value)) {
+                    return "Enter a valid email";
+                  }
+                  return null;
+                },
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-            // Role Selection Dropdown
-            Obx(() => DropdownButton<String>(
-                  value: authController.selectedRole.value.isEmpty
-                      ? null
-                      : authController.selectedRole.value,
-                  hint: const Text("Select Role"),
-                  isExpanded: true,
-                  onChanged: (String? value) {
-                    authController.selectedRole.value = value!;
-                  },
-                  items: authController.userRoles.map((role) {
-                    return DropdownMenuItem(
-                      value: role,
-                      child: Text(role),
-                    );
-                  }).toList(),
-                )),
+              // ✅ Password Field
+              TextFormField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: "Password"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Password cannot be empty";
+                  }
+                  if (value.length < 6) {
+                    return "Password must be at least 6 characters";
+                  }
+                  return null;
+                },
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-            // Sign Up Button with Loading State
-            Obx(() => authController.isLoading.value
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: () {
-                      if (_validateInputs()) {
-                        authController.signUp(
-                          emailController.text.trim(),
-                          passwordController.text.trim(),
-                          authController.selectedRole.value,
-                        );
+              // ✅ Confirm Password Field
+              TextFormField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                decoration:
+                    const InputDecoration(labelText: "Confirm Password"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please confirm your password";
+                  }
+                  if (value != passwordController.text) {
+                    return "Passwords do not match";
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // ✅ Role Selection Dropdown
+              Obx(() => DropdownButtonFormField<String>(
+                    value: authController.selectedRole.value.isEmpty
+                        ? null
+                        : authController.selectedRole.value,
+                    hint: const Text("Select Role"),
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: "Role",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please select a role";
                       }
+                      return null;
                     },
-                    child: const Text("Sign Up"),
+                    onChanged: (String? value) {
+                      authController.selectedRole.value = value!;
+                    },
+                    items: authController.userRoles.map((role) {
+                      return DropdownMenuItem(
+                        value: role,
+                        child: Text(role),
+                      );
+                    }).toList(),
                   )),
-          ],
+
+              const SizedBox(height: 20),
+
+              // ✅ Sign Up Button with Validation
+              Obx(() => authController.isLoading.value
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _signUp,
+                      child: const Text("Sign Up"),
+                    )),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Validation Method
-  bool _validateInputs() {
-    if (emailController.text.isEmpty ||
-        passwordController.text.isEmpty ||
-        confirmPasswordController.text.isEmpty ||
-        authController.selectedRole.value.isEmpty) {
-      Get.snackbar("Error", "All fields are required.");
-      return false;
+  // ✅ Sign Up Function with Full Name
+  void _signUp() {
+    if (_formKey.currentState!.validate()) {
+      authController.signUp(
+        fullNameController.text.trim(), // Pass Full Name
+        emailController.text.trim(),
+        passwordController.text.trim(),
+        authController.selectedRole.value,
+      );
     }
-
-    if (passwordController.text != confirmPasswordController.text) {
-      Get.snackbar("Error", "Passwords do not match.");
-      return false;
-    }
-
-    return true;
   }
 }

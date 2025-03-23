@@ -15,7 +15,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Home"),
+        title: Obx(() => Text(
+              "Welcome, ${authController.fullName.value}!", // ✅ Displays Full Name
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            )),
         actions: [
           Obx(() => Stack(
                 children: [
@@ -52,18 +55,36 @@ class HomeScreen extends StatelessWidget {
                     ),
                 ],
               )),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              authController.logout();
-            },
-          ),
         ],
       ),
-      body: const Center(
-        child: Text(
-          "Welcome to the Assignment Logging App!",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Welcome to the Assignment Logging App!",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+
+            // ✅ Login Button
+            ElevatedButton(
+              onPressed: () {
+                Get.toNamed("/login"); // Navigates to Login Screen
+              },
+              child: const Text("Login"),
+            ),
+
+            const SizedBox(height: 10),
+
+            // ✅ Signup Button
+            OutlinedButton(
+              onPressed: () {
+                Get.toNamed("/signup"); // Navigates to Signup Screen
+              },
+              child: const Text("Sign Up"),
+            ),
+          ],
         ),
       ),
     );
