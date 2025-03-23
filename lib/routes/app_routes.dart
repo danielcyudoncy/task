@@ -1,6 +1,7 @@
 // routes/app_routes.dart
 import 'package:get/get.dart';
 import 'package:task/views/home_screen.dart';
+import 'package:task/views/login_screen.dart';
 import 'package:task/views/notification_screen.dart';
 import 'package:task/views/profile_update_screen.dart';
 import 'package:task/views/signup_screen.dart';
@@ -11,8 +12,9 @@ class AppRoutes {
     GetPage(name: "/signup", page: () => SignUpScreen()),
     GetPage(name: "/assignTask", page: () => TaskAssignmentScreen()),
     GetPage(name: "/profile-update", page: () => const ProfileUpdateScreen()),
+    GetPage(name: "/login", page: () => LoginScreen()),
     GetPage(name: "/home", page: () => HomeScreen()),
-    GetPage(name: "/notifications", page: () => NotificationScreen()),
+        GetPage(name: "/notifications", page: () => NotificationScreen()),
 
   ];
 }
