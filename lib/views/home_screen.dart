@@ -20,41 +20,45 @@ class HomeScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
         actions: [
-          Obx(() => Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {
-                      Get.toNamed("/notifications");
-                    },
-                  ),
-                  if (notificationController.unreadCount.value > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          '${notificationController.unreadCount.value}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.only(
+                right: 16.0), // ✅ Added Padding to Move Notification Icon
+            child: Obx(() => Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications),
+                      onPressed: () {
+                        Get.toNamed("/notifications");
+                      },
+                    ),
+                    if (notificationController.unreadCount.value > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          textAlign: TextAlign.center,
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          child: Text(
+                            '${notificationController.unreadCount.value}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              )),
+                  ],
+                )),
+          ),
         ],
       ),
       body: Center(
@@ -67,22 +71,12 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // ✅ Login Button
+            // ✅ Login Button (Signup Button Removed)
             ElevatedButton(
               onPressed: () {
                 Get.toNamed("/login"); // Navigates to Login Screen
               },
               child: const Text("Login"),
-            ),
-
-            const SizedBox(height: 10),
-
-            // ✅ Signup Button
-            OutlinedButton(
-              onPressed: () {
-                Get.toNamed("/signup"); // Navigates to Signup Screen
-              },
-              child: const Text("Sign Up"),
             ),
           ],
         ),

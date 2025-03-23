@@ -9,12 +9,12 @@ import 'package:task/views/task_assignment_screen.dart';
 
 class AppRoutes {
   static final routes = [
-    GetPage(name: "/signup", page: () => SignUpScreen()),
-    GetPage(name: "/assignTask", page: () => TaskAssignmentScreen()),
-    GetPage(name: "/profile-update", page: () => const ProfileUpdateScreen()),
-    GetPage(name: "/login", page: () => LoginScreen()),
     GetPage(name: "/home", page: () => HomeScreen()),
-        GetPage(name: "/notifications", page: () => NotificationScreen()),
+    GetPage(name: "/login", page: () => LoginScreen()),
+    GetPage(name: "/signup", page: () => SignUpScreen()),
+    GetPage(name: "/profile-update", page: () => const ProfileUpdateScreen()),
+    GetPage(name: "/assignTask", page: () => TaskAssignmentScreen()),
+    GetPage(name: "/notifications", page: () => NotificationScreen()),
 
   ];
 }
