@@ -55,7 +55,6 @@ class TaskCreationScreen extends StatelessWidget {
       ),
     );
   }
-
   // Task Creation Logic with Validation
   void _createTask() {
     String title = titleController.text.trim();
@@ -72,7 +71,11 @@ class TaskCreationScreen extends StatelessWidget {
       return;
     }
 
-    taskController.createTask(title, description, userId);
+    // Create the task and add a callback for when it completes
+    taskController.createTask(title, description, userId).then((_) {
+      Get.snackbar("Success", "Task created successfully");
+      Get.back();
+    });
 
     // Clear fields after task creation
     titleController.clear();

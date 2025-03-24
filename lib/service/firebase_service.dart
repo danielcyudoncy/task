@@ -57,6 +57,16 @@ class FirebaseService {
       });
     } catch (_) {}
   }
+  // Add this method to your FirebaseService class
+  Future<void> updateTask(String taskId, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('tasks').doc(taskId).update(data);
+    } catch (e) {
+      print('Error updating task: $e');
+      throw e;
+    }
+  }
+
 
   // Mark Task as Completed
   Future<void> markTaskAsCompleted(
