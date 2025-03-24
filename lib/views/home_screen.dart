@@ -16,13 +16,14 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Obx(() => Text(
-              "Welcome, ${authController.fullName.value}!", // ✅ Displays Full Name
+              authController.fullName.value.isNotEmpty 
+                  ? "Welcome, ${authController.fullName.value}!" 
+                  : "Assignment Logging App",
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(
-                right: 16.0), // ✅ Added Padding to Move Notification Icon
+            padding: const EdgeInsets.only(right: 16.0),
             child: Obx(() => Stack(
                   children: [
                     IconButton(
@@ -71,30 +72,49 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // ✅ Login Button (Signup Button Removed)
-            ElevatedButton(
-              onPressed: () {
-                Get.toNamed("/login"); // Navigates to Login Screen
-              },
-              child: const Text("Login"),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () => Get.toNamed("/task-creation"),
-                  child: const Text("Create Task"),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () => Get.toNamed("/task-list"),
-                  child: const Text("View Tasks"),
-                ),
-              ],
-            ),
+            Obx(() {
+              if (authController.fullName.value.isNotEmpty) {
+                // Show task-related buttons only when logged in (fullName is not empty)
+                return Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => Get.toNamed("/task-creation"),
+                          child: const Text("Create Task"),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () => Get.toNamed("/task-list"),
+                          child: const Text("View Tasks"),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Since you don't have signOut(), you might need to implement this
+                        // or navigate to a logout screen
+                        // For now, we'll just navigate to login
+                        Get.offAllNamed("/login");
+                      },
+                      child: const Text("Logout"),
+                    ),
+                  ],
+                );
+              } else {
+                // Show login button when not logged in (fullName is empty)
+                return ElevatedButton(
+                  onPressed: () {
+                    Get.toNamed("/login");
+                  },
+                  child: const Text("Login"),
+                );
+              }
+            }),
           ],
         ),
-        
       ),
     );
   }
