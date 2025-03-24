@@ -18,6 +18,7 @@ class AuthController extends GetxController {
 
   var isLoading = false.obs;
   var fullName = "".obs; // ✅ Store Full Name
+  var profilePic = "".obs;
   var selectedRole = ''.obs;
 
   final List<String> userRoles = [
@@ -36,8 +37,9 @@ class AuthController extends GetxController {
         DocumentSnapshot? userData =
             await _firebaseService.getUserData(user.uid);
         if (userData != null && userData.exists) {
-          fullName.value =
-              userData["fullName"] ?? "User"; // ✅ Store fetched name
+          fullName.value = userData["fullName"] ?? "User";
+          profilePic.value =
+              userData["profilePic"] ?? ""; // Load profile pic URL
         }
       }
     } catch (e) {
@@ -46,11 +48,14 @@ class AuthController extends GetxController {
   }
 
   // ✅ Register New User (Includes Full Name)
-  Future<void> signUp(
-      String fullName, String email, String password, String role) async {
+ Future<void> signUp(
+      String userFullName, String email, String password, String role) async {
     try {
       isLoading(true);
       print("🚀 Starting Sign Up...");
+
+      // We'll catch the "email-already-in-use" error instead of using the deprecated method
+      print("📧 Creating user with email: $email");
 
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
@@ -60,14 +65,14 @@ class AuthController extends GetxController {
 
       User? user = userCredential.user;
       if (user != null) {
-        print("✅ Firebase Auth Success!");
+        print("✅ Firebase Auth Success! User ID: ${user.uid}");
 
         String? fcmToken = await FirebaseMessaging.instance.getToken();
         print("📂 Saving user data in Firestore...");
 
         await _firebaseService.saveUserData(user.uid, {
           "uid": user.uid,
-          "fullName": fullName, // ✅ Store Full Name
+          "fullName": userFullName, // Use the parameter name
           "email": email,
           "role": role,
           "profilePic": "",
@@ -75,20 +80,41 @@ class AuthController extends GetxController {
         });
 
         print("✅ Firestore Save Success! Navigating to Profile Update...");
-        isLoading(false); // ✅ Ensure isLoading is set to false
-        Get.offNamed("/profile-update"); // ✅ Ensure this route exists
+
+        // Set the fullName observable
+        fullName.value = userFullName;
+
+        // Ensure we're not in a loading state
+        isLoading(false);
+
+        // Navigate with a slight delay to ensure UI updates
+        Future.delayed(const Duration(milliseconds: 100), () {
+          Get.offNamed("/profile-update");
+        });
       }
+    } on FirebaseAuthException catch (e) {
+      print("❌ Firebase Auth Error: ${e.code}");
+
+      // Handle specific Firebase Auth errors
+      if (e.code == 'email-already-in-use') {
+        Get.snackbar("Error", "Email is already in use.");
+      } else if (e.code == 'weak-password') {
+        Get.snackbar("Error", "Password is too weak.");
+      } else {
+        Get.snackbar("Error", "Signup failed: ${e.message}");
+      }
+
+      isLoading(false);
     } catch (e) {
       print("❌ Error during signup: $e");
       Get.snackbar("Error", "Signup failed: ${e.toString()}");
-    } finally {
       isLoading(false);
     }
   }
 
 
   // ✅ Upload Profile Picture
-  Future<void> uploadProfilePicture(File imageFile) async {
+ Future<void> uploadProfilePicture(File imageFile) async {
     try {
       isLoading(true);
       print("🚀 Uploading profile picture...");
@@ -101,7 +127,15 @@ class AuthController extends GetxController {
 
       String downloadUrl = await snapshot.ref.getDownloadURL();
 
+      // Update Firebase Auth user profile
+      await _auth.currentUser?.updatePhotoURL(downloadUrl);
+
+      // Update Firestore
       await _firebaseService.updateUserData(uid, {"profilePic": downloadUrl});
+
+      // Update the observable
+      profilePic.value = downloadUrl;
+
       print("✅ Upload success: $downloadUrl");
 
       Get.snackbar("Success", "Profile picture updated successfully.");
@@ -125,6 +159,8 @@ class AuthController extends GetxController {
       Get.snackbar("Error", "Failed to save FCM Token.");
     }
   }
+
+  
 
   // ✅ User Login (Loads Full Name)
   Future<void> login(String email, String password) async {

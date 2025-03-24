@@ -136,9 +136,25 @@ class SignUpScreen extends StatelessWidget {
               // ✅ Sign Up Button with Validation
               Obx(() => authController.isLoading.value
                   ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _signUp,
-                      child: const Text("Sign Up"),
+                  : Column(
+                      children: [
+                        ElevatedButton(
+                          onPressed: _signUp,
+                          child: const Text("Sign Up"),
+                        ),
+                        const SizedBox(height: 10),
+                        TextButton(
+                          onPressed: () {
+                            if (authController.auth.currentUser != null) {
+                              Get.offNamed("/profile-update");
+                            } else {
+                              Get.snackbar(
+                                  "Error", "Please complete signup first");
+                            }
+                          },
+                          child: const Text("Continue to Profile Setup"),
+                        ),
+                      ],
                     )),
             ],
           ),
