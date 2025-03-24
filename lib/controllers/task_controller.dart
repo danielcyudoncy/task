@@ -22,7 +22,7 @@ class TaskController extends GetxController {
     });
   }
 
- Future<void> createTask(
+  Future<void> createTask(
       String title, String description, String createdBy) async {
     try {
       isLoading(true);
@@ -39,6 +39,51 @@ class TaskController extends GetxController {
       Get.snackbar("Success", "Task Created Successfully");
     } catch (e) {
       Get.snackbar("Error", "Failed to create task: ${e.toString()}");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // New method to add a task
+  Future<void> addTask(
+      String title, String description, String status) async {
+    try {
+      isLoading(true);
+      
+      // You may need to get the current user ID or use a default value
+      String createdBy = "current_user_id"; // Replace with actual user ID
+      
+      await _firebaseService.createTaskWithId({
+        "title": title,
+        "description": description,
+        "createdBy": createdBy,
+        "status": status,
+        "comments": [],
+      });
+
+      Get.snackbar("Success", "Task Added Successfully");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to add task: ${e.toString()}");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // New method to update a task
+  Future<void> updateTask(
+      String taskId, String title, String description, String status) async {
+    try {
+      isLoading(true);
+      
+      await _firebaseService.updateTask(taskId, {
+        "title": title,
+        "description": description,
+        "status": status,
+      });
+
+      Get.snackbar("Success", "Task Updated Successfully");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to update task: ${e.toString()}");
     } finally {
       isLoading(false);
     }
