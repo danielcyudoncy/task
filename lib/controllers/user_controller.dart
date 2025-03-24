@@ -26,7 +26,8 @@ class UserController extends GetxController {
         return snapshot.docs.map((doc) {
           return {
             "id": doc.id,
-            "name": doc["name"] ?? "Unknown",
+            "name": doc["fullName"] ??
+                "Unknown", // Changed from "name" to "fullName"
           };
         }).toList();
       }),
@@ -44,7 +45,8 @@ class UserController extends GetxController {
         return snapshot.docs.map((doc) {
           return {
             "id": doc.id,
-            "name": doc["name"] ?? "Unknown",
+            "name": doc["fullName"] ??
+                "Unknown", // Changed from "name" to "fullName"
           };
         }).toList();
       }),

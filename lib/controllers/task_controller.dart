@@ -22,17 +22,20 @@ class TaskController extends GetxController {
     });
   }
 
-  Future<void> createTask(
+ Future<void> createTask(
       String title, String description, String createdBy) async {
     try {
       isLoading(true);
-      await _firebaseService.createTask({
+
+      // Use the new method to create a task with an ID
+      await _firebaseService.createTaskWithId({
         "title": title,
         "description": description,
         "createdBy": createdBy,
         "status": "Pending",
         "comments": [],
       });
+
       Get.snackbar("Success", "Task Created Successfully");
     } catch (e) {
       Get.snackbar("Error", "Failed to create task: ${e.toString()}");

@@ -78,8 +78,23 @@ class HomeScreen extends StatelessWidget {
               },
               child: const Text("Login"),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => Get.toNamed("/task-creation"),
+                  child: const Text("Create Task"),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () => Get.toNamed("/task-list"),
+                  child: const Text("View Tasks"),
+                ),
+              ],
+            ),
           ],
         ),
+        
       ),
     );
   }

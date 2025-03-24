@@ -7,10 +7,12 @@ import 'dart:io';
 
 class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});
+  
 
   @override
   ProfileUpdateScreenState createState() => ProfileUpdateScreenState();
 }
+
 
 class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   File? _image;
@@ -50,7 +52,7 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ✅ Display User's Full Name
+            // Display User's Full Name
             Obx(() => Text(
                   "Welcome, ${authController.fullName.value}!",
                   style: const TextStyle(
@@ -58,17 +60,17 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 )),
             const SizedBox(height: 20),
 
-            // ✅ Profile Image Preview (From Firestore or Selected File)
+            // Profile Image Preview - Now using the profilePic observable
             Obx(() {
-              String profilePic =
-                  authController.auth.currentUser?.photoURL ?? "";
               return CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.grey,
                 backgroundImage: _image != null
                     ? FileImage(_image!) as ImageProvider
-                    : (profilePic.isNotEmpty ? NetworkImage(profilePic) : null),
-                child: _image == null && profilePic.isEmpty
+                    : (authController.profilePic.value.isNotEmpty
+                        ? NetworkImage(authController.profilePic.value)
+                        : null),
+                child: _image == null && authController.profilePic.value.isEmpty
                     ? const Icon(Icons.person, size: 50, color: Colors.white)
                     : null,
               );
@@ -93,6 +95,14 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                     icon: const Icon(Icons.upload),
                     label: const Text("Upload"),
                   )),
+
+            const SizedBox(height: 20),
+
+            // Continue to Home button
+            ElevatedButton(
+              onPressed: () => Get.offAllNamed('/home'),
+              child: const Text("Continue to Home"),
+            ),
           ],
         ),
       ),

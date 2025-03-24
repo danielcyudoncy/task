@@ -1,5 +1,6 @@
 // service/firebase_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -14,10 +15,15 @@ class FirebaseService {
   }
 
   // Save User Data (Used for Signup)
-  Future<void> saveUserData(String uid, Map<String, dynamic> userData) async {
+ Future<void> saveUserData(String uid, Map<String, dynamic> userData) async {
     try {
       await _firestore.collection("users").doc(uid).set(userData);
-    } catch (_) {}
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error saving user data: $e");
+      }
+      // Optionally rethrow or handle differently
+    }
   }
 
   // Update User Data
@@ -68,6 +74,20 @@ class FirebaseService {
         "comments": existingComments,
       });
     } catch (_) {}
+  }
+  String generateTaskId() {
+    return _firestore.collection("tasks").doc().id;
+  }
+
+// Create a New Task with ID
+  Future<void> createTaskWithId(Map<String, dynamic> taskData) async {
+    try {
+      String taskId = generateTaskId();
+      taskData["taskId"] = taskId;
+      await _firestore.collection("tasks").doc(taskId).set(taskData);
+    } catch (e) {
+      print("Error creating task: $e");
+    }
   }
 
   // Save Notification
