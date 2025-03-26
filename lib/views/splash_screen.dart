@@ -1,54 +1,58 @@
-// views/splash_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'signup_screen.dart';
-import 'home_screen.dart';
+import 'package:task/controllers/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  SplashScreenState createState() => SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> {
+  final AuthController authController = Get.find<AuthController>();
+
   @override
   void initState() {
     super.initState();
-    _navigateToNextScreen();
+    _navigateBasedOnAuth();
   }
 
-  void _navigateToNextScreen() {
-    Timer(const Duration(seconds: 3), () {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        Get.off(() => HomeScreen()); // Navigate to Home if logged in
+  // ✅ Check if user is logged in and navigate accordingly
+  Future<void> _navigateBasedOnAuth() async {
+    await Future.delayed(const Duration(seconds: 2)); // Simulate splash delay
+
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      await authController.loadUserData(); // ✅ Load user data before navigation
+
+      // ✅ Navigate based on role
+      if (authController.userRole.value == "Reporter" || authController.userRole.value == "Cameraman") {
+        Get.offAllNamed("/home");
+      } else if (authController.userRole.value == "Admin" ||
+          authController.userRole.value == "Assignment Editor" ||
+          authController.userRole.value == "Head of Department") {
+        Get.offAllNamed("/admin-dashboard");
       } else {
-        Get.off(() => SignUpScreen()); // Navigate to Signup if not logged in
+        Get.offAllNamed("/login"); // Fallback
       }
-    });
+    } else {
+      Get.offAllNamed("/login"); // ✅ Always go to Sign In if no user is logged in
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.deepPurple,
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assignment, size: 80, color: Colors.white),
-            SizedBox(height: 20),
-            Text(
-              "Assignment Logging App",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            Image.asset("assets/logo.png", width: 150), // ✅ Replace with your logo
+            const SizedBox(height: 20),
+            const CircularProgressIndicator(),
           ],
         ),
       ),
