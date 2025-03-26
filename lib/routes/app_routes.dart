@@ -1,5 +1,6 @@
 // routes/app_routes.dart
 import 'package:get/get.dart';
+import 'package:task/views/admin_dashboard_screen.dart';
 import 'package:task/views/home_screen.dart';
 import 'package:task/views/login_screen.dart';
 import 'package:task/views/notification_screen.dart';
@@ -21,5 +22,6 @@ class AppRoutes {
     GetPage(name: "/task-list", page: () => TaskListScreen()),
     GetPage(name: "/task-assignment", page: () => TaskAssignmentScreen()), // ✅ Fixed route name
     GetPage(name: "/notifications", page: () => NotificationScreen()),
+    GetPage(name: "/admin-dashboard", page: ()=> AdminDashboardScreen())
   ];
 }

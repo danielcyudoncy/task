@@ -1,4 +1,3 @@
-// views/task_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
@@ -28,13 +27,13 @@ class TaskListScreen extends StatelessWidget {
           );
         }
 
-        // ✅ Filter tasks based on user role
+        // ✅ Fix: Filter tasks correctly
         var filteredTasks = taskController.tasks.where((task) {
           String userRole = authController.userRole.value;
-          String userId = authController.auth.currentUser!.uid;
+          String userName = authController.fullName.value; // ✅ Compare names instead of UID
 
           if (userRole == "Reporter" || userRole == "Cameraman") {
-            return task.createdBy == userId; // Show only own tasks
+            return task.createdBy == userName; // ✅ Compare with userName, not userId
           }
           return true; // Show all tasks for privileged roles
         }).toList();
@@ -51,7 +50,14 @@ class TaskListScreen extends StatelessWidget {
                   task.title,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(task.description),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Created by: ${task.createdBy}"),
+                    Text("Assigned Reporter: ${task.assignedReporter ?? "Not Assigned"}"),
+                    Text("Assigned Cameraman: ${task.assignedCameraman ?? "Not Assigned"}"),
+                  ],
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -171,7 +177,6 @@ class TaskListScreen extends StatelessWidget {
   void _showAddTaskDialog(BuildContext context) {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
-    String? userId = authController.auth.currentUser?.uid; // ✅ Fetch User ID
 
     showDialog(
       context: context,
@@ -208,16 +213,15 @@ class TaskListScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                if (userId == null) {
-                  Get.snackbar("Error", "User not found. Please log in again.");
+                if (titleController.text.trim().isEmpty || descriptionController.text.trim().isEmpty) {
+                  Get.snackbar("Error", "Please fill in all fields.");
                   return;
                 }
 
-                // ✅ Uses createTask with 3 arguments
+                // ✅ Fix: Call createTask with only 2 arguments (no userId)
                 taskController.createTask(
                   titleController.text.trim(),
                   descriptionController.text.trim(),
-                  userId, // ✅ Pass user ID
                 );
                 Navigator.of(context).pop();
               },
