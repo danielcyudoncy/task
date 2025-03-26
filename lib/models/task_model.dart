@@ -6,36 +6,35 @@ class Task {
   final String title;
   final String description;
   final String createdBy;
-  final String status;
-  final List<String> comments;
   final String? assignedReporter;
   final String? assignedCameraman;
-  final Timestamp timestamp;
+  final String status;
+  final List<String> comments; // ✅ Required field
+  final Timestamp timestamp; // ✅ Required field
 
   Task({
     required this.taskId,
     required this.title,
     required this.description,
     required this.createdBy,
-    required this.status,
-    required this.comments,
     this.assignedReporter,
     this.assignedCameraman,
+    required this.status,
+    required this.comments,
     required this.timestamp,
   });
 
-  // ✅ Convert Firestore document to Task model
   factory Task.fromMap(Map<String, dynamic> data) {
     return Task(
-      taskId: data['taskId'] ?? '',
-      title: data['title'] ?? '',
-      description: data['description'] ?? '',
-      createdBy: data['createdBy'] ?? '',
-      status: data['status'] ?? 'Pending',
-      comments: List<String>.from(data['comments'] ?? []),
-      assignedReporter: data['assignedReporter'],
-      assignedCameraman: data['assignedCameraman'],
-      timestamp: data['timestamp'] ?? Timestamp.now(),
+      taskId: data["taskId"] ?? "",
+      title: data["title"] ?? "",
+      description: data["description"] ?? "",
+      createdBy: data["createdBy"] ?? "",
+      assignedReporter: data["assignedReporter"],
+      assignedCameraman: data["assignedCameraman"],
+      status: data["status"] ?? "Pending",
+      comments: List<String>.from(data["comments"] ?? []),
+      timestamp: data["timestamp"] ?? Timestamp.now(),
     );
   }
 
