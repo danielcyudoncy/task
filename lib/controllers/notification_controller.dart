@@ -13,7 +13,7 @@ class NotificationController extends GetxController {
     fetchNotifications();
   }
 
-  // Fetch notifications in real-time using Firestore stream
+  // ✅ Fetch notifications in real-time
   void fetchNotifications() {
     String? uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -38,15 +38,15 @@ class NotificationController extends GetxController {
       }),
     );
 
-    updateUnreadCount();
+    notifications.listen((_) => updateUnreadCount()); // ✅ Update unread count dynamically
   }
 
-  // Update unread notification count
+  // ✅ Update unread notification count
   void updateUnreadCount() {
     unreadCount.value = notifications.where((n) => !(n["isRead"] ?? true)).length;
   }
 
-  // Mark notification as read
+  // ✅ Mark notification as read
   Future<void> markAsRead(String notificationId) async {
     try {
       String? uid = FirebaseAuth.instance.currentUser?.uid;
@@ -59,13 +59,13 @@ class NotificationController extends GetxController {
           .doc(notificationId)
           .update({"isRead": true});
 
-      updateUnreadCount();
+      fetchNotifications(); // ✅ Refresh notifications after marking as read
     } catch (e) {
       Get.snackbar("Error", "Failed to mark as read: ${e.toString()}");
     }
   }
 
-  // Delete notification
+  // ✅ Delete notification
   Future<void> deleteNotification(String notificationId) async {
     try {
       String? uid = FirebaseAuth.instance.currentUser?.uid;
@@ -78,9 +78,30 @@ class NotificationController extends GetxController {
           .doc(notificationId)
           .delete();
 
+      fetchNotifications(); // ✅ Refresh notifications after deletion
       Get.snackbar("Success", "Notification deleted");
     } catch (e) {
       Get.snackbar("Error", "Failed to delete: ${e.toString()}");
+    }
+  }
+
+  // ✅ Save a new notification (For Task Assignments)
+  Future<void> saveNotification(String userId, String title, String message) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(userId)
+          .collection("notifications")
+          .add({
+        "title": title,
+        "message": message,
+        "timestamp": FieldValue.serverTimestamp(),
+        "isRead": false,
+      });
+
+      fetchNotifications(); // ✅ Refresh after adding new notification
+    } catch (e) {
+      Get.snackbar("Error", "Failed to save notification.");
     }
   }
 }
