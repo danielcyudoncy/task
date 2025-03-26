@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
+import '../controllers/auth_controller.dart';
 
 class TaskListScreen extends StatelessWidget {
   final TaskController taskController = Get.put(TaskController());
+  final AuthController authController = Get.find<AuthController>();
 
   TaskListScreen({super.key});
 
@@ -26,10 +28,21 @@ class TaskListScreen extends StatelessWidget {
           );
         }
 
+        // ✅ Filter tasks based on user role
+        var filteredTasks = taskController.tasks.where((task) {
+          String userRole = authController.userRole.value;
+          String userId = authController.auth.currentUser!.uid;
+
+          if (userRole == "Reporter" || userRole == "Cameraman") {
+            return task.createdBy == userId; // Show only own tasks
+          }
+          return true; // Show all tasks for privileged roles
+        }).toList();
+
         return ListView.builder(
-          itemCount: taskController.tasks.length,
+          itemCount: filteredTasks.length,
           itemBuilder: (context, index) {
-            var task = taskController.tasks[index];
+            var task = filteredTasks[index];
             return Card(
               elevation: 3,
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -62,7 +75,7 @@ class TaskListScreen extends StatelessWidget {
     );
   }
 
-  // Task Status Indicator
+  // ✅ Task Status Indicator
   Widget _buildStatusIndicator(String status) {
     Color statusColor = status == "Completed" ? Colors.green : Colors.orange;
     return Container(
@@ -78,7 +91,7 @@ class TaskListScreen extends StatelessWidget {
     );
   }
 
-  // Show dialog to update task
+  // ✅ Show dialog to update task
   void _showUpdateTaskDialog(BuildContext context, dynamic task) {
     final TextEditingController titleController = TextEditingController(text: task.title);
     final TextEditingController descriptionController = TextEditingController(text: task.description);
@@ -138,7 +151,6 @@ class TaskListScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // Update task using controller
                 taskController.updateTask(
                   task.taskId,
                   titleController.text,
@@ -155,11 +167,11 @@ class TaskListScreen extends StatelessWidget {
     );
   }
 
-  // Show dialog to add a new task
+  // ✅ Show dialog to add a new task
   void _showAddTaskDialog(BuildContext context) {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
-    String currentStatus = 'Pending';
+    String? userId = authController.auth.currentUser?.uid; // ✅ Fetch User ID
 
     showDialog(
       context: context,
@@ -186,25 +198,6 @@ class TaskListScreen extends StatelessWidget {
                   ),
                   maxLines: 3,
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: currentStatus,
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ['Pending', 'In Progress', 'Completed'].map((String status) {
-                    return DropdownMenuItem<String>(
-                      value: status,
-                      child: Text(status),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      currentStatus = newValue;
-                    }
-                  },
-                ),
               ],
             ),
           ),
@@ -215,11 +208,16 @@ class TaskListScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // Add task using controller
-                taskController.addTask(
-                  titleController.text,
-                  descriptionController.text,
-                  currentStatus,
+                if (userId == null) {
+                  Get.snackbar("Error", "User not found. Please log in again.");
+                  return;
+                }
+
+                // ✅ Uses createTask with 3 arguments
+                taskController.createTask(
+                  titleController.text.trim(),
+                  descriptionController.text.trim(),
+                  userId, // ✅ Pass user ID
                 );
                 Navigator.of(context).pop();
               },
