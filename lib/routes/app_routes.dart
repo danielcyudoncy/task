@@ -9,7 +9,8 @@ import 'package:task/views/signup_screen.dart';
 import 'package:task/views/task_assignment_screen.dart';
 import 'package:task/views/task_creation_screen.dart';
 import 'package:task/views/task_list_screen.dart';
-import 'package:task/views/splash_screen.dart'; // ✅ Added missing SplashScreen
+import 'package:task/views/splash_screen.dart';
+import 'package:task/views/manage_users_screen.dart'; // ✅ Added Manage Users Screen
 
 class AppRoutes {
   static final routes = [
@@ -20,8 +21,13 @@ class AppRoutes {
     GetPage(name: "/profile-update", page: () => const ProfileUpdateScreen()),
     GetPage(name: "/task-creation", page: () => TaskCreationScreen()),
     GetPage(name: "/task-list", page: () => TaskListScreen()),
-    GetPage(name: "/task-assignment", page: () => TaskAssignmentScreen()), // ✅ Fixed route name
+    GetPage(
+        name: "/task-assignment",
+        page: () => TaskAssignmentScreen()), // ✅ Fixed route name
     GetPage(name: "/notifications", page: () => NotificationScreen()),
-    GetPage(name: "/admin-dashboard", page: ()=> AdminDashboardScreen())
+    GetPage(name: "/admin-dashboard", page: () => AdminDashboardScreen()),
+    GetPage(
+        name: "/manage-users",
+        page: () => ManageUsersScreen()), // ✅ Added Manage Users Screen
   ];
 }
