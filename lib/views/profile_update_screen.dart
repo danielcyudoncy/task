@@ -7,18 +7,16 @@ import 'dart:io';
 
 class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});
-  
 
   @override
   ProfileUpdateScreenState createState() => ProfileUpdateScreenState();
 }
 
-
 class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   File? _image;
   final AuthController authController = Get.find<AuthController>();
 
-  // Function to pick an image from the gallery
+  // ✅ Pick an image from the gallery
   Future<void> _pickImage() async {
     try {
       final pickedFile =
@@ -33,13 +31,12 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
     }
   }
 
-  // Function to upload the selected image
+  // ✅ Upload the selected image
   Future<void> _uploadImage() async {
     if (_image == null) {
       Get.snackbar("Error", "Please select an image first.");
       return;
     }
-
     await authController.uploadProfilePicture(_image!);
   }
 
@@ -52,7 +49,7 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Display User's Full Name
+            // ✅ Display User's Full Name
             Obx(() => Text(
                   "Welcome, ${authController.fullName.value}!",
                   style: const TextStyle(
@@ -60,7 +57,7 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 )),
             const SizedBox(height: 20),
 
-            // Profile Image Preview - Now using the profilePic observable
+            // ✅ Profile Image Preview
             Obx(() {
               return CircleAvatar(
                 radius: 50,
@@ -78,7 +75,7 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
 
             const SizedBox(height: 20),
 
-            // Button to Pick Image
+            // ✅ Button to Pick Image
             ElevatedButton.icon(
               onPressed: _pickImage,
               icon: const Icon(Icons.image),
@@ -87,7 +84,7 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
 
             const SizedBox(height: 20),
 
-            // Upload Button with Loading Indicator
+            // ✅ Upload Button with Loading Indicator
             Obx(() => authController.isLoading.value
                 ? const CircularProgressIndicator()
                 : ElevatedButton.icon(
@@ -98,7 +95,7 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
 
             const SizedBox(height: 20),
 
-            // Continue to Home button
+            // ✅ Continue to Home button
             ElevatedButton(
               onPressed: () => Get.offAllNamed('/home'),
               child: const Text("Continue to Home"),
