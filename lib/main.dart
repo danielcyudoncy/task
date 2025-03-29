@@ -2,7 +2,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ Securely load .env variables
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/firebase_options.dart';
