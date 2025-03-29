@@ -54,7 +54,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // ✅ Statistics Cards
+            // ✅ Statistics Cards (Real-time updates)
             Obx(() {
               if (adminController.isLoading.value) {
                 return const Center(child: CircularProgressIndicator());

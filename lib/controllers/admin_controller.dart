@@ -23,57 +23,75 @@ class AdminController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchAdminDetails(); // Fetch admin name & profile picture
-    fetchDashboardStats(); // Fetch real-time dashboard stats
+    fetchAdminDetails(); // ✅ Fetch admin name & profile picture properly
+    fetchDashboardStats(); // ✅ Fetch real-time dashboard stats
   }
 
-  // ✅ Fetch Admin's Name & Photo from Firestore
-  void fetchAdminDetails() async {
+  // ✅ Fetch Admin's Full Name & Photo from Firestore
+  void fetchAdminDetails() {
     final User? user = _auth.currentUser;
     if (user != null) {
-      final DocumentSnapshot adminSnapshot =
-          await _firestore.collection('users').doc(user.uid).get();
+      _firestore
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((snapshot) {
+        if (snapshot.exists && snapshot.data() != null) {
+          adminName.value = snapshot['fullName']?.toString() ??
+              "Admin"; // ✅ Ensure correct type
+          adminPhotoUrl.value = snapshot['photoUrl']?.toString() ?? "";
+        } else {
+          adminName.value = "Admin"; // ✅ Fallback if no name found
+        }
 
-      if (adminSnapshot.exists) {
-        adminName.value = adminSnapshot['name'] ?? "Admin";
-        adminPhotoUrl.value = adminSnapshot['photoUrl'] ?? "";
-      }
+        // Debugging output to check if fullName updates
+        print("Admin Name Updated: ${adminName.value}"); // 🔍 Debug
+      });
     }
   }
 
   // ✅ Fetch Real-Time Dashboard Stats
   void fetchDashboardStats() {
-    // Total Users Count
+    // Fetch total users and their full names
     _firestore.collection('users').snapshots().listen((snapshot) {
       totalUsers.value = snapshot.size;
+
+      // ✅ Fix: Explicitly cast fullName to String
+      userNames.assignAll(snapshot.docs
+          .map((doc) => doc['fullName']?.toString() ?? "Unknown User")
+          .toList());
     });
 
-    // Total Tasks Count
+    // Fetch total tasks
     _firestore.collection('tasks').snapshots().listen((snapshot) {
       totalTasks.value = snapshot.size;
-      taskTitles.assignAll(snapshot.docs.map((doc) => doc['title'].toString()));
+      taskTitles.assignAll(snapshot.docs
+          .map((doc) => doc['title']?.toString() ?? "Untitled Task")
+          .toList());
     });
 
-    // Completed Tasks Count
+    // Fetch completed tasks
     _firestore
         .collection('tasks')
         .where('status', isEqualTo: 'completed')
         .snapshots()
         .listen((snapshot) {
       completedTasks.value = snapshot.size;
-      completedTaskTitles
-          .assignAll(snapshot.docs.map((doc) => doc['title'].toString()));
+      completedTaskTitles.assignAll(snapshot.docs
+          .map((doc) => doc['title']?.toString() ?? "Unnamed Task")
+          .toList());
     });
 
-    // Pending Tasks Count
+    // Fetch pending tasks
     _firestore
         .collection('tasks')
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .listen((snapshot) {
       pendingTasks.value = snapshot.size;
-      pendingTaskTitles
-          .assignAll(snapshot.docs.map((doc) => doc['title'].toString()));
+      pendingTaskTitles.assignAll(snapshot.docs
+          .map((doc) => doc['title']?.toString() ?? "Unnamed Task")
+          .toList());
     });
   }
 }

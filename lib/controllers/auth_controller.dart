@@ -1,17 +1,19 @@
+// controllers/auth_controller.dart
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:task/service/firebase_service.dart';
-import 'package:flutter/foundation.dart'; // ✅ Import for kIsWeb
-import 'dart:io';
+import 'package:flutter/foundation.dart'; // ✅ For kIsWeb
 
 class AuthController extends GetxController {
   static AuthController instance = Get.find<AuthController>();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseService _firebaseService = FirebaseService();
 
   FirebaseAuth get auth => _auth;
@@ -30,15 +32,22 @@ class AuthController extends GetxController {
     "Admin"
   ];
 
+  @override
+  void onInit() {
+    super.onInit();
+    loadUserData();
+  }
+
   // ✅ Fetch user data from Firestore
   Future<void> loadUserData() async {
     try {
       User? user = _auth.currentUser;
       if (user != null) {
-        DocumentSnapshot? userData = await _firebaseService.getUserData(user.uid);
+        DocumentSnapshot? userData =
+            await _firebaseService.getUserData(user.uid);
         if (userData != null && userData.exists) {
           fullName.value = userData["fullName"] ?? "User";
-          profilePic.value = userData["profilePic"] ?? "";
+          profilePic.value = userData["photoUrl"] ?? ""; // ✅ Fixed field name
           userRole.value = userData["role"] ?? "";
         }
       }
@@ -47,28 +56,32 @@ class AuthController extends GetxController {
     }
   }
 
-  // ✅ Role-based Navigation (Fixed)
+  // ✅ Role-based Navigation
   void navigateBasedOnRole() {
     if (userRole.value == "Reporter" || userRole.value == "Cameraman") {
       Get.offAllNamed("/home");
-    } else if (userRole.value == "Admin" || userRole.value == "Assignment Editor" || userRole.value == "Head of Department") {
+    } else if (userRole.value == "Admin" ||
+        userRole.value == "Assignment Editor" ||
+        userRole.value == "Head of Department") {
       Get.offAllNamed("/admin-dashboard");
     } else {
       Get.offAllNamed("/login"); // ✅ Fallback if role is missing
     }
   }
 
-  // ✅ Sign Up (Fixed)
-  Future<void> signUp(String userFullName, String email, String password, String role) async {
+  // ✅ Sign Up
+  Future<void> signUp(
+      String userFullName, String email, String password, String role) async {
     try {
       isLoading(true);
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
       User? user = userCredential.user;
+
       if (user != null) {
         String? fcmToken;
 
-        if (!kIsWeb) { // ✅ Prevents Web Crashes
+        if (!kIsWeb) {
           fcmToken = await FirebaseMessaging.instance.getToken();
         }
 
@@ -77,7 +90,7 @@ class AuthController extends GetxController {
           "fullName": userFullName,
           "email": email,
           "role": role,
-          "profilePic": "",
+          "photoUrl": "", // ✅ Ensures default empty value
           "fcmToken": fcmToken ?? "",
         });
 
@@ -85,7 +98,6 @@ class AuthController extends GetxController {
         userRole.value = role;
         isLoading(false);
 
-        // ✅ Delay navigation to ensure UI updates properly
         Future.delayed(const Duration(milliseconds: 100), () {
           Get.offNamed("/profile-update");
         });
@@ -97,39 +109,57 @@ class AuthController extends GetxController {
     }
   }
 
-  // ✅ Upload Profile Picture
+  // ✅ Upload Profile Picture (Fixed Storage & Firestore Update)
   Future<void> uploadProfilePicture(File imageFile) async {
+    final User? user = _auth.currentUser;
+    if (user == null) {
+      Get.snackbar("Error", "User not logged in.");
+      return;
+    }
+
     try {
-      isLoading(true);
-      String uid = _auth.currentUser!.uid;
-      Reference ref = _storage.ref().child("profile_pics/$uid.jpg");
-      UploadTask uploadTask = ref.putFile(imageFile);
-      TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
+      isLoading.value = true;
+
+      // Define storage path
+      String filePath = "profile_pictures/${user.uid}.jpg";
+
+      // Upload image to Firebase Storage
+      UploadTask uploadTask = _storage.ref(filePath).putFile(imageFile);
+      TaskSnapshot snapshot = await uploadTask;
+
+      // Get the download URL
       String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      await _auth.currentUser?.updatePhotoURL(downloadUrl);
-      await _firebaseService.updateUserData(uid, {"profilePic": downloadUrl});
+      // ✅ Update Firestore with the new profile picture URL
+      await _firestore.collection('users').doc(user.uid).update({
+        'photoUrl': downloadUrl, // ✅ Field name corrected
+      });
 
+      // ✅ Update local state
       profilePic.value = downloadUrl;
+
       Get.snackbar("Success", "Profile picture updated successfully.");
     } catch (e) {
-      Get.snackbar("Error", "Failed to upload image.");
+      Get.snackbar(
+          "Error", "Failed to upload profile picture. Please try again.");
+      print("Upload Error: $e"); // Debugging
     } finally {
-      isLoading(false);
+      isLoading.value = false;
     }
   }
 
-  // ✅ Save Firebase Cloud Messaging (FCM) Token (Fixed for Web)
+  // ✅ Save Firebase Cloud Messaging (FCM) Token
   Future<void> saveFCMToken() async {
     if (kIsWeb) {
       print("🔥 FCM Token not required on Web.");
-      return; // ✅ Skip FCM on Web
+      return;
     }
 
     try {
       String? token = await FirebaseMessaging.instance.getToken();
       if (token != null && _auth.currentUser != null) {
-        await _firebaseService.updateUserData(_auth.currentUser!.uid, {"fcmToken": token});
+        await _firebaseService
+            .updateUserData(_auth.currentUser!.uid, {"fcmToken": token});
       }
     } catch (e) {
       Get.snackbar("Error", "Failed to save FCM Token.");
@@ -157,6 +187,7 @@ class AuthController extends GetxController {
       await _auth.signOut();
       fullName.value = "";
       userRole.value = "";
+      profilePic.value = "";
       Get.offAllNamed("/login");
     } catch (e) {
       Get.snackbar("Error", "Logout failed.");
