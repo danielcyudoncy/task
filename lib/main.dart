@@ -24,9 +24,10 @@ Future<void> main() async {
     final authController = Get.put(AuthController());
     await authController.loadUserData(); // ✅ Load user data after login
     Get.put(AdminController());
-
-    runApp(const MyApp());
   } catch (e) {
     print("❌ Firebase Initialization Failed: $e");
   }
+
+  // ✅ Ensure runApp() is always called
+  runApp(const MyApp());
 }
