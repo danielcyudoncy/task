@@ -74,7 +74,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     icon: LucideIcons.users,
                     color: Colors.blue.shade600,
                     onTap: () => _showDetailsDialog(
-                        "Total Users", adminController.userNames),
+                        "Total Users", adminController.userNames.toList()),
                   ),
                   _buildStatCard(
                     title: "Total Tasks",
@@ -82,7 +82,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     icon: LucideIcons.fileText,
                     color: Colors.green.shade600,
                     onTap: () => _showDetailsDialog(
-                        "Total Tasks", adminController.taskTitles),
+                        "Total Tasks", adminController.taskTitles.toList()),
                   ),
                   _buildStatCard(
                     title: "Completed Tasks",
@@ -90,7 +90,8 @@ class AdminDashboardScreen extends StatelessWidget {
                     icon: LucideIcons.checkCircle2,
                     color: Colors.orange.shade600,
                     onTap: () => _showDetailsDialog(
-                        "Completed Tasks", adminController.completedTaskTitles),
+                        "Completed Tasks",
+                        adminController.completedTaskTitles.toList()),
                   ),
                   _buildStatCard(
                     title: "Pending Tasks",
@@ -98,7 +99,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     icon: LucideIcons.clock,
                     color: Colors.red.shade600,
                     onTap: () => _showDetailsDialog(
-                        "Pending Tasks", adminController.pendingTaskTitles),
+                        "Pending Tasks", adminController.pendingTaskTitles.toList()),
                   ),
                 ],
               );
@@ -210,26 +211,24 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   // ✅ Pop-up Dialog for Showing Details
-  void _showDetailsDialog(String title, RxList<String> items) {
+  void _showDetailsDialog(String title, List<String> items) {
     Get.dialog(
       AlertDialog(
         title: Text(title),
         content: SizedBox(
           width: double.maxFinite,
           height: 300,
-          child: Obx(
-            () => items.isEmpty
-                ? const Center(child: Text("No data available"))
-                : ListView.builder(
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: const Icon(Icons.person),
-                        title: Text(items[index]),
-                      );
-                    },
-                  ),
-          ),
+          child: items.isEmpty
+              ? const Center(child: Text("No data available"))
+              : ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: const Icon(Icons.person),
+                      title: Text(items[index]),
+                    );
+                  },
+                ),
         ),
         actions: [
           TextButton(

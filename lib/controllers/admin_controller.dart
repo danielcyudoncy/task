@@ -1,6 +1,7 @@
 // controllers/admin_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 class AdminController extends GetxController {
@@ -24,74 +25,79 @@ class AdminController extends GetxController {
   void onInit() {
     super.onInit();
     fetchAdminDetails(); // ✅ Fetch admin name & profile picture properly
-    fetchDashboardStats(); // ✅ Fetch real-time dashboard stats
+    fetchDashboardStats(); // ✅ Fetch dashboard stats
   }
 
   // ✅ Fetch Admin's Full Name & Photo from Firestore
-  void fetchAdminDetails() {
+  void fetchAdminDetails() async {
     final User? user = _auth.currentUser;
     if (user != null) {
-      _firestore
-          .collection('users')
-          .doc(user.uid)
-          .snapshots()
-          .listen((snapshot) {
+      try {
+        final snapshot =
+            await _firestore.collection('users').doc(user.uid).get();
         if (snapshot.exists && snapshot.data() != null) {
-          adminName.value = snapshot['fullName']?.toString() ??
-              "Admin"; // ✅ Ensure correct type
+          adminName.value = snapshot['fullName']?.toString() ?? "Admin";
           adminPhotoUrl.value = snapshot['photoUrl']?.toString() ?? "";
         } else {
           adminName.value = "Admin"; // ✅ Fallback if no name found
         }
 
         // Debugging output to check if fullName updates
-        print("Admin Name Updated: ${adminName.value}"); // 🔍 Debug
-      });
+        if (kDebugMode) {
+          print("Admin Name Updated: ${adminName.value}");
+        } // 🔍 Debug
+      } catch (e) {
+        if (kDebugMode) {
+          print("❌ Error fetching admin details: $e");
+        }
+      }
     }
   }
 
-  // ✅ Fetch Real-Time Dashboard Stats
-  void fetchDashboardStats() {
-    // Fetch total users and their full names
-    _firestore.collection('users').snapshots().listen((snapshot) {
-      totalUsers.value = snapshot.size;
-
-      // ✅ Fix: Explicitly cast fullName to String
-      userNames.assignAll(snapshot.docs
-          .map((doc) => doc['fullName']?.toString() ?? "Unknown User")
+  // ✅ Fetch Dashboard Stats
+  void fetchDashboardStats() async {
+    try {
+      // Fetch total users and their full names
+      final userSnapshot = await _firestore.collection('users').get();
+      totalUsers.value = userSnapshot.size;
+      userNames.assignAll(userSnapshot.docs
+          .map((doc) => doc.data()['fullName']?.toString() ?? "Unknown User")
           .toList());
-    });
 
-    // Fetch total tasks
-    _firestore.collection('tasks').snapshots().listen((snapshot) {
-      totalTasks.value = snapshot.size;
-      taskTitles.assignAll(snapshot.docs
-          .map((doc) => doc['title']?.toString() ?? "Untitled Task")
+      // Fetch total tasks
+      final taskSnapshot = await _firestore.collection('tasks').get();
+      totalTasks.value = taskSnapshot.size;
+      taskTitles.assignAll(taskSnapshot.docs
+          .map((doc) => doc.data()['title']?.toString() ?? "Untitled Task")
           .toList());
-    });
 
-    // Fetch completed tasks
-    _firestore
-        .collection('tasks')
-        .where('status', isEqualTo: 'completed')
-        .snapshots()
-        .listen((snapshot) {
-      completedTasks.value = snapshot.size;
-      completedTaskTitles.assignAll(snapshot.docs
-          .map((doc) => doc['title']?.toString() ?? "Unnamed Task")
-          .toList());
-    });
+      // Fetch completed tasks
+      await _fetchTasksByStatus('completed', completedTasks, completedTaskTitles);
 
-    // Fetch pending tasks
-    _firestore
-        .collection('tasks')
-        .where('status', isEqualTo: 'pending')
-        .snapshots()
-        .listen((snapshot) {
-      pendingTasks.value = snapshot.size;
-      pendingTaskTitles.assignAll(snapshot.docs
-          .map((doc) => doc['title']?.toString() ?? "Unnamed Task")
+      // Fetch pending tasks
+      await _fetchTasksByStatus('pending', pendingTasks, pendingTaskTitles);
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Error fetching dashboard stats: $e");
+      }
+    }
+  }
+
+  // Helper function to fetch tasks by status
+  Future<void> _fetchTasksByStatus(String status, RxInt count, RxList<String> titles) async {
+    try {
+      final snapshot = await _firestore
+          .collection('tasks')
+          .where('status', isEqualTo: status)
+          .get();
+      count.value = snapshot.size;
+      titles.assignAll(snapshot.docs
+          .map((doc) => doc.data()['title']?.toString() ?? "Unnamed Task")
           .toList());
-    });
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Error fetching $status tasks: $e");
+      }
+    }
   }
 }

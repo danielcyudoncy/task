@@ -46,13 +46,17 @@ class AuthController extends GetxController {
         DocumentSnapshot? userData =
             await _firebaseService.getUserData(user.uid);
         if (userData != null && userData.exists) {
-          fullName.value = userData["fullName"] ?? "User";
-          profilePic.value = userData["photoUrl"] ?? ""; // ✅ Fixed field name
-          userRole.value = userData["role"] ?? "";
+          fullName.value = userData["fullName"]?.toString() ?? "User";
+          profilePic.value = userData["photoUrl"]?.toString() ?? "";
+          userRole.value = userData["role"]?.toString() ?? "";
+        } else {
+          Get.snackbar("Error", "User data not found.");
         }
+      } else {
+        Get.snackbar("Error", "No user is currently logged in.");
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to load user data.");
+      Get.snackbar("Error", "Failed to load user data: $e");
     }
   }
 
@@ -101,6 +105,8 @@ class AuthController extends GetxController {
         Future.delayed(const Duration(milliseconds: 100), () {
           Get.offNamed("/profile-update");
         });
+      } else {
+        Get.snackbar("Error", "Failed to create user.");
       }
     } on FirebaseAuthException catch (e) {
       Get.snackbar("Error", _handleAuthError(e));
