@@ -41,6 +41,7 @@ class AuthController extends GetxController {
   // ✅ Fetch user data from Firestore
   Future<void> loadUserData() async {
     try {
+      print('Loading user data...');
       User? user = _auth.currentUser;
       if (user != null) {
         DocumentSnapshot? userData =
@@ -49,6 +50,7 @@ class AuthController extends GetxController {
           fullName.value = userData["fullName"]?.toString() ?? "User";
           profilePic.value = userData["photoUrl"]?.toString() ?? "";
           userRole.value = userData["role"]?.toString() ?? "";
+          print('User data loaded: ${userData.data()}');
         } else {
           Get.snackbar("Error", "User data not found.");
         }
@@ -56,6 +58,7 @@ class AuthController extends GetxController {
         Get.snackbar("Error", "No user is currently logged in.");
       }
     } catch (e) {
+      print("Error loading user data: $e");
       Get.snackbar("Error", "Failed to load user data: $e");
     }
   }
@@ -124,31 +127,25 @@ class AuthController extends GetxController {
     }
 
     try {
+      print("Uploading profile picture...");
       isLoading.value = true;
 
-      // Define storage path
       String filePath = "profile_pictures/${user.uid}.jpg";
-
-      // Upload image to Firebase Storage
       UploadTask uploadTask = _storage.ref(filePath).putFile(imageFile);
       TaskSnapshot snapshot = await uploadTask;
-
-      // Get the download URL
       String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // ✅ Update Firestore with the new profile picture URL
       await _firestore.collection('users').doc(user.uid).update({
-        'photoUrl': downloadUrl, // ✅ Field name corrected
+        'photoUrl': downloadUrl,
       });
 
-      // ✅ Update local state
       profilePic.value = downloadUrl;
-
+      print('Profile picture uploaded: $downloadUrl');
       Get.snackbar("Success", "Profile picture updated successfully.");
     } catch (e) {
+      print("Error uploading profile picture: $e");
       Get.snackbar(
           "Error", "Failed to upload profile picture. Please try again.");
-      print("Upload Error: $e"); // Debugging
     } finally {
       isLoading.value = false;
     }
@@ -157,7 +154,7 @@ class AuthController extends GetxController {
   // ✅ Save Firebase Cloud Messaging (FCM) Token
   Future<void> saveFCMToken() async {
     if (kIsWeb) {
-      print("🔥 FCM Token not required on Web.");
+      print("FCM Token not required on Web.");
       return;
     }
 
@@ -166,8 +163,12 @@ class AuthController extends GetxController {
       if (token != null && _auth.currentUser != null) {
         await _firebaseService
             .updateUserData(_auth.currentUser!.uid, {"fcmToken": token});
+        print('FCM Token saved: $token');
+      } else {
+        print("FCM Token is null or user is not logged in.");
       }
     } catch (e) {
+      print("Error saving FCM Token: $e");
       Get.snackbar("Error", "Failed to save FCM Token.");
     }
   }
@@ -222,7 +223,7 @@ class AuthController extends GetxController {
       case 'wrong-password':
         return "Incorrect password.";
       default:
-        return "An error occurred. Please try again.";
+        return "Authentication failed. Please try again.";
     }
   }
 }
