@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:task/controllers/admin_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/firebase_options.dart';
 import 'package:task/myApp.dart';
@@ -22,12 +21,14 @@ Future<void> main() async {
 
     // ✅ Ensure AuthController is initialized
     final authController = Get.put(AuthController());
-    await authController.loadUserData(); // ✅ Load user data after login
-    Get.put(AdminController());
+
+    // ✅ Wait for user data loading
+    await authController.loadUserData();
+
+    // ✅ After loading user data, run the app
+    runApp(const MyApp());
   } catch (e) {
     print("❌ Firebase Initialization Failed: $e");
+    Get.snackbar("Error", "Failed to initialize Firebase: $e");
   }
-
-  // ✅ Ensure runApp() is always called
-  runApp(const MyApp());
 }

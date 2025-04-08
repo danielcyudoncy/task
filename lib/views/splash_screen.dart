@@ -1,3 +1,4 @@
+// views/splash_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,23 +24,36 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _navigateBasedOnAuth() async {
     await Future.delayed(const Duration(seconds: 2)); // Simulate splash delay
 
-    User? user = FirebaseAuth.instance.currentUser;
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
 
-    if (user != null) {
-      await authController.loadUserData(); // ✅ Load user data before navigation
+      if (user != null) {
+        // ✅ Delayed loading of user data after splash screen
+        await Future.delayed(const Duration(
+            milliseconds:
+                500)); // Optional small delay before loading user data
+        await authController
+            .loadUserData(); // ✅ Load user data after splash screen delay
 
-      // ✅ Navigate based on role
-      if (authController.userRole.value == "Reporter" || authController.userRole.value == "Cameraman") {
-        Get.offAllNamed("/home");
-      } else if (authController.userRole.value == "Admin" ||
-          authController.userRole.value == "Assignment Editor" ||
-          authController.userRole.value == "Head of Department") {
-        Get.offAllNamed("/admin-dashboard");
+        // ✅ Navigate based on role
+        if (authController.userRole.value == "Reporter" ||
+            authController.userRole.value == "Cameraman") {
+          Get.offAllNamed("/home");
+        } else if (authController.userRole.value == "Admin" ||
+            authController.userRole.value == "Assignment Editor" ||
+            authController.userRole.value == "Head of Department") {
+          Get.offAllNamed("/admin-dashboard");
+        } else {
+          Get.offAllNamed("/login"); // Fallback
+        }
       } else {
-        Get.offAllNamed("/login"); // Fallback
+        Get.offAllNamed(
+            "/login"); // ✅ Always go to Sign In if no user is logged in
       }
-    } else {
-      Get.offAllNamed("/login"); // ✅ Always go to Sign In if no user is logged in
+    } catch (e) {
+      // Handle error if any occurs
+      print("Error: $e");
+      Get.offAllNamed("/login"); // Fallback in case of an error
     }
   }
 
@@ -50,7 +64,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/logo.png", width: 150), // ✅ Replace with your logo
+            Image.asset("assets/logo.png",
+                width: 150), // ✅ Replace with your logo
             const SizedBox(height: 20),
             const CircularProgressIndicator(),
           ],

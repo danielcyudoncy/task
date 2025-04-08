@@ -1,103 +1,109 @@
 // controllers/admin_controller.dart
+import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 
 class AdminController extends GetxController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Admin details
+  var adminName = ''.obs;
+  var adminPhotoUrl = ''.obs;
 
-  var isLoading = false.obs;
+  // Loading indicator
+  var isLoading = true.obs;
+
+  // Statistics
   var totalUsers = 0.obs;
   var totalTasks = 0.obs;
   var completedTasks = 0.obs;
   var pendingTasks = 0.obs;
 
-  final RxString adminName = "".obs;
-  final RxString adminPhotoUrl = "".obs;
-  final RxList<String> userNames = <String>[].obs;
-  final RxList<String> taskTitles = <String>[].obs;
-  final RxList<String> completedTaskTitles = <String>[].obs;
-  final RxList<String> pendingTaskTitles = <String>[].obs;
+  // Lists for detail dialogs
+  var userNames = <String>[].obs;
+  var taskTitles = <String>[].obs;
+  var completedTaskTitles = <String>[].obs;
+  var pendingTaskTitles = <String>[].obs;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void onInit() {
     super.onInit();
-    fetchAdminDetails(); // ✅ Fetch admin name & profile picture properly
-    fetchDashboardStats(); // ✅ Fetch dashboard stats
+    fetchAdminProfile();
+    fetchDashboardData();
   }
 
-  // ✅ Fetch Admin's Full Name & Photo from Firestore
-  void fetchAdminDetails() async {
-    final User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        final snapshot =
+  // Fetch Admin Profile
+  Future<void> fetchAdminProfile() async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final DocumentSnapshot<Map<String, dynamic>> snapshot =
             await _firestore.collection('users').doc(user.uid).get();
-        if (snapshot.exists && snapshot.data() != null) {
-          adminName.value = snapshot['fullName']?.toString() ?? "Admin";
-          adminPhotoUrl.value = snapshot['photoUrl']?.toString() ?? "";
-        } else {
-          adminName.value = "Admin"; // ✅ Fallback if no name found
-        }
 
-        // Debugging output to check if fullName updates
-        if (kDebugMode) {
-          print("Admin Name Updated: ${adminName.value}");
-        } // 🔍 Debug
-      } catch (e) {
-        if (kDebugMode) {
-          print("❌ Error fetching admin details: $e");
+        if (snapshot.exists) {
+          adminName.value = snapshot.data()?['name'] ?? 'Admin';
+          adminPhotoUrl.value = snapshot.data()?['photoUrl'] ?? '';
         }
       }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load profile: $e');
     }
   }
 
-  // ✅ Fetch Dashboard Stats
-  void fetchDashboardStats() async {
+  // Fetch Statistics Data
+  Future<void> fetchDashboardData() async {
+    isLoading.value = true;
+
     try {
-      // Fetch total users and their full names
-      final userSnapshot = await _firestore.collection('users').get();
+      QuerySnapshot<Map<String, dynamic>> userSnapshot =
+          await _firestore.collection('users').get();
+      QuerySnapshot<Map<String, dynamic>> taskSnapshot =
+          await _firestore.collection('tasks').get();
+
       totalUsers.value = userSnapshot.size;
-      userNames.assignAll(userSnapshot.docs
-          .map((doc) => doc.data()['fullName']?.toString() ?? "Unknown User")
-          .toList());
-
-      // Fetch total tasks
-      final taskSnapshot = await _firestore.collection('tasks').get();
       totalTasks.value = taskSnapshot.size;
-      taskTitles.assignAll(taskSnapshot.docs
-          .map((doc) => doc.data()['title']?.toString() ?? "Untitled Task")
-          .toList());
 
-      // Fetch completed tasks
-      await _fetchTasksByStatus('completed', completedTasks, completedTaskTitles);
+      userNames.value = userSnapshot.docs
+          .map((doc) => doc.data()['name'] as String? ?? '')
+          .toList();
 
-      // Fetch pending tasks
-      await _fetchTasksByStatus('pending', pendingTasks, pendingTaskTitles);
+      taskTitles.value = taskSnapshot.docs
+          .map((doc) => doc.data()['title'] as String? ?? '')
+          .toList();
+
+      completedTasks.value = taskSnapshot.docs
+          .where((doc) => doc.data()['status'] == 'completed')
+          .length;
+
+      pendingTasks.value = taskSnapshot.docs
+          .where((doc) => doc.data()['status'] == 'pending')
+          .length;
+
+      completedTaskTitles.value = taskSnapshot.docs
+          .where((doc) => doc.data()['status'] == 'completed')
+          .map((doc) => doc.data()['title'] as String? ?? '')
+          .toList();
+
+      pendingTaskTitles.value = taskSnapshot.docs
+          .where((doc) => doc.data()['status'] == 'pending')
+          .map((doc) => doc.data()['title'] as String? ?? '')
+          .toList();
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ Error fetching dashboard stats: $e");
-      }
+      print('Error fetching dashboard data: $e');
+      Get.snackbar('Error', 'Failed to fetch data');
     }
+
+    isLoading.value = false;
   }
 
-  // Helper function to fetch tasks by status
-  Future<void> _fetchTasksByStatus(String status, RxInt count, RxList<String> titles) async {
+  // Logout Logic
+  Future<void> logout() async {
     try {
-      final snapshot = await _firestore
-          .collection('tasks')
-          .where('status', isEqualTo: status)
-          .get();
-      count.value = snapshot.size;
-      titles.assignAll(snapshot.docs
-          .map((doc) => doc.data()['title']?.toString() ?? "Unnamed Task")
-          .toList());
+      await _auth.signOut();
+      Get.offAllNamed('/login'); // Navigate to Login screen after logout
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ Error fetching $status tasks: $e");
-      }
+      Get.snackbar('Error', 'Failed to logout: $e');
     }
   }
 }
