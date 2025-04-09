@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:task/controllers/auth_controller.dart';
+import '../controllers/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,43 +17,27 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateBasedOnAuth();
+    _initializeApp();
   }
 
-  // ✅ Check if user is logged in and navigate accordingly
-  Future<void> _navigateBasedOnAuth() async {
-    await Future.delayed(const Duration(seconds: 2)); // Simulate splash delay
-
+  // ✅ Initialize the app, load user data, and navigate based on role
+  Future<void> _initializeApp() async {
     try {
-      User? user = FirebaseAuth.instance.currentUser;
+      // Display splash screen for at least 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
 
-      if (user != null) {
-        // ✅ Delayed loading of user data after splash screen
-        await Future.delayed(const Duration(
-            milliseconds:
-                500)); // Optional small delay before loading user data
-        await authController
-            .loadUserData(); // ✅ Load user data after splash screen delay
-
-        // ✅ Navigate based on role
-        if (authController.userRole.value == "Reporter" ||
-            authController.userRole.value == "Cameraman") {
-          Get.offAllNamed("/home");
-        } else if (authController.userRole.value == "Admin" ||
-            authController.userRole.value == "Assignment Editor" ||
-            authController.userRole.value == "Head of Department") {
-          Get.offAllNamed("/admin-dashboard");
-        } else {
-          Get.offAllNamed("/login"); // Fallback
-        }
-      } else {
-        Get.offAllNamed(
-            "/login"); // ✅ Always go to Sign In if no user is logged in
+      // Check if the user is logged in
+      if (FirebaseAuth.instance.currentUser == null) {
+        Get.offAllNamed("/login"); // Redirect to login screen
+        return;
       }
+
+      // Load user data and navigate based on role
+      await authController.loadUserData();
+      authController.navigateBasedOnRole();
     } catch (e) {
-      // Handle error if any occurs
-      print("Error: $e");
-      Get.offAllNamed("/login"); // Fallback in case of an error
+      print("Error during initialization: $e");
+      Get.offAllNamed("/login"); // Fallback to login in case of error
     }
   }
 
@@ -64,8 +48,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/logo.png",
-                width: 150), // ✅ Replace with your logo
+            // Replace with your app's logo asset
+            Image.asset("assets/logo.png", width: 150),
             const SizedBox(height: 20),
             const CircularProgressIndicator(),
           ],

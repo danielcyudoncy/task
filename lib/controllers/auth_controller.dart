@@ -5,8 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:task/service/firebase_service.dart';
 import 'package:flutter/foundation.dart'; // ✅ For kIsWeb
+import 'package:task/service/firebase_service.dart';
 
 class AuthController extends GetxController {
   static AuthController instance = Get.find<AuthController>();
@@ -40,26 +40,27 @@ class AuthController extends GetxController {
 
   // ✅ Fetch user data from Firestore
   Future<void> loadUserData() async {
+    if (auth.currentUser == null) {
+      print("No user is currently logged in.");
+      return;
+    }
+
     try {
-      print('Loading user data...');
-      User? user = _auth.currentUser;
-      if (user != null) {
-        DocumentSnapshot? userData =
-            await _firebaseService.getUserData(user.uid);
-        if (userData != null && userData.exists) {
-          fullName.value = userData["fullName"]?.toString() ?? "User";
-          profilePic.value = userData["photoUrl"]?.toString() ?? "";
-          userRole.value = userData["role"]?.toString() ?? "";
-          print('User data loaded: ${userData.data()}');
-        } else {
-          Get.snackbar("Error", "User data not found.");
-        }
+      if (kDebugMode) print('Loading user data...');
+
+      // Fetch user data from Firestore
+      DocumentSnapshot? userData =
+          await _firebaseService.getUserData(auth.currentUser!.uid);
+      if (userData != null && userData.exists) {
+        fullName.value = userData["fullName"]?.toString() ?? "User";
+        profilePic.value = userData["photoUrl"]?.toString() ?? "";
+        userRole.value = userData["role"]?.toString() ?? "";
+        if (kDebugMode) print('User data loaded: ${userData.data()}');
       } else {
-        Get.snackbar("Error", "No user is currently logged in.");
+        print("User data not found.");
       }
     } catch (e) {
       print("Error loading user data: $e");
-      Get.snackbar("Error", "Failed to load user data: $e");
     }
   }
 
@@ -109,7 +110,7 @@ class AuthController extends GetxController {
           Get.offNamed("/profile-update");
         });
       } else {
-        Get.snackbar("Error", "Failed to create user.");
+        Get.snackbar("Error", "Failed to create user. Please try again.");
       }
     } on FirebaseAuthException catch (e) {
       Get.snackbar("Error", _handleAuthError(e));
@@ -174,17 +175,24 @@ class AuthController extends GetxController {
   }
 
   // ✅ Login User
-  Future<void> login(String email, String password) async {
+  Future<void> signIn(String email, String password) async {
     try {
-      isLoading(true);
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
-      await loadUserData();
-      await saveFCMToken();
-      navigateBasedOnRole();
-    } on FirebaseAuthException catch (e) {
-      Get.snackbar("Error", _handleAuthError(e));
-    } finally {
-      isLoading(false);
+      // Sign in with Firebase
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Check if the user is authenticated
+      if (FirebaseAuth.instance.currentUser != null) {
+        // Navigate to admin dashboard after successful login
+        Get.offAllNamed("/admin-dashboard");
+      } else {
+        Get.snackbar("Error", "Failed to authenticate user.");
+      }
+    } catch (e) {
+      print("Error during sign-in: $e");
+      Get.snackbar("Error", "Login failed. Please try again.");
     }
   }
 
@@ -197,7 +205,7 @@ class AuthController extends GetxController {
       profilePic.value = "";
       Get.offAllNamed("/login");
     } catch (e) {
-      Get.snackbar("Error", "Logout failed.");
+      Get.snackbar("Error", "Logout failed. Please try again.");
     }
   }
 

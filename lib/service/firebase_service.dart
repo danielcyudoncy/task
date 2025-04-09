@@ -11,9 +11,9 @@ class FirebaseService {
       return await _firestore.collection("users").doc(uid).get();
     } catch (e) {
       if (kDebugMode) {
-        print("Error fetching user data: $e");
+        print("Error fetching user data for UID $uid: $e");
       }
-      return null;
+      return null; // Return null if an error occurs
     }
   }
 
@@ -23,8 +23,9 @@ class FirebaseService {
       await _firestore.collection("users").doc(uid).set(userData);
     } catch (e) {
       if (kDebugMode) {
-        print("Error saving user data: $e");
+        print("Error saving user data for UID $uid: $e");
       }
+      rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }
 
@@ -34,8 +35,9 @@ class FirebaseService {
       await _firestore.collection("users").doc(uid).update(updates);
     } catch (e) {
       if (kDebugMode) {
-        print("Error updating user data: $e");
+        print("Error updating user data for UID $uid: $e");
       }
+      rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }
 
@@ -44,27 +46,41 @@ class FirebaseService {
     try {
       await _firestore.collection("users").doc(userId).delete();
       if (kDebugMode) {
-        print("User $userId deleted successfully");
+        print("User with ID $userId deleted successfully.");
       }
     } catch (e) {
       if (kDebugMode) {
-        print("Error deleting user: $e");
+        print("Error deleting user with ID $userId: $e");
       }
-      throw Exception("Failed to delete user");
+      rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }
 
   // ✅ Get Tasks Created by a Specific User
   Stream<QuerySnapshot> getTasksByUser(String userId) {
-    return _firestore
-        .collection("tasks")
-        .where("createdBy", isEqualTo: userId)
-        .snapshots();
+    try {
+      return _firestore
+          .collection("tasks")
+          .where("createdBy", isEqualTo: userId)
+          .snapshots();
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching tasks for user ID $userId: $e");
+      }
+      rethrow; // Rethrow error to inform the caller
+    }
   }
 
   // ✅ Get All Tasks (For Admin, Editors, HoDs)
   Stream<QuerySnapshot> getAllTasks() {
-    return _firestore.collection("tasks").snapshots();
+    try {
+      return _firestore.collection("tasks").snapshots();
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching all tasks: $e");
+      }
+      rethrow; // Rethrow error to inform the caller
+    }
   }
 
   // ✅ Create a New Task
@@ -78,6 +94,7 @@ class FirebaseService {
       if (kDebugMode) {
         print("Error creating task: $e");
       }
+      rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }
 
@@ -87,19 +104,25 @@ class FirebaseService {
       await _firestore.collection("tasks").doc(taskId).update(updates);
     } catch (e) {
       if (kDebugMode) {
-        print("Error updating task: $e");
+        print("Error updating task with ID $taskId: $e");
       }
+      rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }
 
   // ✅ Assign Task to a User
-  Future<void> assignTask(String taskId, String userId, String roleField) async {
+  Future<void> assignTask(
+      String taskId, String userId, String roleField) async {
     try {
-      await _firestore.collection("tasks").doc(taskId).update({roleField: userId});
+      await _firestore
+          .collection("tasks")
+          .doc(taskId)
+          .update({roleField: userId});
     } catch (e) {
       if (kDebugMode) {
-        print("Error assigning task: $e");
+        print("Error assigning task with ID $taskId to user ID $userId: $e");
       }
+      rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }
 }
