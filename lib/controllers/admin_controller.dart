@@ -1,109 +1,160 @@
 // controllers/admin_controller.dart
-import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 
 class AdminController extends GetxController {
-  // Admin details
-  var adminName = ''.obs;
-  var adminPhotoUrl = ''.obs;
+  // Admin Profile Data
+  var adminName = "".obs; // Reactive variable for admin name
+  var adminPhotoUrl = "".obs; // Reactive variable for admin profile photo
 
-  // Loading indicator
-  var isLoading = true.obs;
+  // User Role for Role-Based Access Control
+  var userRole = "".obs; // Reactive variable for user role (e.g., "Admin")
 
-  // Statistics
-  var totalUsers = 0.obs;
-  var totalTasks = 0.obs;
-  var completedTasks = 0.obs;
-  var pendingTasks = 0.obs;
+  // Loading Indicator
+  var isLoading =
+      false.obs; // Reactive variable to show/hide loading indicators
 
-  // Lists for detail dialogs
-  var userNames = <String>[].obs;
-  var taskTitles = <String>[].obs;
-  var completedTaskTitles = <String>[].obs;
-  var pendingTaskTitles = <String>[].obs;
+  // Statistics Data
+  var totalUsers = 0.obs; // Total number of users
+  var totalTasks = 0.obs; // Total number of tasks
+  var completedTasks = 0.obs; // Number of completed tasks
+  var pendingTasks = 0.obs; // Number of pending tasks
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // List of User and Task Names (for Details Dialog)
+  var userNames = <String>[].obs; // List of user names
+  var taskTitles = <String>[].obs; // List of task titles
+  var completedTaskTitles = <String>[].obs; // List of completed task titles
+  var pendingTaskTitles = <String>[].obs; // List of pending task titles
+
+  // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void onInit() {
     super.onInit();
-    fetchAdminProfile();
-    fetchDashboardData();
+    fetchAdminProfile(); // Load admin profile data
+    fetchUserRole(); // Load user role
+    fetchStatistics(); // Load initial statistics
   }
 
-  // Fetch Admin Profile
+  // Fetch Admin Profile Data from Firestore
   Future<void> fetchAdminProfile() async {
     try {
-      final User? user = _auth.currentUser;
-      if (user != null) {
-        final DocumentSnapshot<Map<String, dynamic>> snapshot =
-            await _firestore.collection('users').doc(user.uid).get();
+      isLoading.value = true;
+      // Fetch admin profile document from Firestore
+      DocumentSnapshot adminDoc = await _firestore
+          .collection('admins')
+          .doc('adminId') // Replace with the actual admin document ID
+          .get();
 
-        if (snapshot.exists) {
-          adminName.value = snapshot.data()?['name'] ?? 'Admin';
-          adminPhotoUrl.value = snapshot.data()?['photoUrl'] ?? '';
-        }
+      if (adminDoc.exists) {
+        adminName.value = adminDoc.get('name') ?? "Admin";
+        adminPhotoUrl.value = adminDoc.get('photoUrl') ?? "";
+      } else {
+        adminName.value = "Admin"; // Fallback name
+        adminPhotoUrl.value = ""; // Fallback photo
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load profile: $e');
+      print("Error fetching admin profile: $e");
+      adminName.value = "Admin"; // Fallback name
+      adminPhotoUrl.value = ""; // Fallback photo
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  // Fetch Statistics Data
-  Future<void> fetchDashboardData() async {
-    isLoading.value = true;
-
+  // Fetch User Role for Role-Based Access Control from Firestore
+  Future<void> fetchUserRole() async {
     try {
-      QuerySnapshot<Map<String, dynamic>> userSnapshot =
-          await _firestore.collection('users').get();
-      QuerySnapshot<Map<String, dynamic>> taskSnapshot =
-          await _firestore.collection('tasks').get();
+      isLoading.value = true;
+      // Fetch user role document from Firestore
+      DocumentSnapshot roleDoc = await _firestore
+          .collection('user_roles')
+          .doc('adminId') // Replace with the actual user role document ID
+          .get();
 
-      totalUsers.value = userSnapshot.size;
-      totalTasks.value = taskSnapshot.size;
+      if (roleDoc.exists) {
+        userRole.value = roleDoc.get('role') ?? "Admin";
+      } else {
+        userRole.value = ""; // Fallback role
+      }
+    } catch (e) {
+      print("Error fetching user role: $e");
+      userRole.value = ""; // Fallback role
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-      userNames.value = userSnapshot.docs
-          .map((doc) => doc.data()['name'] as String? ?? '')
+  // Fetch Statistics Data from Firestore
+  Future<void> fetchStatistics() async {
+    try {
+      isLoading.value = true;
+
+      // Fetch total users
+      QuerySnapshot userQuery = await _firestore.collection('users').get();
+      totalUsers.value = userQuery.docs.length;
+
+      // Fetch total tasks
+      QuerySnapshot taskQuery = await _firestore.collection('tasks').get();
+      totalTasks.value = taskQuery.docs.length;
+
+      // Fetch completed tasks
+      QuerySnapshot completedTaskQuery = await _firestore
+          .collection('tasks')
+          .where('status', isEqualTo: 'completed')
+          .get();
+      completedTasks.value = completedTaskQuery.docs.length;
+
+      // Fetch pending tasks
+      QuerySnapshot pendingTaskQuery = await _firestore
+          .collection('tasks')
+          .where('status', isEqualTo: 'pending')
+          .get();
+      pendingTasks.value = pendingTaskQuery.docs.length;
+
+      // Populate user names
+      userNames.value = userQuery.docs
+          .map((doc) => doc.get('name') as String) // Safely cast to String
           .toList();
 
-      taskTitles.value = taskSnapshot.docs
-          .map((doc) => doc.data()['title'] as String? ?? '')
+      // Populate task titles
+      taskTitles.value = taskQuery.docs
+          .map((doc) => doc.get('title') as String) // Safely cast to String
           .toList();
 
-      completedTasks.value = taskSnapshot.docs
-          .where((doc) => doc.data()['status'] == 'completed')
-          .length;
-
-      pendingTasks.value = taskSnapshot.docs
-          .where((doc) => doc.data()['status'] == 'pending')
-          .length;
-
-      completedTaskTitles.value = taskSnapshot.docs
-          .where((doc) => doc.data()['status'] == 'completed')
-          .map((doc) => doc.data()['title'] as String? ?? '')
+      // Populate completed task titles
+      completedTaskTitles.value = completedTaskQuery.docs
+          .map((doc) => doc.get('title') as String) // Safely cast to String
           .toList();
 
-      pendingTaskTitles.value = taskSnapshot.docs
-          .where((doc) => doc.data()['status'] == 'pending')
-          .map((doc) => doc.data()['title'] as String? ?? '')
+      // Populate pending task titles
+      pendingTaskTitles.value = pendingTaskQuery.docs
+          .map((doc) => doc.get('title') as String) // Safely cast to String
           .toList();
     } catch (e) {
-      print('Error fetching dashboard data: $e');
-      Get.snackbar('Error', 'Failed to fetch data');
+      print("Error fetching statistics: $e");
+      // Fallback values
+      totalUsers.value = 0;
+      totalTasks.value = 0;
+      completedTasks.value = 0;
+      pendingTasks.value = 0;
+    } finally {
+      isLoading.value = false;
     }
-
-    isLoading.value = false;
   }
 
-  // Logout Logic
+  // Logout Functionality
   Future<void> logout() async {
     try {
-      await _auth.signOut();
-      Get.offAllNamed('/login'); // Navigate to Login screen after logout
+      isLoading.value = true;
+      // Simulate API call or database logout process
+      await Future.delayed(const Duration(seconds: 1)); // Simulated delay
+      Get.offAllNamed("/login"); // Redirect to login screen
     } catch (e) {
-      Get.snackbar('Error', 'Failed to logout: $e');
+      print("Error during logout: $e");
+    } finally {
+      isLoading.value = false;
     }
   }
 }

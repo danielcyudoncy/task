@@ -89,7 +89,7 @@ class LoginScreen extends StatelessWidget {
   // ✅ Login Function with Validation
   void _login() {
     if (_formKey.currentState!.validate()) {
-      authController.login(
+      authController.signIn(
         emailController.text.trim(),
         passwordController.text.trim(),
       );
