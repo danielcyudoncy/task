@@ -1,64 +1,103 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-
 
 class AppDevices {
   AppDevices._();
 
-  static void hideKeyboard(BuildContext context){
-    FocusScope.of(context).requestFocus(FocusNode());
+  /// Hides the keyboard if open
+  static void hideKeyboard(BuildContext context) {
+    FocusScope.of(context).unfocus();
   }
 
-  static bool isLandscapeOrientation(BuildContext context){
-    final viewInset = View.of(context).viewInsets;
-    return viewInset.bottom == 0;
+  /// Detects if the app is in landscape orientation
+  static bool isLandscapeOrientation(BuildContext context) {
+    return MediaQuery.of(context).orientation == Orientation.landscape;
   }
 
-  static bool getAppTheme(){
-    return Theme.of(Get.context!).brightness == Brightness.dark;
+  /// Detects if the app is in portrait orientation
+  static bool isPortraitOrientation(BuildContext context) {
+    return MediaQuery.of(context).orientation == Orientation.portrait;
   }
 
-  static bool isPotraitOrientation(BuildContext context){
-    final viewInset = View.of(context).viewInsets;
-    return viewInset.bottom != 0;
+  /// Returns true if app is in dark theme
+  static bool getAppTheme([BuildContext? context]) {
+    final ctx = context ?? Get.context;
+    if (ctx == null) return false;
+    return Theme.of(ctx).brightness == Brightness.dark;
   }
 
-  static double getStatusBarHeight(){
-    return MediaQuery.of(Get.context!).padding.top;
+  /// Returns status bar height
+  static double getStatusBarHeight([BuildContext? context]) {
+    final ctx = context ?? Get.context;
+    if (ctx == null) return 0;
+    return MediaQuery.of(ctx).padding.top;
   }
 
-  static double getScreenHeight(){
-    return MediaQuery.of(Get.context!).size.height;
+  /// Returns total screen height
+  static double getScreenHeight([BuildContext? context]) {
+    final ctx = context ?? Get.context;
+    if (ctx == null) return 0;
+    return MediaQuery.of(ctx).size.height;
   }
 
-  static double getScreenWidth(){
-    return MediaQuery.of(Get.context!).size.width;
+  /// Returns total screen width
+  static double getScreenWidth([BuildContext? context]) {
+    final ctx = context ?? Get.context;
+    if (ctx == null) return 0;
+    return MediaQuery.of(ctx).size.width;
   }
 
-  static Future<bool> hasInternetConnection() async{
+  /// Checks for internet connection
+  static Future<bool> hasInternetConnection() async {
     try {
       final result = await InternetAddress.lookup('example.com');
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } on SocketException catch(_){
+    } on SocketException {
       return false;
     }
   }
 
-  static bool isIOS(){
+  /// Returns true if the platform is iOS
+  static bool isIOS() {
     return Platform.isIOS;
   }
 
-  static bool isAndroid(){
+  /// Returns true if the platform is Android
+  static bool isAndroid() {
     return Platform.isAndroid;
   }
 
-  static void launchUrl(String url) async{
-    if (await canLaunchUrlString(url)){
+  /// Launches a URL in the browser
+  static void launchUrl(String url) async {
+    if (await canLaunchUrlString(url)) {
       await launchUrlString(url);
-    }else{
+    } else {
       throw 'Could not launch $url';
     }
+  }
+
+  /// Detects if device is tablet or not
+  static bool isTablet([BuildContext? context]) {
+    final ctx = context ?? Get.context;
+    if (ctx == null) return false;
+    final data = MediaQuery.of(ctx);
+    return data.size.shortestSide >= 600;
+  }
+
+  /// Gets safe area padding (for notch, etc.)
+  static EdgeInsets getSafeAreaInsets([BuildContext? context]) {
+    final ctx = context ?? Get.context;
+    if (ctx == null) return EdgeInsets.zero;
+    return MediaQuery.of(ctx).padding;
+  }
+
+  /// Copies a string to the clipboard
+  static Future<void> copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    Get.snackbar("Copied", "Text copied to clipboard",
+        snackPosition: SnackPosition.BOTTOM);
   }
 }
