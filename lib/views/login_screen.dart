@@ -1,4 +1,3 @@
-// views/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
@@ -29,7 +28,7 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // ✅ Email Field
+              // Email Field
               TextFormField(
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -47,7 +46,7 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // ✅ Password Field
+              // Password Field
               TextFormField(
                 controller: passwordController,
                 obscureText: true,
@@ -62,7 +61,7 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // ✅ Login Button with Loading Indicator
+              // Login Button with Loading Indicator
               Obx(() => authController.isLoading.value
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
@@ -72,7 +71,7 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // ✅ Signup Link
+              // Signup Link
               TextButton(
                 onPressed: () {
                   Get.toNamed("/signup");
@@ -86,7 +85,6 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Login Function with Validation
   void _login() {
     if (_formKey.currentState!.validate()) {
       authController.signIn(
