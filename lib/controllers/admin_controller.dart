@@ -1,4 +1,3 @@
-// controllers/admin_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
@@ -11,8 +10,7 @@ class AdminController extends GetxController {
   var userRole = "".obs; // Reactive variable for user role (e.g., "Admin")
 
   // Loading Indicator
-  var isLoading =
-      false.obs; // Reactive variable to show/hide loading indicators
+  var isLoading = false.obs; // Reactive variable to show/hide loading indicators
 
   // Statistics Data
   var totalUsers = 0.obs; // Total number of users
@@ -37,31 +35,40 @@ class AdminController extends GetxController {
     fetchStatistics(); // Load initial statistics
   }
 
-  // Fetch Admin Profile Data from Firestore
+    // Fetch Admin Profile Data from Firestore
   Future<void> fetchAdminProfile() async {
     try {
       isLoading.value = true;
+
       // Fetch admin profile document from Firestore
       DocumentSnapshot adminDoc = await _firestore
           .collection('admins')
           .doc('adminId') // Replace with the actual admin document ID
           .get();
 
+      // Log the document data for debugging
+      print("Admin document data: ${adminDoc.data()}");
+
       if (adminDoc.exists) {
-        adminName.value = adminDoc.get('name') ?? "Admin";
-        adminPhotoUrl.value = adminDoc.get('photoUrl') ?? "";
+        Map<String, dynamic>? data = adminDoc.data() as Map<String, dynamic>?;
+
+        // Extract fields safely with fallbacks
+        adminName.value = data?['fullName'] ?? "Unknown Name"; // Updated to 'fullName'
+        adminPhotoUrl.value = data?['photoUrl'] ?? "";
       } else {
-        adminName.value = "Admin"; // Fallback name
-        adminPhotoUrl.value = ""; // Fallback photo
+        // Document does not exist
+        adminName.value = "Unknown Name";
+        adminPhotoUrl.value = "";
+        print("Admin document does not exist!");
       }
     } catch (e) {
+      // Handle errors gracefully
       print("Error fetching admin profile: $e");
-      adminName.value = "Admin"; // Fallback name
-      adminPhotoUrl.value = ""; // Fallback photo
-    } finally {
-      isLoading.value = false;
+      adminName.value = "Unknown Name";
+      adminPhotoUrl.value = "";
     }
   }
+
 
   // Fetch User Role for Role-Based Access Control from Firestore
   Future<void> fetchUserRole() async {
