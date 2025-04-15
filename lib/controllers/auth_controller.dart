@@ -35,7 +35,20 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadUserData();
+    _initializeUserSession();
+  }
+
+  // ✅ Initialize Session and Handle Navigation
+  Future<void> _initializeUserSession() async {
+    if (auth.currentUser != null) {
+      isLoading(true); // Show loading indicator
+      await loadUserData(); // Load user data, including role
+      navigateBasedOnRole(); // Navigate based on the fetched role
+      isLoading(false); // Hide loading indicator
+    } else {
+      // If no user is logged in, redirect to login
+      Get.offAllNamed("/login");
+    }
   }
 
   // ✅ Fetch user data from Firestore
@@ -66,6 +79,7 @@ class AuthController extends GetxController {
 
   // ✅ Role-based Navigation
   void navigateBasedOnRole() {
+    print("Navigating based on role: ${userRole.value}");
     if (userRole.value == "Reporter" || userRole.value == "Cameraman") {
       Get.offAllNamed("/home");
     } else if (userRole.value == "Admin" ||
@@ -177,6 +191,7 @@ class AuthController extends GetxController {
   // ✅ Login User
   Future<void> signIn(String email, String password) async {
     try {
+      isLoading(true);
       // Sign in with Firebase
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -185,14 +200,19 @@ class AuthController extends GetxController {
 
       // Check if the user is authenticated
       if (FirebaseAuth.instance.currentUser != null) {
-        // Navigate to admin dashboard after successful login
-        Get.offAllNamed("/admin-dashboard");
+        // Load user data (including role)
+        await loadUserData();
+
+        // Navigate based on the user's role
+        navigateBasedOnRole();
       } else {
         Get.snackbar("Error", "Failed to authenticate user.");
       }
     } catch (e) {
       print("Error during sign-in: $e");
       Get.snackbar("Error", "Login failed. Please try again.");
+    } finally {
+      isLoading(false);
     }
   }
 

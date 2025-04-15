@@ -12,6 +12,13 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use Obx to ensure redirection is handled reactively in a safe manner
     return Obx(() {
+      if (adminController.isLoading.value) {
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
       if (adminController.userRole.value != "Admin") {
         // Perform redirection outside the build phase
         Future.microtask(() => Get.offAllNamed("/login"));
