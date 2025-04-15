@@ -19,25 +19,23 @@ class AppRoutes {
     GetPage(
       name: "/",
       page: () => const SplashScreen(),
-      binding: GlobalBindings(), // Apply global bindings here
+      binding: GlobalBindings(),
     ),
     GetPage(
       name: "/login",
       page: () => LoginScreen(),
-      binding: GlobalBindings(), // Ensure GlobalBindings is applied here
+      binding: GlobalBindings(),
     ),
     GetPage(
       name: "/signup",
       page: () => SignUpScreen(),
       binding: GlobalBindings(),
     ),
-
-    // Protected routes with AuthMiddleware
     GetPage(
       name: "/home",
       page: () => HomeScreen(),
       middlewares: [AuthMiddleware()],
-      binding: GlobalBindings(), // Ensure GlobalBindings is applied here
+      binding: GlobalBindings(),
     ),
     GetPage(
       name: "/profile-update",
@@ -73,7 +71,7 @@ class AppRoutes {
       name: "/admin-dashboard",
       page: () => AdminDashboardScreen(),
       middlewares: [AuthMiddleware()],
-      binding: GlobalBindings(), // Ensure GlobalBindings is applied here
+      binding: GlobalBindings(),
     ),
     GetPage(
       name: "/manage-users",

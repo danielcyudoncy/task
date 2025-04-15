@@ -20,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
     _initializeApp();
   }
 
-  // ✅ Initialize the app, load user data, and navigate based on role
   Future<void> _initializeApp() async {
     try {
       // Display splash screen for at least 2 seconds
@@ -48,8 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Replace with your app's logo asset
-            Image.asset("assets/png/logo.png", width: 150),
+            Image.asset("assets/png/logo.png", width: 150), // App logo
             const SizedBox(height: 20),
             const CircularProgressIndicator(),
           ],
