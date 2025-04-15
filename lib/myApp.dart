@@ -4,10 +4,9 @@ import 'package:get/get.dart';
 import 'package:task/routes/app_routes.dart';
 import 'package:task/routes/global_bindings.dart';
 import 'package:task/utils/themes/app_theme.dart';
-import 'package:task/views/splash_screen.dart';
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +19,6 @@ class MyApp extends StatelessWidget {
       initialBinding: GlobalBindings(), // ✅ Apply GlobalBindings here
       initialRoute: "/", // Define the initial route
       getPages: AppRoutes.routes, // Define all routes
-      home: const SplashScreen(), // SplashScreen is the initial screen
     );
   }
 }

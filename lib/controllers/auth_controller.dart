@@ -52,23 +52,25 @@ class AuthController extends GetxController {
   }
 
   // ✅ Fetch user data from Firestore
-  Future<void> loadUserData() async {
+ Future<void> loadUserData() async {
     if (auth.currentUser == null) {
       print("No user is currently logged in.");
       return;
     }
 
     try {
-      if (kDebugMode) print('Loading user data...');
-
-      // Fetch user data from Firestore
+      print('Loading user data...');
       DocumentSnapshot? userData =
           await _firebaseService.getUserData(auth.currentUser!.uid);
+
       if (userData != null && userData.exists) {
-        fullName.value = userData["fullName"]?.toString() ?? "User";
+        print("Document data: ${userData.data()}");
+
+        fullName.value = userData["fullName"]?.toString() ??
+            "User"; // Ensure "fullName" is used
         profilePic.value = userData["photoUrl"]?.toString() ?? "";
         userRole.value = userData["role"]?.toString() ?? "";
-        if (kDebugMode) print('User data loaded: ${userData.data()}');
+        print('User data loaded successfully.');
       } else {
         print("User data not found.");
       }
@@ -78,16 +80,24 @@ class AuthController extends GetxController {
   }
 
   // ✅ Role-based Navigation
-  void navigateBasedOnRole() {
+ void navigateBasedOnRole() {
     print("Navigating based on role: ${userRole.value}");
+
+    // Check if the user is already on the target route before navigating
     if (userRole.value == "Reporter" || userRole.value == "Cameraman") {
-      Get.offAllNamed("/home");
+      if (Get.currentRoute != "/home") {
+        Get.offAllNamed("/home");
+      }
     } else if (userRole.value == "Admin" ||
         userRole.value == "Assignment Editor" ||
         userRole.value == "Head of Department") {
-      Get.offAllNamed("/admin-dashboard");
+      if (Get.currentRoute != "/admin-dashboard") {
+        Get.offAllNamed("/admin-dashboard");
+      }
     } else {
-      Get.offAllNamed("/login"); // ✅ Fallback if role is missing
+      if (Get.currentRoute != "/login") {
+        Get.offAllNamed("/login"); // Fallback if role is missing
+      }
     }
   }
 

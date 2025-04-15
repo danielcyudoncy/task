@@ -44,17 +44,26 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Update Profile")),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // ✅ Display User's Full Name
-            Obx(() => Text(
+            Obx(() {
+              if (authController.fullName.value.isNotEmpty) {
+                return Text(
                   "Welcome, ${authController.fullName.value}!",
                   style: const TextStyle(
                       fontSize: 22, fontWeight: FontWeight.bold),
-                )),
+                );
+              } else {
+                return const Text(
+                  "Welcome!",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                );
+              }
+            }),
             const SizedBox(height: 20),
 
             // ✅ Profile Image Preview
@@ -99,6 +108,15 @@ class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
             ElevatedButton(
               onPressed: () => Get.offAllNamed('/home'),
               child: const Text("Continue to Home"),
+            ),
+
+            // ✅ Logout Button
+            ElevatedButton(
+              onPressed: () async {
+                await authController.logout();
+              },
+              child: const Text("Logout"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             ),
           ],
         ),
