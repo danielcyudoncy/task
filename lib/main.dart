@@ -25,6 +25,9 @@ Future<void> main() async {
     // ✅ Wait for user data loading
     await authController.loadUserData();
 
+    // ✅ Navigate based on role after loading user data
+    authController.navigateBasedOnRole();
+
     // ✅ After loading user data, run the app
     runApp(const MyApp());
   } catch (e) {
