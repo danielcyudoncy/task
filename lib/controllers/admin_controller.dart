@@ -1,5 +1,7 @@
+// controllers/admin_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminController extends GetxController {
   // Admin Profile Data
@@ -10,7 +12,8 @@ class AdminController extends GetxController {
   var userRole = "".obs; // Reactive variable for user role (e.g., "Admin")
 
   // Loading Indicator
-  var isLoading = false.obs; // Reactive variable to show/hide loading indicators
+  var isLoading =
+      false.obs; // Reactive variable to show/hide loading indicators
 
   // Statistics Data
   var totalUsers = 0.obs; // Total number of users
@@ -35,16 +38,17 @@ class AdminController extends GetxController {
     fetchStatistics(); // Load initial statistics
   }
 
-    // Fetch Admin Profile Data from Firestore
+  // Fetch Admin Profile Data from Firestore
   Future<void> fetchAdminProfile() async {
     try {
       isLoading.value = true;
 
+      // Dynamically fetch the admin's document ID based on the authenticated user
+      String adminId = FirebaseAuth.instance.currentUser?.uid ?? "";
+
       // Fetch admin profile document from Firestore
-      DocumentSnapshot adminDoc = await _firestore
-          .collection('admins')
-          .doc('adminId') // Replace with the actual admin document ID
-          .get();
+      DocumentSnapshot adminDoc =
+          await _firestore.collection('admins').doc(adminId).get();
 
       // Log the document data for debugging
       print("Admin document data: ${adminDoc.data()}");
@@ -53,7 +57,8 @@ class AdminController extends GetxController {
         Map<String, dynamic>? data = adminDoc.data() as Map<String, dynamic>?;
 
         // Extract fields safely with fallbacks
-        adminName.value = data?['fullName'] ?? "Unknown Name"; // Updated to 'fullName'
+        adminName.value =
+            data?['fullName'] ?? "Unknown Name"; // Updated to 'fullName'
         adminPhotoUrl.value = data?['photoUrl'] ?? "";
       } else {
         // Document does not exist
@@ -66,19 +71,22 @@ class AdminController extends GetxController {
       print("Error fetching admin profile: $e");
       adminName.value = "Unknown Name";
       adminPhotoUrl.value = "";
+    } finally {
+      isLoading.value = false;
     }
   }
-
 
   // Fetch User Role for Role-Based Access Control from Firestore
   Future<void> fetchUserRole() async {
     try {
       isLoading.value = true;
+
+      // Dynamically fetch the admin's document ID based on the authenticated user
+      String adminId = FirebaseAuth.instance.currentUser?.uid ?? "";
+
       // Fetch user role document from Firestore
-      DocumentSnapshot roleDoc = await _firestore
-          .collection('user_roles')
-          .doc('adminId') // Replace with the actual user role document ID
-          .get();
+      DocumentSnapshot roleDoc =
+          await _firestore.collection('user_roles').doc(adminId).get();
 
       if (roleDoc.exists) {
         userRole.value = roleDoc.get('role') ?? "Admin";
@@ -92,7 +100,6 @@ class AdminController extends GetxController {
       isLoading.value = false;
     }
   }
-
   // Fetch Statistics Data from Firestore
   Future<void> fetchStatistics() async {
     try {
