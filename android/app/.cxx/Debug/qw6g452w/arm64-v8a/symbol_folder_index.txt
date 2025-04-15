@@ -1,0 +1,1 @@
+/Users/danieludoncy/Documents/GitHub/task/build/app/intermediates/cxx/Debug/qw6g452w/obj/arm64-v8a
