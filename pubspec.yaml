@@ -56,6 +56,8 @@ dependencies:
   flutter_dotenv: ^5.2.1
   lucide_icons: ^0.257.0
   syncfusion_flutter_charts: ^29.1.37+1
+  firebase_analytics: ^11.4.5
+  internet_connection_checker: ^3.0.1
 
 dev_dependencies:
   flutter_test:

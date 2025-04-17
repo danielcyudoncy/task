@@ -9,114 +9,88 @@ class ProfileUpdateScreen extends StatefulWidget {
   const ProfileUpdateScreen({super.key});
 
   @override
-  ProfileUpdateScreenState createState() => ProfileUpdateScreenState();
+  State<ProfileUpdateScreen> createState() => _ProfileUpdateScreenState();
 }
 
-class ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
-  File? _image;
-  final AuthController authController = Get.find<AuthController>();
+class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
+  final AuthController _auth = Get.find();
+  final _picker = ImagePicker();
+  File? _selectedImage;
 
-  // ✅ Pick an image from the gallery
   Future<void> _pickImage() async {
     try {
-      final pickedFile =
-          await ImagePicker().pickImage(source: ImageSource.gallery);
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
-        setState(() {
-          _image = File(pickedFile.path);
-        });
+        setState(() => _selectedImage = File(pickedFile.path));
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to pick an image.");
+      Get.snackbar("Error", "Image selection failed");
     }
   }
 
-  // ✅ Upload the selected image
   Future<void> _uploadImage() async {
-    if (_image == null) {
-      Get.snackbar("Error", "Please select an image first.");
+    if (_selectedImage == null) {
+      Get.snackbar("Notice", "Please select an image first");
       return;
     }
-    await authController.uploadProfilePicture(_image!);
+    await _auth.uploadProfilePicture(_selectedImage!);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Update Profile")),
+      appBar: AppBar(
+        title: const Text("Complete Profile"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () => Get.offAllNamed('/home'),
+          )
+        ],
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ✅ Display User's Full Name
-            Obx(() {
-              if (authController.fullName.value.isNotEmpty) {
-                return Text(
-                  "Welcome, ${authController.fullName.value}!",
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold),
-                );
-              } else {
-                return const Text(
-                  "Welcome!",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                );
-              }
-            }),
-            const SizedBox(height: 20),
-
-            // ✅ Profile Image Preview
-            Obx(() {
-              return CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.grey,
-                backgroundImage: _image != null
-                    ? FileImage(_image!) as ImageProvider
-                    : (authController.profilePic.value.isNotEmpty
-                        ? NetworkImage(authController.profilePic.value)
-                        : null),
-                child: _image == null && authController.profilePic.value.isEmpty
-                    ? const Icon(Icons.person, size: 50, color: Colors.white)
-                    : null,
-              );
-            }),
-
-            const SizedBox(height: 20),
-
-            // ✅ Button to Pick Image
-            ElevatedButton.icon(
-              onPressed: _pickImage,
-              icon: const Icon(Icons.image),
-              label: const Text("Choose Image"),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ✅ Upload Button with Loading Indicator
-            Obx(() => authController.isLoading.value
-                ? const CircularProgressIndicator()
-                : ElevatedButton.icon(
-                    onPressed: _uploadImage,
-                    icon: const Icon(Icons.upload),
-                    label: const Text("Upload"),
+            Obx(() => Text(
+                  "Hi, ${_auth.fullName.value}",
+                  style: Theme.of(context).textTheme.headlineSmall,
+                )),
+            const SizedBox(height: 30),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Obx(() => CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: _selectedImage != null
+                        ? FileImage(_selectedImage!)
+                        : (_auth.profilePic.value.isNotEmpty
+                            ? NetworkImage(_auth.profilePic.value)
+                            : null),
+                    child:
+                        _selectedImage == null && _auth.profilePic.value.isEmpty
+                            ? const Icon(Icons.add_a_photo, size: 40)
+                            : null,
                   )),
-
-            const SizedBox(height: 20),
-
-            // ✅ Continue to Home button
-            ElevatedButton(
-              onPressed: () => Get.offAllNamed('/home'),
-              child: const Text("Continue to Home"),
             ),
-
-            // ✅ Logout Button
-            ElevatedButton(
-              onPressed: () async {
-                await authController.logout();
-              },
-              child: const Text("Logout"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            const SizedBox(height: 20),
+            Text(
+              _selectedImage == null && _auth.profilePic.value.isEmpty
+                  ? "Add profile photo"
+                  : "Change photo",
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 40),
+            Obx(() => _auth.isLoading.value
+                ? const CircularProgressIndicator()
+                : FilledButton(
+                    onPressed: _uploadImage,
+                    child: const Text("Save Profile"),
+                  )),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () => Get.offAllNamed('/home'),
+              child: const Text("Skip for now"),
             ),
           ],
         ),

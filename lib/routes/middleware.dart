@@ -1,22 +1,28 @@
 // routes/middleware.dart
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../controllers/auth_controller.dart';
+import 'package:flutter/material.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
-    final firebaseAuth = FirebaseAuth.instance;
+    final auth = Get.find<AuthController>();
 
-    // Check if user is authenticated with Firebase
-    if (firebaseAuth.currentUser == null) {
-      // No user is signed in, redirect to login
-      print("AuthMiddleware: User not authenticated. Redirecting to /login.");
+    // Allow these routes without auth
+    if (route == '/' || route == '/login' || route == '/signup') {
+      return null;
+    }
+
+    // Check both auth state and loaded role
+    if (auth.userRole.value.isEmpty) {
       return const RouteSettings(name: '/login');
     }
 
-    // User is signed in, proceed to requested route
-    print("AuthMiddleware: User authenticated. Proceeding to $route.");
+    if (auth.auth.currentUser == null || auth.userRole.value.isEmpty) {
+      debugPrint("Redirecting to login - Auth state invalid");
+      return const RouteSettings(name: '/login');
+    }
+
     return null;
   }
 }
