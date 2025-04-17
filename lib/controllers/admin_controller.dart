@@ -1,174 +1,264 @@
 // controllers/admin_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:task/controllers/auth_controller.dart';
 
 class AdminController extends GetxController {
   // Admin Profile Data
-  var adminName = "".obs; // Reactive variable for admin name
-  var adminPhotoUrl = "".obs; // Reactive variable for admin profile photo
-
-  // User Role for Role-Based Access Control
-  var userRole = "".obs; // Reactive variable for user role (e.g., "Admin")
-
-  // Loading Indicator
-  var isLoading =
-      false.obs; // Reactive variable to show/hide loading indicators
+  var adminName = "".obs;
+  var adminEmail = "".obs;
+  var adminPhotoUrl = "".obs;
+  var adminCreationDate = "".obs;
+  var adminPrivileges = <String>[].obs;
 
   // Statistics Data
-  var totalUsers = 0.obs; // Total number of users
-  var totalTasks = 0.obs; // Total number of tasks
-  var completedTasks = 0.obs; // Number of completed tasks
-  var pendingTasks = 0.obs; // Number of pending tasks
+  var totalUsers = 0.obs;
+  var totalTasks = 0.obs;
+  var completedTasks = 0.obs;
+  var pendingTasks = 0.obs;
+  var overdueTasks = 0.obs;
 
-  // List of User and Task Names (for Details Dialog)
-  var userNames = <String>[].obs; // List of user names
-  var taskTitles = <String>[].obs; // List of task titles
-  var completedTaskTitles = <String>[].obs; // List of completed task titles
-  var pendingTaskTitles = <String>[].obs; // List of pending task titles
+  // Detailed Lists
+  var userNames = <String>[].obs;
+  var taskTitles = <String>[].obs;
+  var completedTaskTitles = <String>[].obs;
+  var pendingTaskTitles = <String>[].obs;
+  var overdueTaskTitles = <String>[].obs;
 
-  // Firestore instance
+  // Loading States
+  var isLoading = false.obs;
+  var isProfileLoading = false.obs;
+  var isStatsLoading = false.obs;
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void onInit() {
     super.onInit();
-    fetchAdminProfile(); // Load admin profile data
-    fetchUserRole(); // Load user role
-    fetchStatistics(); // Load initial statistics
-  }
-
-  // Fetch Admin Profile Data from Firestore
-  Future<void> fetchAdminProfile() async {
-    try {
-      isLoading.value = true;
-
-      // Dynamically fetch the admin's document ID based on the authenticated user
-      String adminId = FirebaseAuth.instance.currentUser?.uid ?? "";
-
-      // Fetch admin profile document from Firestore
-      DocumentSnapshot adminDoc =
-          await _firestore.collection('admins').doc(adminId).get();
-
-      // Log the document data for debugging
-      print("Admin document data: ${adminDoc.data()}");
-
-      if (adminDoc.exists) {
-        Map<String, dynamic>? data = adminDoc.data() as Map<String, dynamic>?;
-
-        // Extract fields safely with fallbacks
-        adminName.value =
-            data?['fullName'] ?? "Unknown Name"; // Updated to 'fullName'
-        adminPhotoUrl.value = data?['photoUrl'] ?? "";
-      } else {
-        // Document does not exist
-        adminName.value = "Unknown Name";
-        adminPhotoUrl.value = "";
-        print("Admin document does not exist!");
-      }
-    } catch (e) {
-      // Handle errors gracefully
-      print("Error fetching admin profile: $e");
-      adminName.value = "Unknown Name";
-      adminPhotoUrl.value = "";
-    } finally {
-      isLoading.value = false;
+    if (_auth.currentUser != null) {
+      initializeAdminData();
     }
   }
 
-  // Fetch User Role for Role-Based Access Control from Firestore
-  Future<void> fetchUserRole() async {
+  Future<void> initializeAdminData() async {
     try {
-      isLoading.value = true;
-
-      // Dynamically fetch the admin's document ID based on the authenticated user
-      String adminId = FirebaseAuth.instance.currentUser?.uid ?? "";
-
-      // Fetch user role document from Firestore
-      DocumentSnapshot roleDoc =
-          await _firestore.collection('user_roles').doc(adminId).get();
-
-      if (roleDoc.exists) {
-        userRole.value = roleDoc.get('role') ?? "Admin";
-      } else {
-        userRole.value = ""; // Fallback role
+      isLoading(true);
+      await _verifyAdminAccess();
+      await Future.wait([
+        fetchAdminProfile(),
+        fetchStatistics(),
+      ]);
+      // Only proceed if we successfully got admin data
+      if (adminName.value.isNotEmpty) {
+        Get.offAllNamed('/admin-dashboard');
       }
     } catch (e) {
-      print("Error fetching user role: $e");
-      userRole.value = ""; // Fallback role
+      Get.snackbar("Admin Error", "Failed to initialize admin data");
+      await logout();
     } finally {
-      isLoading.value = false;
+      isLoading(false);
     }
   }
-  // Fetch Statistics Data from Firestore
+
+  Future<void> _verifyAdminAccess() async {
+    final authController = Get.find<AuthController>();
+    if (authController.userRole.value != "Admin") {
+      throw Exception("Not an admin user");
+    }
+
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) throw Exception("No authenticated user");
+
+    final adminDoc = await _firestore.collection('admins').doc(userId).get();
+    if (!adminDoc.exists) {
+      // Auto-create admin profile if missing
+      await _createAdminProfileFromUser(userId);
+    }
+  }
+
+  Future<void> _createAdminProfileFromUser(String userId) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        await createAdminProfile(
+          userId: userId,
+          fullName: userData['fullName'] ?? "Administrator",
+          email: userData['email'] ?? "",
+          photoUrl: userData['photoUrl'] ?? "",
+        );
+      } else {
+        throw Exception("User document not found");
+      }
+    } catch (e) {
+      throw Exception("Failed to create admin profile: ${e.toString()}");
+    }
+  }
+
   Future<void> fetchStatistics() async {
     try {
-      isLoading.value = true;
+      isStatsLoading(true);
+      final now = DateTime.now();
 
-      // Fetch total users
-      QuerySnapshot userQuery = await _firestore.collection('users').get();
-      totalUsers.value = userQuery.docs.length;
+      // Fetch all data in parallel
+      final results = await Future.wait([
+        _firestore.collection('users').get(),
+        _firestore.collection('tasks').get(),
+      ]);
 
-      // Fetch total tasks
-      QuerySnapshot taskQuery = await _firestore.collection('tasks').get();
-      totalTasks.value = taskQuery.docs.length;
+      final userDocs = results[0].docs;
+      final taskDocs = results[1].docs;
 
-      // Fetch completed tasks
-      QuerySnapshot completedTaskQuery = await _firestore
-          .collection('tasks')
-          .where('status', isEqualTo: 'completed')
-          .get();
-      completedTasks.value = completedTaskQuery.docs.length;
+      // Update statistics counts
+      totalUsers.value = userDocs.length;
+      totalTasks.value = taskDocs.length;
 
-      // Fetch pending tasks
-      QuerySnapshot pendingTaskQuery = await _firestore
-          .collection('tasks')
-          .where('status', isEqualTo: 'pending')
-          .get();
-      pendingTasks.value = pendingTaskQuery.docs.length;
+      // Filter tasks by status
+      completedTasks.value =
+          taskDocs.where((doc) => doc.get('status') == 'completed').length;
+      pendingTasks.value =
+          taskDocs.where((doc) => doc.get('status') == 'pending').length;
+      overdueTasks.value = taskDocs.where((doc) {
+        final dueDate = doc.get('dueDate') as Timestamp?;
+        return dueDate != null &&
+            dueDate.toDate().isBefore(now) &&
+            doc.get('status') != 'completed';
+      }).length;
 
-      // Populate user names
-      userNames.value = userQuery.docs
-          .map((doc) => doc.get('name') as String) // Safely cast to String
+      // Update detailed lists
+      userNames.value = userDocs
+          .map((doc) => doc.get('fullName') as String? ?? "Unknown User")
           .toList();
 
-      // Populate task titles
-      taskTitles.value = taskQuery.docs
-          .map((doc) => doc.get('title') as String) // Safely cast to String
+      taskTitles.value = taskDocs
+          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
           .toList();
 
-      // Populate completed task titles
-      completedTaskTitles.value = completedTaskQuery.docs
-          .map((doc) => doc.get('title') as String) // Safely cast to String
+      completedTaskTitles.value = taskDocs
+          .where((doc) => doc.get('status') == 'completed')
+          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
           .toList();
 
-      // Populate pending task titles
-      pendingTaskTitles.value = pendingTaskQuery.docs
-          .map((doc) => doc.get('title') as String) // Safely cast to String
+      pendingTaskTitles.value = taskDocs
+          .where((doc) => doc.get('status') == 'pending')
+          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
+          .toList();
+
+      overdueTaskTitles.value = taskDocs
+          .where((doc) {
+            final dueDate = doc.get('dueDate') as Timestamp?;
+            return dueDate != null &&
+                dueDate.toDate().isBefore(now) &&
+                doc.get('status') != 'completed';
+          })
+          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
           .toList();
     } catch (e) {
-      print("Error fetching statistics: $e");
-      // Fallback values
-      totalUsers.value = 0;
-      totalTasks.value = 0;
-      completedTasks.value = 0;
-      pendingTasks.value = 0;
+      Get.snackbar("Error", "Failed to fetch statistics: ${e.toString()}");
+      rethrow;
     } finally {
-      isLoading.value = false;
+      isStatsLoading(false);
     }
   }
 
-  // Logout Functionality
+  Future<void> createAdminProfile({
+    required String userId,
+    required String fullName,
+    required String email,
+    String photoUrl = "",
+    List<String> privileges = const ["full_access"],
+  }) async {
+    try {
+      isProfileLoading(true);
+      await _firestore.collection('admins').doc(userId).set({
+        "uid": userId,
+        "fullName": fullName,
+        "email": email,
+        "photoUrl": photoUrl,
+        "privileges": privileges,
+        "createdAt": FieldValue.serverTimestamp(),
+        "lastUpdated": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Update local state
+      adminName.value = fullName;
+      adminEmail.value = email;
+      adminPhotoUrl.value = photoUrl;
+      adminPrivileges.value = privileges;
+      adminCreationDate.value = DateFormat('MMMM d, y').format(DateTime.now());
+    } catch (e) {
+      Get.snackbar("Error", "Failed to create admin profile: ${e.toString()}");
+      rethrow;
+    } finally {
+      isProfileLoading(false);
+    }
+  }
+
+  Future<void> fetchAdminProfile() async {
+    try {
+      isProfileLoading(true);
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) throw Exception("No authenticated user");
+
+      DocumentSnapshot adminDoc =
+          await _firestore.collection('admins').doc(userId).get();
+
+      if (!adminDoc.exists) {
+        throw Exception("Admin document not found");
+      }
+
+      final data = adminDoc.data() as Map<String, dynamic>? ?? {};
+
+      adminName.value = data['fullName'] ?? "Administrator";
+      adminEmail.value = data['email'] ?? "";
+      adminPhotoUrl.value = data['photoUrl'] ?? "";
+      adminPrivileges.value = List<String>.from(data['privileges'] ?? []);
+
+      if (data['createdAt'] != null) {
+        final date = (data['createdAt'] as Timestamp).toDate();
+        adminCreationDate.value = DateFormat('MMMM d, y').format(date);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to fetch admin profile: ${e.toString()}");
+      rethrow;
+    } finally {
+      isProfileLoading(false);
+    }
+  }
+
   Future<void> logout() async {
     try {
-      isLoading.value = true;
-      // Simulate API call or database logout process
-      await Future.delayed(const Duration(seconds: 1)); // Simulated delay
-      Get.offAllNamed("/login"); // Redirect to login screen
+      isLoading(true);
+      await _auth.signOut();
+      clearAdminData();
+      Get.offAllNamed('/login');
     } catch (e) {
-      print("Error during logout: $e");
+      Get.snackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
-      isLoading.value = false;
+      isLoading(false);
     }
+  }
+
+  void clearAdminData() {
+    adminName.value = "";
+    adminEmail.value = "";
+    adminPhotoUrl.value = "";
+    adminCreationDate.value = "";
+    adminPrivileges.value = [];
+
+    totalUsers.value = 0;
+    totalTasks.value = 0;
+    completedTasks.value = 0;
+    pendingTasks.value = 0;
+    overdueTasks.value = 0;
+
+    userNames.value = [];
+    taskTitles.value = [];
+    completedTaskTitles.value = [];
+    pendingTaskTitles.value = [];
+    overdueTaskTitles.value = [];
   }
 }

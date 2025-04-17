@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../controllers/admin_controller.dart';
+import '../controllers/auth_controller.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
   final AdminController adminController = Get.find<AdminController>();
+  final AuthController authController = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
-    // Use Obx to ensure redirection is handled reactively in a safe manner
     return Obx(() {
       if (adminController.isLoading.value) {
         return const Scaffold(
@@ -19,8 +20,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         );
       }
-      if (adminController.userRole.value != "Admin") {
-        // Perform redirection outside the build phase
+      if (authController.userRole.value != "Admin") {
         Future.microtask(() => Get.offAllNamed("/login"));
         return const Scaffold(
           body: Center(
@@ -39,22 +39,12 @@ class AdminDashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Admin Profile Section
               _buildAdminProfileSection(),
-
               const SizedBox(height: 20),
-
-              // Statistics Section
               _buildStatisticsSection(),
-
               const SizedBox(height: 24),
-
-              // Action Buttons Section
               _buildActionButtonsSection(),
-
               const SizedBox(height: 80),
-
-              // Logout Button
               _buildLogoutButton(),
             ],
           ),
@@ -97,7 +87,7 @@ class AdminDashboardScreen extends StatelessWidget {
   // Statistics Section
   Widget _buildStatisticsSection() {
     return Obx(() {
-      if (adminController.isLoading.value) {
+      if (adminController.isStatsLoading.value) {
         return const Center(child: CircularProgressIndicator());
       }
 
