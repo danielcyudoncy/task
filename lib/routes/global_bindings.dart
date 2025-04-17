@@ -1,17 +1,16 @@
 // routes/global_bindings.dart
 import 'package:get/get.dart';
-import 'package:task/controllers/admin_controller.dart';
-import 'package:task/controllers/auth_controller.dart';
+import '../controllers/auth_controller.dart';
+import '../controllers/admin_controller.dart';
 
 class GlobalBindings extends Bindings {
   @override
   void dependencies() {
-    print("GlobalBindings initialized");
+    // Make AuthController permanent so it doesn't get disposed
+    Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
+    Get.lazyPut<AdminController>(() => AdminController(), fenix: true);
 
-    // ✅ Lazy load AdminController
+    // Other controllers
     Get.lazyPut<AdminController>(() => AdminController());
-
-    // ✅ Lazy load AuthController
-    Get.lazyPut<AuthController>(() => AuthController());
   }
 }

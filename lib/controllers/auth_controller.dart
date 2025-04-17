@@ -5,11 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart'; // ✅ For kIsWeb
+import 'package:flutter/foundation.dart';
+import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
 
 class AuthController extends GetxController {
-  static AuthController instance = Get.find<AuthController>();
+  // Changed from static instance to GetX dependency management
+  static AuthController get to => Get.find<AuthController>();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -23,6 +25,7 @@ class AuthController extends GetxController {
   var profilePic = "".obs;
   var selectedRole = ''.obs;
   var userRole = ''.obs;
+  final lastActivity = DateTime.now().obs;
 
   final List<String> userRoles = [
     "Reporter",
@@ -35,73 +38,211 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initializeUserSession();
+    // Initialize only if this is the first creation
+    if (!Get.isRegistered<AuthController>()) {
+      _initializeUserSession();
+    }
   }
 
-  // ✅ Initialize Session and Handle Navigation
+  @override
+  void onReady() {
+    ever(userRole, (_) => _handleRoleChange());
+    debounce(lastActivity, (_) => _checkInactivity(),
+        time: const Duration(minutes: 30));
+  }
+
+  // In your AuthController class
   Future<void> _initializeUserSession() async {
-    if (auth.currentUser != null) {
-      isLoading(true); // Show loading indicator
-      await loadUserData(); // Load user data, including role
-      navigateBasedOnRole(); // Navigate based on the fetched role
-      isLoading(false); // Hide loading indicator
-    } else {
-      // If no user is logged in, redirect to login
+    try {
+      isLoading(true);
+      if (_auth.currentUser != null) {
+        await loadUserData();
+        await saveFCMToken();
+
+        // Add specific admin check
+        if (userRole.value == "Admin") {
+          await _verifyAdminPrivileges();
+        }
+
+        navigateBasedOnRole();
+      } else {
+        Get.offAllNamed("/login");
+      }
+    } catch (e) {
+      debugPrint("Session initialization error: $e");
+      await logout(); // Ensure clean logout on error
+      Get.offAllNamed("/login");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+// Add these methods to your AuthController
+Future<void> _verifyAdminPrivileges() async {
+  try {
+    final adminController = Get.find<AdminController>();
+    await adminController.fetchAdminProfile();
+    
+    // Additional verification if needed
+    if (adminController.adminName.value.isEmpty) {
+      throw Exception("Admin profile incomplete");
+    }
+  } catch (e) {
+    debugPrint("Admin verification error: $e");
+    await logout();
+    rethrow;
+  }
+}
+
+Future<void> signUpAdmin(
+  String userFullName, 
+  String email, 
+  String password
+) async {
+  try {
+    isLoading(true);
+    UserCredential userCredential = await _auth
+        .createUserWithEmailAndPassword(email: email, password: password);
+    User? user = userCredential.user;
+
+    if (user != null) {
+      // Save basic user data
+      await _firebaseService.saveUserData(user.uid, {
+        "uid": user.uid,
+        "fullName": userFullName,
+        "email": email,
+        "role": "Admin",
+        "photoUrl": "",
+      });
+
+      // Create admin-specific document
+      final adminController = Get.find<AdminController>();
+      await _firestore.collection('admins').doc(user.uid).set({
+        "uid": user.uid,
+        "fullName": userFullName,
+        "email": email,
+        "createdAt": FieldValue.serverTimestamp(),
+        "privileges": ["full_access"],
+      });
+
+      // Initialize session
+      fullName.value = userFullName;
+      userRole.value = "Admin";
+      await adminController.fetchAdminProfile();
+      navigateBasedOnRole();
+    }
+  } catch (e) {
+    Get.snackbar("Error", "Failed to create admin account: ${e.toString()}");
+    rethrow;
+  } finally {
+    isLoading(false);
+  }
+}
+
+  Future<void> loadUserData() async {
+    try {
+      if (_auth.currentUser == null) return;
+
+      final userData =
+          await _firebaseService.getUserData(_auth.currentUser!.uid);
+      if (userData?.exists ?? false) {
+        fullName.value = userData!['fullName']?.toString() ?? 'User';
+        profilePic.value = userData['photoUrl']?.toString() ?? '';
+        userRole.value = userData['role']?.toString() ?? '';
+
+        if (userRole.value.isEmpty) {
+          throw Exception("User role not found");
+        }
+      } else {
+        throw Exception("User document not found");
+      }
+    } catch (e) {
+      debugPrint("Error loading user data: $e");
+      resetUserData();
+      rethrow;
+    }
+  }
+
+  void navigateBasedOnRole() {
+    debugPrint("Current role: ${userRole.value}");
+    debugPrint("Current route: ${Get.currentRoute}");
+
+    switch (userRole.value) {
+      case "Admin":
+      case "Assignment Editor":
+      case "Head of Department":
+        if (Get.currentRoute != "/admin-dashboard") {
+          Get.offAllNamed("/admin-dashboard");
+        }
+        break;
+      case "Reporter":
+      case "Cameraman":
+        if (Get.currentRoute != "/home") {
+          Get.offAllNamed("/home");
+        }
+        break;
+      default:
+        Get.offAllNamed("/login");
+        break;
+    }
+  }
+
+  void _handleRoleChange() {
+    if (userRole.value.isEmpty) {
+      Get.offAllNamed("/login");
+      return;
+    }
+
+    final allowedAdminRoutes = [
+      "Admin",
+      "Assignment Editor",
+      "Head of Department"
+    ];
+    final targetRoute = allowedAdminRoutes.contains(userRole.value)
+        ? "/admin-dashboard"
+        : "/home";
+
+    if (Get.currentRoute != targetRoute) {
+      Get.offAllNamed(targetRoute);
+    }
+  }
+
+  Future<void> validateAuthState() async {
+    try {
+      await _auth.currentUser?.reload();
+
+      if (_auth.currentUser == null) {
+        await logout();
+        return;
+      }
+
+      await loadUserData();
+
+      if (userRole.value.isEmpty) {
+        await logout();
+        return;
+      }
+
+      navigateBasedOnRole();
+    } catch (e) {
+      await logout();
       Get.offAllNamed("/login");
     }
   }
 
-  // ✅ Fetch user data from Firestore
- Future<void> loadUserData() async {
-    if (auth.currentUser == null) {
-      print("No user is currently logged in.");
-      return;
-    }
+  void resetUserData() {
+    fullName.value = "";
+    profilePic.value = "";
+    userRole.value = "";
+  }
 
-    try {
-      print('Loading user data...');
-      DocumentSnapshot? userData =
-          await _firebaseService.getUserData(auth.currentUser!.uid);
-
-      if (userData != null && userData.exists) {
-        print("Document data: ${userData.data()}");
-
-        fullName.value = userData["fullName"]?.toString() ??
-            "User"; // Ensure "fullName" is used
-        profilePic.value = userData["photoUrl"]?.toString() ?? "";
-        userRole.value = userData["role"]?.toString() ?? "";
-        print('User data loaded successfully.');
-      } else {
-        print("User data not found.");
-      }
-    } catch (e) {
-      print("Error loading user data: $e");
+  Future<void> _checkInactivity() async {
+    if (DateTime.now().difference(lastActivity.value) >
+        const Duration(minutes: 30)) {
+      await logout();
     }
   }
 
-  // ✅ Role-based Navigation
- void navigateBasedOnRole() {
-    print("Navigating based on role: ${userRole.value}");
-
-    // Check if the user is already on the target route before navigating
-    if (userRole.value == "Reporter" || userRole.value == "Cameraman") {
-      if (Get.currentRoute != "/home") {
-        Get.offAllNamed("/home");
-      }
-    } else if (userRole.value == "Admin" ||
-        userRole.value == "Assignment Editor" ||
-        userRole.value == "Head of Department") {
-      if (Get.currentRoute != "/admin-dashboard") {
-        Get.offAllNamed("/admin-dashboard");
-      }
-    } else {
-      if (Get.currentRoute != "/login") {
-        Get.offAllNamed("/login"); // Fallback if role is missing
-      }
-    }
-  }
-
-  // ✅ Sign Up
   Future<void> signUp(
       String userFullName, String email, String password, String role) async {
     try {
@@ -122,7 +263,7 @@ class AuthController extends GetxController {
           "fullName": userFullName,
           "email": email,
           "role": role,
-          "photoUrl": "", // ✅ Ensures default empty value
+          "photoUrl": "",
           "fcmToken": fcmToken ?? "",
         });
 
@@ -143,7 +284,6 @@ class AuthController extends GetxController {
     }
   }
 
-  // ✅ Upload Profile Picture (Fixed Storage & Firestore Update)
   Future<void> uploadProfilePicture(File imageFile) async {
     final User? user = _auth.currentUser;
     if (user == null) {
@@ -152,9 +292,7 @@ class AuthController extends GetxController {
     }
 
     try {
-      print("Uploading profile picture...");
       isLoading.value = true;
-
       String filePath = "profile_pictures/${user.uid}.jpg";
       UploadTask uploadTask = _storage.ref(filePath).putFile(imageFile);
       TaskSnapshot snapshot = await uploadTask;
@@ -165,10 +303,8 @@ class AuthController extends GetxController {
       });
 
       profilePic.value = downloadUrl;
-      print('Profile picture uploaded: $downloadUrl');
       Get.snackbar("Success", "Profile picture updated successfully.");
     } catch (e) {
-      print("Error uploading profile picture: $e");
       Get.snackbar(
           "Error", "Failed to upload profile picture. Please try again.");
     } finally {
@@ -176,70 +312,47 @@ class AuthController extends GetxController {
     }
   }
 
-  // ✅ Save Firebase Cloud Messaging (FCM) Token
   Future<void> saveFCMToken() async {
-    if (kIsWeb) {
-      print("FCM Token not required on Web.");
-      return;
-    }
+    if (kIsWeb) return;
 
     try {
       String? token = await FirebaseMessaging.instance.getToken();
       if (token != null && _auth.currentUser != null) {
         await _firebaseService
             .updateUserData(_auth.currentUser!.uid, {"fcmToken": token});
-        print('FCM Token saved: $token');
-      } else {
-        print("FCM Token is null or user is not logged in.");
       }
     } catch (e) {
-      print("Error saving FCM Token: $e");
-      Get.snackbar("Error", "Failed to save FCM Token.");
+      debugPrint("Error saving FCM Token: $e");
     }
   }
 
-  // ✅ Login User
   Future<void> signIn(String email, String password) async {
     try {
       isLoading(true);
-      // Sign in with Firebase
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+      await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
       );
-
-      // Check if the user is authenticated
-      if (FirebaseAuth.instance.currentUser != null) {
-        // Load user data (including role)
-        await loadUserData();
-
-        // Navigate based on the user's role
-        navigateBasedOnRole();
-      } else {
-        Get.snackbar("Error", "Failed to authenticate user.");
-      }
-    } catch (e) {
-      print("Error during sign-in: $e");
-      Get.snackbar("Error", "Login failed. Please try again.");
+      await loadUserData();
+      lastActivity.value = DateTime.now();
+      navigateBasedOnRole();
+    } on FirebaseAuthException catch (e) {
+      Get.snackbar("Error", _handleAuthError(e));
     } finally {
       isLoading(false);
     }
   }
 
-  // ✅ Logout User
   Future<void> logout() async {
     try {
       await _auth.signOut();
-      fullName.value = "";
-      userRole.value = "";
-      profilePic.value = "";
+      resetUserData();
       Get.offAllNamed("/login");
     } catch (e) {
       Get.snackbar("Error", "Logout failed. Please try again.");
     }
   }
 
-  // ✅ Delete User (Admin Only)
   Future<void> deleteUser(String userId) async {
     try {
       await _firebaseService.deleteUser(userId);
@@ -249,7 +362,6 @@ class AuthController extends GetxController {
     }
   }
 
-  // ✅ Handle FirebaseAuth Errors
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':
