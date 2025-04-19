@@ -3,28 +3,29 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:get/get.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
 
 class AuthController extends GetxController {
-  // Changed from static instance to GetX dependency management
   static AuthController get to => Get.find<AuthController>();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseService _firebaseService = FirebaseService();
 
   FirebaseAuth get auth => _auth;
+  FirebaseService get firebaseService => _firebaseService;
 
   var isLoading = false.obs;
   var fullName = "".obs;
   var profilePic = "".obs;
   var selectedRole = ''.obs;
   var userRole = ''.obs;
+  var isProfileComplete = false.obs;
   final lastActivity = DateTime.now().obs;
 
   final List<String> userRoles = [
@@ -38,10 +39,19 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize only if this is the first creation
+    // Initialize only once
     if (!Get.isRegistered<AuthController>()) {
       _initializeUserSession();
     }
+    // Listen to auth state changes
+    _auth.authStateChanges().listen((User? user) {
+      if (user == null) {
+        debugPrint("User signed out");
+        Get.offAllNamed("/login");
+      } else {
+        debugPrint("User signed in: ${user.uid}");
+      }
+    });
   }
 
   @override
@@ -51,104 +61,69 @@ class AuthController extends GetxController {
         time: const Duration(minutes: 30));
   }
 
-  // In your AuthController class
-  Future<void> _initializeUserSession() async {
+ Future<void> _initializeUserSession() async {
     try {
       isLoading(true);
       if (_auth.currentUser != null) {
         await loadUserData();
         await saveFCMToken();
 
-        // Add specific admin check
         if (userRole.value == "Admin") {
           await _verifyAdminPrivileges();
         }
 
-        navigateBasedOnRole();
+        if (!isProfileComplete.value) {
+          Get.offAllNamed("/profile-update");
+        } else {
+          navigateBasedOnRole();
+        }
       } else {
-        Get.offAllNamed("/login");
+        if (Get.currentRoute != "/login") {
+          Get.offAllNamed("/login");
+        }
       }
     } catch (e) {
       debugPrint("Session initialization error: $e");
-      await logout(); // Ensure clean logout on error
+      await logout();
       Get.offAllNamed("/login");
     } finally {
       isLoading(false);
     }
   }
 
-// Add these methods to your AuthController
-Future<void> _verifyAdminPrivileges() async {
-  try {
-    final adminController = Get.find<AdminController>();
-    await adminController.fetchAdminProfile();
-    
-    // Additional verification if needed
-    if (adminController.adminName.value.isEmpty) {
-      throw Exception("Admin profile incomplete");
-    }
-  } catch (e) {
-    debugPrint("Admin verification error: $e");
-    await logout();
-    rethrow;
+  Future<void> initializeAuthSession() async {
+    await _initializeUserSession();
   }
-}
 
-Future<void> signUpAdmin(
-  String userFullName, 
-  String email, 
-  String password
-) async {
-  try {
-    isLoading(true);
-    UserCredential userCredential = await _auth
-        .createUserWithEmailAndPassword(email: email, password: password);
-    User? user = userCredential.user;
-
-    if (user != null) {
-      // Save basic user data
-      await _firebaseService.saveUserData(user.uid, {
-        "uid": user.uid,
-        "fullName": userFullName,
-        "email": email,
-        "role": "Admin",
-        "photoUrl": "",
-      });
-
-      // Create admin-specific document
+  Future<void> _verifyAdminPrivileges() async {
+    try {
       final adminController = Get.find<AdminController>();
-      await _firestore.collection('admins').doc(user.uid).set({
-        "uid": user.uid,
-        "fullName": userFullName,
-        "email": email,
-        "createdAt": FieldValue.serverTimestamp(),
-        "privileges": ["full_access"],
-      });
-
-      // Initialize session
-      fullName.value = userFullName;
-      userRole.value = "Admin";
       await adminController.fetchAdminProfile();
-      navigateBasedOnRole();
+
+      if (adminController.adminName.value.isEmpty) {
+        throw Exception("Admin profile incomplete");
+      }
+    } catch (e) {
+      debugPrint("Admin verification error: $e");
+      await logout();
+      rethrow;
     }
-  } catch (e) {
-    Get.snackbar("Error", "Failed to create admin account: ${e.toString()}");
-    rethrow;
-  } finally {
-    isLoading(false);
   }
-}
 
   Future<void> loadUserData() async {
     try {
       if (_auth.currentUser == null) return;
 
-      final userData =
-          await _firebaseService.getUserData(_auth.currentUser!.uid);
-      if (userData?.exists ?? false) {
-        fullName.value = userData!['fullName']?.toString() ?? 'User';
+      final userDoc = await _firestore
+          .collection("users")
+          .doc(_auth.currentUser!.uid)
+          .get();
+      if (userDoc.exists) {
+        final userData = userDoc.data()!;
+        fullName.value = userData['fullName']?.toString() ?? 'User';
         profilePic.value = userData['photoUrl']?.toString() ?? '';
         userRole.value = userData['role']?.toString() ?? '';
+        isProfileComplete.value = userData['profileComplete'] ?? false;
 
         if (userRole.value.isEmpty) {
           throw Exception("User role not found");
@@ -159,6 +134,22 @@ Future<void> signUpAdmin(
     } catch (e) {
       debugPrint("Error loading user data: $e");
       resetUserData();
+      rethrow;
+    }
+  }
+
+  Future<void> completeProfile() async {
+    try {
+      if (_auth.currentUser == null) return;
+
+      await _firestore.collection('users').doc(_auth.currentUser!.uid).update({
+        "profileComplete": true,
+      });
+
+      isProfileComplete.value = true;
+      navigateBasedOnRole();
+    } catch (e) {
+      Get.snackbar("Error", "Failed to complete profile: ${e.toString()}");
       rethrow;
     }
   }
@@ -207,42 +198,6 @@ Future<void> signUpAdmin(
     }
   }
 
-  Future<void> validateAuthState() async {
-    try {
-      await _auth.currentUser?.reload();
-
-      if (_auth.currentUser == null) {
-        await logout();
-        return;
-      }
-
-      await loadUserData();
-
-      if (userRole.value.isEmpty) {
-        await logout();
-        return;
-      }
-
-      navigateBasedOnRole();
-    } catch (e) {
-      await logout();
-      Get.offAllNamed("/login");
-    }
-  }
-
-  void resetUserData() {
-    fullName.value = "";
-    profilePic.value = "";
-    userRole.value = "";
-  }
-
-  Future<void> _checkInactivity() async {
-    if (DateTime.now().difference(lastActivity.value) >
-        const Duration(minutes: 30)) {
-      await logout();
-    }
-  }
-
   Future<void> signUp(
       String userFullName, String email, String password, String role) async {
     try {
@@ -252,33 +207,71 @@ Future<void> signUpAdmin(
       User? user = userCredential.user;
 
       if (user != null) {
-        String? fcmToken;
+        String? fcmToken =
+            !kIsWeb ? await FirebaseMessaging.instance.getToken() : null;
 
-        if (!kIsWeb) {
-          fcmToken = await FirebaseMessaging.instance.getToken();
-        }
-
-        await _firebaseService.saveUserData(user.uid, {
+        await _firestore.collection('users').doc(user.uid).set({
           "uid": user.uid,
           "fullName": userFullName,
           "email": email,
           "role": role,
           "photoUrl": "",
           "fcmToken": fcmToken ?? "",
+          "profileComplete": false,
+          "createdAt": FieldValue.serverTimestamp(),
         });
 
         fullName.value = userFullName;
         userRole.value = role;
-        isLoading(false);
-
-        Future.delayed(const Duration(milliseconds: 100), () {
-          Get.offNamed("/profile-update");
-        });
-      } else {
-        Get.snackbar("Error", "Failed to create user. Please try again.");
+        Get.offNamed("/profile-update", arguments: {'role': role});
       }
     } on FirebaseAuthException catch (e) {
       Get.snackbar("Error", _handleAuthError(e));
+      rethrow;
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> signUpAdmin(
+      String userFullName, String email, String password) async {
+    try {
+      isLoading(true);
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+      User? user = userCredential.user;
+
+      if (user != null) {
+        String? fcmToken =
+            !kIsWeb ? await FirebaseMessaging.instance.getToken() : null;
+
+        await _firestore.collection('users').doc(user.uid).set({
+          "uid": user.uid,
+          "fullName": userFullName,
+          "email": email,
+          "role": "Admin",
+          "photoUrl": "",
+          "fcmToken": fcmToken ?? "",
+          "profileComplete": false,
+          "createdAt": FieldValue.serverTimestamp(),
+        });
+
+        await _firestore.collection('admins').doc(user.uid).set({
+          "uid": user.uid,
+          "fullName": userFullName,
+          "email": email,
+          "createdAt": FieldValue.serverTimestamp(),
+          "privileges": ["full_access"],
+        });
+
+        fullName.value = userFullName;
+        userRole.value = "Admin";
+        await Get.find<AdminController>().fetchAdminProfile();
+        Get.offNamed("/profile-update", arguments: {'role': "Admin"});
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to create admin account: ${e.toString()}");
+      rethrow;
     } finally {
       isLoading(false);
     }
@@ -318,8 +311,10 @@ Future<void> signUpAdmin(
     try {
       String? token = await FirebaseMessaging.instance.getToken();
       if (token != null && _auth.currentUser != null) {
-        await _firebaseService
-            .updateUserData(_auth.currentUser!.uid, {"fcmToken": token});
+        await _firestore
+            .collection('users')
+            .doc(_auth.currentUser!.uid)
+            .update({"fcmToken": token});
       }
     } catch (e) {
       debugPrint("Error saving FCM Token: $e");
@@ -329,15 +324,27 @@ Future<void> signUpAdmin(
   Future<void> signIn(String email, String password) async {
     try {
       isLoading(true);
-      await _auth.signInWithEmailAndPassword(
+      final UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
+
+      // Ensure we have a user
+      if (credential.user == null) throw Exception("No user returned");
+
+      // Load user data before navigation
       await loadUserData();
       lastActivity.value = DateTime.now();
-      navigateBasedOnRole();
+
+      // Check profile completion
+      if (!isProfileComplete.value) {
+        Get.offAllNamed("/profile-update");
+      } else {
+        navigateBasedOnRole();
+      }
     } on FirebaseAuthException catch (e) {
       Get.snackbar("Error", _handleAuthError(e));
+      rethrow;
     } finally {
       isLoading(false);
     }
@@ -353,12 +360,17 @@ Future<void> signUpAdmin(
     }
   }
 
-  Future<void> deleteUser(String userId) async {
-    try {
-      await _firebaseService.deleteUser(userId);
-      Get.snackbar("Success", "User deleted successfully.");
-    } catch (e) {
-      Get.snackbar("Error", "Failed to delete user.");
+  void resetUserData() {
+    fullName.value = "";
+    profilePic.value = "";
+    userRole.value = "";
+    isProfileComplete.value = false;
+  }
+
+  void _checkInactivity() {
+    if (DateTime.now().difference(lastActivity.value) >
+        const Duration(minutes: 30)) {
+      logout();
     }
   }
 
