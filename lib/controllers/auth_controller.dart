@@ -277,7 +277,7 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> uploadProfilePicture(File imageFile) async {
+ Future<void> uploadProfilePicture(File imageFile) async {
     final User? user = _auth.currentUser;
     if (user == null) {
       Get.snackbar("Error", "User not logged in.");
@@ -286,10 +286,33 @@ class AuthController extends GetxController {
 
     try {
       isLoading.value = true;
-      String filePath = "profile_pictures/${user.uid}.jpg";
-      UploadTask uploadTask = _storage.ref(filePath).putFile(imageFile);
+      debugPrint("Starting profile picture upload...");
+
+      // Verify the image file exists and is readable
+      if (!await imageFile.exists()) {
+        throw Exception("Image file doesn't exist");
+      }
+
+      String filePath =
+          "profile_pictures/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg";
+      debugPrint("Uploading to path: $filePath");
+
+      UploadTask uploadTask = _storage.ref(filePath).putFile(
+            imageFile,
+            SettableMetadata(
+              contentType: 'image/jpeg',
+            ),
+          );
+
+      // Listen for state changes
+      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        debugPrint(
+            "Upload progress: ${snapshot.bytesTransferred}/${snapshot.totalBytes}");
+      });
+
       TaskSnapshot snapshot = await uploadTask;
       String downloadUrl = await snapshot.ref.getDownloadURL();
+      debugPrint("Download URL: $downloadUrl");
 
       await _firestore.collection('users').doc(user.uid).update({
         'photoUrl': downloadUrl,
@@ -297,9 +320,14 @@ class AuthController extends GetxController {
 
       profilePic.value = downloadUrl;
       Get.snackbar("Success", "Profile picture updated successfully.");
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint("Upload error: $e");
+      debugPrint("Stack trace: $stackTrace");
       Get.snackbar(
-          "Error", "Failed to upload profile picture. Please try again.");
+        "Upload Failed",
+        "Error: ${e.toString()}",
+        duration: const Duration(seconds: 5),
+      );
     } finally {
       isLoading.value = false;
     }
