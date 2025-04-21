@@ -5,24 +5,38 @@ import 'package:flutter/material.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override
+  int? priority = 0; // Lower priority than ProfileCompleteMiddleware
+
+  @override
   RouteSettings? redirect(String? route) {
     final auth = Get.find<AuthController>();
 
-    // Allow these routes without auth
-    if (route == '/' || route == '/login' || route == '/signup') {
+    // Always allow these routes
+    if (route == '/' ||
+        route == '/login' ||
+        route == '/signup' ||
+        route == '/profile-update') {
       return null;
     }
 
-    // Check both auth state and loaded role
-    if (auth.userRole.value.isEmpty) {
+    // Check auth state
+    if (auth.auth.currentUser == null) {
+      debugPrint("AuthMiddleware: Redirecting to login - No user");
       return const RouteSettings(name: '/login');
     }
 
-    if (auth.auth.currentUser == null || auth.userRole.value.isEmpty) {
-      debugPrint("Redirecting to login - Auth state invalid");
+    // Check if user role is loaded
+    if (auth.userRole.value.isEmpty) {
+      debugPrint("AuthMiddleware: Redirecting to login - No role");
       return const RouteSettings(name: '/login');
     }
 
     return null;
+  }
+
+  @override
+  GetPage? onPageCalled(GetPage? page) {
+    debugPrint("AuthMiddleware: Entering ${page?.name}");
+    return super.onPageCalled(page);
   }
 }
