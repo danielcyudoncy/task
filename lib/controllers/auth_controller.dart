@@ -4,8 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
 
@@ -28,6 +29,11 @@ class AuthController extends GetxController {
   var isProfileComplete = false.obs;
   final lastActivity = DateTime.now().obs;
 
+  final fullNameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneNumberController = TextEditingController();
+  final passwordController = TextEditingController();
+
   final List<String> userRoles = [
     "Reporter",
     "Cameraman",
@@ -39,11 +45,9 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize only once
     if (!Get.isRegistered<AuthController>()) {
       _initializeUserSession();
     }
-    // Listen to auth state changes
     _auth.authStateChanges().listen((User? user) {
       if (user == null) {
         debugPrint("User signed out");
@@ -61,17 +65,24 @@ class AuthController extends GetxController {
         time: const Duration(minutes: 30));
   }
 
- Future<void> _initializeUserSession() async {
+  @override
+  void onClose() {
+    fullNameController.dispose();
+    emailController.dispose();
+    phoneNumberController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
+
+  Future<void> _initializeUserSession() async {
     try {
       isLoading(true);
       if (_auth.currentUser != null) {
         await loadUserData();
         await saveFCMToken();
-
         if (userRole.value == "Admin") {
           await _verifyAdminPrivileges();
         }
-
         if (!isProfileComplete.value) {
           Get.offAllNamed("/profile-update");
         } else {
@@ -118,6 +129,7 @@ class AuthController extends GetxController {
           .collection("users")
           .doc(_auth.currentUser!.uid)
           .get();
+
       if (userDoc.exists) {
         final userData = userDoc.data()!;
         fullName.value = userData['fullName']?.toString() ?? 'User';
@@ -277,7 +289,7 @@ class AuthController extends GetxController {
     }
   }
 
- Future<void> uploadProfilePicture(File imageFile) async {
+  Future<void> uploadProfilePicture(File imageFile) async {
     final User? user = _auth.currentUser;
     if (user == null) {
       Get.snackbar("Error", "User not logged in.");
@@ -288,7 +300,6 @@ class AuthController extends GetxController {
       isLoading.value = true;
       debugPrint("Starting profile picture upload...");
 
-      // Verify the image file exists and is readable
       if (!await imageFile.exists()) {
         throw Exception("Image file doesn't exist");
       }
@@ -299,12 +310,9 @@ class AuthController extends GetxController {
 
       UploadTask uploadTask = _storage.ref(filePath).putFile(
             imageFile,
-            SettableMetadata(
-              contentType: 'image/jpeg',
-            ),
+            SettableMetadata(contentType: 'image/jpeg'),
           );
 
-      // Listen for state changes
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         debugPrint(
             "Upload progress: ${snapshot.bytesTransferred}/${snapshot.totalBytes}");
@@ -323,11 +331,8 @@ class AuthController extends GetxController {
     } catch (e, stackTrace) {
       debugPrint("Upload error: $e");
       debugPrint("Stack trace: $stackTrace");
-      Get.snackbar(
-        "Upload Failed",
-        "Error: ${e.toString()}",
-        duration: const Duration(seconds: 5),
-      );
+      Get.snackbar("Upload Failed", "Error: ${e.toString()}",
+          duration: const Duration(seconds: 5));
     } finally {
       isLoading.value = false;
     }
@@ -357,14 +362,11 @@ class AuthController extends GetxController {
         password: password.trim(),
       );
 
-      // Ensure we have a user
       if (credential.user == null) throw Exception("No user returned");
 
-      // Load user data before navigation
       await loadUserData();
       lastActivity.value = DateTime.now();
 
-      // Check profile completion
       if (!isProfileComplete.value) {
         Get.offAllNamed("/profile-update");
       } else {
