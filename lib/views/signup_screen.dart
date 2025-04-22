@@ -1,7 +1,6 @@
 // views/signup_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task/controllers/auth_social_button.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/constants/app_icons.dart';
@@ -229,28 +228,59 @@ class SignUpScreen extends StatelessWidget {
                                       ),
                                     )),
                               const SizedBox(height: 20),
+                              const Row(
+                                children: [
+                                  Expanded(child: Divider()),
+                                  Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 8),
+                                    child: Text("Or sign up with"),
+                                  ),
+                                  Expanded(child: Divider()),
+                                ],
+                              ),
 
-                              const Text("Or sign up with"),
+                           
                               const SizedBox(height: 16),
 
                               // Google and Apple Buttons
-                              Column(
+                             Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: Image.asset(AppIcons.google,
+                                          width: 48, height: 48),
+                                      onPressed: () {
+                                        Get.snackbar("Coming Soon",
+                                            "Google sign-up not yet implemented.");
+                                      },
+                                    ),
+                                    const SizedBox(width: 20),
+                                    IconButton(
+                                      icon: Image.asset(AppIcons.apple,
+                                          width: 48, height: 48),
+                                      onPressed: () {
+                                        Get.snackbar("Coming Soon",
+                                            "Apple sign-up not yet implemented.");
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                
+
+                                Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  AuthSocialButton(
-                                    label: "Continue with Google",
-                                    isGoogle: true,
-                                    onTap: () {
-                                      Get.snackbar("Coming Soon",
-                                          "Google sign-up not yet implemented.");
-                                    },
-                                  ),
-                                  AuthSocialButton(
-                                    label: "Continue with Apple",
-                                    isGoogle: false,
-                                    onTap: () {
-                                      Get.snackbar("Coming Soon",
-                                          "Apple sign-up not yet implemented.");
-                                    },
+                                  const Text("Don't have an account? "),
+                                  GestureDetector(
+                                    onTap: () => Get.toNamed('/login'),
+                                    child: const Text(
+                                      "Sign In",
+                                      style: TextStyle(
+                                        color: AppColors.primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),

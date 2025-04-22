@@ -1,7 +1,6 @@
 // views/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task/controllers/auth_social_button.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
@@ -133,6 +132,7 @@ class LoginScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
                                     ),
+                      
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -190,19 +190,27 @@ class LoginScreen extends StatelessWidget {
                                 const SizedBox(height: 16),
 
                                 // Animated Google & Apple Login Buttons
-                                AuthSocialButton(
-                                  label: 'Continue with Google',
-                                  isGoogle: true,
-                                  onTap: () {
-                                    // TODO: Trigger Google Sign-In
-                                  },
-                                ),
-                                AuthSocialButton(
-                                  label: 'Continue with Apple',
-                                  isGoogle: false,
-                                  onTap: () {
-                                    // TODO: Trigger Apple Sign-In
-                                  },
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: Image.asset(AppIcons.google,
+                                          width: 48, height: 48),
+                                      onPressed: () {
+                                        Get.snackbar("Coming Soon",
+                                            "Google sign-up not yet implemented.");
+                                      },
+                                    ),
+                                    const SizedBox(width: 20),
+                                    IconButton(
+                                      icon: Image.asset(AppIcons.apple,
+                                          width: 48, height: 48),
+                                      onPressed: () {
+                                        Get.snackbar("Coming Soon",
+                                            "Apple sign-up not yet implemented.");
+                                      },
+                                    ),
+                                  ],
                                 ),
 
                                 const SizedBox(height: 24),
