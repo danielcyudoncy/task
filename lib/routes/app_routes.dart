@@ -14,6 +14,7 @@ import 'package:task/views/splash_screen.dart';
 import 'package:task/views/task_assignment_screen.dart';
 import 'package:task/views/task_creation_screen.dart';
 import 'package:task/views/task_list_screen.dart';
+import 'package:task/views/onboarding_screen.dart'; // Import your onboarding screen
 
 class AppRoutes {
   static final routes = [
@@ -24,6 +25,13 @@ class AppRoutes {
       binding: GlobalBindings(),
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 500),
+    ),
+    GetPage(
+      name: "/onboarding", // Add onboarding route
+      page: () => const OnboardingScreen(),
+      binding: GlobalBindings(),
+      transition: Transition.fade,
+      transitionDuration: const Duration(milliseconds: 400),
     ),
     GetPage(
       name: "/login",
