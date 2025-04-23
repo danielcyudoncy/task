@@ -45,18 +45,17 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (!Get.isRegistered<AuthController>()) {
-      _initializeUserSession();
-    }
+    // Listen for auth state changes—but NO auto‐init here
     _auth.authStateChanges().listen((User? user) {
       if (user == null) {
         debugPrint("User signed out");
-        Get.offAllNamed("/login");
+       
       } else {
         debugPrint("User signed in: ${user.uid}");
       }
     });
   }
+
 
   @override
   void onReady() {
