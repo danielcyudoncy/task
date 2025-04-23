@@ -1,4 +1,5 @@
 // controllers/admin_controller.dart
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -6,28 +7,24 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/auth_controller.dart';
 
 class AdminController extends GetxController {
-  // Admin Profile Data
   var adminName = "".obs;
   var adminEmail = "".obs;
   var adminPhotoUrl = "".obs;
   var adminCreationDate = "".obs;
   var adminPrivileges = <String>[].obs;
 
-  // Statistics Data
   var totalUsers = 0.obs;
   var totalTasks = 0.obs;
   var completedTasks = 0.obs;
   var pendingTasks = 0.obs;
   var overdueTasks = 0.obs;
 
-  // Detailed Lists
   var userNames = <String>[].obs;
   var taskTitles = <String>[].obs;
   var completedTaskTitles = <String>[].obs;
   var pendingTaskTitles = <String>[].obs;
   var overdueTaskTitles = <String>[].obs;
 
-  // Loading States
   var isLoading = false.obs;
   var isProfileLoading = false.obs;
   var isStatsLoading = false.obs;
@@ -51,7 +48,6 @@ class AdminController extends GetxController {
         fetchAdminProfile(),
         fetchStatistics(),
       ]);
-      // Only proceed if we successfully got admin data
       if (adminName.value.isNotEmpty) {
         Get.offAllNamed('/admin-dashboard');
       }
@@ -74,7 +70,6 @@ class AdminController extends GetxController {
 
     final adminDoc = await _firestore.collection('admins').doc(userId).get();
     if (!adminDoc.exists) {
-      // Auto-create admin profile if missing
       await _createAdminProfileFromUser(userId);
     }
   }
@@ -83,12 +78,12 @@ class AdminController extends GetxController {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (userDoc.exists) {
-        final userData = userDoc.data() as Map<String, dynamic>;
+        final userData = userDoc.data();
         await createAdminProfile(
           userId: userId,
-          fullName: userData['fullName'] ?? "Administrator",
-          email: userData['email'] ?? "",
-          photoUrl: userData['photoUrl'] ?? "",
+          fullName: userData?['fullName'] ?? "Administrator",
+          email: userData?['email'] ?? "",
+          photoUrl: userData?['photoUrl'] ?? "",
         );
       } else {
         throw Exception("User document not found");
@@ -103,62 +98,65 @@ class AdminController extends GetxController {
       isStatsLoading(true);
       final now = DateTime.now();
 
-      // Fetch all data in parallel
-      final results = await Future.wait([
-        _firestore.collection('users').get(),
-        _firestore.collection('tasks').get(),
-      ]);
+      final userSnapshot = await _firestore
+          .collection('users')
+          .get()
+          .timeout(const Duration(seconds: 10));
+      final taskSnapshot = await _firestore
+          .collection('tasks')
+          .get()
+          .timeout(const Duration(seconds: 10));
 
-      final userDocs = results[0].docs;
-      final taskDocs = results[1].docs;
+      final userDocs = userSnapshot.docs;
+      final taskDocs = taskSnapshot.docs;
 
-      // Update statistics counts
       totalUsers.value = userDocs.length;
       totalTasks.value = taskDocs.length;
 
-      // Filter tasks by status
       completedTasks.value =
-          taskDocs.where((doc) => doc.get('status') == 'completed').length;
+          taskDocs.where((doc) => doc.data()['status'] == 'completed').length;
       pendingTasks.value =
-          taskDocs.where((doc) => doc.get('status') == 'pending').length;
+          taskDocs.where((doc) => doc.data()['status'] == 'pending').length;
       overdueTasks.value = taskDocs.where((doc) {
-        final dueDate = doc.get('dueDate') as Timestamp?;
-        return dueDate != null &&
-            dueDate.toDate().isBefore(now) &&
-            doc.get('status') != 'completed';
+        final data = doc.data();
+        final dueTs = data['dueDate'] as Timestamp?;
+        return dueTs != null &&
+            dueTs.toDate().isBefore(now) &&
+            data['status'] != 'completed';
       }).length;
 
-      // Update detailed lists
       userNames.value = userDocs
-          .map((doc) => doc.get('fullName') as String? ?? "Unknown User")
+          .map((doc) => doc.data()['fullName'] as String? ?? "Unknown")
           .toList();
 
       taskTitles.value = taskDocs
-          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
+          .map((doc) => doc.data()['title'] as String? ?? 'Untitled')
           .toList();
 
       completedTaskTitles.value = taskDocs
-          .where((doc) => doc.get('status') == 'completed')
-          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
+          .where((doc) => doc.data()['status'] == 'completed')
+          .map((doc) => doc.data()['title'] as String? ?? '')
           .toList();
 
       pendingTaskTitles.value = taskDocs
-          .where((doc) => doc.get('status') == 'pending')
-          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
+          .where((doc) => doc.data()['status'] == 'pending')
+          .map((doc) => doc.data()['title'] as String? ?? '')
           .toList();
 
       overdueTaskTitles.value = taskDocs
           .where((doc) {
-            final dueDate = doc.get('dueDate') as Timestamp?;
-            return dueDate != null &&
-                dueDate.toDate().isBefore(now) &&
-                doc.get('status') != 'completed';
+            final data = doc.data();
+            final dueTs = data['dueDate'] as Timestamp?;
+            return dueTs != null &&
+                dueTs.toDate().isBefore(now) &&
+                data['status'] != 'completed';
           })
-          .map((doc) => doc.get('title') as String? ?? "Untitled Task")
+          .map((doc) => doc.data()['title'] as String? ?? '')
           .toList();
+    } on TimeoutException {
+      Get.snackbar('Error', 'Fetching statistics timed out');
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch statistics: ${e.toString()}");
-      rethrow;
+      Get.snackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
     } finally {
       isStatsLoading(false);
     }
@@ -183,7 +181,6 @@ class AdminController extends GetxController {
         "lastUpdated": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // Update local state
       adminName.value = fullName;
       adminEmail.value = email;
       adminPhotoUrl.value = photoUrl;
