@@ -73,7 +73,7 @@ class OnboardingScreen extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 80),
+              const SizedBox(height: 300),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

@@ -1,7 +1,6 @@
 // views/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../controllers/admin_controller.dart';
 import '../controllers/auth_controller.dart';
 
@@ -15,18 +14,17 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final AdminController adminController = Get.find<AdminController>();
   final AuthController authController = Get.find<AuthController>();
+  final RxInt selectedTab = 0.obs;
 
   @override
   void initState() {
     super.initState();
-    // Fetch latest statistics each time the dashboard loads
     adminController.fetchStatistics();
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // Show loading until stats and profile are ready
       if (adminController.isLoading.value ||
           adminController.isStatsLoading.value) {
         return const Scaffold(
@@ -34,234 +32,265 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         );
       }
 
-      // Ensure only Admin can view
-      if (authController.userRole.value != 'Admin') {
-        Future.microtask(() => Get.offAllNamed('/login'));
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
-
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Admin Dashboard'),
-          centerTitle: true,
-          elevation: 4,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              _buildAdminProfileSection(),
-              const SizedBox(height: 20),
-              _buildStatisticsSection(),
-              const SizedBox(height: 24),
-              _buildActionButtonsSection(),
-              const SizedBox(height: 80),
-              _buildLogoutButton(),
-            ],
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Color(0xFF0B189B)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Row: Welcome, Name, Avatar, Icons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Welcome, Avatar, Name
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage:
+                                NetworkImage(authController.profilePic.value),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Welcome',
+                                  style: TextStyle(fontSize: 14)),
+                              Text(
+                                authController.fullName.value,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      // Camera & Logout
+                      Row(
+                        children: [
+                          _iconButton(Icons.camera_alt, () {
+                            // Implement camera logic
+                          }),
+                          const SizedBox(width: 10),
+                          _iconButton(Icons.logout, () {
+                            authController.logout();
+                          }),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Daily Assignments Text
+                  const Text(
+                    'DAILY ASSIGNMENTS',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Clickable Stats
+                  Row(
+                    children: [
+                      _statCard(
+                        label: 'Total Users',
+                        value: adminController.totalUsers.value.toString(),
+                        onTap: () => Get.toNamed('/users-list'),
+                      ),
+                      const SizedBox(width: 12),
+                      _statCard(
+                        label: 'Total Task',
+                        value: adminController.totalTasks.value.toString(),
+                        onTap: () => Get.toNamed('/tasks-list'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // TASK & Create Task Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'TASK',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Get.toNamed('/task-creation'),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF0B189B),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.add, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Tab Switcher
+                  Obx(() {
+                    return Row(
+                      children: [
+                        _tabButton('Not Completed', 0),
+                        _tabButton('Completed', 1),
+                      ],
+                    );
+                  }),
+
+                  const SizedBox(height: 16),
+
+                  // Task List
+                  Expanded(
+                    child: Obx(() {
+                      bool showCompleted = selectedTab.value == 1;
+                      return ListView.builder(
+                        itemCount: 4,
+                        itemBuilder: (context, index) {
+                          return _taskCard(
+                            title: 'Task ${index + 1}',
+                            completed: showCompleted,
+                          );
+                        },
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       );
     });
   }
 
-  Widget _buildAdminProfileSection() {
-    return Center(
-      child: Column(
-        children: [
-          Obx(
-            () => CircleAvatar(
-              radius: 50,
-              backgroundImage: adminController.adminPhotoUrl.value.isNotEmpty
-                  ? NetworkImage(adminController.adminPhotoUrl.value)
-                  : const AssetImage('assets/default_avatar.png')
-                      as ImageProvider,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Obx(
-            () => Text(
-              adminController.adminName.value.isNotEmpty
-                  ? adminController.adminName.value
-                  : 'Admin',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatisticsSection() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.4,
-      children: [
-        _buildStatCard(
-          title: 'Total Users',
-          count: adminController.totalUsers.value,
-          icon: LucideIcons.users,
-          color: Colors.blue.shade600,
-          onTap: () => _showDetailsDialog(
-            'Total Users',
-            adminController.userNames.toList(),
-          ),
-        ),
-        _buildStatCard(
-          title: 'Total Tasks',
-          count: adminController.totalTasks.value,
-          icon: LucideIcons.fileText,
-          color: Colors.green.shade600,
-          onTap: () => _showDetailsDialog(
-            'Total Tasks',
-            adminController.taskTitles.toList(),
-          ),
-        ),
-        _buildStatCard(
-          title: 'Completed Tasks',
-          count: adminController.completedTasks.value,
-          icon: LucideIcons.checkCircle2,
-          color: Colors.orange.shade600,
-          onTap: () => _showDetailsDialog(
-            'Completed Tasks',
-            adminController.completedTaskTitles.toList(),
-          ),
-        ),
-        _buildStatCard(
-          title: 'Pending Tasks',
-          count: adminController.pendingTasks.value,
-          icon: LucideIcons.clock,
-          color: Colors.red.shade600,
-          onTap: () => _showDetailsDialog(
-            'Pending Tasks',
-            adminController.pendingTaskTitles.toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtonsSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildActionButton(
-          label: 'Manage Users',
-          icon: LucideIcons.userCog,
-          onPressed: () => Get.toNamed('/manage-users'),
-        ),
-        _buildActionButton(
-          label: 'View Reports',
-          icon: LucideIcons.fileBarChart,
-          onPressed: () => Get.toNamed('/reports'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20),
-      label: Text(label),
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Colors.black),
-        ),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      onPressed: () async {
-        await adminController.logout();
-      },
-      icon: const Icon(LucideIcons.logOut),
-      label: const Text('Logout'),
-    );
-  }
-
-  Widget _buildStatCard({
-    required String title,
-    required int count,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
+  Widget _iconButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 36),
-            const SizedBox(height: 10),
-            Text(
-              count.toString(),
-              style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: color),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
+          shape: BoxShape.circle,
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFF0B189B), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withOpacity(0.2),
+              blurRadius: 4,
+              spreadRadius: 1,
             ),
           ],
         ),
+        child: Icon(icon, color: const Color(0xFF0B189B), size: 20),
       ),
     );
   }
 
-  void _showDetailsDialog(String title, List<String> items) {
-    Get.dialog(
-      AlertDialog(
-        title: Text(title),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: items.length,
-            itemBuilder: (context, index) => ListTile(
-              title: Text(items[index]),
+  Widget _statCard(
+      {required String label,
+      required String value,
+      required VoidCallback onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(label, style: const TextStyle(color: Colors.white)),
+              const SizedBox(height: 6),
+              Text(value,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tabButton(String title, int index) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => selectedTab.value = index,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selectedTab.value == index
+                    ? const Color(0xFF0B189B)
+                    : Colors.transparent,
+                width: 3,
+              ),
+            ),
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selectedTab.value == index
+                  ? const Color(0xFF0B189B)
+                  : Colors.black,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Close'),
+      ),
+    );
+  }
+
+  Widget _taskCard({required String title, required bool completed}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B189B),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.task, color: Colors.white),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+          Icon(
+            completed ? Icons.check_circle : Icons.pending,
+            color: Colors.white,
           ),
         ],
       ),

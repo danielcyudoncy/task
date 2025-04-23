@@ -28,6 +28,8 @@ class AdminController extends GetxController {
   var isLoading = false.obs;
   var isProfileLoading = false.obs;
   var isStatsLoading = false.obs;
+  var userList = <Map<String, String>>[].obs;
+         
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
