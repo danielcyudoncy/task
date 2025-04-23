@@ -59,7 +59,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/profile-update",
-      page: () => const ProfileUpdateScreen(),
+      page: () =>  ProfileUpdateScreen(),
       middlewares: [AuthMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
