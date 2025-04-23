@@ -29,10 +29,14 @@ class AdminController extends GetxController {
   var isProfileLoading = false.obs;
   var isStatsLoading = false.obs;
   var userList = <Map<String, String>>[].obs;
-         
+
+  var selectedUserName = ''.obs;
+  var selectedTaskTitle = ''.obs;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  List<QueryDocumentSnapshot> taskSnapshotDocs = [];
 
   @override
   void onInit() {
@@ -115,6 +119,8 @@ class AdminController extends GetxController {
       totalUsers.value = userDocs.length;
       totalTasks.value = taskDocs.length;
 
+      taskSnapshotDocs = taskDocs;
+
       completedTasks.value =
           taskDocs.where((doc) => doc.data()['status'] == 'completed').length;
       pendingTasks.value =
@@ -164,8 +170,40 @@ class AdminController extends GetxController {
     }
   }
 
-  Future<void> createAdminProfile({
-    required String userId,
+  void filterTasksByUser(String fullName) {
+    final userTasks = taskSnapshotDocs.where((doc) =>
+        (doc.data() as Map<String, dynamic>)['createdByName']?.toString().toLowerCase() ==
+        fullName.toLowerCase());
+
+    final now = DateTime.now();
+
+    completedTaskTitles.value = userTasks
+        .where((doc) => (doc.data() as Map<String, dynamic>)['status'] == 'completed')
+        .map((doc) => (doc.data() as Map<String, dynamic>)['title']?.toString() ?? '')
+        .toList()
+        .cast<String>();
+
+    pendingTaskTitles.value = userTasks
+        .where((doc) => (doc.data() as Map<String, dynamic>)['status'] != 'completed')
+        .map((doc) => (doc.data() as Map<String, dynamic>)['title']?.toString() ?? '')
+        .toList()
+        .cast<String>();
+
+    overdueTaskTitles.value = userTasks
+        .where((doc) {
+          final dueTs = (doc.data() as Map<String, dynamic>)['dueDate'] as Timestamp?;
+          return dueTs != null &&
+              dueTs.toDate().isBefore(now) &&
+              (doc.data() as Map<String, dynamic>)['status'] != 'completed';
+        })
+        .map((doc) => (doc.data() as Map<String, dynamic>)['title']?.toString() ?? '')
+        .toList()
+        .cast<String>();
+
+    completedTasks.value = completedTaskTitles.length;
+    pendingTasks.value = pendingTaskTitles.length;
+    overdueTasks.value = overdueTaskTitles.length;
+  }  Future<void> createAdminProfile({    required String userId,
     required String fullName,
     required String email,
     String photoUrl = "",
@@ -259,5 +297,8 @@ class AdminController extends GetxController {
     completedTaskTitles.value = [];
     pendingTaskTitles.value = [];
     overdueTaskTitles.value = [];
+
+    selectedUserName.value = '';
+    selectedTaskTitle.value = '';
   }
 }
