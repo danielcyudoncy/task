@@ -337,6 +337,36 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> updateProfileDetails() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      Get.snackbar('Error', 'No user signed in');
+      return;
+    }
+    try {
+      isLoading(true);
+
+      // Update Firestore document, now including profileComplete:true
+      await _firebaseService.updateUserData(user.uid, {
+        'fullName': fullNameController.text.trim(),
+        'phoneNumber': phoneNumberController.text.trim(),
+        'role': selectedRole.value,
+        'profileComplete': true, // ← mark profile done
+      });
+
+      // Update local observables
+      fullName.value = fullNameController.text.trim();
+      userRole.value = selectedRole.value;
+      isProfileComplete.value = true; // ← sync local flag
+
+      Get.snackbar('Success', 'Profile updated successfully');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update profile: ${e.toString()}');
+    } finally {
+      isLoading(false);
+    }
+  }
+
   Future<void> saveFCMToken() async {
     if (kIsWeb) return;
 
