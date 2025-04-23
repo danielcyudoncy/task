@@ -47,11 +47,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Row: Welcome, Name, Avatar, Icons
+                  // Top Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Welcome, Avatar, Name
                       Row(
                         children: [
                           CircleAvatar(
@@ -60,28 +59,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 NetworkImage(authController.profilePic.value),
                           ),
                           const SizedBox(width: 8),
-                          Column(
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text('Welcome',
-                                  style: TextStyle(fontSize: 14)),
+                                  style: TextStyle(fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  )),
+                                  const SizedBox(width: 8),
                               Text(
                                 authController.fullName.value,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  
+                                  fontSize: 24,
                                 ),
                               ),
                             ],
                           ),
                         ],
                       ),
-                      // Camera & Logout
                       Row(
                         children: [
-                          _iconButton(Icons.camera_alt, () {
-                            // Implement camera logic
-                          }),
+                          _iconButton(Icons.camera_alt, () {}),
                           const SizedBox(width: 10),
                           _iconButton(Icons.logout, () {
                             authController.logout();
@@ -90,10 +89,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 30),
 
-                  // Daily Assignments Text
                   const Text(
                     'DAILY ASSIGNMENTS',
                     style: TextStyle(
@@ -101,27 +98,156 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.indigo),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
 
-                  // Clickable Stats
+                  // Total Users & Tasks Cards with Dropdowns
                   Row(
                     children: [
-                      _statCard(
-                        label: 'Total Users',
-                        value: adminController.totalUsers.value.toString(),
-                        onTap: () => Get.toNamed('/users-list'),
+                      // Total Users
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 26, horizontal: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Center(
+                                child: Text('Total Users',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.white)),
+                              ),
+                              const SizedBox(height: 6),
+                              Center(
+                                child: Text(
+                                  adminController.totalUsers.value.toString(),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Obx(() {
+                                  return DropdownButton<String>(
+                                    isExpanded: true,
+                                    value: adminController
+                                            .selectedUserName.value.isEmpty
+                                        ? null
+                                        : adminController
+                                            .selectedUserName.value,
+                                    hint: const Text("Select User"),
+                                    underline: const SizedBox(),
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    items:
+                                        adminController.userNames.map((name) {
+                                      return DropdownMenuItem<String>(
+                                        value: name,
+                                        child: Text(name),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        adminController.selectedUserName.value =
+                                            value;
+                                      }
+                                    },
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
+
                       const SizedBox(width: 12),
-                      _statCard(
-                        label: 'Total Task',
-                        value: adminController.totalTasks.value.toString(),
-                        onTap: () => Get.toNamed('/tasks-list'),
+
+                      // Total Tasks
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 26, horizontal: 12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Center(
+                                child: Text('Total Task',
+                                    style: TextStyle(color: Colors.white, fontSize: 18)),
+                              ),
+                              const SizedBox(height: 6),
+                              Center(
+                                child: Text(
+                                  adminController.totalTasks.value.toString(),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Obx(() {
+                                  return DropdownButton<String>(
+                                    isExpanded: true,
+                                    value: adminController
+                                            .selectedTaskTitle.value.isEmpty
+                                        ? null
+                                        : adminController
+                                            .selectedTaskTitle.value,
+                                    hint: const Text("Select Task"),
+                                    underline: const SizedBox(),
+                                    icon: const Icon(Icons.arrow_drop_down),
+                                    items:
+                                        adminController.taskTitles.map((title) {
+                                      return DropdownMenuItem<String>(
+                                        value: title,
+                                        child: Text(title),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        adminController
+                                            .selectedTaskTitle.value = value;
+                                      }
+                                    },
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 24),
 
-                  // TASK & Create Task Button
+                  // Task section title and Create button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -150,7 +276,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Tab Switcher
                   Obx(() {
                     return Row(
                       children: [
@@ -162,7 +287,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Task List
                   Expanded(
                     child: Obx(() {
                       bool showCompleted = selectedTab.value == 1;
@@ -204,37 +328,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ],
         ),
         child: Icon(icon, color: const Color(0xFF0B189B), size: 20),
-      ),
-    );
-  }
-
-  Widget _statCard(
-      {required String label,
-      required String value,
-      required VoidCallback onTap}) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
-            ),
-          ),
-          child: Column(
-            children: [
-              Text(label, style: const TextStyle(color: Colors.white)),
-              const SizedBox(height: 6),
-              Text(value,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
       ),
     );
   }
