@@ -47,7 +47,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Row
+                  // Top Row with Avatar and Welcome
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -55,26 +55,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundImage:
-                                NetworkImage(authController.profilePic.value),
+                            backgroundColor: Colors.grey.shade300,
+                            backgroundImage: authController
+                                    .profilePic.value.isNotEmpty
+                                ? NetworkImage(authController.profilePic.value)
+                                : null,
+                            child: authController.profilePic.value.isEmpty
+                                ? Text(
+                                    authController.fullName.value.isNotEmpty
+                                        ? authController.fullName.value[0]
+                                            .toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold),
+                                  )
+                                : null,
                           ),
                           const SizedBox(width: 8),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Welcome',
-                                  style: TextStyle(fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  )),
-                                  const SizedBox(width: 8),
-                              Text(
-                                authController.fullName.value,
-                                style: const TextStyle(
-                                  
-                                  fontSize: 24,
-                                ),
-                              ),
-                            ],
+                          const Text(
+                            'Welcome',
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            authController.fullName.value,
+                            style: const TextStyle(fontSize: 24),
                           ),
                         ],
                       ),
@@ -89,8 +96,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
 
+                  const SizedBox(height: 30),
                   const Text(
                     'DAILY ASSIGNMENTS',
                     style: TextStyle(
@@ -100,10 +107,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Total Users & Tasks Cards with Dropdowns
+                  // Total Users & Total Tasks Cards
                   Row(
                     children: [
-                      // Total Users
+                      // Total Users Card
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -115,23 +122,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             ),
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Center(
-                                child: Text('Total Users',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.white)),
-                              ),
+                              const Text('Total Users',
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.white)),
                               const SizedBox(height: 6),
-                              Center(
-                                child: Text(
-                                  adminController.totalUsers.value.toString(),
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                              Text(
+                                adminController.totalUsers.value.toString(),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 12),
                               Container(
@@ -142,6 +143,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Obx(() {
+                                  final sortedUserList = [
+                                    ...adminController.userNames
+                                  ]..sort();
                                   return DropdownButton<String>(
                                     isExpanded: true,
                                     value: adminController
@@ -152,17 +156,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     hint: const Text("Select User"),
                                     underline: const SizedBox(),
                                     icon: const Icon(Icons.arrow_drop_down),
-                                    items:
-                                        adminController.userNames.map((name) {
-                                      return DropdownMenuItem<String>(
-                                        value: name,
-                                        child: Text(name),
-                                      );
-                                    }).toList(),
+                                    items: sortedUserList
+                                        .map((name) => DropdownMenuItem<String>(
+                                              value: name,
+                                              child: Text(name),
+                                            ))
+                                        .toList(),
                                     onChanged: (value) {
-                                      if (value != null) {
-                                        adminController.selectedUserName.value =
-                                            value;
+                                      adminController.selectedUserName.value =
+                                          value ?? '';
+                                      if (value != null && value.isNotEmpty) {
+                                        adminController
+                                            .filterTasksByUser(value);
+                                      } else {
+                                        adminController
+                                            .fetchStatistics(); // reset
                                       }
                                     },
                                   );
@@ -175,7 +183,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                       const SizedBox(width: 12),
 
-                      // Total Tasks
+                      // Total Tasks Card
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -187,21 +195,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             ),
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Center(
-                                child: Text('Total Task',
-                                    style: TextStyle(color: Colors.white, fontSize: 18)),
-                              ),
+                              const Text('Total Task',
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.white)),
                               const SizedBox(height: 6),
-                              Center(
-                                child: Text(
-                                  adminController.totalTasks.value.toString(),
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                              Text(
+                                adminController.totalTasks.value.toString(),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 12),
                               Container(
@@ -212,6 +216,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Obx(() {
+                                  final sortedTasks = [
+                                    ...adminController.taskTitles
+                                  ]..sort();
                                   return DropdownButton<String>(
                                     isExpanded: true,
                                     value: adminController
@@ -222,17 +229,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     hint: const Text("Select Task"),
                                     underline: const SizedBox(),
                                     icon: const Icon(Icons.arrow_drop_down),
-                                    items:
-                                        adminController.taskTitles.map((title) {
-                                      return DropdownMenuItem<String>(
-                                        value: title,
-                                        child: Text(title),
-                                      );
-                                    }).toList(),
+                                    items: sortedTasks
+                                        .map(
+                                            (title) => DropdownMenuItem<String>(
+                                                  value: title,
+                                                  child: Text(title),
+                                                ))
+                                        .toList(),
                                     onChanged: (value) {
-                                      if (value != null) {
-                                        adminController
-                                            .selectedTaskTitle.value = value;
+                                      adminController.selectedTaskTitle.value =
+                                          value ?? '';
+                                      if (value != null && value.isNotEmpty) {
+                                        _showTaskDetailDialog(value);
                                       }
                                     },
                                   );
@@ -247,17 +255,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Task section title and Create button
+                  // Task title & Create Task Button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         'TASK',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo,
-                        ),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.indigo),
                       ),
                       GestureDetector(
                         onTap: () => Get.toNamed('/task-creation'),
@@ -276,6 +283,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 16),
 
+                  // Task Status Tabs
                   Obx(() {
                     return Row(
                       children: [
@@ -287,14 +295,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 16),
 
+                  // Task List
                   Expanded(
                     child: Obx(() {
-                      bool showCompleted = selectedTab.value == 1;
+                      final showCompleted = selectedTab.value == 1;
+                      final tasks = showCompleted
+                          ? adminController.completedTaskTitles
+                          : adminController.pendingTaskTitles;
+
                       return ListView.builder(
-                        itemCount: 4,
+                        itemCount: tasks.length,
                         itemBuilder: (context, index) {
                           return _taskCard(
-                            title: 'Task ${index + 1}',
+                            title: tasks[index],
                             completed: showCompleted,
                           );
                         },
@@ -308,6 +321,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       );
     });
+  }
+
+  void _showTaskDetailDialog(String title) {
+    Get.defaultDialog(
+      title: "Task Details",
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Title: $title"),
+          const SizedBox(height: 6),
+          Text("Status: ${_getTaskStatus(title)}"),
+          const SizedBox(height: 6),
+          Text("Created by: ${_getCreatedBy(title)}"),
+        ],
+      ),
+      textConfirm: "Close",
+      onConfirm: () => Get.back(),
+    );
+  }
+
+  String _getTaskStatus(String title) {
+    if (adminController.completedTaskTitles.contains(title)) {
+      return "Completed";
+    } else if (adminController.pendingTaskTitles.contains(title)) {
+      return "Pending";
+    } else {
+      return "Unknown";
+    }
+  }
+
+  String _getCreatedBy(String title) {
+    final task = adminController.taskSnapshotDocs.firstWhereOrNull(
+      (doc) => doc['title'] == title,
+    );
+    return task?['createdByName'] ?? 'Unknown';
   }
 
   Widget _iconButton(IconData icon, VoidCallback onTap) {
