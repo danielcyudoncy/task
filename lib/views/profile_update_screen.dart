@@ -6,10 +6,10 @@ import '../controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import '../widgets/image_picker_widget.dart';
-
+ // Import your UserScreen
 
 class ProfileUpdateScreen extends StatelessWidget {
-  ProfileUpdateScreen({Key? key}) : super(key: key);
+  ProfileUpdateScreen({super.key});
 
   final AuthController auth = Get.find<AuthController>();
   final _formKey = GlobalKey<FormState>();
@@ -201,8 +201,10 @@ class ProfileUpdateScreen extends StatelessWidget {
                                     onPressed: () async {
                                       if (_formKey.currentState!.validate()) {
                                         await auth.updateProfileDetails();
-                                        Get.off(
-                                            () => const SaveSuccessScreen());
+
+                                        // Navigate to SaveSuccessScreen after profile update
+                                        Get.offAll(() => const SaveSuccessScreen(),
+                                            predicate: (route) => false);
                                       }
                                     },
                                     child: const Text(

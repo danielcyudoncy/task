@@ -18,8 +18,12 @@ class AuthController extends GetxController {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseService _firebaseService = FirebaseService();
 
+  Rx<User?> firebaseUser = Rx<User?>(null);
+  RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
+
   FirebaseAuth get auth => _auth;
   FirebaseService get firebaseService => _firebaseService;
+  
 
   var isLoading = false.obs;
   var fullName = "".obs;
@@ -39,26 +43,25 @@ class AuthController extends GetxController {
     "Cameraman",
     "Assignment Editor",
     "Head of Department",
+    "Head of Unit",
     "Admin"
   ];
 
   @override
   void onInit() {
     super.onInit();
-    // Listen for auth state changes—but NO auto‐init here
     _auth.authStateChanges().listen((User? user) {
       if (user == null) {
         debugPrint("User signed out");
-       
       } else {
         debugPrint("User signed in: ${user.uid}");
       }
     });
   }
 
-
   @override
   void onReady() {
+    firebaseUser.bindStream(_auth.authStateChanges());
     ever(userRole, (_) => _handleRoleChange());
     debounce(lastActivity, (_) => _checkInactivity(),
         time: const Duration(minutes: 30));
@@ -71,6 +74,14 @@ class AuthController extends GetxController {
     phoneNumberController.dispose();
     passwordController.dispose();
     super.onClose();
+  }
+
+  bool get canAssignTask {
+    final role = userData['role'];
+    return role == 'Admin' ||
+        role == 'Assignment Editor' ||
+        role == 'Head of Department' ||
+        role == 'Head of Unit';
   }
 
   Future<void> _initializeUserSession() async {
@@ -88,14 +99,11 @@ class AuthController extends GetxController {
           navigateBasedOnRole();
         }
       } else {
-        if (Get.currentRoute != "/login") {
-          Get.offAllNamed("/login");
-        }
+        Get.offAllNamed("/login");
       }
     } catch (e) {
       debugPrint("Session initialization error: $e");
       await logout();
-      Get.offAllNamed("/login");
     } finally {
       isLoading(false);
     }
@@ -131,9 +139,9 @@ class AuthController extends GetxController {
 
       if (userDoc.exists) {
         final userData = userDoc.data()!;
-        fullName.value = userData['fullName']?.toString() ?? 'User';
-        profilePic.value = userData['photoUrl']?.toString() ?? '';
-        userRole.value = userData['role']?.toString() ?? '';
+        fullName.value = userData['fullName'] ?? 'User';
+        profilePic.value = userData['photoUrl'] ?? '';
+        userRole.value = userData['role'] ?? '';
         isProfileComplete.value = userData['profileComplete'] ?? false;
 
         if (userRole.value.isEmpty) {
@@ -147,6 +155,13 @@ class AuthController extends GetxController {
       resetUserData();
       rethrow;
     }
+  }
+
+  void resetUserData() {
+    fullName.value = '';
+    profilePic.value = '';
+    userRole.value = '';
+    isProfileComplete.value = false;
   }
 
   Future<void> completeProfile() async {
@@ -166,26 +181,15 @@ class AuthController extends GetxController {
   }
 
   void navigateBasedOnRole() {
-    debugPrint("Current role: ${userRole.value}");
-    debugPrint("Current route: ${Get.currentRoute}");
+    final route = Get.currentRoute;
 
-    switch (userRole.value) {
-      case "Admin":
-      case "Assignment Editor":
-      case "Head of Department":
-        if (Get.currentRoute != "/admin-dashboard") {
-          Get.offAllNamed("/admin-dashboard");
-        }
-        break;
-      case "Reporter":
-      case "Cameraman":
-        if (Get.currentRoute != "/home") {
-          Get.offAllNamed("/home");
-        }
-        break;
-      default:
-        Get.offAllNamed("/login");
-        break;
+    if (["Admin", "Assignment Editor", "Head of Department"]
+        .contains(userRole.value)) {
+      if (route != "/admin-dashboard") Get.offAllNamed("/admin-dashboard");
+    } else if (["Reporter", "Cameraman"].contains(userRole.value)) {
+      if (route != "/home") Get.offAllNamed("/home");
+    } else {
+      Get.offAllNamed("/login");
     }
   }
 
@@ -215,6 +219,7 @@ class AuthController extends GetxController {
       isLoading(true);
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
+
       User? user = userCredential.user;
 
       if (user != null) {
@@ -250,6 +255,7 @@ class AuthController extends GetxController {
       isLoading(true);
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
+
       User? user = userCredential.user;
 
       if (user != null) {
@@ -297,7 +303,6 @@ class AuthController extends GetxController {
 
     try {
       isLoading.value = true;
-      debugPrint("Starting profile picture upload...");
 
       if (!await imageFile.exists()) {
         throw Exception("Image file doesn't exist");
@@ -305,21 +310,14 @@ class AuthController extends GetxController {
 
       String filePath =
           "profile_pictures/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg";
-      debugPrint("Uploading to path: $filePath");
 
       UploadTask uploadTask = _storage.ref(filePath).putFile(
             imageFile,
             SettableMetadata(contentType: 'image/jpeg'),
           );
 
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        debugPrint(
-            "Upload progress: ${snapshot.bytesTransferred}/${snapshot.totalBytes}");
-      });
-
       TaskSnapshot snapshot = await uploadTask;
       String downloadUrl = await snapshot.ref.getDownloadURL();
-      debugPrint("Download URL: $downloadUrl");
 
       await _firestore.collection('users').doc(user.uid).update({
         'photoUrl': downloadUrl,
@@ -327,11 +325,8 @@ class AuthController extends GetxController {
 
       profilePic.value = downloadUrl;
       Get.snackbar("Success", "Profile picture updated successfully.");
-    } catch (e, stackTrace) {
-      debugPrint("Upload error: $e");
-      debugPrint("Stack trace: $stackTrace");
-      Get.snackbar("Upload Failed", "Error: ${e.toString()}",
-          duration: const Duration(seconds: 5));
+    } catch (e) {
+      Get.snackbar("Upload Failed", "Error: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
@@ -343,21 +338,20 @@ class AuthController extends GetxController {
       Get.snackbar('Error', 'No user signed in');
       return;
     }
+
     try {
       isLoading(true);
 
-      // Update Firestore document, now including profileComplete:true
       await _firebaseService.updateUserData(user.uid, {
         'fullName': fullNameController.text.trim(),
         'phoneNumber': phoneNumberController.text.trim(),
         'role': selectedRole.value,
-        'profileComplete': true, // ← mark profile done
+        'profileComplete': true,
       });
 
-      // Update local observables
       fullName.value = fullNameController.text.trim();
       userRole.value = selectedRole.value;
-      isProfileComplete.value = true; // ← sync local flag
+      isProfileComplete.value = true;
 
       Get.snackbar('Success', 'Profile updated successfully');
     } catch (e) {
@@ -409,42 +403,52 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> assignTask(String taskId, String userId) async {
+    try {
+      isLoading.value = true;
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
+        'assignedTo': userId,
+      });
+      Get.snackbar("Success", "Task assigned successfully.");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to assign task.");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> logout() async {
     try {
+      isLoading.value = true;
       await _auth.signOut();
       resetUserData();
       Get.offAllNamed("/login");
     } catch (e) {
-      Get.snackbar("Error", "Logout failed. Please try again.");
-    }
-  }
-
-  void resetUserData() {
-    fullName.value = "";
-    profilePic.value = "";
-    userRole.value = "";
-    isProfileComplete.value = false;
-  }
-
-  void _checkInactivity() {
-    if (DateTime.now().difference(lastActivity.value) >
-        const Duration(minutes: 30)) {
-      logout();
+      Get.snackbar("Error", "Logout failed: ${e.toString()}");
+    } finally {
+      isLoading.value = false;
     }
   }
 
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
+      case 'user-not-found':
+        return "No user found for that email.";
+      case 'wrong-password':
+        return "Wrong password provided.";
       case 'email-already-in-use':
         return "Email is already in use.";
-      case 'weak-password':
-        return "Password should be at least 6 characters.";
-      case 'user-not-found':
-        return "No user found with this email.";
-      case 'wrong-password':
-        return "Incorrect password.";
       default:
-        return "Authentication failed. Please try again.";
+        return e.message ?? "Authentication error.";
+    }
+  }
+
+  
+
+  void _checkInactivity() {
+    final now = DateTime.now();
+    if (now.difference(lastActivity.value).inMinutes >= 30) {
+      logout();
     }
   }
 }
