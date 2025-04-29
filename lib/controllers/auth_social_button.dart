@@ -37,7 +37,7 @@ class _AuthSocialButtonState extends State<AuthSocialButton>
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -88,7 +88,7 @@ class _AuthSocialButtonState extends State<AuthSocialButton>
             ],
           ),
         ),
-      ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut),
+      ).animate(delay: 100.ms).fadeIn(duration: 500.ms, curve: Curves.easeOut),
     );
   }
 }

@@ -1,3 +1,4 @@
+// controllers/task_controller.dart
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/task_model.dart';
@@ -58,8 +59,10 @@ class TaskController extends GetxController {
             assignedReporter: assignedReporterName,
             assignedCameraman: assignedCameramanName,
             status: taskData["status"] ?? "Pending",
-            comments: List<String>.from(taskData["comments"] ?? []), // ✅ Fix missing comments
-            timestamp: taskData["timestamp"] ?? Timestamp.now(), // ✅ Fix missing timestamp
+            comments: List<String>.from(
+                taskData["comments"] ?? []), // ✅ Fix missing comments
+            timestamp: taskData["timestamp"] ??
+                Timestamp.now(), // ✅ Fix missing timestamp
           ));
         }
 
@@ -86,7 +89,8 @@ class TaskController extends GetxController {
         "assignedCameraman": null, // ✅ Initially null
         "status": "Pending",
         "comments": [], // ✅ Fix: Ensure comments exist
-        "timestamp": FieldValue.serverTimestamp(), // ✅ Fix: Ensure timestamp exists
+        "timestamp":
+            FieldValue.serverTimestamp(), // ✅ Fix: Ensure timestamp exists
       });
 
       Get.snackbar("Success", "Task created successfully");
@@ -98,7 +102,8 @@ class TaskController extends GetxController {
   }
 
   // ✅ Update Task
-  Future<void> updateTask(String taskId, String title, String description, String status) async {
+  Future<void> updateTask(
+      String taskId, String title, String description, String status) async {
     try {
       isLoading(true);
       await _firebaseService.updateTask(taskId, {
@@ -150,7 +155,8 @@ class TaskController extends GetxController {
   // ✅ Assign Task to Cameraman & Update UI
   Future<void> assignTaskToCameraman(String taskId, String cameramanId) async {
     try {
-      await _firebaseService.assignTask(taskId, cameramanId, "assignedCameraman");
+      await _firebaseService.assignTask(
+          taskId, cameramanId, "assignedCameraman");
 
       // ✅ Fetch updated cameraman name
       String cameramanName = await _getUserName(cameramanId);
@@ -183,10 +189,17 @@ class TaskController extends GetxController {
   Future<String> _getUserName(String uid) async {
     try {
       if (uid.isEmpty) return "Unknown";
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection("users").doc(uid).get();
-      return userDoc.exists ? userDoc["fullName"] ?? "Unknown" : "Unknown";
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection("users").doc(uid).get();
+
+      // Ensure that the user exists and return the fullName
+      if (userDoc.exists) {
+        return userDoc["fullName"] ?? "Unknown";
+      } else {
+        return "User not found";
+      }
     } catch (e) {
-      return "Unknown";
+      return "Error fetching user";
     }
   }
 }

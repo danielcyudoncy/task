@@ -1,5 +1,6 @@
 // routes/global_bindings.dart
 import 'package:get/get.dart';
+import 'package:task/controllers/manage_users_controller.dart';
 import 'package:task/controllers/notification_controller.dart';
 import 'package:task/service/firebase_service.dart';
 import '../controllers/auth_controller.dart';
@@ -15,6 +16,7 @@ class GlobalBindings extends Bindings {
     Get.lazyPut<FirebaseService>(() => FirebaseService(), fenix: true);
     Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
     Get.lazyPut<AdminController>(() => AdminController(), fenix: true);
+    Get.lazyPut<ManageUsersController>(() =>ManageUsersController(), fenix: true);
 
     // Other controllers
     Get.lazyPut<AdminController>(() => AdminController());

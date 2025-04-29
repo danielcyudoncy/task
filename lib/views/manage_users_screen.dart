@@ -6,6 +6,8 @@ import '../controllers/manage_users_controller.dart';
 class ManageUsersScreen extends StatelessWidget {
   final ManageUsersController controller = Get.put(ManageUsersController());
 
+   ManageUsersScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,13 +34,29 @@ class ManageUsersScreen extends StatelessWidget {
                 subtitle: Text(user['email']),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => controller.deleteUser(user['id']),
+                  onPressed: () {
+                    _confirmDelete(context, user['id']);
+                  },
                 ),
               ),
             );
           },
         );
       }),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, String userId) {
+    Get.defaultDialog(
+      title: "Delete User",
+      middleText: "Are you sure you want to delete this user?",
+      textConfirm: "Yes, Delete",
+      textCancel: "Cancel",
+      onConfirm: () {
+        controller.deleteUser(userId);
+        Get.back();
+      },
+      onCancel: () => Get.back(),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/admin_controller.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/manage_users_controller.dart'; // Import the ManageUsersController
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -14,12 +15,16 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final AdminController adminController = Get.find<AdminController>();
   final AuthController authController = Get.find<AuthController>();
+  final ManageUsersController manageUsersController =
+      Get.find<ManageUsersController>(); // Instantiate the controller
   final RxInt selectedTab = 0.obs;
 
   @override
   void initState() {
     super.initState();
     adminController.fetchStatistics();
+    manageUsersController
+        .fetchUsers(); // Fetch users when the screen is initialized
   }
 
   @override
@@ -135,46 +140,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 12),
-                              Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
+                              GestureDetector(
+                                onTap: () {
+                                  // Navigate to user management screen or show users list in the current screen
+                                  Get.toNamed('/user-management');
+                                },
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    "Manage Users",
+                                    style: TextStyle(color: Colors.black),
+                                  ),
                                 ),
-                                child: Obx(() {
-                                  final sortedUserList = [
-                                    ...adminController.userNames
-                                  ]..sort();
-                                  return DropdownButton<String>(
-                                    isExpanded: true,
-                                    value: adminController
-                                            .selectedUserName.value.isEmpty
-                                        ? null
-                                        : adminController
-                                            .selectedUserName.value,
-                                    hint: const Text("Select User"),
-                                    underline: const SizedBox(),
-                                    icon: const Icon(Icons.arrow_drop_down),
-                                    items: sortedUserList
-                                        .map((name) => DropdownMenuItem<String>(
-                                              value: name,
-                                              child: Text(name),
-                                            ))
-                                        .toList(),
-                                    onChanged: (value) {
-                                      adminController.selectedUserName.value =
-                                          value ?? '';
-                                      if (value != null && value.isNotEmpty) {
-                                        adminController
-                                            .filterTasksByUser(value);
-                                      } else {
-                                        adminController
-                                            .fetchStatistics(); // reset
-                                      }
-                                    },
-                                  );
-                                }),
                               ),
                             ],
                           ),
@@ -380,60 +362,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _tabButton(String title, int index) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => selectedTab.value = index,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selectedTab.value == index
-                    ? const Color(0xFF0B189B)
-                    : Colors.transparent,
-                width: 3,
-              ),
-            ),
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: selectedTab.value == index
-                  ? const Color(0xFF0B189B)
-                  : Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
+  Widget _tabButton(String text, int tabIndex) {
+    return GestureDetector(
+      onTap: () {
+        selectedTab.value = tabIndex;
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: selectedTab.value == tabIndex
+              ? const Color(0xFF0B189B)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: selectedTab.value == tabIndex ? Colors.white : Colors.black,
           ),
         ),
       ),
     );
   }
 
-  Widget _taskCard({required String title, required bool completed}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B189B),
-        borderRadius: BorderRadius.circular(20),
+  Widget _taskCard({
+    required String title,
+    required bool completed,
+  }) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.task, color: Colors.white),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ),
-          Icon(
-            completed ? Icons.check_circle : Icons.pending,
-            color: Colors.white,
-          ),
-        ],
+      child: ListTile(
+        title: Text(title),
+        trailing: Icon(
+          completed ? Icons.check_circle : Icons.radio_button_unchecked,
+          color: completed ? Colors.green : Colors.grey,
+        ),
+        onTap: () => _showTaskDetailDialog(title),
       ),
     );
   }
