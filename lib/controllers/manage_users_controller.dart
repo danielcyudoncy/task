@@ -6,9 +6,12 @@ import 'package:get/get.dart';
 class ManageUsersController extends GetxController {
   var isLoading = false.obs;
   var usersList = <Map<String, dynamic>>[].obs;
+  var filteredUsersList =
+      <Map<String, dynamic>>[].obs; // Filtered list for search
   var lastDocument; // To store the last fetched document for pagination
   var hasMoreUsers = true.obs;
 
+  ScrollController get scrollController => _scrollController;
   late ScrollController _scrollController;
 
   @override
@@ -27,66 +30,66 @@ class ManageUsersController extends GetxController {
   }
 
   // ✅ Fetch users from Firestore with pagination
-  Future<void> fetchUsers({bool isNewSearch = false}) async {
-    if (isLoading.value || !hasMoreUsers.value)
-      return; // Prevent fetching if already loading or no more users
-
-    isLoading.value = true;
-
+  Future<void> fetchUsers() async {
     try {
-      // Build query
-      Query query = FirebaseFirestore.instance
-          .collection('users')
-          .orderBy('fullname') // You can change this to any field you prefer
-          .limit(20); // Fetch 20 users per query
+      isLoading.value = true;
+      print("Fetching users from Firebase...");
 
-      // If there's a last document, start fetching after it
-      if (lastDocument != null) {
-        query = query.startAfterDocument(lastDocument);
-      }
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection(
+              'users') // Ensure this matches your Firebase collection name
+          .get();
 
-      var snapshot = await query.get();
+      print("Fetched ${snapshot.docs.length} users from Firebase");
 
       if (snapshot.docs.isNotEmpty) {
-        // Update the last document for the next fetch
-        lastDocument = snapshot.docs.last;
-
-        // Add fetched users to the list
-        usersList.addAll(snapshot.docs.map((doc) {
-          var data = doc.data()
-              as Map<String, dynamic>?; // Safe cast to Map<String, dynamic>
-
-          // Ensure data is not null and handle missing fields
+        usersList.value = snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          print("User Data: ${data}"); // Debug print
           return {
             'id': doc.id,
-            'fullname': data?['fullname'] ?? 'Unknown User',
-            'email': data?['email'] ?? 'No Email',
+            'fullname': data['fullname'] ?? 'Unknown User',
+            'role': data['role'] ?? 'No Role',
           };
-        }).toList());
+        }).toList();
       } else {
-        hasMoreUsers.value = false; // No more users to fetch
+        print("No users found in Firebase");
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch users. Please try again.");
       print("Error fetching users: $e");
     } finally {
       isLoading.value = false;
     }
   }
-
   // ✅ Delete a user from Firestore
-  void deleteUser(String userId) async {
+  Future<bool> deleteUser(String userId) async {
     try {
-      // Delete user document from Firestore
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();
 
-      // Update the local users list
       usersList.removeWhere((user) => user['id'] == userId);
+      filteredUsersList.removeWhere(
+          (user) => user['id'] == userId); // Remove from filtered list
 
-      Get.snackbar("Success", "User deleted successfully.");
+      return true;
     } catch (e) {
-      Get.snackbar("Error", "Failed to delete user. Please try again.");
       print("Error deleting user: $e");
+      return false;
+    }
+  }
+
+  // ✅ Search users
+  void searchUsers(String query) {
+    if (query.isEmpty) {
+      filteredUsersList
+          .assignAll(usersList); // Reset to full list if query is empty
+    } else {
+      filteredUsersList.assignAll(
+        usersList
+            .where((user) =>
+                user['fullname'].toLowerCase().contains(query.toLowerCase()) ||
+                user['email'].toLowerCase().contains(query.toLowerCase()))
+            .toList(),
+      );
     }
   }
 
