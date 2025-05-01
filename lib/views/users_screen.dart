@@ -14,7 +14,10 @@ class UserScreen extends StatelessWidget {
       Get.find<ManageUsersController>(); // Initialize the controller
 
   final RxString selectedTask = ''.obs; // Track selected task
-  final RxString selectedUser = ''.obs; // Track selected user
+  final RxString selectedUser =
+      ''.obs; // Track selected user (for task assignment)
+  final RxString selectedManagedUser =
+      ''.obs; // Track selected user (for manage users)
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +63,7 @@ class UserScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // **User Dropdown or List** (Assignment Editor can assign tasks to Reporters or Cameramen)
+                  // **User Dropdown**
                   Obx(() {
                     if (userController.allUsers.isEmpty) {
                       return const Text("No users available");
@@ -106,9 +109,9 @@ class UserScreen extends StatelessWidget {
                         )),
                 ],
               ),
+            const SizedBox(height: 20),
 
-            // Example of how you could use the ManageUsersController to show users (optional):
-            // Listing users if needed
+            // 2. **Manage Users Section**
             Obx(() {
               if (manageUsersController.usersList.isEmpty) {
                 return const Text('No users to display');
@@ -116,20 +119,50 @@ class UserScreen extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
-                  const Text('Manage Users:'),
+                  const Text('Manage Users'),
                   const SizedBox(height: 10),
-                  ...manageUsersController.usersList.map((user) {
-                    return ListTile(
-                      title: Text(user['fullname']),
-                      subtitle: Text(user['email']),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () =>
-                            manageUsersController.deleteUser(user['id']),
-                      ),
-                    );
-                  }).toList(),
+
+                  // **User Dropdown for Managing Users**
+                  DropdownButtonFormField<String>(
+                    value: selectedManagedUser.value.isEmpty
+                        ? null
+                        : selectedManagedUser.value, // Bind selected user
+                    items: manageUsersController.usersList.map((user) {
+                      return DropdownMenuItem<String>(
+                        value: user['id'],
+                        child: Text(user['fullname']),
+                      );
+                    }).toList(),
+                    decoration: const InputDecoration(
+                      labelText: 'Select User',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      selectedManagedUser.value =
+                          value ?? ''; // Update selected user
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // **Manage User Actions**
+                  Obx(() => ElevatedButton(
+                        onPressed: () {
+                          if (selectedManagedUser.value.isNotEmpty) {
+                            // Perform action for the selected user
+                            manageUsersController
+                                .deleteUser(selectedManagedUser.value);
+                            Get.snackbar(
+                                'Success', 'User deleted successfully');
+                          } else {
+                            Get.snackbar(
+                                'Error', 'Please select a user to manage');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete User'),
+                      )),
                 ],
               );
             }),

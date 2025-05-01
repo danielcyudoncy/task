@@ -23,7 +23,6 @@ class AuthController extends GetxController {
 
   FirebaseAuth get auth => _auth;
   FirebaseService get firebaseService => _firebaseService;
-  
 
   var isLoading = false.obs;
   var fullName = "".obs;
