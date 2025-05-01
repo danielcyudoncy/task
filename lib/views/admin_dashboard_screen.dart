@@ -119,7 +119,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              vertical: 26, horizontal: 12),
+                              vertical: 28, horizontal: 12),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             gradient: const LinearGradient(
@@ -142,19 +142,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               const SizedBox(height: 12),
                               GestureDetector(
                                 onTap: () {
-                                  // Navigate to user management screen or show users list in the current screen
-                                  Get.toNamed('/user-management');
+                                  _showManageUsersDialog();
                                 },
                                 child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 36, vertical: 14),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
                                     "Manage Users",
-                                    style: TextStyle(color: Colors.black),
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.black),
                                   ),
                                 ),
                               ),
@@ -190,6 +190,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 12),
+                              // Dropdown for tasks
                               Container(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8),
@@ -305,39 +306,75 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
   }
 
-  void _showTaskDetailDialog(String title) {
-    Get.defaultDialog(
-      title: "Task Details",
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Title: $title"),
-          const SizedBox(height: 6),
-          Text("Status: ${_getTaskStatus(title)}"),
-          const SizedBox(height: 6),
-          Text("Created by: ${_getCreatedBy(title)}"),
-        ],
+  void _showManageUsersDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          height: 400,
+          child: Obx(() {
+            if (manageUsersController.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (manageUsersController.usersList.isEmpty) {
+              return const Center(child: Text('No users available.'));
+            }
+
+            return ListView.builder(
+              itemCount: manageUsersController.usersList.length,
+              itemBuilder: (context, index) {
+                final user = manageUsersController.usersList[index];
+                return ListTile(
+                  title: Text(user['fullname']),
+                  subtitle: Text("Role: ${user['role']}"),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.assignment, color: Colors.blue),
+                        onPressed: () {
+                          // Handle task assignment
+                          Get.snackbar("Assign Task",
+                              "Task assigned to ${user['fullname']}");
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          final isConfirmed = await Get.defaultDialog(
+                            title: "Delete User",
+                            middleText:
+                                "Are you sure you want to delete this user?",
+                            textCancel: "Cancel",
+                            textConfirm: "Delete",
+                            confirmTextColor: Colors.white,
+                          );
+
+                          if (isConfirmed != null && isConfirmed) {
+                            final success = await manageUsersController
+                                .deleteUser(user['id']);
+                            if (success) {
+                              Get.snackbar(
+                                  "Success", "User deleted successfully");
+                            } else {
+                              Get.snackbar("Error", "Failed to delete user");
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }),
+        ),
       ),
-      textConfirm: "Close",
-      onConfirm: () => Get.back(),
     );
-  }
-
-  String _getTaskStatus(String title) {
-    if (adminController.completedTaskTitles.contains(title)) {
-      return "Completed";
-    } else if (adminController.pendingTaskTitles.contains(title)) {
-      return "Pending";
-    } else {
-      return "Unknown";
-    }
-  }
-
-  String _getCreatedBy(String title) {
-    final task = adminController.taskSnapshotDocs.firstWhereOrNull(
-      (doc) => doc['title'] == title,
-    );
-    return task?['createdByName'] ?? 'Unknown';
   }
 
   Widget _iconButton(IconData icon, VoidCallback onTap) {
@@ -403,5 +440,40 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onTap: () => _showTaskDetailDialog(title),
       ),
     );
+  }
+
+  void _showTaskDetailDialog(String title) {
+    Get.defaultDialog(
+      title: "Task Details",
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Title: $title"),
+          const SizedBox(height: 6),
+          Text("Status: ${_getTaskStatus(title)}"),
+          const SizedBox(height: 6),
+          Text("Created by: ${_getCreatedBy(title)}"),
+        ],
+      ),
+      textConfirm: "Close",
+      onConfirm: () => Get.back(),
+    );
+  }
+
+  String _getTaskStatus(String title) {
+    if (adminController.completedTaskTitles.contains(title)) {
+      return "Completed";
+    } else if (adminController.pendingTaskTitles.contains(title)) {
+      return "Pending";
+    } else {
+      return "Unknown";
+    }
+  }
+
+  String _getCreatedBy(String title) {
+    final task = adminController.taskSnapshotDocs.firstWhereOrNull(
+      (doc) => doc['title'] == title,
+    );
+    return task?['createdByName'] ?? 'Unknown';
   }
 }

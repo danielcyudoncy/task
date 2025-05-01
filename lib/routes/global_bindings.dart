@@ -9,17 +9,15 @@ import '../controllers/admin_controller.dart';
 class GlobalBindings extends Bindings {
   @override
   void dependencies() {
-
+    // Permanent controllers
     Get.put<AuthController>(AuthController(), permanent: true);
     Get.put<AdminController>(AdminController(), permanent: true);
-    // Make AuthController permanent so it doesn't get disposed
-    Get.lazyPut<FirebaseService>(() => FirebaseService(), fenix: true);
-    Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
-    Get.lazyPut<AdminController>(() => AdminController(), fenix: true);
-    Get.lazyPut<ManageUsersController>(() =>ManageUsersController(), fenix: true);
 
-    // Other controllers
-    Get.lazyPut<AdminController>(() => AdminController());
-    Get.lazyPut<NotificationController>(() => NotificationController());
+    // Lazy-loaded controllers and services
+    Get.lazyPut<FirebaseService>(() => FirebaseService(), fenix: true);
+    Get.lazyPut<ManageUsersController>(() => ManageUsersController(),
+        fenix: true);
+    Get.lazyPut<NotificationController>(() => NotificationController(),
+        fenix: true);
   }
 }
