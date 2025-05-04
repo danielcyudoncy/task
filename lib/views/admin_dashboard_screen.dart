@@ -23,6 +23,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
     adminController.fetchStatistics();
+    adminController.fetchDashboardData();
     manageUsersController
         .fetchUsers(); // Fetch users when the screen is initialized
   }
@@ -119,7 +120,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              vertical: 28, horizontal: 12),
+                              vertical: 26, horizontal: 12),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             gradient: const LinearGradient(
@@ -146,7 +147,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 36, vertical: 14),
+                                      horizontal: 30, vertical: 14),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(8),
@@ -306,76 +307,81 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
   }
 
-  void _showManageUsersDialog() {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(16.0),
-          height: 400,
-          child: Obx(() {
-            if (manageUsersController.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (manageUsersController.usersList.isEmpty) {
-              return const Center(child: Text('No users available.'));
-            }
-
-            return ListView.builder(
-              itemCount: manageUsersController.usersList.length,
-              itemBuilder: (context, index) {
-                final user = manageUsersController.usersList[index];
-                return ListTile(
-                  title: Text(user['fullname']),
-                  subtitle: Text("Role: ${user['role']}"),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.assignment, color: Colors.blue),
-                        onPressed: () {
-                          // Handle task assignment
-                          Get.snackbar("Assign Task",
-                              "Task assigned to ${user['fullname']}");
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final isConfirmed = await Get.defaultDialog(
-                            title: "Delete User",
-                            middleText:
-                                "Are you sure you want to delete this user?",
-                            textCancel: "Cancel",
-                            textConfirm: "Delete",
-                            confirmTextColor: Colors.white,
-                          );
-
-                          if (isConfirmed != null && isConfirmed) {
-                            final success = await manageUsersController
-                                .deleteUser(user['id']);
-                            if (success) {
-                              Get.snackbar(
-                                  "Success", "User deleted successfully");
-                            } else {
-                              Get.snackbar("Error", "Failed to delete user");
-                            }
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          }),
-        ),
+ void _showManageUsersDialog() {
+  Get.dialog(
+    Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
       ),
-    );
-  }
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        height: 500,
+        child: Obx(() {
+          if (manageUsersController.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (manageUsersController.usersList.isEmpty) {
+            return const Center(child: Text('No users available.'));
+          }
+
+          return ListView.builder(
+            itemCount: manageUsersController.usersList.length,
+            itemBuilder: (context, index) {
+              final user = manageUsersController.usersList[index];
+              print("User Data at index $index: $user");
+              final userName = (user.containsKey('fullname') && 
+                    user['fullname'] != null && 
+                    user['fullname'].isNotEmpty)
+      ? user['fullname']
+      : "Unknown User"; // Fallback to "Unknown User"
+
+              return ListTile(
+                title: Text(userName), // Display the corrected name
+                subtitle: Text("Role: ${user['role']}"),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.assignment, color: Colors.blue),
+                      onPressed: () {
+                        // Handle task assignment
+                        Get.snackbar("Assign Task", "Task assigned to $userName");
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        final isConfirmed = await Get.defaultDialog(
+                          title: "Delete User",
+                          middleText:
+                              "Are you sure you want to delete this user?",
+                          textCancel: "Cancel",
+                          textConfirm: "Delete",
+                          confirmTextColor: Colors.white,
+                        );
+
+                        if (isConfirmed != null && isConfirmed) {
+                          final success =
+                              await manageUsersController.deleteUser(user['id']);
+                          if (success) {
+                            Get.snackbar("Success", "User deleted successfully");
+                          } else {
+                            Get.snackbar("Error", "Failed to delete user");
+                          }
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }),
+      ),
+    ),
+  );
+}
 
   Widget _iconButton(IconData icon, VoidCallback onTap) {
     return GestureDetector(
