@@ -293,6 +293,35 @@ class AuthController extends GetxController {
     }
   }
 
+  // auth_controller.dart
+Future<void> createAdminUser({
+  required String email, 
+  required String password,
+  required String fullName,
+}) async {
+  try {
+    // 1. Create Firebase Auth user
+    final credential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: email, password: password);
+
+    
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(credential.user!.uid)
+        .set({
+          'uid': credential.user!.uid,
+          'email': email,
+          'fullName': fullName,
+          'role': 'admin',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+    Get.snackbar('Success', 'Admin user created');
+  } on FirebaseAuthException catch (e) {
+    Get.snackbar('Error', e.message ?? 'Admin creation failed');
+  }
+}
+
   Future<void> uploadProfilePicture(File imageFile) async {
     final User? user = _auth.currentUser;
     if (user == null) {

@@ -7,6 +7,20 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/auth_controller.dart';
 
 class AdminController extends GetxController {
+  void startRealtimeUpdates() {
+    // Implement real-time updates logic here
+    // Example: Listen to Firestore changes
+    _firestore.collection('dashboard_metrics').snapshots().listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        totalUsers.value = data['totalUsers'] ?? 0;
+        totalTasks.value = data['tasks']['total'] ?? 0;
+        completedTasks.value = data['tasks']['completed'] ?? 0;
+        pendingTasks.value = data['tasks']['pending'] ?? 0;
+        overdueTasks.value = data['tasks']['overdue'] ?? 0;
+      }
+    });
+  }
   var adminName = "".obs;
   var adminEmail = "".obs;
   var adminPhotoUrl = "".obs;
@@ -40,9 +54,34 @@ class AdminController extends GetxController {
 
   @override
   void onInit() {
+     fetchDashboardData();  // Initial load
+     startRealtimeUpdates();
     super.onInit();
     if (_auth.currentUser != null) {
       initializeAdminData();
+    }
+  }
+  
+
+    Future<void> fetchDashboardData() async {  // Changed from _fetchDashboardData to make it public
+    try {
+      isLoading(true);
+      final snapshot = await _firestore
+          .collection('dashboard_metrics')
+          .doc('summary')
+          .get();
+      
+      if (snapshot.exists) {
+        totalUsers.value = snapshot['totalUsers'] ?? 0;
+        totalTasks.value = snapshot['tasks']['total'] ?? 0;
+        completedTasks.value = snapshot['tasks']['completed'] ?? 0;
+        pendingTasks.value = snapshot['tasks']['pending'] ?? 0;
+        overdueTasks.value = snapshot['tasks']['overdue'] ?? 0;
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load dashboard data');
+    } finally {
+      isLoading(false);
     }
   }
 
@@ -100,75 +139,82 @@ class AdminController extends GetxController {
   }
 
   Future<void> fetchStatistics() async {
-    try {
-      isStatsLoading(true);
-      final now = DateTime.now();
+  try {
+    isStatsLoading(true);
+    final now = DateTime.now();
 
-      final userSnapshot = await _firestore
-          .collection('users')
-          .get()
-          .timeout(const Duration(seconds: 10));
-      final taskSnapshot = await _firestore
-          .collection('tasks')
-          .get()
-          .timeout(const Duration(seconds: 10));
+    final userSnapshot = await _firestore
+        .collection('users')
+        .get()
+        .timeout(const Duration(seconds: 10));
+    final taskSnapshot = await _firestore
+        .collection('tasks')
+        .get()
+        .timeout(const Duration(seconds: 10));
 
-      final userDocs = userSnapshot.docs;
-      final taskDocs = taskSnapshot.docs;
+    final userDocs = userSnapshot.docs;
+    final taskDocs = taskSnapshot.docs;
 
-      totalUsers.value = userDocs.length;
-      totalTasks.value = taskDocs.length;
+    // Update total counts
+    totalUsers.value = userDocs.length;
+    totalTasks.value = taskDocs.length;
 
-      taskSnapshotDocs = taskDocs;
+    taskSnapshotDocs = taskDocs;
 
-      completedTasks.value =
-          taskDocs.where((doc) => doc.data()['status'] == 'completed').length;
-      pendingTasks.value =
-          taskDocs.where((doc) => doc.data()['status'] == 'pending').length;
-      overdueTasks.value = taskDocs.where((doc) {
-        final data = doc.data();
-        final dueTs = data['dueDate'] as Timestamp?;
-        return dueTs != null &&
-            dueTs.toDate().isBefore(now) &&
-            data['status'] != 'completed';
-      }).length;
+    // Update task counts
+    completedTasks.value =
+        taskDocs.where((doc) => doc.data()['status'] == 'completed').length;
+    pendingTasks.value =
+        taskDocs.where((doc) => doc.data()['status'] == 'pending').length;
+    overdueTasks.value = taskDocs.where((doc) {
+      final data = doc.data();
+      final dueTs = data['dueDate'] as Timestamp?;
+      return dueTs != null &&
+          dueTs.toDate().isBefore(now) &&
+          data['status'] != 'completed';
+    }).length;
 
-      userNames.value = userDocs
-          .map((doc) => doc.data()['fullName'] as String? ?? "Unknown")
-          .toList();
+    // Populate user names and debug the data
+    userNames.value = userDocs.map((doc) {
+      final data = doc.data();
+      final fullName = data['fullName']?.toString() ?? "Unknown User";
+      print("User fetched: ${data['fullName']}"); // Debug log
+      return fullName;
+    }).toList();
 
-      taskTitles.value = taskDocs
-          .map((doc) => doc.data()['title'] as String? ?? 'Untitled')
-          .toList();
+    // Populate task titles
+    taskTitles.value = taskDocs
+        .map((doc) => doc.data()['title'] as String? ?? 'Untitled')
+        .toList();
 
-      completedTaskTitles.value = taskDocs
-          .where((doc) => doc.data()['status'] == 'completed')
-          .map((doc) => doc.data()['title'] as String? ?? '')
-          .toList();
+    completedTaskTitles.value = taskDocs
+        .where((doc) => doc.data()['status'] == 'completed')
+        .map((doc) => doc.data()['title'] as String? ?? '')
+        .toList();
 
-      pendingTaskTitles.value = taskDocs
-          .where((doc) => doc.data()['status'] == 'pending')
-          .map((doc) => doc.data()['title'] as String? ?? '')
-          .toList();
+    pendingTaskTitles.value = taskDocs
+        .where((doc) => doc.data()['status'] == 'pending')
+        .map((doc) => doc.data()['title'] as String? ?? '')
+        .toList();
 
-      overdueTaskTitles.value = taskDocs
-          .where((doc) {
-            final data = doc.data();
-            final dueTs = data['dueDate'] as Timestamp?;
-            return dueTs != null &&
-                dueTs.toDate().isBefore(now) &&
-                data['status'] != 'completed';
-          })
-          .map((doc) => doc.data()['title'] as String? ?? '')
-          .toList();
-    } on TimeoutException {
-      Get.snackbar('Error', 'Fetching statistics timed out');
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
-    } finally {
-      isStatsLoading(false);
-    }
+    overdueTaskTitles.value = taskDocs
+        .where((doc) {
+          final data = doc.data();
+          final dueTs = data['dueDate'] as Timestamp?;
+          return dueTs != null &&
+              dueTs.toDate().isBefore(now) &&
+              data['status'] != 'completed';
+        })
+        .map((doc) => doc.data()['title'] as String? ?? '')
+        .toList();
+  } on TimeoutException {
+    Get.snackbar('Error', 'Fetching statistics timed out');
+  } catch (e) {
+    Get.snackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
+  } finally {
+    isStatsLoading(false);
   }
+}
 
   void filterTasksByUser(String fullName) {
     final userTasks = taskSnapshotDocs.where((doc) =>
