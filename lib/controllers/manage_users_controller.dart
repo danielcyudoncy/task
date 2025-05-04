@@ -29,38 +29,47 @@ class ManageUsersController extends GetxController {
     super.onClose();
   }
 
-  // ✅ Fetch users from Firestore with pagination
   Future<void> fetchUsers() async {
-    try {
-      isLoading.value = true;
-      print("Fetching users from Firebase...");
+  try {
+    isLoading.value = true;
+    print("Fetching users from Firebase...");
 
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection(
-              'users') // Ensure this matches your Firebase collection name
-          .get();
+    // Fetch all user documents from Firestore
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .get();
 
-      print("Fetched ${snapshot.docs.length} users from Firebase");
+    print("Fetched ${snapshot.docs.length} users from Firebase");
 
-      if (snapshot.docs.isNotEmpty) {
-        usersList.value = snapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          print("User Data: ${data}"); // Debug print
-          return {
-            'id': doc.id,
-            'fullname': data['fullname'] ?? 'Unknown User',
-            'role': data['role'] ?? 'No Role',
-          };
-        }).toList();
-      } else {
-        print("No users found in Firebase");
-      }
-    } catch (e) {
-      print("Error fetching users: $e");
-    } finally {
-      isLoading.value = false;
+    if (snapshot.docs.isNotEmpty) {
+      // Map each document to a user object with proper fallback values
+      usersList.value = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        // Debug: Print the raw data fetched from Firestore
+        print("User Data: $data");
+
+        return {
+          'id': doc.id,
+          'fullname': data['fullName'] ?? 'Unknown User', // Correct field name
+          'role': data['role'] ?? 'No Role',
+          'email': data['email'] ?? 'No Email', // Added email for search
+        };
+      }).toList();
+
+      // Set the filtered list to the full list initially
+      filteredUsersList.assignAll(usersList);
+    } else {
+      print("No users found in Firebase");
+      usersList.clear();
+      filteredUsersList.clear();
     }
+  } catch (e) {
+    print("Error fetching users: $e");
+  } finally {
+    isLoading.value = false;
   }
+}
   // ✅ Delete a user from Firestore
   Future<bool> deleteUser(String userId) async {
     try {
@@ -100,4 +109,24 @@ class ManageUsersController extends GetxController {
       fetchUsers(); // Fetch more users when scrolled to the bottom
     }
   }
+
+  // manage_users_controller.dart
+Future<void> promoteToAdmin(String userId) async {
+  try {
+    // 1. Set admin claim
+    // Setting custom claims is not supported in FirebaseAuth for Flutter.
+    // This operation should be handled on the server side using Firebase Admin SDK.
+    print('Custom claims must be set using Firebase Admin SDK on the server.');
+
+    // 2. Update Firestore role
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .update({'role': 'admin'});
+
+    Get.snackbar('Success', 'User promoted to admin');
+  } catch (e) {
+    Get.snackbar('Error', 'Promotion failed: ${e.toString()}');
+  }
+}
 }
