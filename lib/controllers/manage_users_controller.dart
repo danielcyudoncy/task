@@ -8,6 +8,7 @@ class ManageUsersController extends GetxController {
   var usersList = <Map<String, dynamic>>[].obs;
   var filteredUsersList =
       <Map<String, dynamic>>[].obs; // Filtered list for search
+  var tasksList = <Map<String, dynamic>>[].obs; // Task list for assigning tasks
   var lastDocument; // To store the last fetched document for pagination
   var hasMoreUsers = true.obs;
 
@@ -70,6 +71,21 @@ class ManageUsersController extends GetxController {
     isLoading.value = false;
   }
 }
+
+Future<void> assignTaskToUser(String userId, String taskId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('assignedTasks')
+          .doc(taskId)
+          .set({'taskId': taskId});
+
+      Get.snackbar('Success', 'Task assigned successfully');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to assign task: ${e.toString()}');
+    }
+  }
   // ✅ Delete a user from Firestore
   Future<bool> deleteUser(String userId) async {
     try {

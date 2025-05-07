@@ -1,9 +1,16 @@
 // views/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/utils/constants/app_strings.dart';
+import 'package:task/utils/constants/app_styles.dart';
+import 'package:task/widgets/dashboard_cards_widget.dart';
+import 'package:task/widgets/header_widget.dart';
+import 'package:task/widgets/tab_bar_widget.dart';
+import 'package:task/widgets/task_list_widget.dart';
 import '../controllers/admin_controller.dart';
 import '../controllers/auth_controller.dart';
-import '../controllers/manage_users_controller.dart'; // Import the ManageUsersController
+import '../controllers/manage_users_controller.dart';
+
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -12,20 +19,28 @@ class AdminDashboardScreen extends StatefulWidget {
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class _AdminDashboardScreenState extends State<AdminDashboardScreen>
+    with SingleTickerProviderStateMixin {
   final AdminController adminController = Get.find<AdminController>();
   final AuthController authController = Get.find<AuthController>();
   final ManageUsersController manageUsersController =
-      Get.find<ManageUsersController>(); // Instantiate the controller
-  final RxInt selectedTab = 0.obs;
+      Get.find<ManageUsersController>();
+
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     adminController.fetchStatistics();
     adminController.fetchDashboardData();
-    manageUsersController
-        .fetchUsers(); // Fetch users when the screen is initialized
+    manageUsersController.fetchUsers();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,263 +55,70 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       return Scaffold(
         body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, Color(0xFF0B189B)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
+          decoration:
+              const BoxDecoration(gradient: AppStyles.gradientBackground),
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Row with Avatar and Welcome
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Colors.grey.shade300,
-                            backgroundImage: authController
-                                    .profilePic.value.isNotEmpty
-                                ? NetworkImage(authController.profilePic.value)
-                                : null,
-                            child: authController.profilePic.value.isEmpty
-                                ? Text(
-                                    authController.fullName.value.isNotEmpty
-                                        ? authController.fullName.value[0]
-                                            .toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Welcome',
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            authController.fullName.value,
-                            style: const TextStyle(fontSize: 24),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          _iconButton(Icons.camera_alt, () {}),
-                          const SizedBox(width: 10),
-                          _iconButton(Icons.logout, () {
-                            authController.logout();
-                          }),
-                        ],
-                      ),
-                    ],
-                  ),
+                  // Using HeaderWidget
+                  HeaderWidget(authController: authController),
 
                   const SizedBox(height: 30),
-                  const Text(
-                    'DAILY ASSIGNMENTS',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo),
-                  ),
+
+                  const Text(AppStrings.dailyAssignments,
+                      style: AppStyles.sectionTitleStyle),
+
                   const SizedBox(height: 20),
 
-                  // Total Users & Total Tasks Cards
-                  Row(
-                    children: [
-                      // Total Users Card
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 26, horizontal: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text('Total Users',
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.white)),
-                              const SizedBox(height: 6),
-                              Text(
-                                adminController.totalUsers.value.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 12),
-                              GestureDetector(
-                                onTap: () {
-                                  _showManageUsersDialog();
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 30, vertical: 14),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    "Manage Users",
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.black),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      // Total Tasks Card
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 26, horizontal: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text('Total Task',
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.white)),
-                              const SizedBox(height: 6),
-                              Text(
-                                adminController.totalTasks.value.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 12),
-                              // Dropdown for tasks
-                              Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Obx(() {
-                                  final sortedTasks = [
-                                    ...adminController.taskTitles
-                                  ]..sort();
-                                  return DropdownButton<String>(
-                                    isExpanded: true,
-                                    value: adminController
-                                            .selectedTaskTitle.value.isEmpty
-                                        ? null
-                                        : adminController
-                                            .selectedTaskTitle.value,
-                                    hint: const Text("Select Task"),
-                                    underline: const SizedBox(),
-                                    icon: const Icon(Icons.arrow_drop_down),
-                                    items: sortedTasks
-                                        .map(
-                                            (title) => DropdownMenuItem<String>(
-                                                  value: title,
-                                                  child: Text(title),
-                                                ))
-                                        .toList(),
-                                    onChanged: (value) {
-                                      adminController.selectedTaskTitle.value =
-                                          value ?? '';
-                                      if (value != null && value.isNotEmpty) {
-                                        _showTaskDetailDialog(value);
-                                      }
-                                    },
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  // Using DashboardCardsWidget
+                  DashboardCardsWidget(
+                    adminController: adminController,
+                    onManageUsersTap: _showManageUsersDialog,
+                    onTaskSelected: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        _showTaskDetailDialog(value);
+                      }
+                    },
                   ),
 
                   const SizedBox(height: 24),
 
-                  // Task title & Create Task Button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'TASK',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo),
-                      ),
-                      GestureDetector(
-                        onTap: () => Get.toNamed('/task-creation'),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF0B189B),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.add, color: Colors.white),
-                        ),
-                      ),
+                  // Task Section
+                  _buildTaskSection(),
+
+                  const SizedBox(height: 16),
+
+                  // Using TabBarWidget
+                  TabBarWidget(
+                    tabController: _tabController,
+                    tabTitles: const [
+                      AppStrings.notCompleted,
+                      AppStrings.completed
                     ],
                   ),
 
                   const SizedBox(height: 16),
 
-                  // Task Status Tabs
-                  Obx(() {
-                    return Row(
-                      children: [
-                        _tabButton('Not Completed', 0),
-                        _tabButton('Completed', 1),
-                      ],
-                    );
-                  }),
-
-                  const SizedBox(height: 16),
-
-                  // Task List
+                  // Using TaskListWidget inside TabBarView
                   Expanded(
-                    child: Obx(() {
-                      final showCompleted = selectedTab.value == 1;
-                      final tasks = showCompleted
-                          ? adminController.completedTaskTitles
-                          : adminController.pendingTaskTitles;
-
-                      return ListView.builder(
-                        itemCount: tasks.length,
-                        itemBuilder: (context, index) {
-                          return _taskCard(
-                            title: tasks[index],
-                            completed: showCompleted,
-                          );
-                        },
-                      );
-                    }),
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        TaskListWidget(
+                          tasks: adminController.pendingTaskTitles,
+                          showCompleted: false,
+                          onTaskTap: (task) => _showTaskDetailDialog(task),
+                        ),
+                        TaskListWidget(
+                          tasks: adminController.completedTaskTitles,
+                          showCompleted: true,
+                          onTaskTap: (task) => _showTaskDetailDialog(task),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -307,150 +129,114 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
   }
 
- void _showManageUsersDialog() {
-  Get.dialog(
-    Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        height: 500,
-        child: Obx(() {
-          if (manageUsersController.isLoading.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (manageUsersController.usersList.isEmpty) {
-            return const Center(child: Text('No users available.'));
-          }
-
-          return ListView.builder(
-            itemCount: manageUsersController.usersList.length,
-            itemBuilder: (context, index) {
-              final user = manageUsersController.usersList[index];
-              print("User Data at index $index: $user");
-              final userName = (user.containsKey('fullname') && 
-                    user['fullname'] != null && 
-                    user['fullname'].isNotEmpty)
-      ? user['fullname']
-      : "Unknown User"; // Fallback to "Unknown User"
-
-              return ListTile(
-                title: Text(userName), // Display the corrected name
-                subtitle: Text("Role: ${user['role']}"),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.assignment, color: Colors.blue),
-                      onPressed: () {
-                        // Handle task assignment
-                        Get.snackbar("Assign Task", "Task assigned to $userName");
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        final isConfirmed = await Get.defaultDialog(
-                          title: "Delete User",
-                          middleText:
-                              "Are you sure you want to delete this user?",
-                          textCancel: "Cancel",
-                          textConfirm: "Delete",
-                          confirmTextColor: Colors.white,
-                        );
-
-                        if (isConfirmed != null && isConfirmed) {
-                          final success =
-                              await manageUsersController.deleteUser(user['id']);
-                          if (success) {
-                            Get.snackbar("Success", "User deleted successfully");
-                          } else {
-                            Get.snackbar("Error", "Failed to delete user");
-                          }
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        }),
-      ),
-    ),
-  );
-}
-
-  Widget _iconButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: const Color(0xFF0B189B), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blue.withOpacity(0.2),
-              blurRadius: 4,
-              spreadRadius: 1,
+  Widget _buildTaskSection() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(AppStrings.task, style: AppStyles.sectionTitleStyle),
+        GestureDetector(
+          onTap: () => Get.toNamed('/task-creation'),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Color(0xFF0B189B),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-        child: Icon(icon, color: const Color(0xFF0B189B), size: 20),
-      ),
-    );
-  }
-
-  Widget _tabButton(String text, int tabIndex) {
-    return GestureDetector(
-      onTap: () {
-        selectedTab.value = tabIndex;
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: selectedTab.value == tabIndex
-              ? const Color(0xFF0B189B)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: selectedTab.value == tabIndex ? Colors.white : Colors.black,
+            child: const Icon(Icons.add, color: Colors.white),
           ),
         ),
+      ],
+    );
+  }
+
+  void _showManageUsersDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          height: 500,
+          child: Obx(() {
+            if (manageUsersController.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (manageUsersController.usersList.isEmpty) {
+              return const Center(child: Text('No users available.'));
+            }
+            return ListView.builder(
+              itemCount: manageUsersController.usersList.length,
+              itemBuilder: (context, index) {
+                final user = manageUsersController.usersList[index];
+                final userName = user['fullname']?.isNotEmpty == true
+                    ? user['fullname']
+                    : AppStrings.unknownUser;
+                return ListTile(
+                  title: Text(userName),
+                  subtitle: Text("Role: ${user['role']}"),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.assignment, color: Colors.blue),
+                        onPressed: () => Get.snackbar(
+                            "Assign Task", "Task assigned to $userName"),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _confirmUserDeletion(user),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }),
+        ),
       ),
     );
   }
 
-  Widget _taskCard({
-    required String title,
-    required bool completed,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ListTile(
-        title: Text(title),
-        trailing: Icon(
-          completed ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: completed ? Colors.green : Colors.grey,
-        ),
-        onTap: () => _showTaskDetailDialog(title),
+  void _confirmUserDeletion(Map<String, dynamic> user) async {
+    final result = await Get.dialog<bool>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        title: const Text(AppStrings.deleteUser),
+        content: const Text(AppStrings.deleteUserConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Get.back(result: true),
+            child: const Text("Delete", style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
+
+    if (result == true) {
+      final userId = user['uid'];
+      if (userId != null) {
+        await manageUsersController.deleteUser(userId);
+        Get.snackbar("Success", "User deleted successfully",
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM);
+      } else {
+        Get.snackbar("Error", "User ID is missing",
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM);
+      }
+    }
   }
 
   void _showTaskDetailDialog(String title) {
     Get.defaultDialog(
-      title: "Task Details",
+      title: AppStrings.taskDetails,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -461,25 +247,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Text("Created by: ${_getCreatedBy(title)}"),
         ],
       ),
-      textConfirm: "Close",
+      textConfirm: AppStrings.close,
       onConfirm: () => Get.back(),
     );
   }
 
   String _getTaskStatus(String title) {
     if (adminController.completedTaskTitles.contains(title)) {
-      return "Completed";
+      return AppStrings.completed;
     } else if (adminController.pendingTaskTitles.contains(title)) {
-      return "Pending";
+      return AppStrings.notCompleted;
     } else {
-      return "Unknown";
+      return AppStrings.unknown;
     }
   }
 
   String _getCreatedBy(String title) {
-    final task = adminController.taskSnapshotDocs.firstWhereOrNull(
-      (doc) => doc['title'] == title,
-    );
-    return task?['createdByName'] ?? 'Unknown';
+    final task = adminController.taskSnapshotDocs
+        .firstWhereOrNull((doc) => doc['title'] == title);
+    return task?['createdByName'] ?? AppStrings.unknown;
   }
 }
