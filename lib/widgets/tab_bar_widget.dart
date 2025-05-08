@@ -16,7 +16,7 @@ class TabBarWidget extends StatelessWidget {
     return TabBar(
       controller: tabController,
       indicator: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         color: const Color(0xFF0B189B),
       ),
       labelColor: Colors.white,
