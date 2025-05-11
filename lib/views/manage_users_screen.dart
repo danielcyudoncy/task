@@ -137,52 +137,46 @@ class ManageUsersScreen extends StatelessWidget {
     );
   }
 
-void _showTaskListDialog(BuildContext context, Map<String, dynamic> user) {
+ void _showTaskListDialog(BuildContext context, Map<String, dynamic> user) {
   final tasks = manageUsersController.tasksList;
 
   showDialog(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        scrollable: true,
-        title: const Text('Assign Task'),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 300),
-          child: tasks.isEmpty
-              ? const Center(child: Text('No tasks available'))
-              : ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = tasks[index];
-                    return ListTile(
-                      title: Text(task['title']),
-                      trailing: ElevatedButton(
-                        onPressed: () {
-                          manageUsersController.assignTaskToUser(user['id'], task['id']);
-                          Navigator.pop(context);
-                          Get.snackbar('Success', 'Task assigned successfully',
-                              snackPosition: SnackPosition.BOTTOM);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0B189B),
-                        ),
-                        child: const Text('Assign', style: TextStyle(color: Colors.white)),
-                      ),
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      );
+      return Obx(() {
+        // Debug: Log tasks length and data
+        print("Tasks length: ${tasks.length}");
+        tasks.forEach((task) => print(task));
+
+        if (tasks.isEmpty) {
+          return const SimpleDialog(
+            title: Text('Assign Task'),
+            children: [Center(child: Text("No tasks available"))],
+          );
+        }
+
+        return SimpleDialog(
+          title: const Text('Assign Task'),
+          children: tasks.map((task) {
+            return SimpleDialogOption(
+              onPressed: () {
+                // Debug: Log selected task ID and user ID
+                print("Selected Task ID: ${task['taskId']}");
+                print("Assigning to User ID: ${user['id']}");
+
+                manageUsersController.assignTaskToUser(user['id'], task['taskId']);
+                Navigator.pop(context);
+                Get.snackbar('Success', 'Task assigned successfully',
+                    snackPosition: SnackPosition.BOTTOM);
+              },
+              child: Text(task['title']),
+            );
+          }).toList(),
+        );
+      });
     },
   );
 }
-
 
   String _getInitials(String fullname) {
     if (fullname.isEmpty) return "?";

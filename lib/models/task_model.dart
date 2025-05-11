@@ -1,4 +1,3 @@
-// models/task_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Task {
@@ -51,5 +50,30 @@ class Task {
       'assignedCameraman': assignedCameraman,
       'timestamp': timestamp,
     };
+  }
+
+  // ✅ Add copyWith method for immutability and updates
+  Task copyWith({
+    String? taskId,
+    String? title,
+    String? description,
+    String? createdBy,
+    String? assignedReporter,
+    String? assignedCameraman,
+    String? status,
+    List<String>? comments,
+    Timestamp? timestamp,
+  }) {
+    return Task(
+      taskId: taskId ?? this.taskId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      createdBy: createdBy ?? this.createdBy,
+      assignedReporter: assignedReporter ?? this.assignedReporter,
+      assignedCameraman: assignedCameraman ?? this.assignedCameraman,
+      status: status ?? this.status,
+      comments: comments ?? this.comments,
+      timestamp: timestamp ?? this.timestamp,
+    );
   }
 }
