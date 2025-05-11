@@ -18,6 +18,7 @@ class ManageUsersController extends GetxController {
   void onInit() {
     super.onInit();
     fetchUsers(); // Fetch users when the controller is initialized
+    fetchTasks(); // Fetch tasks when the controller is initialized
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
     isHovered.assignAll(List.filled(usersList.length, false));
@@ -72,6 +73,41 @@ class ManageUsersController extends GetxController {
     }
   }
 
+  // New: Fetch tasks from Firestore
+  Future<void> fetchTasks() async {
+    try {
+      isLoading.value = true;
+      print("Fetching tasks from Firebase...");
+
+      // Fetch all task documents from Firestore
+      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('tasks').get();
+
+      print("Fetched ${snapshot.docs.length} tasks from Firebase");
+
+      if (snapshot.docs.isNotEmpty) {
+        // Map each document to a task object
+        tasksList.value = snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          // Debug: Print the raw task data fetched from Firestore
+          print("Task Data: $data");
+
+          return {
+            'id': doc.id,
+            'title': data['title'] ?? 'Untitled Task',
+          };
+        }).toList();
+      } else {
+        print("No tasks found in Firebase");
+        tasksList.clear();
+      }
+    } catch (e) {
+      print("Error fetching tasks: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> assignTaskToUser(String userId, String taskId) async {
     try {
       await FirebaseFirestore.instance
@@ -94,7 +130,6 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  // ✅ Delete a user from Firestore
   Future<bool> deleteUser(String userId) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();
@@ -109,7 +144,6 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  // ✅ Search users
   void searchUsers(String query) {
     if (query.isEmpty) {
       filteredUsersList.assignAll(usersList); // Reset to full list if query is empty
@@ -124,7 +158,6 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  // Handle the scroll to trigger fetch more users when reaching the bottom
   void _scrollListener() {
     if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
       fetchUsers(); // Fetch more users when scrolled to the bottom
