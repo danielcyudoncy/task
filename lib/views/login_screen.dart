@@ -1,4 +1,3 @@
-// views/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_colors.dart';
@@ -12,6 +11,15 @@ class LoginScreen extends StatelessWidget {
   final AuthController _auth = Get.find();
 
   LoginScreen({super.key});
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      _auth.signIn(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +140,6 @@ class LoginScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
                                     ),
-                      
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -238,6 +245,7 @@ class LoginScreen extends StatelessWidget {
                                 GestureDetector(
                                   onTap: () {
                                     // TODO: Navigate to Forgot Password screen
+                                    Get.toNamed('/forgot-password');
                                   },
                                   child: const Text(
                                     "Forget password?",
@@ -277,14 +285,5 @@ class LoginScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      _auth.signIn(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-    }
   }
 }

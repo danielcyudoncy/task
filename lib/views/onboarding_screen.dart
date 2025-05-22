@@ -1,4 +1,3 @@
-// views/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,15 +9,15 @@ class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
   void _handleGetStarted() {
-    Get.toNamed("/signup");
+    Get.offAllNamed("/signup"); // Use offAllNamed to clear the stack
   }
 
   void _handleMyAccount() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Get.offAllNamed("/home");
+      Get.offAllNamed("/home"); // Use offAllNamed to clear the stack
     } else {
-      Get.toNamed("/login");
+      Get.offAllNamed("/login"); // Use offAllNamed to clear the stack
     }
   }
 
