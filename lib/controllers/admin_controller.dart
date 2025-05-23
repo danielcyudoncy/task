@@ -47,8 +47,10 @@ class AdminController extends GetxController {
   var selectedUserName = ''.obs;
   var selectedTaskTitle = ''.obs;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
 
   List<QueryDocumentSnapshot> taskSnapshotDocs = [];
 
@@ -346,5 +348,56 @@ class AdminController extends GetxController {
 
     selectedUserName.value = '';
     selectedTaskTitle.value = '';
+  }
+
+  Future<void> deleteUser(String userId) async {
+    try {
+      isLoading(true);
+
+      // 1. Verify user exists in Firestore
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        throw 'Firestore user not found';
+      }
+
+      // 3. Execute deletion (with transaction for safety)
+      await _firestore.runTransaction((transaction) async {
+        // Delete user document
+        transaction.delete(_firestore.collection('users').doc(userId));
+
+        // Optional: Delete user's tasks or other related data
+        final tasks = await _firestore
+            .collection('tasks')
+            .where('assignedTo', isEqualTo: userId)
+            .get();
+
+        for (final doc in tasks.docs) {
+          transaction.delete(doc.reference);
+        }
+      });
+
+      
+      userList.removeWhere((user) => user['id'] == userId);
+      Get.snackbar('Success', 'User deleted permanently');
+    } on FirebaseAuthException catch (e) {
+      Get.snackbar('Error', _getAuthErrorMessage(e));
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  String _getAuthErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'requires-recent-login':
+        return 'Requires recent authentication. Please re-login.';
+      case 'user-not-found':
+        return 'User account not found';
+      case 'insufficient-permissions':
+        return 'Admin privileges required';
+      default:
+        return e.message ?? 'User deletion failed';
+    }
   }
 }

@@ -1,3 +1,4 @@
+// controllers/task_controller.dart
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,7 +48,8 @@ class TaskController extends GetxController {
       taskTitleCache.addAll(Map<String, String>.from(jsonDecode(titleCache)));
     }
 
-    print("Caches initialized: UserNameCache: $userNameCache, TaskTitleCache: $taskTitleCache");
+    print(
+        "Caches initialized: UserNameCache: $userNameCache, TaskTitleCache: $taskTitleCache");
   }
 
   // Save cache to local storage
@@ -104,16 +106,14 @@ class TaskController extends GetxController {
     try {
       Stream<QuerySnapshot> taskStream;
       String userRole = authController.userRole.value;
-      String userId = authController.auth.currentUser!.uid;
 
-      if (userRole == "Reporter" || userRole == "Cameraman") {
-        taskStream = _firebaseService.getTasksByUser(userId);
-      } else {
-        taskStream = _firebaseService.getAllTasks();
-      }
+      // Always fetch all tasks, filtering by role below
+      taskStream = _firebaseService.getAllTasks();
 
       taskStream.listen((snapshot) async {
         List<Task> updatedTasks = [];
+        // Move userId here, where it's actually used
+        String userId = authController.auth.currentUser!.uid;
 
         for (var doc in snapshot.docs) {
           var taskData = doc.data() as Map<String, dynamic>;
@@ -147,8 +147,27 @@ class TaskController extends GetxController {
                 taskData["comments"] ?? []), // Fix missing comments
             timestamp: taskData["timestamp"] ??
                 Timestamp.now(), // Fix missing timestamp
+            createdById: taskData["createdBy"] ?? "",
+            assignedReporterId: taskData["assignedReporter"],
+            assignedCameramanId: taskData["assignedCameraman"],
           ));
         }
+
+        // Role-based filtering
+        if (userRole == "Reporter") {
+          updatedTasks = updatedTasks
+              .where((task) =>
+                  (task.assignedReporterId == userId) ||
+                  (task.createdById == userId))
+              .toList();
+        } else if (userRole == "Cameraman") {
+          updatedTasks = updatedTasks
+              .where((task) =>
+                  (task.assignedCameramanId == userId) ||
+                  (task.createdById == userId))
+              .toList();
+        }
+        // Other roles see all tasks
 
         tasks.value = updatedTasks;
         saveCache(); // Save the updated cache
@@ -161,7 +180,8 @@ class TaskController extends GetxController {
   }
 
   // Fetch user's full name using UID with caching
-  Future<String> _getUserName(String uid) async {
+  Future<String> _getUserName(String? uid) async {
+    if (uid == null) return "Not Assigned";
     try {
       // Check if the name is already in the cache
       if (userNameCache.containsKey(uid)) {
@@ -239,7 +259,8 @@ class TaskController extends GetxController {
     }
   }
 
-  Future<void> updateTask(String taskId, String title, String description, String status) async {
+  Future<void> updateTask(
+      String taskId, String title, String description, String status) async {
     try {
       isLoading(true);
       // Call Firestore service to update the task
@@ -266,33 +287,6 @@ class TaskController extends GetxController {
       Get.snackbar("Error", "Failed to update task: ${e.toString()}");
     } finally {
       isLoading(false);
-    }
-  }
-
-  // Fetch task title using taskId with caching
-  Future<String> _getTaskTitle(String taskId) async {
-    try {
-      // Check if the title is already in the cache
-      if (taskTitleCache.containsKey(taskId)) {
-        return taskTitleCache[taskId]!;
-      }
-
-      // If not in cache, fetch from Firestore
-      DocumentSnapshot taskDoc =
-          await FirebaseFirestore.instance.collection("tasks").doc(taskId).get();
-
-      if (taskDoc.exists) {
-        String title = taskDoc["title"] ?? "Unknown";
-
-        // Add the title to the cache
-        taskTitleCache[taskId] = title;
-
-        return title;
-      } else {
-        return "Task not found";
-      }
-    } catch (e) {
-      return "Error fetching task title";
     }
   }
 }
