@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Don't call Get.find here!
+    // Don't call Get.find here
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Assignment Logging App',
