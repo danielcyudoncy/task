@@ -21,6 +21,11 @@ class AuthController extends GetxController {
   Rx<User?> firebaseUser = Rx<User?>(null);
   RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
 
+  // Add this Rx<User?> and currentUser getter
+  final Rx<User?> user = Rx<User?>(null);
+
+  User? get currentUser => user.value;
+
   FirebaseAuth get auth => _auth;
   FirebaseService get firebaseService => _firebaseService;
 
@@ -49,11 +54,12 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _auth.authStateChanges().listen((User? user) {
-      if (user == null) {
+    _auth.authStateChanges().listen((User? userValue) {
+      user.value = userValue; // keep user Rx in sync
+      if (userValue == null) {
         debugPrint("User signed out");
       } else {
-        debugPrint("User signed in: ${user.uid}");
+        debugPrint("User signed in: ${userValue.uid}");
       }
     });
   }
@@ -61,6 +67,7 @@ class AuthController extends GetxController {
   @override
   void onReady() {
     firebaseUser.bindStream(_auth.authStateChanges());
+    user.bindStream(_auth.authStateChanges()); // also bind user Rx to stream
     ever(userRole, (_) => _handleRoleChange());
     debounce(lastActivity, (_) => _checkInactivity(),
         time: const Duration(minutes: 30));
@@ -294,33 +301,32 @@ class AuthController extends GetxController {
   }
 
   // auth_controller.dart
-Future<void> createAdminUser({
-  required String email, 
-  required String password,
-  required String fullName,
-}) async {
-  try {
-    // 1. Create Firebase Auth user
-    final credential = await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(email: email, password: password);
+  Future<void> createAdminUser({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    try {
+      // 1. Create Firebase Auth user
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
 
-    
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(credential.user!.uid)
-        .set({
-          'uid': credential.user!.uid,
-          'email': email,
-          'fullName': fullName,
-          'role': 'admin',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(credential.user!.uid)
+          .set({
+        'uid': credential.user!.uid,
+        'email': email,
+        'fullName': fullName,
+        'role': 'admin',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-    Get.snackbar('Success', 'Admin user created');
-  } on FirebaseAuthException catch (e) {
-    Get.snackbar('Error', e.message ?? 'Admin creation failed');
+      Get.snackbar('Success', 'Admin user created');
+    } on FirebaseAuthException catch (e) {
+      Get.snackbar('Error', e.message ?? 'Admin creation failed');
+    }
   }
-}
 
   Future<void> uploadProfilePicture(File imageFile) async {
     final User? user = _auth.currentUser;
@@ -458,6 +464,24 @@ Future<void> createAdminUser({
     }
   }
 
+  // Sign out the current user
+  Future<void> signOut() async {
+    await FirebaseAuth.instance.signOut();
+    // Optionally: Clear your user Rx variable, navigate to login, etc.
+    Get.offAllNamed('/onboarding');
+  }
+
+  // Delete the current user's account
+  Future<void> deleteAccount() async {
+    try {
+      await FirebaseAuth.instance.currentUser?.delete();
+      // Optionally: Clear user state, navigate to onboarding/login
+      Get.offAllNamed('/onboarding');
+    } catch (e) {
+      Get.snackbar('Error', 'Could not delete account: $e');
+    }
+  }
+
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -470,8 +494,6 @@ Future<void> createAdminUser({
         return e.message ?? "Authentication error.";
     }
   }
-
-  
 
   void _checkInactivity() {
     final now = DateTime.now();

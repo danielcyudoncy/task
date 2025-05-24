@@ -1,8 +1,10 @@
 // views/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/notification_controller.dart';
 import '../controllers/auth_controller.dart';
+
 
 class HomeScreen extends StatelessWidget {
   final NotificationController notificationController =
@@ -16,8 +18,8 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Obx(() => Text(
-              authController.fullName.value.isNotEmpty 
-                  ? "Welcome, ${authController.fullName.value}!" 
+              authController.fullName.value.isNotEmpty
+                  ? "Welcome, ${authController.fullName.value}!"
                   : "Assignment Logging App",
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
@@ -71,7 +73,6 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-
             Obx(() {
               if (authController.fullName.value.isNotEmpty) {
                 // Show task-related buttons only when logged in (fullName is not empty)
@@ -116,6 +117,8 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar:
+          const UserNavBar(currentIndex: 0), // <-- Add this line
     );
   }
 }
