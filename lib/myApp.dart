@@ -11,18 +11,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Don't call Get.find here
+    
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Assignment Logging App',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Use system by default, will update in Home
+      themeMode: ThemeMode.system, 
       initialBinding: GlobalBindings(),
       initialRoute: "/",
       getPages: AppRoutes.routes,
       builder: (context, child) {
-        // Now it's safe to use Get.find, because bindings have been initialized
         final SettingsController settingsController =
             Get.find<SettingsController>();
         return Obx(() => MaterialApp(
