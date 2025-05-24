@@ -1,10 +1,10 @@
 // views/users_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/user_controller.dart';
 import '../controllers/auth_controller.dart';
-import '../controllers/manage_users_controller.dart'; // Import ManageUsersController
-
+import '../controllers/manage_users_controller.dart'; 
 class UserScreen extends StatelessWidget {
   UserScreen({super.key});
 
@@ -169,6 +169,7 @@ class UserScreen extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: const UserNavBar(currentIndex: 2), // <-- Added here
     );
   }
 }

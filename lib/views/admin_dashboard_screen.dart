@@ -5,12 +5,10 @@ import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/constants/app_styles.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
 import 'package:task/widgets/header_widget.dart';
-import 'package:task/widgets/tab_bar_widget.dart';
-import 'package:task/widgets/task_list_widget.dart';
+import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/admin_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/manage_users_controller.dart';
-
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -86,38 +84,99 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
                   const SizedBox(height: 24),
 
-                  // Task Section
-                  _buildTaskSection(),
-
-                  const SizedBox(height: 16),
-
-                  // Using TabBarWidget
-                  TabBarWidget(
-                    tabController: _tabController,
-                    tabTitles: const [
-                      AppStrings.notCompleted,
-                      AppStrings.completed
-                    ],
+                  // ===== NEW UI: TASK label is OUTSIDE the white container =====
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, bottom: 8),
+                    child: Text(
+                      "TASK",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xFF3739B7),
+                      ),
+                    ),
                   ),
 
-                  const SizedBox(height: 16),
-
-                  // Using TaskListWidget inside TabBarView
+                  // ===== White rounded container blends with bottom navbar =====
                   Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        TaskListWidget(
-                          tasks: adminController.pendingTaskTitles,
-                          showCompleted: false,
-                          onTaskTap: (task) => _showTaskDetailDialog(task),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(26),
+                          topRight: Radius.circular(26),
                         ),
-                        TaskListWidget(
-                          tasks: adminController.completedTaskTitles,
-                          showCompleted: true,
-                          onTaskTap: (task) => _showTaskDetailDialog(task),
-                        ),
-                      ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Row with Add button only (TASK label is now above container)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: 18,
+                              left: 16,
+                              right: 16,
+                              bottom: 10,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => Get.toNamed('/task-creation'),
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF3739B7),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.add,
+                                        color: Colors.white, size: 22),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Tab Bar
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: TabBar(
+                              controller: _tabController,
+                              indicatorColor: const Color(0xFF3739B7),
+                              indicatorWeight: 2.5,
+                              labelColor: const Color(0xFF3739B7),
+                              unselectedLabelColor: Colors.black54,
+                              labelStyle: const TextStyle(
+                                  fontWeight: FontWeight.w500, fontSize: 15),
+                              tabs: const [
+                                Tab(text: "Not Completed"),
+                                Tab(text: "Completed"),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // TabBarView with task cards
+                          Expanded(
+                            child: TabBarView(
+                              controller: _tabController,
+                              children: [
+                                _TasksTab(
+                                  tasks: adminController.pendingTaskTitles,
+                                  taskDocs: adminController.taskSnapshotDocs,
+                                  onTaskTap: _showTaskDetailDialog,
+                                ),
+                                _TasksTab(
+                                  tasks: adminController.completedTaskTitles,
+                                  taskDocs: adminController.taskSnapshotDocs,
+                                  onTaskTap: _showTaskDetailDialog,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -125,29 +184,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ),
           ),
         ),
+        bottomNavigationBar: const UserNavBar(currentIndex: 0),
       );
     });
-  }
-
-  Widget _buildTaskSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(AppStrings.task, style: AppStyles.sectionTitleStyle),
-        GestureDetector(
-          onTap: () => Get.toNamed('/task-creation'),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Color(0xFF0B189B),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
-        ),
-      ],
-    );
   }
 
   void _showManageUsersDialog() {
@@ -266,5 +305,88 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final task = adminController.taskSnapshotDocs
         .firstWhereOrNull((doc) => doc['title'] == title);
     return task?['createdByName'] ?? AppStrings.unknown;
+  }
+}
+
+// ---- Custom TaskList for the Cards ----
+class _TasksTab extends StatelessWidget {
+  final List<dynamic> tasks;
+  final List<dynamic> taskDocs;
+  final void Function(String title) onTaskTap;
+
+  const _TasksTab({
+    required this.tasks,
+    required this.taskDocs,
+    required this.onTaskTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (tasks.isEmpty) {
+      return const Center(
+          child: Text("No tasks.", style: TextStyle(color: Colors.black54)));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 12, bottom: 20, left: 8, right: 8),
+      itemCount: tasks.length,
+      itemBuilder: (context, index) {
+        final title = tasks[index];
+        final doc = taskDocs.firstWhereOrNull((d) => d['title'] == title);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14.0),
+          child: GestureDetector(
+            onTap: () => onTaskTap(title),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF171FA0),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title ?? "",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    doc?['details'] ?? "Task Details",
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Assigned Name", // Replace with actual logic if available
+                    style: TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Due Date ${doc?['dueDate'] ?? 'N/A'}",
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.bottomRight,
+                    child: Icon(Icons.edit_note_rounded,
+                        color: Colors.white, size: 22),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }

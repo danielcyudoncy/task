@@ -1,8 +1,10 @@
 // views/task_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/auth_controller.dart';
+
 
 class TaskListScreen extends StatelessWidget {
   final TaskController taskController = Get.put(TaskController());
@@ -31,10 +33,12 @@ class TaskListScreen extends StatelessWidget {
         // ✅ Fix: Filter tasks correctly
         var filteredTasks = taskController.tasks.where((task) {
           String userRole = authController.userRole.value;
-          String userName = authController.fullName.value; // ✅ Compare names instead of UID
+          String userName =
+              authController.fullName.value; // ✅ Compare names instead of UID
 
           if (userRole == "Reporter" || userRole == "Cameraman") {
-            return task.createdBy == userName; // ✅ Compare with userName, not userId
+            return task.createdBy ==
+                userName; // ✅ Compare with userName, not userId
           }
           return true; // Show all tasks for privileged roles
         }).toList();
@@ -55,8 +59,10 @@ class TaskListScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Created by: ${task.createdBy}"),
-                    Text("Assigned Reporter: ${task.assignedReporter ?? "Not Assigned"}"),
-                    Text("Assigned Cameraman: ${task.assignedCameraman ?? "Not Assigned"}"),
+                    Text(
+                        "Assigned Reporter: ${task.assignedReporter ?? "Not Assigned"}"),
+                    Text(
+                        "Assigned Cameraman: ${task.assignedCameraman ?? "Not Assigned"}"),
                   ],
                 ),
                 trailing: Row(
@@ -79,6 +85,8 @@ class TaskListScreen extends StatelessWidget {
         onPressed: () => _showAddTaskDialog(context),
         child: const Icon(Icons.add),
       ),
+      bottomNavigationBar:
+          const UserNavBar(currentIndex: 1), // <-- Add this line
     );
   }
 
@@ -93,15 +101,18 @@ class TaskListScreen extends StatelessWidget {
       ),
       child: Text(
         status,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
     );
   }
 
   // ✅ Show dialog to update task
   void _showUpdateTaskDialog(BuildContext context, dynamic task) {
-    final TextEditingController titleController = TextEditingController(text: task.title);
-    final TextEditingController descriptionController = TextEditingController(text: task.description);
+    final TextEditingController titleController =
+        TextEditingController(text: task.title);
+    final TextEditingController descriptionController =
+        TextEditingController(text: task.description);
     String currentStatus = task.status;
 
     showDialog(
@@ -136,7 +147,8 @@ class TaskListScreen extends StatelessWidget {
                     labelText: 'Status',
                     border: OutlineInputBorder(),
                   ),
-                  items: ['Pending', 'In Progress', 'Completed'].map((String status) {
+                  items: ['Pending', 'In Progress', 'Completed']
+                      .map((String status) {
                     return DropdownMenuItem<String>(
                       value: status,
                       child: Text(status),
@@ -214,7 +226,8 @@ class TaskListScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                if (titleController.text.trim().isEmpty || descriptionController.text.trim().isEmpty) {
+                if (titleController.text.trim().isEmpty ||
+                    descriptionController.text.trim().isEmpty) {
                   Get.snackbar("Error", "Please fill in all fields.");
                   return;
                 }
