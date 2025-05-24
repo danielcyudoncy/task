@@ -1,4 +1,3 @@
-// views/splash_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,16 +14,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 5), () {
-      Get.offNamed('/onboarding');
+    Timer(const Duration(seconds: 3), () {
+      Get.offAllNamed('/onboarding'); // Use offAllNamed to clear the stack
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(0xFF2E3BB5), // Using the specified blue color
+      backgroundColor: const Color(0xFF2E3BB5), // Using the specified blue color
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -38,12 +36,15 @@ class _SplashScreenState extends State<SplashScreen> {
             const Text(
               'Your home for news',
               style: TextStyle(
-                color:
-                    Colors.white, // Slightly transparent white
+                color: Colors.white, // Slightly transparent white
                 fontSize: 18,
                 letterSpacing: 0.5,
               ),
             ),
+            const SizedBox(height: 16),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ), // Add a loading indicator
           ],
         ),
       ),
