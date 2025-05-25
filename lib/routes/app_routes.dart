@@ -4,10 +4,12 @@ import 'package:task/routes/global_bindings.dart';
 import 'package:task/routes/middleware.dart';
 import 'package:task/routes/profile_complete_middleware.dart';
 import 'package:task/views/admin_dashboard_screen.dart';
+import 'package:task/views/all_task_screen.dart';
 import 'package:task/views/home_screen.dart';
 import 'package:task/views/login_screen.dart';
 import 'package:task/views/manage_users_screen.dart';
 import 'package:task/views/notification_screen.dart';
+import 'package:task/views/profile_screen.dart';
 import 'package:task/views/profile_update_screen.dart';
 import 'package:task/views/signup_screen.dart';
 import 'package:task/views/splash_screen.dart';
@@ -73,6 +75,22 @@ class AppRoutes {
       transition: Transition.rightToLeftWithFade,
       transitionDuration: const Duration(milliseconds: 500),
     ),
+    GetPage(
+  name: "/profile",
+  page: () => ProfileScreen(),
+  middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+  binding: GlobalBindings(),
+  transition: Transition.rightToLeft,
+  transitionDuration: const Duration(milliseconds: 400),
+),
+  GetPage(
+  name: "/all-tasks",
+  page: () =>  AllTaskScreen(),
+  middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+  binding: GlobalBindings(),
+  transition: Transition.rightToLeft,
+  transitionDuration: const Duration(milliseconds: 400),
+),
     GetPage(
       name: "/manage-users",
       page: () => ManageUsersScreen(),
