@@ -12,13 +12,14 @@ class UserNavBar extends StatelessWidget {
       // Use offAllNamed to avoid stack/navigation issues
       Get.offAllNamed('/profile');
     } else if (index == 1) {
-      Get.offAllNamed('/tasks');
+      Get.offAllNamed('/all-tasks');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
+    return BottomNavigationBar(backgroundColor: Colors.white,
+      selectedItemColor: Colors.blue,
       currentIndex: currentIndex,
       onTap: _onTap,
       items: const [
