@@ -1,4 +1,3 @@
-// routes/app_routes.dart
 import 'package:get/get.dart';
 import 'package:task/routes/global_bindings.dart';
 import 'package:task/routes/middleware.dart';
@@ -11,12 +10,13 @@ import 'package:task/views/manage_users_screen.dart';
 import 'package:task/views/notification_screen.dart';
 import 'package:task/views/profile_screen.dart';
 import 'package:task/views/profile_update_screen.dart';
+import 'package:task/views/settings_screen.dart';
 import 'package:task/views/signup_screen.dart';
 import 'package:task/views/splash_screen.dart';
 import 'package:task/views/task_assignment_screen.dart';
 import 'package:task/views/task_creation_screen.dart';
 import 'package:task/views/task_list_screen.dart';
-import 'package:task/views/onboarding_screen.dart'; // Import your onboarding screen
+import 'package:task/views/onboarding_screen.dart';
 
 class AppRoutes {
   static final routes = [
@@ -29,7 +29,7 @@ class AppRoutes {
       transitionDuration: const Duration(milliseconds: 500),
     ),
     GetPage(
-      name: "/onboarding", // Add onboarding route
+      name: "/onboarding",
       page: () => const OnboardingScreen(),
       binding: GlobalBindings(),
       transition: Transition.fade,
@@ -49,7 +49,6 @@ class AppRoutes {
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 400),
     ),
-
     // Protected routes
     GetPage(
       name: "/home",
@@ -76,21 +75,29 @@ class AppRoutes {
       transitionDuration: const Duration(milliseconds: 500),
     ),
     GetPage(
-  name: "/profile",
-  page: () => ProfileScreen(),
-  middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
-  binding: GlobalBindings(),
-  transition: Transition.rightToLeft,
-  transitionDuration: const Duration(milliseconds: 400),
-),
-  GetPage(
-  name: "/all-tasks",
-  page: () =>  AllTaskScreen(),
-  middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
-  binding: GlobalBindings(),
-  transition: Transition.rightToLeft,
-  transitionDuration: const Duration(milliseconds: 400),
-),
+      name: "/profile",
+      page: () => ProfileScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: "/settings",
+      page: () => SettingsScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: "/all-tasks",
+      page: () =>  AllTaskScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
     GetPage(
       name: "/manage-users",
       page: () => ManageUsersScreen(),
@@ -133,14 +140,13 @@ class AppRoutes {
     ),
   ];
 
-  // Helper method for navigation
+  // Helper methods for navigation
   static Future<T?>? toNamed<T>(String routeName, {dynamic arguments}) {
     if (Get.isDialogOpen == true) Get.back();
     return Get.toNamed<T>(routeName, arguments: arguments);
   }
 
-  static Future<dynamic> offAllNamed(String routeName,
-      {dynamic arguments}) async {
+  static Future<dynamic> offAllNamed(String routeName, {dynamic arguments}) async {
     if (Get.isDialogOpen == true) Get.back();
     return Get.offAllNamed(routeName, arguments: arguments);
   }
