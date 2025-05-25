@@ -3,22 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ManageUsersController extends GetxController {
+  // Observables
   var isLoading = false.obs;
   var usersList = <Map<String, dynamic>>[].obs;
-  var filteredUsersList = <Map<String, dynamic>>[].obs; // Filtered list for search
-  var tasksList = <Map<String, dynamic>>[].obs; // Task list for assigning tasks
-  var lastDocument; // To store the last fetched document for pagination
+  var filteredUsersList = <Map<String, dynamic>>[].obs;
+  var tasksList = <Map<String, dynamic>>[].obs;
+  var lastDocument; // For pagination
   var hasMoreUsers = true.obs;
   var isHovered = <bool>[].obs;
+  final int usersLimit = 15; // Page size
 
-  ScrollController get scrollController => _scrollController;
   late ScrollController _scrollController;
+  ScrollController get scrollController => _scrollController;
 
   @override
   void onInit() {
     super.onInit();
-    fetchUsers(); // Fetch users when the controller is initialized
-    fetchTasks(); // Fetch tasks when the controller is initialized
+    fetchUsers(); // Initial page
+    fetchTasks();
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
     isHovered.assignAll(List.filled(usersList.length, false));
@@ -26,45 +28,54 @@ class ManageUsersController extends GetxController {
 
   @override
   void onClose() {
-    _scrollController.dispose(); // Dispose the controller when it's no longer needed
+    _scrollController.dispose();
     super.onClose();
   }
 
-  Future<void> fetchUsers() async {
+  /// Fetch users with pagination.
+  Future<void> fetchUsers({bool isNextPage = false}) async {
+    if (!hasMoreUsers.value || isLoading.value) return;
     try {
       isLoading.value = true;
-      print("Fetching users from Firebase...");
 
-      // Fetch all user documents from Firestore
-      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('users').get();
+      Query query = FirebaseFirestore.instance
+          .collection('users')
+          .orderBy('fullName')
+          .limit(usersLimit);
 
-      print("Fetched ${snapshot.docs.length} users from Firebase");
+      if (isNextPage && lastDocument != null) {
+        query = query.startAfterDocument(lastDocument as DocumentSnapshot);
+      }
+
+      QuerySnapshot snapshot = await query.get();
 
       if (snapshot.docs.isNotEmpty) {
-        // Map each document to a user object with proper fallback values
-        usersList.value = snapshot.docs.map((doc) {
+        final newUsers = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
-
-          // Debug: Print the raw data fetched from Firestore
-          print("User Data: $data");
-
           return {
             'id': doc.id,
-            'fullname': data['fullName'] ?? 'Unknown User', // Correct field name
+            'fullname': data['fullName'] ?? 'Unknown User',
             'role': data['role'] ?? 'No Role',
-            'email': data['email'] ?? 'No Email', // Added email for search
+            'email': data['email'] ?? 'No Email',
           };
         }).toList();
 
-        // Set the filtered list to the full list initially
+        if (isNextPage) {
+          usersList.addAll(newUsers);
+        } else {
+          usersList.value = newUsers;
+        }
+
+        // Keep filtered in sync
         filteredUsersList.assignAll(usersList);
 
-        // Initialize `isHovered` with the correct length
+        // Update isHovered for new items
         isHovered.assignAll(List.filled(usersList.length, false));
+
+        lastDocument = snapshot.docs.last;
+        if (snapshot.docs.length < usersLimit) hasMoreUsers.value = false;
       } else {
-        print("No users found in Firebase");
-        usersList.clear();
-        filteredUsersList.clear();
+        hasMoreUsers.value = false;
       }
     } catch (e) {
       print("Error fetching users: $e");
@@ -73,32 +84,20 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  // New: Fetch tasks from Firestore
+  /// Fetch all tasks for assignment
   Future<void> fetchTasks() async {
     try {
       isLoading.value = true;
-      print("Fetching tasks from Firebase...");
-
-      // Fetch all task documents from Firestore
       QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('tasks').get();
-
-      print("Fetched ${snapshot.docs.length} tasks from Firebase");
-
       if (snapshot.docs.isNotEmpty) {
-        // Map each document to a task object
         tasksList.value = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
-
-          // Debug: Print the raw task data fetched from Firestore
-          print("Task Data: $data");
-
           return {
             'id': doc.id,
             'title': data['title'] ?? 'Untitled Task',
           };
         }).toList();
       } else {
-        print("No tasks found in Firebase");
         tasksList.clear();
       }
     } catch (e) {
@@ -108,6 +107,7 @@ class ManageUsersController extends GetxController {
     }
   }
 
+  /// Assign a task to a user (creates/overwrites under assignedTasks)
   Future<void> assignTaskToUser(String userId, String taskId) async {
     try {
       await FirebaseFirestore.instance
@@ -116,27 +116,19 @@ class ManageUsersController extends GetxController {
           .collection('assignedTasks')
           .doc(taskId)
           .set({'taskId': taskId});
-
       Get.snackbar('Success', 'Task assigned successfully');
     } catch (e) {
       Get.snackbar('Error', 'Failed to assign task: ${e.toString()}');
     }
   }
 
-  void updateHoverState(int index, bool value) {
-    if (index >= 0 && index < isHovered.length) {
-      isHovered[index] = value;
-      print("isHovered[$index] = $value");
-    }
-  }
-
+  /// Remove user from Firestore. (Full Auth account deletion requires a Cloud Function)
   Future<bool> deleteUser(String userId) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();
-
       usersList.removeWhere((user) => user['id'] == userId);
-      filteredUsersList.removeWhere((user) => user['id'] == userId); // Remove from filtered list
-
+      filteredUsersList.removeWhere((user) => user['id'] == userId);
+      isHovered.assignAll(List.filled(usersList.length, false));
       return true;
     } catch (e) {
       print("Error deleting user: $e");
@@ -144,36 +136,47 @@ class ManageUsersController extends GetxController {
     }
   }
 
+  /// Promote user to admin (Firestore only; use Admin SDK for real custom claims)
+  Future<void> promoteToAdmin(String userId) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({'role': 'admin'});
+      Get.snackbar('Success', 'User promoted to admin');
+      // Optionally update in usersList as well
+      int idx = usersList.indexWhere((u) => u['id'] == userId);
+      if (idx != -1) {
+        usersList[idx]['role'] = 'admin';
+        filteredUsersList.assignAll(usersList);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Promotion failed: ${e.toString()}');
+    }
+  }
+
+  /// Search by name or email in the current loaded users
   void searchUsers(String query) {
     if (query.isEmpty) {
-      filteredUsersList.assignAll(usersList); // Reset to full list if query is empty
+      filteredUsersList.assignAll(usersList);
     } else {
       filteredUsersList.assignAll(
-        usersList
-            .where((user) =>
-                user['fullname'].toLowerCase().contains(query.toLowerCase()) ||
-                user['email'].toLowerCase().contains(query.toLowerCase()))
-            .toList(),
+        usersList.where((user) =>
+          user['fullname'].toLowerCase().contains(query.toLowerCase()) ||
+          user['email'].toLowerCase().contains(query.toLowerCase())
+        ).toList(),
       );
     }
   }
 
-  void _scrollListener() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-      fetchUsers(); // Fetch more users when scrolled to the bottom
+  /// Update hover state (useful for web/desktop UI)
+  void updateHoverState(int index, bool value) {
+    if (index >= 0 && index < isHovered.length) {
+      isHovered[index] = value;
     }
   }
 
-  Future<void> promoteToAdmin(String userId) async {
-    try {
-      print('Custom claims must be set using Firebase Admin SDK on the server.');
-
-      // Update Firestore role
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({'role': 'admin'});
-
-      Get.snackbar('Success', 'User promoted to admin');
-    } catch (e) {
-      Get.snackbar('Error', 'Promotion failed: ${e.toString()}');
+  /// Infinite scroll: loads next page if not loading/finished and scrolled near bottom
+  void _scrollListener() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      fetchUsers(isNextPage: true);
     }
   }
 }
