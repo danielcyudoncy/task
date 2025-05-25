@@ -1,11 +1,8 @@
-// widgets/dashboard_cards_widget.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/constants/app_styles.dart';
 import '../../controllers/admin_controller.dart';
-
-
 
 class DashboardCardsWidget extends StatelessWidget {
   final AdminController adminController;
@@ -21,6 +18,7 @@ class DashboardCardsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
     return Row(
       children: [
         _dashboardCard(
@@ -28,6 +26,7 @@ class DashboardCardsWidget extends StatelessWidget {
           value: adminController.totalUsers.value.toString(),
           onTap: onManageUsersTap,
           buttonText: AppStrings.manageUsers,
+          textScale: textScaler.scale(1),
         ),
         const SizedBox(width: 12),
         _dashboardCard(
@@ -35,6 +34,10 @@ class DashboardCardsWidget extends StatelessWidget {
           value: adminController.totalTasks.value.toString(),
           dropdownItems: adminController.taskTitles,
           onDropdownChanged: onTaskSelected,
+          selectedValue: adminController.selectedTaskTitle.value.isEmpty
+              ? null
+              : adminController.selectedTaskTitle.value,
+          textScale: textScaler.scale(1),
         ),
       ],
     );
@@ -43,10 +46,12 @@ class DashboardCardsWidget extends StatelessWidget {
   Widget _dashboardCard({
     required String title,
     required String value,
+    double textScale = 1.0,
     VoidCallback? onTap,
     String? buttonText,
     List<String>? dropdownItems,
     ValueChanged<String?>? onDropdownChanged,
+    String? selectedValue,
   }) {
     return Expanded(
       child: Container(
@@ -57,23 +62,23 @@ class DashboardCardsWidget extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(title, style: AppStyles.cardTitleStyle),
+            Text(title, style: AppStyles.cardTitleStyle.copyWith(fontSize: 16 * textScale)),
             const SizedBox(height: 6),
-            Text(value, style: AppStyles.cardValueStyle),
+            Text(value, style: AppStyles.cardValueStyle.copyWith(fontSize: 28 * textScale)),
             const SizedBox(height: 12),
             if (onTap != null && buttonText != null)
               GestureDetector(
                 onTap: onTap,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(buttonText,
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.black)),
+                  child: Text(
+                    buttonText,
+                    style: TextStyle(fontSize: 14 * textScale, color: Colors.black),
+                  ),
                 ),
               ),
             if (dropdownItems != null && onDropdownChanged != null)
@@ -87,9 +92,7 @@ class DashboardCardsWidget extends StatelessWidget {
                   final sortedTasks = [...dropdownItems]..sort();
                   return DropdownButton<String>(
                     isExpanded: true,
-                    value: adminController.selectedTaskTitle.value.isEmpty
-                        ? null
-                        : adminController.selectedTaskTitle.value,
+                    value: selectedValue,
                     hint: const Text(AppStrings.selectTask),
                     underline: const SizedBox(),
                     icon: const Icon(Icons.arrow_drop_down),

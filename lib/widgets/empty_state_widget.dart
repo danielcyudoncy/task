@@ -1,29 +1,38 @@
 import 'package:flutter/material.dart';
 
 class EmptyStateWidget extends StatelessWidget {
-  const EmptyStateWidget({super.key});
+  final IconData icon;
+  final String title;
+  final String message;
+  const EmptyStateWidget({
+    this.icon = Icons.inbox_rounded,
+    this.title = "Nothing here yet!",
+    this.message = "No data available.",
+    super.key,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inbox_rounded, size: 100, color: Colors.white24, semanticLabel: 'No Tasks Icon'),
-            SizedBox(height: 20),
+            Icon(icon, size: 100, color: Colors.white24, semanticLabel: 'Empty State Icon'),
+            const SizedBox(height: 20),
             Text(
-              "No tasks here yet!",
-              style: TextStyle(
+              title,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              "Tap the '+' button below to create your first task.\nStay organized and productive!",
-              style: TextStyle(
+              message,
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 15,
               ),
