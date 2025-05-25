@@ -1,4 +1,3 @@
-// views/profile_scren.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
@@ -26,37 +25,51 @@ class ProfileScreen extends StatelessWidget {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Home Icon
+                // Top Row: Home Icon (left) and Settings Icon (right)
                 Padding(
-                  padding: const EdgeInsets.only(top: 16.0, left: 16.0),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        border: Border.all(color: const Color(0xFF3739B7)),
-                        borderRadius: BorderRadius.circular(32),
+                  padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Home Icon
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(color: const Color(0xFF3739B7)),
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.home_outlined, color: Color(0xFF3739B7)),
+                          onPressed: () {
+                            final role = authController.userRole.value;
+                            if (role == "Admin" ||
+                                role == "Assignment Editor" ||
+                                role == "Head of Department") {
+                              Get.offAllNamed('/admin-dashboard');
+                            } else if (role == "Reporter" ||
+                                role == "Cameraman") {
+                              Get.offAllNamed('/home');
+                            } else {
+                              Get.offAllNamed('/login');
+                            }
+                          },
+                        ),
                       ),
-                      child: IconButton(
-                        icon: const Icon(Icons.home_outlined,
-                            color: Color(0xFF3739B7)),
-                        onPressed: () {
-                          // Navigate to the user's home screen based on their role
-                          final role = authController.userRole.value;
-                          if (role == "Admin" ||
-                              role == "Assignment Editor" ||
-                              role == "Head of Department") {
-                            Get.offAllNamed('/admin-dashboard');
-                          } else if (role == "Reporter" ||
-                              role == "Cameraman") {
-                            Get.offAllNamed('/home');
-                          } else {
-                            // Default/fallback route
-                            Get.offAllNamed('/login');
-                          }
-                        },
+                      // Settings Icon
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(color: const Color(0xFF3739B7)),
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.settings, color: Color(0xFF3739B7)),
+                          onPressed: () {
+                            Get.toNamed('/settings');
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -174,7 +187,6 @@ class ProfileScreen extends StatelessWidget {
                         trailing: Icon(Icons.chevron_right_rounded,
                             color: Colors.grey[600]),
                         onTap: () {
-                          // Navigate to notifications settings
                           Get.toNamed('/push-notification-settings');
                         },
                       ),
@@ -186,7 +198,6 @@ class ProfileScreen extends StatelessWidget {
                         trailing: Icon(Icons.chevron_right_rounded,
                             color: Colors.grey[600]),
                         onTap: () {
-                          // Navigate to update profile
                           Get.toNamed('/profile-update');
                         },
                       ),
