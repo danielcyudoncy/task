@@ -1,4 +1,3 @@
-// views/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
@@ -56,131 +55,123 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           decoration:
               const BoxDecoration(gradient: AppStyles.gradientBackground),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Using HeaderWidget
-                  HeaderWidget(authController: authController),
-
-                  const SizedBox(height: 30),
-
-                  const Text(AppStrings.dailyAssignments,
-                      style: AppStyles.sectionTitleStyle),
-
-                  const SizedBox(height: 20),
-
-                  // Using DashboardCardsWidget
-                  DashboardCardsWidget(
-                    adminController: adminController,
-                    onManageUsersTap: _showManageUsersDialog,
-                    onTaskSelected: (value) {
-                      if (value != null && value.isNotEmpty) {
-                        _showTaskDetailDialog(value);
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ===== NEW UI: TASK label is OUTSIDE the white container =====
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8, bottom: 8),
-                    child: Text(
-                      "TASK",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Color(0xFF3739B7),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header, dashboard, etc. remain with padding
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HeaderWidget(authController: authController),
+                      const SizedBox(height: 30),
+                      const Text(AppStrings.dailyAssignments,
+                          style: AppStyles.sectionTitleStyle),
+                      const SizedBox(height: 20),
+                      DashboardCardsWidget(
+                        adminController: adminController,
+                        onManageUsersTap: _showManageUsersDialog,
+                        onTaskSelected: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            _showTaskDetailDialog(value);
+                          }
+                        },
                       ),
-                    ),
-                  ),
-
-                  // ===== White rounded container blends with bottom navbar =====
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(26),
-                          topRight: Radius.circular(26),
+                      const SizedBox(height: 24),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8, bottom: 8),
+                        child: Text(
+                          "TASK",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: Color(0xFF3739B7),
+                          ),
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Row with Add button only (TASK label is now above container)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              top: 18,
-                              left: 16,
-                              right: 16,
-                              bottom: 10,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                GestureDetector(
-                                  onTap: () => Get.toNamed('/task-creation'),
-                                  child: Container(
-                                    width: 34,
-                                    height: 34,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF3739B7),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.add,
-                                        color: Colors.white, size: 22),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Tab Bar
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: TabBar(
-                              controller: _tabController,
-                              indicatorColor: const Color(0xFF3739B7),
-                              indicatorWeight: 2.5,
-                              labelColor: const Color(0xFF3739B7),
-                              unselectedLabelColor: Colors.black54,
-                              labelStyle: const TextStyle(
-                                  fontWeight: FontWeight.w500, fontSize: 15),
-                              tabs: const [
-                                Tab(text: "Not Completed"),
-                                Tab(text: "Completed"),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // TabBarView with task cards
-                          Expanded(
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                _TasksTab(
-                                  tasks: adminController.pendingTaskTitles,
-                                  taskDocs: adminController.taskSnapshotDocs,
-                                  onTaskTap: _showTaskDetailDialog,
-                                ),
-                                _TasksTab(
-                                  tasks: adminController.completedTaskTitles,
-                                  taskDocs: adminController.taskSnapshotDocs,
-                                  onTaskTap: _showTaskDetailDialog,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                    ],
+                  ),
+                ),
+                // White container is edge-to-edge (no left/right margin)
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(26),
+                        topRight: Radius.circular(26),
                       ),
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Add button row (with left and right padding for button only)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 18,
+                            left: 16,
+                            right: 16,
+                            bottom: 10,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              GestureDetector(
+                                onTap: () => Get.toNamed('/task-creation'),
+                                child: Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF3739B7),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.add,
+                                      color: Colors.white, size: 22),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Tab Bar (edge-to-edge)
+                        TabBar(
+                          controller: _tabController,
+                          indicatorColor: const Color(0xFF3739B7),
+                          indicatorWeight: 2.5,
+                          labelColor: const Color(0xFF3739B7),
+                          unselectedLabelColor: Colors.black54,
+                          labelStyle: const TextStyle(
+                              fontWeight: FontWeight.w500, fontSize: 15),
+                          tabs: const [
+                            Tab(text: "Not Completed"),
+                            Tab(text: "Completed"),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // TabBarView with task cards (edge-to-edge)
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _TasksTab(
+                                tasks: adminController.pendingTaskTitles,
+                                taskDocs: adminController.taskSnapshotDocs,
+                                onTaskTap: _showTaskDetailDialog,
+                              ),
+                              _TasksTab(
+                                tasks: adminController.completedTaskTitles,
+                                taskDocs: adminController.taskSnapshotDocs,
+                                onTaskTap: _showTaskDetailDialog,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -327,13 +318,14 @@ class _TasksTab extends StatelessWidget {
           child: Text("No tasks.", style: TextStyle(color: Colors.black54)));
     }
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 12, bottom: 20, left: 8, right: 8),
+      // Remove left/right padding so task cards go edge-to-edge (minus card padding)
+      padding: const EdgeInsets.only(top: 12, bottom: 20),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final title = tasks[index];
         final doc = taskDocs.firstWhereOrNull((d) => d['title'] == title);
         return Padding(
-          padding: const EdgeInsets.only(bottom: 14.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 7.0),
           child: GestureDetector(
             onTap: () => onTaskTap(title),
             child: Container(
