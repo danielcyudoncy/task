@@ -1,3 +1,4 @@
+// controllers/manage_users_controller.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,7 +9,7 @@ class ManageUsersController extends GetxController {
   var usersList = <Map<String, dynamic>>[].obs;
   var filteredUsersList = <Map<String, dynamic>>[].obs;
   var tasksList = <Map<String, dynamic>>[].obs;
-  var lastDocument; // For pagination
+  DocumentSnapshot? lastDocument; // For pagination
   var hasMoreUsers = true.obs;
   var isHovered = <bool>[].obs;
   final int usersLimit = 15; // Page size
@@ -77,8 +78,6 @@ class ManageUsersController extends GetxController {
       } else {
         hasMoreUsers.value = false;
       }
-    } catch (e) {
-      print("Error fetching users: $e");
     } finally {
       isLoading.value = false;
     }
@@ -100,8 +99,6 @@ class ManageUsersController extends GetxController {
       } else {
         tasksList.clear();
       }
-    } catch (e) {
-      print("Error fetching tasks: $e");
     } finally {
       isLoading.value = false;
     }
@@ -131,7 +128,6 @@ class ManageUsersController extends GetxController {
       isHovered.assignAll(List.filled(usersList.length, false));
       return true;
     } catch (e) {
-      print("Error deleting user: $e");
       return false;
     }
   }

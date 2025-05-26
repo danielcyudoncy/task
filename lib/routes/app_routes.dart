@@ -27,28 +27,28 @@ class AppRoutes {
       page: () => const SplashScreen(),
       binding: GlobalBindings(),
       transition: Transition.fade,
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/onboarding",
       page: () => const OnboardingScreen(),
       binding: GlobalBindings(),
       transition: Transition.fade,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/login",
       page: () => LoginScreen(),
       binding: GlobalBindings(),
       transition: Transition.fade,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/signup",
       page: () => SignUpScreen(),
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     // Protected routes
     GetPage(
@@ -57,7 +57,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/profile-update",
@@ -65,7 +65,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/admin-dashboard",
@@ -73,7 +73,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeftWithFade,
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/profile",
@@ -81,7 +81,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/settings",
@@ -89,15 +89,15 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/all-tasks",
-      page: () => AllTaskScreen(),
+      page: () => const AllTaskScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/manage-users",
@@ -105,7 +105,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/tasks",
@@ -113,7 +113,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/task-assignment",
@@ -121,7 +121,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/create-task",
@@ -129,7 +129,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/notifications",
@@ -137,7 +137,7 @@ class AppRoutes {
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 200),
     ),
   ];
 }
