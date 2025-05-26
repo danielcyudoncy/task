@@ -180,8 +180,7 @@ class AdminController extends GetxController {
     userNames.value = userDocs.map((doc) {
       final data = doc.data();
       final fullName = data['fullName']?.toString() ?? "Unknown User";
-      print("User fetched: ${data['fullName']}"); // Debug log
-      return fullName;
+        return fullName;
     }).toList();
 
     // Populate task titles

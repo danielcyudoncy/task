@@ -149,8 +149,8 @@ class SettingsScreen extends StatelessWidget {
         subtitle: subtitle.isNotEmpty
             ? Text(
                 subtitle,
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                style: const TextStyle(
+                    color: Colors.white,
                     fontSize: 13), // Light-colored subtitle
               )
             : null,
@@ -395,8 +395,8 @@ class SettingsPrivacyScreen extends StatelessWidget {
         subtitle: subtitle.isNotEmpty
             ? Text(
                 subtitle,
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.8), fontSize: 13),
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 13),
               )
             : null,
         trailing: Switch(
