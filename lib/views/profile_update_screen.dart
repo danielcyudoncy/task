@@ -6,7 +6,6 @@ import '../controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import '../widgets/image_picker_widget.dart';
- // Import your UserScreen
 
 class ProfileUpdateScreen extends StatelessWidget {
   ProfileUpdateScreen({super.key});
@@ -16,6 +15,8 @@ class ProfileUpdateScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Prefill form controllers
     auth.fullNameController.text = auth.fullName.value;
     auth.emailController.text = auth.auth.currentUser?.email ?? '';
@@ -27,11 +28,13 @@ class ProfileUpdateScreen extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.white, Color(0xFF2e3bb5)],
+            colors: isDark
+                ? [Colors.black, Colors.grey.shade900]
+                : [Colors.white, const Color(0xFF2e3bb5)],
           ),
         ),
         child: SafeArea(
@@ -45,12 +48,12 @@ class ProfileUpdateScreen extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    color: AppColors.primaryColor,
+                    color: isDark ? Colors.white : AppColors.primaryColor,
                     onPressed: () => Get.back(),
                   ),
                 ),
-
                 const SizedBox(height: 8),
+
                 // App logo
                 Image.asset(
                   AppIcons.logo,
@@ -59,20 +62,22 @@ class ProfileUpdateScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Form card
+                // Form Card
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? Colors.grey[900] : Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
+                    boxShadow: isDark
+                        ? []
+                        : const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
                   ),
                   child: Form(
                     key: _formKey,
@@ -84,28 +89,40 @@ class ProfileUpdateScreen extends StatelessWidget {
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+
+                        Text(
                           'Adjust the content below to update your profile.',
-                          style: TextStyle(fontSize: 14, color: Colors.black87),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
 
-                        // Profile picture picker
                         ImagePickerWidget(controller: auth),
                         const SizedBox(height: 24),
 
                         // Full Name
                         TextFormField(
                           controller: auth.fullNameController,
+                          style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black),
                           decoration: InputDecoration(
                             hintText: 'Full Name',
+                            hintStyle: TextStyle(
+                                color:
+                                    isDark ? Colors.white54 : Colors.black54),
                             filled: true,
-                            fillColor: Colors.grey[200],
+                            fillColor:
+                                isDark ? Colors.grey[850] : Colors.grey[200],
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -121,10 +138,16 @@ class ProfileUpdateScreen extends StatelessWidget {
                         TextFormField(
                           controller: auth.phoneNumberController,
                           keyboardType: TextInputType.phone,
+                          style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black),
                           decoration: InputDecoration(
                             hintText: 'Phone Number',
+                            hintStyle: TextStyle(
+                                color:
+                                    isDark ? Colors.white54 : Colors.black54),
                             filled: true,
-                            fillColor: Colors.grey[200],
+                            fillColor:
+                                isDark ? Colors.grey[850] : Colors.grey[200],
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -140,10 +163,16 @@ class ProfileUpdateScreen extends StatelessWidget {
                         TextFormField(
                           controller: auth.emailController,
                           keyboardType: TextInputType.emailAddress,
+                          style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black),
                           decoration: InputDecoration(
                             hintText: 'Email Address',
+                            hintStyle: TextStyle(
+                                color:
+                                    isDark ? Colors.white54 : Colors.black54),
                             filled: true,
-                            fillColor: Colors.grey[200],
+                            fillColor:
+                                isDark ? Colors.grey[850] : Colors.grey[200],
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -164,14 +193,28 @@ class ProfileUpdateScreen extends StatelessWidget {
                             items: auth.userRoles
                                 .map((role) => DropdownMenuItem(
                                       value: role,
-                                      child: Text(role),
+                                      child: Text(
+                                        role,
+                                        style: TextStyle(
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black),
+                                      ),
                                     ))
                                 .toList(),
                             onChanged: (v) => auth.selectedRole.value = v!,
+                            dropdownColor:
+                                isDark ? Colors.grey[850] : Colors.white,
+                            style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black),
                             decoration: InputDecoration(
                               hintText: 'Role',
+                              hintStyle: TextStyle(
+                                  color:
+                                      isDark ? Colors.white54 : Colors.black54),
                               filled: true,
-                              fillColor: Colors.grey[200],
+                              fillColor:
+                                  isDark ? Colors.grey[850] : Colors.grey[200],
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
@@ -201,9 +244,8 @@ class ProfileUpdateScreen extends StatelessWidget {
                                     onPressed: () async {
                                       if (_formKey.currentState!.validate()) {
                                         await auth.updateProfileDetails();
-
-                                        // Navigate to SaveSuccessScreen after profile update
-                                        Get.offAll(() => const SaveSuccessScreen(),
+                                        Get.offAll(
+                                            () => const SaveSuccessScreen(),
                                             predicate: (route) => false);
                                       }
                                     },
@@ -212,6 +254,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),

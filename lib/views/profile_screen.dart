@@ -1,3 +1,4 @@
+// views/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
@@ -9,8 +10,12 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if the theme is light or dark
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      // Background color based on the theme
+      backgroundColor: isLightMode ? const Color(0xFFF6F7FB) : Colors.black,
       body: SafeArea(
         child: Obx(() {
           final fullName = authController.fullName.value;
@@ -27,7 +32,8 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 // Top Row: Home Icon (left) and Settings Icon (right)
                 Padding(
-                  padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
+                  padding:
+                      const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -39,7 +45,13 @@ class ProfileScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(32),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.home_outlined, color: Color(0xFF3739B7)),
+                          icon: Icon(
+                            Icons.home_outlined,
+                            color: isLightMode
+                                ? const Color(
+                                    0xFF3739B7) // Retain original color in light mode
+                                : Colors.white, // White in dark mode
+                          ),
                           onPressed: () {
                             final role = authController.userRole.value;
                             if (role == "Admin" ||
@@ -63,7 +75,13 @@ class ProfileScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(32),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.settings, color: Color(0xFF3739B7)),
+                          icon: Icon(
+                            Icons.settings,
+                            color: isLightMode
+                                ? const Color(
+                                    0xFF3739B7) // Retain original color in light mode
+                                : Colors.white, // White in dark mode
+                          ),
                           onPressed: () {
                             Get.toNamed('/settings');
                           },
@@ -113,10 +131,10 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   fullName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF3739B7),
+                    color: isLightMode ? const Color(0xFF3739B7) : Colors.white,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -127,7 +145,7 @@ class ProfileScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isLightMode ? Colors.white : Colors.grey[800],
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: const [
                       BoxShadow(
@@ -146,26 +164,48 @@ class ProfileScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
-                          color: Colors.grey[700],
+                          color: isLightMode ? Colors.black : Colors.white,
                           letterSpacing: 0.2,
                         ),
                       ),
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(Icons.phone,
-                              size: 19, color: Color(0xFF3739B7)),
+                          Icon(
+                            Icons.phone,
+                            size: 19,
+                            color: isLightMode
+                                ? const Color(0xFF3739B7)
+                                : Colors.black, // Leading icon color
+                          ),
                           const SizedBox(width: 10),
-                          Text(phone, style: const TextStyle(fontSize: 15)),
+                          Text(
+                            phone,
+                            style: TextStyle(
+                                fontSize: 15,
+                                color:
+                                    isLightMode ? Colors.black : Colors.white),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.email,
-                              size: 19, color: Color(0xFF3739B7)),
+                          Icon(
+                            Icons.email,
+                            size: 19,
+                            color: isLightMode
+                                ? const Color(0xFF3739B7)
+                                : Colors.black, // Leading icon color
+                          ),
                           const SizedBox(width: 10),
-                          Text(email, style: const TextStyle(fontSize: 15)),
+                          Text(
+                            email,
+                            style: TextStyle(
+                                fontSize: 15,
+                                color:
+                                    isLightMode ? Colors.black : Colors.white),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -175,28 +215,46 @@ class ProfileScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
-                          color: Colors.grey[700],
+                          color: isLightMode ? Colors.black : Colors.white,
                           letterSpacing: 0.2,
                         ),
                       ),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.notifications_none,
-                            color: Color(0xFF3739B7)),
-                        title: const Text("Push Notifications"),
-                        trailing: Icon(Icons.chevron_right_rounded,
-                            color: Colors.grey[600]),
+                        leading: Icon(
+                          Icons.notifications_none,
+                          color: isLightMode
+                              ? const Color(0xFF3739B7)
+                              : Colors.black, // Leading icon color
+                        ),
+                        title: Text("Push Notifications",
+                            style: TextStyle(
+                                color:
+                                    isLightMode ? Colors.black : Colors.white)),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          color: isLightMode ? Colors.black : Colors.white,
+                        ),
                         onTap: () {
                           Get.toNamed('/push-notification-settings');
                         },
                       ),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.person_outline,
-                            color: Color(0xFF3739B7)),
-                        title: const Text("Update Profile"),
-                        trailing: Icon(Icons.chevron_right_rounded,
-                            color: Colors.grey[600]),
+                        leading: Icon(
+                          Icons.person_outline,
+                          color: isLightMode
+                              ? const Color(0xFF3739B7)
+                              : Colors.black, // Leading icon color
+                        ),
+                        title: Text("Update Profile",
+                            style: TextStyle(
+                                color:
+                                    isLightMode ? Colors.black : Colors.white)),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          color: isLightMode ? Colors.black : Colors.white,
+                        ),
                         onTap: () {
                           Get.toNamed('/profile-update');
                         },
@@ -204,6 +262,7 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 24),
                 // Buttons
                 Padding(
@@ -222,7 +281,7 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           icon: const Icon(Icons.logout, color: Colors.white),
                           label: const Text("Log out",
-                              style: TextStyle(fontSize: 18)),
+                              style: TextStyle(fontSize: 18, color: Colors.white)),
                           onPressed: () {
                             authController.signOut();
                           },
@@ -242,7 +301,7 @@ class ProfileScreen extends StatelessWidget {
                           icon: const Icon(Icons.delete_forever,
                               color: Colors.white),
                           label: const Text("Delete Account",
-                              style: TextStyle(fontSize: 18)),
+                              style: TextStyle(fontSize: 18, color: Colors.white)),
                           onPressed: () async {
                             final confirmed = await showDialog<bool>(
                               context: context,

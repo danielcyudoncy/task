@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
-import '../utils/constants/app_colors.dart';
 import '../utils/constants/app_icons.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -19,17 +18,28 @@ class SignUpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Color(0xFF2e3bb5)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          gradient: theme.brightness == Brightness.light
+              ? const LinearGradient(
+                  colors: [Colors.white, Color(0xFF2e3bb5)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : LinearGradient(
+                  colors: [colorScheme.surface, Colors.grey.shade900],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
         ),
         child: SafeArea(
           child: Stack(
@@ -38,14 +48,10 @@ class SignUpScreen extends StatelessWidget {
               // Scrollable Main Content
               Positioned.fill(
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                      top: 10,
-                      left: 25,
-                      right: 25), // Leave space for back arrow
+                  padding: const EdgeInsets.only(top: 10, left: 25, right: 25),
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-
                       // Logo
                       Center(
                         child: ClipRRect(
@@ -56,46 +62,46 @@ class SignUpScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
                       // Form Container
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
+                          boxShadow: theme.brightness == Brightness.light
+                              ? const [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 10,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             children: [
-                              const Text(
+                              Text(
                                 "Create Account",
-                                style: TextStyle(
-                                  fontSize: 24,
+                                style: textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Poppins',
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              const Text(
+                              Text(
                                 "Adjust the content below to update your profile.",
-                                style: TextStyle(fontSize: 14),
+                                style: textTheme.bodyMedium,
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 24),
 
                               // Full Name
                               _buildTextField(
+                                context: context,
                                 controller: fullNameController,
                                 icon: Icons.person,
                                 hint: "Full Name",
@@ -110,6 +116,7 @@ class SignUpScreen extends StatelessWidget {
 
                               // Email
                               _buildTextField(
+                                context: context,
                                 controller: emailController,
                                 icon: Icons.email,
                                 hint: "Email",
@@ -128,6 +135,7 @@ class SignUpScreen extends StatelessWidget {
 
                               // Password
                               _buildTextField(
+                                context: context,
                                 controller: passwordController,
                                 icon: Icons.lock,
                                 hint: "Password",
@@ -146,6 +154,7 @@ class SignUpScreen extends StatelessWidget {
 
                               // Confirm Password
                               _buildTextField(
+                                context: context,
                                 controller: confirmPasswordController,
                                 icon: Icons.lock,
                                 hint: "Confirm Password",
@@ -175,12 +184,17 @@ class SignUpScreen extends StatelessWidget {
                                       prefixIcon:
                                           const Icon(Icons.person_outline),
                                       filled: true,
-                                      fillColor: Colors.grey[200],
+                                      fillColor:
+                                          theme.brightness == Brightness.light
+                                              ? Colors.grey[200]
+                                              : Colors.grey[800],
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide.none,
                                       ),
                                     ),
+                                    dropdownColor: colorScheme.surface,
+                                    style: textTheme.bodyMedium,
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
                                         return "Please select a role";
@@ -207,8 +221,7 @@ class SignUpScreen extends StatelessWidget {
                                       width: double.infinity,
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              AppColors.primaryColor,
+                                          backgroundColor: colorScheme.primary,
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 16),
                                           shape: RoundedRectangleBorder(
@@ -217,67 +230,68 @@ class SignUpScreen extends StatelessWidget {
                                           ),
                                         ),
                                         onPressed: _signUp,
-                                        child: const Text(
+                                        child: Text(
                                           "Save & Continue",
-                                          style: TextStyle(
-                                            fontSize: 16,
+                                          style: textTheme.bodyLarge?.copyWith(
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                            color: colorScheme.onPrimary,
                                           ),
                                         ),
                                       ),
                                     )),
                               const SizedBox(height: 20),
-                              const Row(
+                              Row(
                                 children: [
-                                  Expanded(child: Divider()),
+                                  const Expanded(child: Divider()),
                                   Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 8),
-                                    child: Text("Or sign up with"),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8),
+                                    child: Text(
+                                      "Or sign up with",
+                                      style: textTheme.bodySmall,
+                                    ),
                                   ),
-                                  Expanded(child: Divider()),
+                                  const Expanded(child: Divider()),
                                 ],
                               ),
-
-                           
                               const SizedBox(height: 16),
-
                               // Google and Apple Buttons
-                             Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: Image.asset(AppIcons.google,
-                                          width: 48, height: 48),
-                                      onPressed: () {
-                                        Get.snackbar("Coming Soon",
-                                            "Google sign-up not yet implemented.");
-                                      },
-                                    ),
-                                    const SizedBox(width: 20),
-                                    IconButton(
-                                      icon: Image.asset(AppIcons.apple,
-                                          width: 48, height: 48),
-                                      onPressed: () {
-                                        Get.snackbar("Coming Soon",
-                                            "Apple sign-up not yet implemented.");
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                
-
-                                Row(
+                              Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text("Don't have an account? "),
+                                  IconButton(
+                                    icon: Image.asset(AppIcons.google,
+                                        width: 48, height: 48),
+                                    onPressed: () {
+                                      Get.snackbar("Coming Soon",
+                                          "Google sign-up not yet implemented.");
+                                    },
+                                  ),
+                                  const SizedBox(width: 20),
+                                  IconButton(
+                                    icon: Image.asset(AppIcons.apple,
+                                        width: 48, height: 48),
+                                    onPressed: () {
+                                      Get.snackbar("Coming Soon",
+                                          "Apple sign-up not yet implemented.");
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Don't have an account? ",
+                                    style: textTheme.bodySmall,
+                                  ),
                                   GestureDetector(
                                     onTap: () => Get.toNamed('/login'),
-                                    child: const Text(
+                                    child: Text(
                                       "Sign In",
-                                      style: TextStyle(
-                                        color: AppColors.primaryColor,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.primary,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -293,13 +307,12 @@ class SignUpScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               // Back Arrow on Top Layer
               Positioned(
                 top: 10,
                 left: 20,
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: AppColors.primaryColor),
+                  icon: Icon(Icons.arrow_back, color: colorScheme.primary),
                   onPressed: () {
                     Get.back(); // Navigates back to the previous screen
                   },
@@ -313,6 +326,7 @@ class SignUpScreen extends StatelessWidget {
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required IconData icon,
     required String hint,
@@ -320,16 +334,21 @@ class SignUpScreen extends StatelessWidget {
     bool obscureText = false,
     required String? Function(String?) validator,
   }) {
+    final theme = Theme.of(context);
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
+      style: theme.textTheme.bodyMedium,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
         filled: true,
-        fillColor: Colors.grey[200],
+        fillColor: theme.brightness == Brightness.light
+            ? Colors.grey[200]
+            : Colors.grey[800],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

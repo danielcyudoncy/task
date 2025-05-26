@@ -1,3 +1,4 @@
+// widgets/app_bar.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -7,6 +8,9 @@ class AppBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check the current theme mode (light or dark)
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: basePadding, vertical: 10),
       child: Row(
@@ -20,10 +24,18 @@ class AppBarWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF171FA0)),
+                  border: Border.all(
+                      color:
+                          isDarkMode ? Colors.white : const Color(0xFF171FA0)),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back, color: Color(0xFF171FA0)),
+                child: Icon(
+                  Icons.arrow_back,
+                  color: isDarkMode
+                      ? Colors.white
+                      : const Color(
+                          0xFF171FA0), // Change icon color based on theme
+                ),
               ),
             ),
           ),
@@ -35,10 +47,18 @@ class AppBarWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF171FA0)),
+                  border: Border.all(
+                      color:
+                          isDarkMode ? Colors.white : const Color(0xFF171FA0)),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.account_circle, color: Color(0xFF171FA0)),
+                child: Icon(
+                  Icons.account_circle,
+                  color: isDarkMode
+                      ? Colors.white
+                      : const Color(
+                          0xFF171FA0), // Change icon color based on theme
+                ),
               ),
             ),
           ),
