@@ -2,19 +2,27 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/settings_controller.dart';
+import '../controllers/theme_controller.dart';
 
 class SettingsScreen extends StatelessWidget {
-  final SettingsController controller = Get.put(SettingsController());
+  final SettingsController settingsController = Get.find<SettingsController>();
+  final ThemeController themeController = Get.find<ThemeController>();
 
-   SettingsScreen({super.key});
+  SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF05168E), // Deep blue background
+      backgroundColor: isLightMode
+          ? const Color(0xFF05168E)
+          : Colors.black, // Keep your custom color in light mode
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF05168E),
+        backgroundColor: isLightMode
+            ? const Color(0xFF05168E)
+            : Colors.black, // Match the app bar background
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -33,47 +41,46 @@ class SettingsScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     const SizedBox(height: 8),
-                    // Logo
                     Center(
                       child: Container(
                         margin: const EdgeInsets.only(top: 8, bottom: 10),
                         child: Image.asset(
-                          'assets/png/logo.png', // Use your asset path!
+                          'assets/png/logo.png',
                           width: 80,
                           height: 80,
                         ),
                       ),
                     ),
-
-                    // ----------- App Preferences -----------
                     sectionTitle("App Preferences"),
                     settingsSwitchTile(
                       "Dark Mode",
                       "Activate Dark background for app",
-                      controller.isDarkMode.value,
-                      controller.toggleDarkMode,
+                      themeController.isDarkMode.value,
+                      (value) => themeController.toggleTheme(value),
                     ),
-
-                    // ----------- Sound and Vibration -----------
                     sectionTitle("Sound and Vibration"),
                     settingsSwitchTile(
                       "Sounds",
                       "Enable Sound",
-                      controller.isSoundEnabled.value,
-                      controller.toggleSound,
+                      settingsController.isSoundEnabled.value,
+                      (value) {
+                        settingsController.toggleSound(value);
+                        settingsController.saveSettings();
+                      },
                     ),
                     settingsSwitchTile(
                       "Vibration",
                       "Enable/Disable Vibration",
-                      controller.isVibrationEnabled.value,
-                      controller.toggleVibration,
+                      settingsController.isVibrationEnabled.value,
+                      (value) {
+                        settingsController.toggleVibration(value);
+                        settingsController.saveSettings();
+                      },
                     ),
-
-                    // ----------- Account Preferences -----------
                     sectionTitle("Account Preferences"),
                     settingsDropdownTile(
                       "Language",
-                      controller.selectedLanguage.value,
+                      settingsController.selectedLanguage.value,
                       [
                         "English (Default)",
                         "French",
@@ -81,23 +88,24 @@ class SettingsScreen extends StatelessWidget {
                         "Yoruba",
                         "Igbo"
                       ],
-                      controller.setLanguage,
+                      (lang) {
+                        settingsController.setLanguage(lang);
+                        settingsController.saveSettings();
+                      },
                     ),
-
-                    // ----------- Sync Settings -----------
                     sectionTitle("Sync Settings"),
                     settingsSwitchTile(
                       "Synchronize data across all devices",
                       "",
-                      controller.isSyncEnabled.value,
-                      controller.toggleSync,
+                      settingsController.isSyncEnabled.value,
+                      (value) {
+                        settingsController.toggleSync(value);
+                        settingsController.saveSettings();
+                      },
                     ),
-
                     const SizedBox(height: 14),
-                    // Save Button
-                    saveButton(controller),
+                    saveButton(settingsController),
                     const SizedBox(height: 30),
-                    // Go to next page button
                     nextPageButton(),
                     const SizedBox(height: 20),
                   ],
@@ -114,7 +122,7 @@ class SettingsScreen extends StatelessWidget {
         child: Text(
           title,
           style: const TextStyle(
-            color: Colors.white,
+            color: Colors.white, // Text remains white regardless of the theme
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -142,7 +150,8 @@ class SettingsScreen extends StatelessWidget {
             ? Text(
                 subtitle,
                 style: TextStyle(
-                    color: Colors.white.withOpacity(0.8), fontSize: 13),
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 13), // Light-colored subtitle
               )
             : null,
         trailing: Switch(
@@ -173,7 +182,8 @@ class SettingsScreen extends StatelessWidget {
                 color: Colors.white, fontWeight: FontWeight.w500)),
         trailing: DropdownButton<String>(
           value: selected,
-          dropdownColor: const Color(0xFF05168E),
+          dropdownColor: const Color(
+              0xFF05168E), // Keep dropdown color as your custom blue
           style:
               const TextStyle(color: Colors.white, fontWeight: FontWeight.w400),
           underline: Container(),
@@ -209,7 +219,8 @@ class SettingsScreen extends StatelessWidget {
           Get.snackbar(
             "Settings Saved",
             "Your preferences have been updated.",
-            backgroundColor: Colors.black.withOpacity(0.7),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.grey[900],
             colorText: Colors.white,
           );
         },
@@ -242,17 +253,22 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-// ------- Second screen (Privacy Settings) -------
 class SettingsPrivacyScreen extends StatelessWidget {
-  final SettingsController controller = Get.find<SettingsController>();
+  final SettingsController settingsController = Get.find<SettingsController>();
+
+  SettingsPrivacyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF05168E),
+      backgroundColor: isLightMode
+          ? const Color(0xFF05168E)
+          : Colors.black, // Background as per theme
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF05168E),
+        backgroundColor: isLightMode ? const Color(0xFF05168E) : Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -271,12 +287,11 @@ class SettingsPrivacyScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     const SizedBox(height: 8),
-                    // Logo
                     Center(
                       child: Container(
                         margin: const EdgeInsets.only(top: 8, bottom: 10),
                         child: Image.asset(
-                          'assets/images/channels_logo.png', // Use your asset path!
+                          'assets/images/channels_logo.png',
                           width: 80,
                           height: 80,
                         ),
@@ -286,23 +301,31 @@ class SettingsPrivacyScreen extends StatelessWidget {
                     settingsSwitchTile(
                       "Third Party Services",
                       "Get alerts of new assignments",
-                      controller.isAssignmentAlertEnabled.value,
-                      controller.toggleAssignmentAlert,
+                      settingsController.isAssignmentAlertEnabled.value,
+                      (value) {
+                        settingsController.toggleAssignmentAlert(value);
+                        settingsController.saveSettings();
+                      },
                     ),
                     settingsSwitchTile(
                       "Location Services",
                       "Enable/Disable Location",
-                      controller.isLocationEnabled.value,
-                      controller.toggleLocation,
+                      settingsController.isLocationEnabled.value,
+                      (value) {
+                        settingsController.toggleLocation(value);
+                        settingsController.saveSettings();
+                      },
                     ),
                     settingsSwitchTile(
-                      "Ad’s Prference",
+                      "Ad’s Preference",
                       "Targeted Ads",
-                      controller.isTargetedAdsEnabled.value,
-                      controller.toggleTargetedAds,
+                      settingsController.isTargetedAdsEnabled.value,
+                      (value) {
+                        settingsController.toggleTargetedAds(value);
+                        settingsController.saveSettings();
+                      },
                     ),
                     const SizedBox(height: 14),
-                    // Privacy Policy
                     ListTile(
                       title: const Text(
                         "Privacy Policy",
@@ -313,9 +336,8 @@ class SettingsPrivacyScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.white70)),
                       trailing: const Icon(Icons.arrow_forward_ios,
                           color: Colors.white, size: 18),
-                      onTap: () => controller.viewPrivacyPolicy(),
+                      onTap: () => settingsController.viewPrivacyPolicy(),
                     ),
-                    // Security (2FA)
                     ListTile(
                       title: const Text(
                         "Security",
@@ -326,10 +348,11 @@ class SettingsPrivacyScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.white70)),
                       trailing: const Icon(Icons.arrow_forward_ios,
                           color: Colors.white, size: 18),
-                      onTap: () => controller.setupTwoFactorAuthentication(),
+                      onTap: () =>
+                          settingsController.setupTwoFactorAuthentication(),
                     ),
                     const SizedBox(height: 14),
-                    saveButton(controller),
+                    saveButton(settingsController),
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -345,7 +368,7 @@ class SettingsPrivacyScreen extends StatelessWidget {
         child: Text(
           title,
           style: const TextStyle(
-            color: Colors.white,
+            color: Colors.white, // Text remains white
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -404,7 +427,8 @@ class SettingsPrivacyScreen extends StatelessWidget {
           Get.snackbar(
             "Settings Saved",
             "Your preferences have been updated.",
-            backgroundColor: Colors.black.withOpacity(0.7),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.grey[900],
             colorText: Colors.white,
           );
         },

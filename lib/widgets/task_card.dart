@@ -1,3 +1,4 @@
+// widgets/task_card.dart
 import 'package:flutter/material.dart';
 import 'status_chip.dart';
 
@@ -19,11 +20,16 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     final title = data['title'] ?? 'No title';
     final description = data['description'] ?? 'No description';
     final status = data['status'] ?? 'No status';
     final creatorName = data['creatorName'] ?? data['createdBy'];
-    final creatorAvatar = data['creatorAvatar'] ?? null;
+    final creatorAvatar = data['creatorAvatar'];
 
     // Robust timestamp extraction & formatting
     final dynamic timestampRaw = data['timestamp'];
@@ -34,20 +40,31 @@ class TaskCard extends StatelessWidget {
       } else if (timestampRaw is String) {
         formattedTimestamp = timestampRaw;
       } else if (timestampRaw is int) {
-        // If stored as millisecondsSinceEpoch
-        formattedTimestamp = DateTime.fromMillisecondsSinceEpoch(timestampRaw).toLocal().toString();
+        formattedTimestamp = DateTime.fromMillisecondsSinceEpoch(timestampRaw)
+            .toLocal()
+            .toString();
       } else if (timestampRaw.runtimeType.toString() == 'Timestamp') {
-        // For Firestore Timestamp type (as dynamic)
-        formattedTimestamp = (timestampRaw as dynamic).toDate().toLocal().toString();
+        formattedTimestamp =
+            (timestampRaw as dynamic).toDate().toLocal().toString();
       }
     }
 
+    final cardBg = colorScheme.surface;
+    final cardShadow = isDark ? Colors.black45 : Colors.black12;
+    final mainText =
+        textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black);
+    final subText = isDark ? Colors.white70 : Colors.black54;
+    final accent = colorScheme.primary;
+    final avatarBg = isDark ? Colors.grey[800] : Colors.grey[200];
+
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isLargeScreen ? 16 : 8.0, vertical: 4.0),
+      padding: EdgeInsets.symmetric(
+          horizontal: isLargeScreen ? 16 : 8.0, vertical: 4.0),
       child: Material(
         elevation: 3,
         borderRadius: BorderRadius.circular(12),
-        shadowColor: const Color(0x1A000000),
+        shadowColor: cardShadow,
+        color: cardBg,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
@@ -57,7 +74,7 @@ class TaskCard extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.all(isLargeScreen ? 24 : 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -67,15 +84,20 @@ class TaskCard extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: isLargeScreen ? 25 : 18,
-                        backgroundColor: Colors.grey[200],
-                        backgroundImage: creatorAvatar != null ? NetworkImage(creatorAvatar) : null,
+                        backgroundColor: avatarBg,
+                        backgroundImage: creatorAvatar != null
+                            ? NetworkImage(creatorAvatar)
+                            : null,
                         child: creatorAvatar == null
                             ? Text(
-                                (creatorName.isNotEmpty ? creatorName[0] : "?").toUpperCase(),
+                                (creatorName.isNotEmpty ? creatorName[0] : "?")
+                                    .toUpperCase(),
                                 style: TextStyle(
-                                  color: const Color(0xFF171FA0),
+                                  color: accent,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: isLargeScreen ? 20 * textScale : 15 * textScale,
+                                  fontSize: isLargeScreen
+                                      ? 20 * textScale
+                                      : 15 * textScale,
                                 ),
                               )
                             : null,
@@ -84,10 +106,11 @@ class TaskCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           creatorName,
-                          style: TextStyle(
+                          style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            fontSize: isLargeScreen ? 18 * textScale : 14 * textScale,
-                            color: Colors.black87,
+                            fontSize:
+                                isLargeScreen ? 18 * textScale : 14 * textScale,
+                            color: mainText,
                           ),
                         ),
                       ),
@@ -95,36 +118,40 @@ class TaskCard extends StatelessWidget {
                       _TaskActionMenu(
                         taskData: data,
                         onAction: onAction,
+                        accent: accent,
+                        isDark: isDark,
                       ),
                     ],
                   ),
                   SizedBox(height: isLargeScreen ? 16 : 10),
                   Text(
                     title,
-                    style: TextStyle(
+                    style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: isLargeScreen ? 20 * textScale : 16 * textScale,
-                      color: const Color(0xFF171FA0),
+                      color: accent,
                     ),
                   ),
                   SizedBox(height: isLargeScreen ? 10 : 6),
                   Text(
                     description,
-                    style: TextStyle(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontSize: isLargeScreen ? 16 * textScale : 13 * textScale,
-                      color: Colors.black87,
+                      color: mainText,
                     ),
                   ),
-                  // Timestamp (optional, style as you wish)
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   if (formattedTimestamp.isNotEmpty)
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 16, color: Colors.black54),
+                        Icon(Icons.calendar_today, size: 16, color: subText),
                         const SizedBox(width: 6),
                         Text(
                           formattedTimestamp,
-                          style: TextStyle(fontSize: 13 * textScale, color: Colors.black54),
+                          style: textTheme.bodySmall?.copyWith(
+                            fontSize: 13 * textScale,
+                            color: subText,
+                          ),
                         ),
                       ],
                     ),
@@ -141,12 +168,19 @@ class TaskCard extends StatelessWidget {
 class _TaskActionMenu extends StatelessWidget {
   final Map<String, dynamic> taskData;
   final ValueChanged<String> onAction;
-  const _TaskActionMenu({required this.taskData, required this.onAction});
+  final Color accent;
+  final bool isDark;
+  const _TaskActionMenu({
+    required this.taskData,
+    required this.onAction,
+    required this.accent,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Color(0xFF171FA0)),
+      icon: Icon(Icons.more_vert, color: accent),
       onSelected: onAction,
       itemBuilder: (context) {
         List<PopupMenuEntry<String>> items = [

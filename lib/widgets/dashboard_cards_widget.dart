@@ -1,3 +1,4 @@
+// widgets/dashboard_cards_widget.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
@@ -19,6 +20,7 @@ class DashboardCardsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textScaler = MediaQuery.textScalerOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         _dashboardCard(
@@ -27,6 +29,7 @@ class DashboardCardsWidget extends StatelessWidget {
           onTap: onManageUsersTap,
           buttonText: AppStrings.manageUsers,
           textScale: textScaler.scale(1),
+          isDark: isDark,
         ),
         const SizedBox(width: 12),
         _dashboardCard(
@@ -38,6 +41,7 @@ class DashboardCardsWidget extends StatelessWidget {
               ? null
               : adminController.selectedTaskTitle.value,
           textScale: textScaler.scale(1),
+          isDark: isDark,
         ),
       ],
     );
@@ -52,7 +56,11 @@ class DashboardCardsWidget extends StatelessWidget {
     List<String>? dropdownItems,
     ValueChanged<String?>? onDropdownChanged,
     String? selectedValue,
+    required bool isDark,
   }) {
+    final Color innerBg = isDark ? Colors.black : Colors.white;
+    final Color innerText = isDark ? Colors.white : Colors.black;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 12),
@@ -62,22 +70,36 @@ class DashboardCardsWidget extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(title, style: AppStyles.cardTitleStyle.copyWith(fontSize: 16 * textScale)),
+            Text(
+              title,
+              style: AppStyles.cardTitleStyle.copyWith(
+                fontSize: 16 * textScale,
+                color: innerText,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(value, style: AppStyles.cardValueStyle.copyWith(fontSize: 28 * textScale)),
+            Text(
+              value,
+              style: AppStyles.cardValueStyle.copyWith(
+                fontSize: 28 * textScale,
+                color: innerText,
+              ),
+            ),
             const SizedBox(height: 12),
             if (onTap != null && buttonText != null)
               GestureDetector(
                 onTap: onTap,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: innerBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     buttonText,
-                    style: TextStyle(fontSize: 14 * textScale, color: Colors.black),
+                    style:
+                        TextStyle(fontSize: 14 * textScale, color: innerText),
                   ),
                 ),
               ),
@@ -85,7 +107,7 @@ class DashboardCardsWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: innerBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Obx(() {
@@ -93,13 +115,18 @@ class DashboardCardsWidget extends StatelessWidget {
                   return DropdownButton<String>(
                     isExpanded: true,
                     value: selectedValue,
-                    hint: const Text(AppStrings.selectTask),
+                    dropdownColor: innerBg,
+                    hint: Text(
+                      AppStrings.selectTask,
+                      style: TextStyle(color: innerText),
+                    ),
                     underline: const SizedBox(),
-                    icon: const Icon(Icons.arrow_drop_down),
+                    icon: Icon(Icons.arrow_drop_down, color: innerText),
                     items: sortedTasks
                         .map((title) => DropdownMenuItem<String>(
                               value: title,
-                              child: Text(title),
+                              child: Text(title,
+                                  style: TextStyle(color: innerText)),
                             ))
                         .toList(),
                     onChanged: onDropdownChanged,

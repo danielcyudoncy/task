@@ -1,3 +1,4 @@
+// views/manage_users_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/widgets/empty_state_widget.dart';
@@ -14,7 +15,7 @@ class ManageUsersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textScale = MediaQuery.of(context).textScaleFactor;
+    final textScale = MediaQuery.of(context).textScaler.scale(1.0);
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
 
     return Scaffold(
