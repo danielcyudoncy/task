@@ -1,3 +1,4 @@
+// views/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
@@ -42,6 +43,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color sectionTitleColor =
+        isDark ? Colors.white : const Color(0xFF3739B7);
+    final Color tabSelectedColor =
+        isDark ? Colors.white : const Color(0xFF3739B7);
+    final Color tabUnselectedColor = isDark ? Colors.white70 : Colors.black54;
+    final Color addBtnColor = isDark ? Colors.white : const Color(0xFF3739B7);
+    final Color addIconColor = isDark ? const Color(0xFF3739B7) : Colors.white;
+
     return Obx(() {
       if (adminController.isLoading.value ||
           adminController.isStatsLoading.value) {
@@ -52,8 +62,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
       return Scaffold(
         body: Container(
-          decoration:
-              const BoxDecoration(gradient: AppStyles.gradientBackground),
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? const LinearGradient(
+                    colors: [Colors.black, Colors.black87],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  )
+                : AppStyles.gradientBackground,
+          ),
           child: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,8 +83,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     children: [
                       HeaderWidget(authController: authController),
                       const SizedBox(height: 30),
-                      const Text(AppStrings.dailyAssignments,
-                          style: AppStyles.sectionTitleStyle),
+                      Text(AppStrings.dailyAssignments,
+                          style: AppStyles.sectionTitleStyle.copyWith(
+                            color: sectionTitleColor,
+                          )),
                       const SizedBox(height: 20),
                       DashboardCardsWidget(
                         adminController: adminController,
@@ -79,27 +98,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         },
                       ),
                       const SizedBox(height: 24),
-                      const Padding(
-                        padding: EdgeInsets.only(left: 8, bottom: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, bottom: 8),
                         child: Text(
                           "TASK",
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
-                            color: Color(0xFF3739B7),
+                            color: sectionTitleColor,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                // White container is edge-to-edge (no left/right margin)
+                // White/dark container is edge-to-edge (no left/right margin)
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey[900] : Colors.white,
+                      borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(26),
                         topRight: Radius.circular(26),
                       ),
@@ -123,12 +142,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 child: Container(
                                   width: 34,
                                   height: 34,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF3739B7),
+                                  decoration: BoxDecoration(
+                                    color: addBtnColor,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.add,
-                                      color: Colors.white, size: 22),
+                                  child: Icon(Icons.add,
+                                      color: addIconColor, size: 22),
                                 ),
                               ),
                             ],
@@ -137,10 +156,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         // Tab Bar (edge-to-edge)
                         TabBar(
                           controller: _tabController,
-                          indicatorColor: const Color(0xFF3739B7),
+                          indicatorColor: tabSelectedColor,
                           indicatorWeight: 2.5,
-                          labelColor: const Color(0xFF3739B7),
-                          unselectedLabelColor: Colors.black54,
+                          labelColor: tabSelectedColor,
+                          unselectedLabelColor: tabUnselectedColor,
                           labelStyle: const TextStyle(
                               fontWeight: FontWeight.w500, fontSize: 15),
                           tabs: const [
@@ -158,11 +177,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 tasks: adminController.pendingTaskTitles,
                                 taskDocs: adminController.taskSnapshotDocs,
                                 onTaskTap: _showTaskDetailDialog,
+                                isDark: isDark,
                               ),
                               _TasksTab(
                                 tasks: adminController.completedTaskTitles,
                                 taskDocs: adminController.taskSnapshotDocs,
                                 onTaskTap: _showTaskDetailDialog,
+                                isDark: isDark,
                               ),
                             ],
                           ),
@@ -304,18 +325,26 @@ class _TasksTab extends StatelessWidget {
   final List<dynamic> tasks;
   final List<dynamic> taskDocs;
   final void Function(String title) onTaskTap;
+  final bool isDark;
 
   const _TasksTab({
     required this.tasks,
     required this.taskDocs,
     required this.onTaskTap,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color cardColor =
+        isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
+    const Color textColor = Colors.white;
+    final Color subTextColor = Colors.white.withOpacity(0.87);
+    final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;
+
     if (tasks.isEmpty) {
-      return const Center(
-          child: Text("No tasks.", style: TextStyle(color: Colors.black54)));
+      return Center(
+          child: Text("No tasks.", style: TextStyle(color: emptyListColor)));
     }
     return ListView.builder(
       // Remove left/right padding so task cards go edge-to-edge (minus card padding)
@@ -330,13 +359,13 @@ class _TasksTab extends StatelessWidget {
             onTap: () => onTaskTap(title),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF171FA0),
+                color: cardColor,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x22000000),
+                    color: isDark ? Colors.black38 : const Color(0x22000000),
                     blurRadius: 8,
-                    offset: Offset(0, 5),
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
@@ -347,7 +376,7 @@ class _TasksTab extends StatelessWidget {
                   Text(
                     title ?? "",
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: textColor,
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                     ),
@@ -355,23 +384,32 @@ class _TasksTab extends StatelessWidget {
                   const SizedBox(height: 7),
                   Text(
                     doc?['details'] ?? "Task Details",
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     "Assigned Name", // Replace with actual logic if available
-                    style: TextStyle(color: Colors.white, fontSize: 13),
+                    style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     "Due Date ${doc?['dueDate'] ?? 'N/A'}",
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 8),
                   const Align(
                     alignment: Alignment.bottomRight,
                     child: Icon(Icons.edit_note_rounded,
-                        color: Colors.white, size: 22),
+                        color: textColor, size: 22),
                   ),
                 ],
               ),

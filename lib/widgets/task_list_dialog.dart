@@ -1,3 +1,4 @@
+// widgets/task_list_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/manage_users_controller.dart';
@@ -15,11 +16,21 @@ class TaskListDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tasks = controller.tasksList;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final userName = user['name'] ?? 'User';
+
     return Obx(() {
       if (tasks.isEmpty) {
-        return const SimpleDialog(
-          title: Text('Assign Task'),
-          children: [
+        return SimpleDialog(
+          title: Text(
+            'Assign Task to $userName',
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          children: const [
             Center(
               child: Padding(
                 padding: EdgeInsets.all(16),
@@ -30,7 +41,13 @@ class TaskListDialog extends StatelessWidget {
         );
       }
       return SimpleDialog(
-        title: const Text('Assign Task'),
+        title: Text(
+          'Assign Task to $userName',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         children: tasks.map((task) {
           return SimpleDialogOption(
             onPressed: () {

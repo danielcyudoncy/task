@@ -18,7 +18,12 @@ class UserNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(backgroundColor: Colors.white,
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
+    return BottomNavigationBar(
+      backgroundColor: isLightMode
+          ? Colors.white
+          : Colors.black, // Background color based on the theme
       selectedItemColor: Colors.blue,
       currentIndex: currentIndex,
       onTap: _onTap,

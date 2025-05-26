@@ -1,3 +1,4 @@
+// views/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,19 +24,41 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // App's primary color (as requested)
+    const Color appPrimaryColor = Color(0xFF2E3BB5);
+
+    // Interchanged: white at top and bottom, primary in the middle
+    final gradientColors = isDark
+        ? [
+            colorScheme.surface,
+            colorScheme.primary.withOpacity(0.7),
+            colorScheme.surface,
+          ]
+        : [
+            Colors.white, // Top
+            colorScheme.primary, // Middle
+            Colors.white, // Bottom
+          ];
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.white,
-              Color(0xFF2e3bb5),
-            ],
+            colors: gradientColors,
+            stops: const [
+              0.0,
+              0.5,
+              1.0
+            ], // White at top and bottom, color in the middle
           ),
         ),
         child: SingleChildScrollView(
@@ -49,24 +72,51 @@ class OnboardingScreen extends StatelessWidget {
                 height: 250,
               ),
               const SizedBox(height: 60),
-              const Text(
-                'Welcome!',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontFamily: AppFontsStyles.openSans,
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+              // Welcome: outlined and shadowed text
+              Stack(
+                children: [
+                  // Outline
+                  Text(
+                    'Welcome!',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: AppFontsStyles.openSans,
+                      foreground: Paint()
+                        ..style = PaintingStyle.stroke
+                        ..strokeWidth = 4
+                        ..color = Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  // Fill with shadow
+                  Text(
+                    'Welcome!',
+                    style: TextStyle(
+                      color: isDark ? appPrimaryColor : Colors.black,
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: AppFontsStyles.openSans,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.25),
+                          offset: const Offset(0, 3),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Thanks for joining! Access or\n'
                 'create your account below, and get\n'
                 'started on your journey!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.black,
+                  color: isDark ? Colors.white : Colors.black,
                   fontSize: 18,
                   fontFamily: AppFontsStyles.montserrat,
                   fontWeight: FontWeight.w400,
@@ -82,12 +132,17 @@ class OnboardingScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: _handleGetStarted,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
+                        backgroundColor:
+                            isDark ? colorScheme.surface : Colors.white,
+                        foregroundColor:
+                            isDark ? colorScheme.primary : Colors.black,
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        side: isDark
+                            ? BorderSide(color: colorScheme.primary, width: 1.2)
+                            : BorderSide.none,
                       ),
                       child: const Text(
                         'Get Started',
@@ -105,9 +160,11 @@ class OnboardingScreen extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: _handleMyAccount,
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFF007AFF),
+                        backgroundColor: appPrimaryColor,
                         foregroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFF007AFF)),
+                        side: BorderSide(
+                          color: appPrimaryColor,
+                        ),
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -118,6 +175,7 @@ class OnboardingScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: AppSizes.fontVerySmall,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white, // Ensure text is white
                         ),
                       ),
                     ),

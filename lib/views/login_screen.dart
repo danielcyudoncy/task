@@ -1,6 +1,6 @@
+// views/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
 
@@ -23,21 +23,35 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: Stack(
         children: [
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white,
-                  Color(0xFF2e3bb5),
-                ],
-              ),
+            decoration: BoxDecoration(
+              gradient: isDark
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        colorScheme.surface,
+                        Colors.grey.shade900,
+                      ],
+                    )
+                  : const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white,
+                        Color(0xFF2e3bb5),
+                      ],
+                    ),
             ),
             child: SafeArea(
               child: SingleChildScrollView(
@@ -66,12 +80,20 @@ class LoginScreen extends StatelessWidget {
 
                         const SizedBox(height: 24),
 
-                        // White box container
+                        // Main box container
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              if (!isDark)
+                                const BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 12,
+                                  offset: Offset(0, 4),
+                                ),
+                            ],
                           ),
                           child: Form(
                             key: _formKey,
@@ -80,22 +102,22 @@ class LoginScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   "Welcome Back",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 24,
-                                        fontFamily: 'Poppins',
-                                      ),
+                                  style: textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                    fontFamily: 'Poppins',
+                                    color: textTheme.headlineMedium?.color,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
+                                Text(
                                   "Fill out the information below in order to access your account.",
-                                  style: TextStyle(
+                                  style: textTheme.bodyMedium?.copyWith(
                                     fontSize: 14,
-                                    color: AppColors.black,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.black87,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -104,11 +126,19 @@ class LoginScreen extends StatelessWidget {
                                 // Email Field
                                 TextFormField(
                                   controller: _emailController,
+                                  style: textTheme.bodyMedium,
                                   decoration: InputDecoration(
                                     labelText: "Email",
-                                    prefixIcon: const Icon(Icons.email),
+                                    labelStyle: textTheme.bodyMedium,
+                                    hintStyle: textTheme.bodyMedium,
+                                    prefixIcon: Icon(Icons.email,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black54),
                                     filled: true,
-                                    fillColor: Colors.grey[200],
+                                    fillColor: isDark
+                                        ? Colors.grey[800]
+                                        : Colors.grey[200],
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
@@ -131,11 +161,19 @@ class LoginScreen extends StatelessWidget {
                                 TextFormField(
                                   controller: _passwordController,
                                   obscureText: true,
+                                  style: textTheme.bodyMedium,
                                   decoration: InputDecoration(
                                     labelText: "Password",
-                                    prefixIcon: const Icon(Icons.lock),
+                                    labelStyle: textTheme.bodyMedium,
+                                    hintStyle: textTheme.bodyMedium,
+                                    prefixIcon: Icon(Icons.lock,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black54),
                                     filled: true,
-                                    fillColor: Colors.grey[200],
+                                    fillColor: isDark
+                                        ? Colors.grey[800]
+                                        : Colors.grey[200],
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
@@ -160,9 +198,9 @@ class LoginScreen extends StatelessWidget {
                                         child: CircularProgressIndicator())
                                     : ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          backgroundColor:
-                                              AppColors.primaryColor,
+                                          foregroundColor:
+                                              colorScheme.onPrimary,
+                                          backgroundColor: colorScheme.primary,
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 16),
                                           shape: RoundedRectangleBorder(
@@ -171,26 +209,33 @@ class LoginScreen extends StatelessWidget {
                                           ),
                                         ),
                                         onPressed: _submit,
-                                        child: const Text(
+                                        child: Text(
                                           "Sign In",
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
+                                          style: textTheme.bodyLarge?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: colorScheme.onPrimary),
                                         ),
                                       )),
 
                                 const SizedBox(height: 24),
 
                                 // Divider with text
-                                const Row(
+                                Row(
                                   children: [
-                                    Expanded(child: Divider()),
+                                    const Expanded(child: Divider()),
                                     Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 8),
-                                      child: Text("or continue with"),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8),
+                                      child: Text(
+                                        "or continue with",
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.black54,
+                                        ),
+                                      ),
                                     ),
-                                    Expanded(child: Divider()),
+                                    const Expanded(child: Divider()),
                                   ],
                                 ),
 
@@ -226,13 +271,20 @@ class LoginScreen extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Text("Don't have an account? "),
+                                    Text(
+                                      "Don't have an account? ",
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black54,
+                                      ),
+                                    ),
                                     GestureDetector(
                                       onTap: () => Get.toNamed('/signup'),
-                                      child: const Text(
+                                      child: Text(
                                         "Create Account",
-                                        style: TextStyle(
-                                          color: AppColors.primaryColor,
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -244,15 +296,16 @@ class LoginScreen extends StatelessWidget {
 
                                 GestureDetector(
                                   onTap: () {
-                                    // TODO: Navigate to Forgot Password screen
                                     Get.toNamed('/forgot-password');
                                   },
-                                  child: const Text(
+                                  child: Text(
                                     "Forget password?",
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
+                                    style: textTheme.bodySmall?.copyWith(
                                       decoration: TextDecoration.underline,
-                                      color: AppColors.black,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black87,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -261,7 +314,6 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -276,9 +328,10 @@ class LoginScreen extends StatelessWidget {
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.primaryColor),
+              icon: Icon(Icons.arrow_back,
+                  color: isDark ? Colors.white : colorScheme.primary),
               onPressed: () {
-                Get.back(); // Navigates back to the previous screen
+                Get.back();
               },
             ),
           ),

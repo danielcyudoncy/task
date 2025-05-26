@@ -1,3 +1,4 @@
+// widgets/filter_bar.dart
 import 'package:flutter/material.dart';
 
 class FilterBarWidget extends StatelessWidget {
@@ -5,11 +6,12 @@ class FilterBarWidget extends StatelessWidget {
   final double textScale;
   final String filterStatus;
   final String sortBy;
-  final ValueChanged<String> onSearch;
-  final ValueChanged<String?> onFilter;
-  final ValueChanged<String?> onSort;
+  final Function(String) onSearch;
+  final Function(String?) onFilter;
+  final Function(String?) onSort;
 
   const FilterBarWidget({
+    super.key,
     required this.basePadding,
     required this.textScale,
     required this.filterStatus,
@@ -17,67 +19,133 @@ class FilterBarWidget extends StatelessWidget {
     required this.onSearch,
     required this.onFilter,
     required this.onSort,
-    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: basePadding, vertical: 4),
-      child: Row(
+    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
+    final backgroundColor =
+        isLightMode ? Colors.white : const Color(0xFF1E1E1E);
+    final borderColor = isLightMode ? Colors.grey[300]! : Colors.white;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: basePadding, vertical: 12),
+      color: backgroundColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Semantics(
-              label: "Search by creator username",
-              textField: true,
-              child: TextField(
-                style: TextStyle(fontSize: 15 * textScale),
-                decoration: InputDecoration(
-                  hintText: 'Search by creator username...',
-                  prefixIcon: const Icon(Icons.search, semanticLabel: "Search Icon"),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Color(0xFF171FA0)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Color(0xFF171FA0)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Color(0xFF171FA0), width: 2),
-                  ),
-                ),
-                onChanged: onSearch,
+          // Search Field
+          TextField(
+            onChanged: onSearch,
+            style: TextStyle(
+              color: isLightMode ? Colors.black : Colors.white,
+              fontSize: 14 * textScale,
+            ),
+            decoration: InputDecoration(
+              hintText: "Search by creator name...",
+              hintStyle: TextStyle(
+                color: isLightMode ? Colors.grey[600] : Colors.grey[300],
+              ),
+              prefixIcon: Icon(Icons.search,
+                  color: isLightMode ? Colors.grey[700] : Colors.white),
+              filled: true,
+              fillColor: isLightMode ? Colors.white : const Color(0xFF2C2C2E),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    BorderSide(color: isLightMode ? Colors.blue : Colors.white),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          DropdownButton<String>(
-            value: filterStatus,
-            underline: const SizedBox(),
-            items: <String>['All', 'Completed', 'Pending', 'Overdue']
-                .map((String value) => DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value, style: TextStyle(fontSize: 12 * textScale)),
-                    ))
-                .toList(),
-            onChanged: onFilter,
-          ),
-          const SizedBox(width: 8),
-          DropdownButton<String>(
-            value: sortBy,
-            underline: const SizedBox(),
-            items: <String>['Newest', 'Oldest']
-                .map((String value) => DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value, style: TextStyle(fontSize: 12 * textScale)),
-                    ))
-                .toList(),
-            onChanged: onSort,
+          const SizedBox(height: 12),
+
+          // Filter & Sort Row
+          Row(
+            children: [
+              // Filter Status Dropdown
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: filterStatus,
+                  onChanged: onFilter,
+                  style: TextStyle(
+                    color: isLightMode ? Colors.black : Colors.white,
+                    fontSize: 14 * textScale,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Filter",
+                    labelStyle: TextStyle(
+                      color: isLightMode ? Colors.black : Colors.white,
+                    ),
+                    filled: true,
+                    fillColor:
+                        isLightMode ? Colors.white : const Color(0xFF2C2C2E),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                  ),
+                  dropdownColor:
+                      isLightMode ? Colors.white : const Color(0xFF2C2C2E),
+                  items: const [
+                    DropdownMenuItem(value: 'All', child: Text("All")),
+                    DropdownMenuItem(value: 'Pending', child: Text("Pending")),
+                    DropdownMenuItem(
+                        value: 'Completed', child: Text("Completed")),
+                    DropdownMenuItem(value: 'Overdue', child: Text("Overdue")),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Sort Dropdown
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: sortBy,
+                  onChanged: onSort,
+                  style: TextStyle(
+                    color: isLightMode ? Colors.black : Colors.white,
+                    fontSize: 14 * textScale,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Sort",
+                    labelStyle: TextStyle(
+                      color: isLightMode ? Colors.black : Colors.white,
+                    ),
+                    filled: true,
+                    fillColor:
+                        isLightMode ? Colors.white : const Color(0xFF2C2C2E),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                  ),
+                  dropdownColor:
+                      isLightMode ? Colors.white : const Color(0xFF2C2C2E),
+                  items: const [
+                    DropdownMenuItem(value: 'Newest', child: Text("Newest")),
+                    DropdownMenuItem(value: 'Oldest', child: Text("Oldest")),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

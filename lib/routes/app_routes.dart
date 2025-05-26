@@ -1,3 +1,4 @@
+// routes/app_routes.dart
 import 'package:get/get.dart';
 import 'package:task/routes/global_bindings.dart';
 import 'package:task/routes/middleware.dart';
@@ -60,7 +61,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/profile-update",
-      page: () =>  ProfileUpdateScreen(),
+      page: () => ProfileUpdateScreen(),
       middlewares: [AuthMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
@@ -92,7 +93,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/all-tasks",
-      page: () =>  AllTaskScreen(),
+      page: () => AllTaskScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
@@ -103,23 +104,15 @@ class AppRoutes {
       page: () => ManageUsersScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
-      transition: Transition.rightToLeftWithFade,
-      transitionDuration: const Duration(milliseconds: 500),
-    ),
-    GetPage(
-      name: "/task-creation",
-      page: () => TaskCreationScreen(),
-      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
-      binding: GlobalBindings(),
-      transition: Transition.zoom,
+      transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 400),
     ),
     GetPage(
-      name: "/task-list",
+      name: "/tasks",
       page: () => TaskListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
-      transition: Transition.zoom,
+      transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 400),
     ),
     GetPage(
@@ -127,7 +120,15 @@ class AppRoutes {
       page: () => TaskAssignmentScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
-      transition: Transition.zoom,
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 400),
+    ),
+    GetPage(
+      name: "/create-task",
+      page: () => TaskCreationScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 400),
     ),
     GetPage(
@@ -135,19 +136,8 @@ class AppRoutes {
       page: () => NotificationScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
-      transition: Transition.cupertino,
+      transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 400),
     ),
   ];
-
-  // Helper methods for navigation
-  static Future<T?>? toNamed<T>(String routeName, {dynamic arguments}) {
-    if (Get.isDialogOpen == true) Get.back();
-    return Get.toNamed<T>(routeName, arguments: arguments);
-  }
-
-  static Future<dynamic> offAllNamed(String routeName, {dynamic arguments}) async {
-    if (Get.isDialogOpen == true) Get.back();
-    return Get.offAllNamed(routeName, arguments: arguments);
-  }
 }
