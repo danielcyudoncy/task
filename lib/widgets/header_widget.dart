@@ -62,9 +62,9 @@ class HeaderWidget extends StatelessWidget {
           shape: BoxShape.circle,
           color: Colors.white,
           border: Border.all(color: const Color(0xFF0B189B), width: 1.5),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Colors.blue.withOpacity(0.2),
+              color: Colors.blue,
               blurRadius: 4,
               spreadRadius: 1,
             ),

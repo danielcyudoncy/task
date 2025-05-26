@@ -35,7 +35,7 @@ class OnboardingScreen extends StatelessWidget {
     final gradientColors = isDark
         ? [
             colorScheme.surface,
-            colorScheme.primary.withOpacity(0.7),
+            colorScheme.primaryContainer,
             colorScheme.surface,
           ]
         : [
@@ -97,10 +97,10 @@ class OnboardingScreen extends StatelessWidget {
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
                       fontFamily: AppFontsStyles.openSans,
-                      shadows: [
+                      shadows: const [
                         Shadow(
-                          color: Colors.black.withOpacity(0.25),
-                          offset: const Offset(0, 3),
+                          color: Colors.black26,
+                          offset: Offset(0, 3),
                           blurRadius: 12,
                         ),
                       ],
@@ -162,7 +162,7 @@ class OnboardingScreen extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         backgroundColor: appPrimaryColor,
                         foregroundColor: Colors.white,
-                        side: BorderSide(
+                        side: const BorderSide(
                           color: appPrimaryColor,
                         ),
                         padding: EdgeInsets.zero,

@@ -48,8 +48,6 @@ class TaskController extends GetxController {
       taskTitleCache.addAll(Map<String, String>.from(jsonDecode(titleCache)));
     }
 
-    print(
-        "Caches initialized: UserNameCache: $userNameCache, TaskTitleCache: $taskTitleCache");
   }
 
   // Save cache to local storage
@@ -65,7 +63,6 @@ class TaskController extends GetxController {
     // Save timestamp for cache expiration
     prefs.setInt("cacheTimestamp", DateTime.now().millisecondsSinceEpoch);
 
-    print("Caches saved");
   }
 
   // Pre-fetch all user names and cache them
@@ -76,7 +73,6 @@ class TaskController extends GetxController {
       int? lastUpdate = prefs.getInt("cacheTimestamp");
       if (lastUpdate != null &&
           DateTime.now().millisecondsSinceEpoch - lastUpdate < 86400000) {
-        print("Cache is still valid, skipping pre-fetch.");
         return;
       }
 
@@ -94,10 +90,8 @@ class TaskController extends GetxController {
 
       // Save updated cache
       saveCache();
-      print("User names pre-fetched and cached!");
-    } catch (e) {
-      print("Error pre-fetching user names: $e");
-    }
+    // ignore: empty_catches
+    } catch (e) {}
   }
 
   // Fetch tasks and replace UIDs with real names and titles

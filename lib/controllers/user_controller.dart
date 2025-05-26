@@ -48,7 +48,6 @@ class UserController extends GetxController {
       );
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch reporters. Please try again.");
-      print("Error fetching reporters: $e");
     }
   }
 
@@ -73,7 +72,6 @@ class UserController extends GetxController {
       );
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch cameramen. Please try again.");
-      print("Error fetching cameramen: $e");
     }
   }
 
@@ -103,7 +101,6 @@ class UserController extends GetxController {
       }
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch users. Please try again.");
-      print("Error fetching users: $e");
     }
   }
 

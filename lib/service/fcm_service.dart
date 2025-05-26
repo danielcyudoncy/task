@@ -25,15 +25,12 @@ Future<void> sendTaskNotification(
     final String? fcmToken = userData['fcmToken'];
 
     if (fcmToken == null || fcmToken.isEmpty) {
-      print("⚠️ FCM Token is null or empty for user: $assignedUserId");
       return;
     }
 
     // ✅ Securely retrieve Firebase Server Key
     final String? serverKey = dotenv.env['FIREBASE_SERVER_KEY'];
     if (serverKey == null || serverKey.isEmpty) {
-      print(
-          "❌ Firebase Server Key not found! Please set FIREBASE_SERVER_KEY in .env file");
       return;
     }
 
@@ -90,8 +87,7 @@ Future<void> sendTaskNotification(
       "timestamp": FieldValue.serverTimestamp(),
       "isRead": false,
     });
-  } catch (e, stackTrace) {
-    print("❌ Error sending notification: $e");
-    print(stackTrace);
+  // ignore: empty_catches
+  } catch (e) {
   }
 }

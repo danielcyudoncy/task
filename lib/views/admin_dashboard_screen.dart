@@ -339,7 +339,7 @@ class _TasksTab extends StatelessWidget {
     final Color cardColor =
         isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
     const Color textColor = Colors.white;
-    final Color subTextColor = Colors.white.withOpacity(0.87);
+    const Color subTextColor = Colors.white;
     final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;
 
     if (tasks.isEmpty) {
@@ -384,13 +384,13 @@ class _TasksTab extends StatelessWidget {
                   const SizedBox(height: 7),
                   Text(
                     doc?['details'] ?? "Task Details",
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: subTextColor,
                         fontSize: 13,
                         fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 6),
-                  Text(
+                  const Text(
                     "Assigned Name", // Replace with actual logic if available
                     style: TextStyle(
                         color: subTextColor,
@@ -400,7 +400,7 @@ class _TasksTab extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     "Due Date ${doc?['dueDate'] ?? 'N/A'}",
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: subTextColor,
                         fontSize: 13,
                         fontWeight: FontWeight.w400),
