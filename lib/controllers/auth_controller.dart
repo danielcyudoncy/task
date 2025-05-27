@@ -3,19 +3,19 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
+import 'package:task/service/supabase_storage_service.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final SupabaseStorageService storageService = SupabaseStorageService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseService _firebaseService = FirebaseService();
 
   Rx<User?> firebaseUser = Rx<User?>(null);
@@ -329,7 +329,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> uploadProfilePicture(File imageFile) async {
-    final User? user = _auth.currentUser;
+    final user = _auth.currentUser;
     if (user == null) {
       Get.snackbar("Error", "User not logged in.");
       return;
@@ -337,35 +337,40 @@ class AuthController extends GetxController {
 
     try {
       isLoading.value = true;
-
       if (!await imageFile.exists()) {
         throw Exception("Image file doesn't exist");
       }
 
-      String filePath =
-          "profile_pictures/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg";
+      // Upload to Supabase Storage
+      String filePath = "profile_pictures/${user.uid}.jpg";
+      final result = await storageService.uploadFile(
+        bucket: 'avatars', // your Supabase bucket name
+        path: filePath,
+        file: imageFile,
+      );
 
-      UploadTask uploadTask = _storage.ref(filePath).putFile(
-            imageFile,
-            SettableMetadata(contentType: 'image/jpeg'),
-          );
+      if (result != null) {
+        final url = storageService.getPublicUrl(
+          bucket: 'avatars',
+          path: filePath,
+        );
 
-      TaskSnapshot snapshot = await uploadTask;
-      String downloadUrl = await snapshot.ref.getDownloadURL();
+        // Update Firestore with new photo URL
+        await _firestore.collection('users').doc(user.uid).update({
+          'photoUrl': url,
+        });
 
-      await _firestore.collection('users').doc(user.uid).update({
-        'photoUrl': downloadUrl,
-      });
-
-      profilePic.value = downloadUrl;
-      Get.snackbar("Success", "Profile picture updated successfully.");
+        profilePic.value = url;
+        Get.snackbar("Success", "Profile picture updated successfully.");
+      } else {
+        Get.snackbar("Upload Failed", "Could not upload the image.");
+      }
     } catch (e) {
       Get.snackbar("Upload Failed", "Error: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
   }
-
   Future<void> updateProfileDetails() async {
     final user = _auth.currentUser;
     if (user == null) {

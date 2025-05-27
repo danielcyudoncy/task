@@ -1,4 +1,5 @@
 // core/bootstrap.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/myApp.dart';
 
+/// Bootstraps the Flutter app by initializing essential services and controllers.
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -15,7 +17,7 @@ Future<void> bootstrapApp() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    // Register controllers here so they are available before runApp
+    // Register controllers globally
     Get.put(ThemeController(), permanent: true);
     Get.put(SettingsController(), permanent: true);
 
@@ -26,6 +28,7 @@ Future<void> bootstrapApp() async {
   }
 }
 
+/// Simple error UI for failed initialization.
 class ErrorApp extends StatelessWidget {
   final String error;
   const ErrorApp({super.key, required this.error});
