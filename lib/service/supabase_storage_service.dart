@@ -32,4 +32,15 @@ class SupabaseStorageService {
   }) {
     return _client.storage.from(bucket).getPublicUrl(path);
   }
+
+  Future<void> deleteFile({
+    required String bucket,
+    required String path,
+  }) async {
+    try {
+      await _client.storage.from(bucket).remove([path]);
+    } catch (e) {
+      print('Supabase delete error: $e');
+    }
+  }
 }

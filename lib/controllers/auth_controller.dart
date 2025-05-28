@@ -14,14 +14,14 @@ class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final SupabaseStorageService storageService = SupabaseStorageService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final FirebaseService _firebaseService = FirebaseService();
+  final SupabaseStorageService storageService = SupabaseStorageService();
 
   Rx<User?> firebaseUser = Rx<User?>(null);
   RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
 
-  // Add this Rx<User?> and currentUser getter
   final Rx<User?> user = Rx<User?>(null);
 
   User? get currentUser => user.value;
@@ -55,7 +55,7 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     _auth.authStateChanges().listen((User? userValue) {
-      user.value = userValue; // keep user Rx in sync
+      user.value = userValue;
       if (userValue == null) {
         debugPrint("User signed out");
       } else {
@@ -67,7 +67,7 @@ class AuthController extends GetxController {
   @override
   void onReady() {
     firebaseUser.bindStream(_auth.authStateChanges());
-    user.bindStream(_auth.authStateChanges()); // also bind user Rx to stream
+    user.bindStream(_auth.authStateChanges());
     ever(userRole, (_) => _handleRoleChange());
     debounce(lastActivity, (_) => _checkInactivity(),
         time: const Duration(minutes: 30));
@@ -300,14 +300,12 @@ class AuthController extends GetxController {
     }
   }
 
-  // auth_controller.dart
   Future<void> createAdminUser({
     required String email,
     required String password,
     required String fullName,
   }) async {
     try {
-      // 1. Create Firebase Auth user
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
@@ -328,34 +326,58 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Profile picture upload (USES SUPABASE STORAGE, not Firebase Storage)
   Future<void> uploadProfilePicture(File imageFile) async {
-    final user = _auth.currentUser;
+    final User? user = _auth.currentUser;
     if (user == null) {
       Get.snackbar("Error", "User not logged in.");
       return;
     }
 
+    const String bucket = 'photos'; // use your actual Supabase bucket name
+
     try {
       isLoading.value = true;
+
       if (!await imageFile.exists()) {
         throw Exception("Image file doesn't exist");
       }
 
+      // Delete old image from Supabase, if any
+      String oldPhotoUrl = profilePic.value;
+      String newFilePath = "profile_pictures/${user.uid}.jpg";
+
+      // Only attempt to delete if photoUrl is a Supabase URL and is not empty
+      if (oldPhotoUrl.isNotEmpty && oldPhotoUrl.contains("supabase")) {
+        try {
+          Uri uri = Uri.parse(oldPhotoUrl);
+          // Supabase URL: .../storage/v1/object/public/photos/profile_pictures/xxxx.jpg
+          // pathSegments: [storage, v1, object, public, photos, profile_pictures, ...]
+          int bucketIndex = uri.pathSegments.indexOf(bucket);
+          if (bucketIndex > -1 && uri.pathSegments.length > bucketIndex + 1) {
+            String path = uri.pathSegments.sublist(bucketIndex + 1).join('/');
+            if (path.isNotEmpty) {
+              await storageService.deleteFile(bucket: bucket, path: path);
+            }
+          }
+        } catch (e) {
+          debugPrint("Failed to delete old Supabase image: $e");
+        }
+      }
+
       // Upload to Supabase Storage
-      String filePath = "profile_pictures/${user.uid}.jpg";
       final result = await storageService.uploadFile(
-        bucket: 'avatars', // your Supabase bucket name
-        path: filePath,
+        bucket: bucket,
+        path: newFilePath,
         file: imageFile,
       );
 
       if (result != null) {
         final url = storageService.getPublicUrl(
-          bucket: 'avatars',
-          path: filePath,
+          bucket: bucket,
+          path: newFilePath,
         );
 
-        // Update Firestore with new photo URL
         await _firestore.collection('users').doc(user.uid).update({
           'photoUrl': url,
         });
@@ -371,6 +393,7 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
   Future<void> updateProfileDetails() async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -469,18 +492,14 @@ class AuthController extends GetxController {
     }
   }
 
-  // Sign out the current user
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
-    // Optionally: Clear your user Rx variable, navigate to login, etc.
     Get.offAllNamed('/onboarding');
   }
 
-  // Delete the current user's account
   Future<void> deleteAccount() async {
     try {
       await FirebaseAuth.instance.currentUser?.delete();
-      // Optionally: Clear user state, navigate to onboarding/login
       Get.offAllNamed('/onboarding');
     } catch (e) {
       Get.snackbar('Error', 'Could not delete account: $e');
