@@ -11,12 +11,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeController themeController = Get.find<ThemeController>();
+    // Use Get.put if not already initialized elsewhere to avoid "not found" error.
+    final ThemeController themeController = Get.isRegistered<ThemeController>()
+        ? Get.find<ThemeController>()
+        : Get.put(ThemeController(), permanent: true);
+
     return Obx(() => GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Assignment Logging App',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
+          // Always start in light mode unless user toggles to dark
           themeMode: themeController.isDarkMode.value
               ? ThemeMode.dark
               : ThemeMode.light,

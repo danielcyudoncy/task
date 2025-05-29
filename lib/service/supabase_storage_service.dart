@@ -11,6 +11,7 @@ class SupabaseStorageService {
     required File file,
   }) async {
     try {
+      print('Uploading to bucket: $bucket, path: $path');
       final response = await _client.storage.from(bucket).upload(
             path,
             file,
@@ -19,9 +20,11 @@ class SupabaseStorageService {
               upsert: true,
             ),
           );
+      print('Upload response: $response');
       return response;
-    } catch (e) {
+    } catch (e, stack) {
       print('Supabase upload error: $e');
+      print('Stacktrace: $stack');
       return null;
     }
   }
