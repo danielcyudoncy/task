@@ -16,9 +16,9 @@ class OnboardingScreen extends StatelessWidget {
   void _handleMyAccount() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Get.offAllNamed("/home"); // Use offAllNamed to clear the stack
+      Get.offAllNamed("/home");
     } else {
-      Get.offAllNamed("/login"); // Use offAllNamed to clear the stack
+      Get.offAllNamed("/login");
     }
   }
 
@@ -28,10 +28,10 @@ class OnboardingScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // App's primary color (as requested)
+    // App's primary color
     const Color appPrimaryColor = Color(0xFF2E3BB5);
 
-    // Interchanged: white at top and bottom, primary in the middle
+    // Gradient: white at top, blue at bottom for light theme
     final gradientColors = isDark
         ? [
             colorScheme.surface,
@@ -40,8 +40,7 @@ class OnboardingScreen extends StatelessWidget {
           ]
         : [
             Colors.white, // Top
-            colorScheme.primary, // Middle
-            Colors.white, // Bottom
+            appPrimaryColor, // Bottom (blue)
           ];
 
     return Scaffold(
@@ -54,11 +53,7 @@ class OnboardingScreen extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: gradientColors,
-            stops: const [
-              0.0,
-              0.5,
-              1.0
-            ], // White at top and bottom, color in the middle
+            stops: isDark ? const [0.0, 0.5, 1.0] : const [0.0, 1.0],
           ),
         ),
         child: SingleChildScrollView(
@@ -72,10 +67,8 @@ class OnboardingScreen extends StatelessWidget {
                 height: 250,
               ),
               const SizedBox(height: 60),
-              // Welcome: outlined and shadowed text
               Stack(
                 children: [
-                  // Outline
                   Text(
                     'Welcome!',
                     style: TextStyle(
@@ -89,7 +82,6 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  // Fill with shadow
                   Text(
                     'Welcome!',
                     style: TextStyle(
@@ -175,7 +167,7 @@ class OnboardingScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: AppSizes.fontVerySmall,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white, // Ensure text is white
+                          color: Colors.white,
                         ),
                       ),
                     ),

@@ -29,7 +29,7 @@ Future<void> main() async {
 
   // Initialize Supabase per latest best practice.
   await Supabase.initialize(
-    url: 'https://supabase.com/dashboard/project/avivxpqksbqncnjuwxia', // TODO: Replace with your project url
+    url: 'https://supabase.com/dashboard/project/avivxpqksbqncnjuwxia',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2aXZ4cHFrc2JxbmNuanV3eGlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjA1MjYsImV4cCI6MjA2MzkzNjUyNn0.aD0dUoVQ0pe08nt9WEbohCJcC6QxSyQ9QfnfvFSUinQ', 
     debug: true, // Enable detailed error logs (optional)
