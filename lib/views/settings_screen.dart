@@ -30,7 +30,7 @@ class SettingsScreen extends StatelessWidget {
         title: const Text(
           'Settings',
           style: TextStyle(
-              color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+              color: Colors.white, fontSize: 33, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
       ),
@@ -46,8 +46,8 @@ class SettingsScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(top: 8, bottom: 10),
                         child: Image.asset(
                           'assets/png/logo.png',
-                          width: 80,
-                          height: 80,
+                          width: 100,
+                          height: 100,
                         ),
                       ),
                     ),
@@ -244,198 +244,11 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),
         onPressed: () {
-          Get.to(() => SettingsPrivacyScreen());
+          // Use named route for smooth navigation
+          Get.toNamed('/privacy');
         },
         child: const Text("Next: Privacy Settings",
             style: TextStyle(fontSize: 16)),
-      ),
-    );
-  }
-}
-
-class SettingsPrivacyScreen extends StatelessWidget {
-  final SettingsController settingsController = Get.find<SettingsController>();
-
-  SettingsPrivacyScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final isLightMode = Theme.of(context).brightness == Brightness.light;
-
-    return Scaffold(
-      backgroundColor: isLightMode
-          ? const Color(0xFF05168E)
-          : Colors.black, // Background as per theme
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: isLightMode ? const Color(0xFF05168E) : Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-              color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Obx(() => SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(top: 8, bottom: 10),
-                        child: Image.asset(
-                          'assets/images/channels_logo.png',
-                          width: 80,
-                          height: 80,
-                        ),
-                      ),
-                    ),
-                    sectionTitle("Privacy Settings"),
-                    settingsSwitchTile(
-                      "Third Party Services",
-                      "Get alerts of new assignments",
-                      settingsController.isAssignmentAlertEnabled.value,
-                      (value) {
-                        settingsController.toggleAssignmentAlert(value);
-                        settingsController.saveSettings();
-                      },
-                    ),
-                    settingsSwitchTile(
-                      "Location Services",
-                      "Enable/Disable Location",
-                      settingsController.isLocationEnabled.value,
-                      (value) {
-                        settingsController.toggleLocation(value);
-                        settingsController.saveSettings();
-                      },
-                    ),
-                    settingsSwitchTile(
-                      "Ad’s Preference",
-                      "Targeted Ads",
-                      settingsController.isTargetedAdsEnabled.value,
-                      (value) {
-                        settingsController.toggleTargetedAds(value);
-                        settingsController.saveSettings();
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    ListTile(
-                      title: const Text(
-                        "Privacy Policy",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: const Text("View Privacy Policy",
-                          style: TextStyle(color: Colors.white70)),
-                      trailing: const Icon(Icons.arrow_forward_ios,
-                          color: Colors.white, size: 18),
-                      onTap: () => settingsController.viewPrivacyPolicy(),
-                    ),
-                    ListTile(
-                      title: const Text(
-                        "Security",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: const Text("Set up two - factor authentication",
-                          style: TextStyle(color: Colors.white70)),
-                      trailing: const Icon(Icons.arrow_forward_ios,
-                          color: Colors.white, size: 18),
-                      onTap: () =>
-                          settingsController.setupTwoFactorAuthentication(),
-                    ),
-                    const SizedBox(height: 14),
-                    saveButton(settingsController),
-                    const SizedBox(height: 30),
-                  ],
-                ),
-              ),
-            )),
-      ),
-    );
-  }
-
-  Widget sectionTitle(String title) => Container(
-        alignment: Alignment.centerLeft,
-        margin: const EdgeInsets.only(top: 18, bottom: 6),
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white, // Text remains white
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-      );
-
-  Widget settingsSwitchTile(
-    String title,
-    String subtitle,
-    bool value,
-    Function(bool) onChanged,
-  ) {
-    return Card(
-      color: Colors.transparent,
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 2),
-      child: ListTile(
-        contentPadding: const EdgeInsets.only(left: 0, right: 0),
-        title: Text(
-          title,
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-        ),
-        subtitle: subtitle.isNotEmpty
-            ? Text(
-                subtitle,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 13),
-              )
-            : null,
-        trailing: Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: Colors.white,
-          activeTrackColor: const Color(0xFF2F80ED),
-          inactiveThumbColor: Colors.white70,
-          inactiveTrackColor: Colors.white24,
-        ),
-      ),
-    );
-  }
-
-  Widget saveButton(SettingsController controller) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2F80ED),
-          foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-        onPressed: () async {
-          await controller.onSave();
-          Get.snackbar(
-            "Settings Saved",
-            "Your preferences have been updated.",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.grey[900],
-            colorText: Colors.white,
-          );
-        },
-        child: const Text(
-          "Save",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-        ),
       ),
     );
   }
