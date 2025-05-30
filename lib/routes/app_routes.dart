@@ -9,6 +9,7 @@ import 'package:task/views/home_screen.dart';
 import 'package:task/views/login_screen.dart';
 import 'package:task/views/manage_users_screen.dart';
 import 'package:task/views/notification_screen.dart';
+import 'package:task/views/privacy_screen.dart';
 import 'package:task/views/profile_screen.dart';
 import 'package:task/views/profile_update_screen.dart';
 import 'package:task/views/settings_screen.dart';
@@ -86,6 +87,14 @@ class AppRoutes {
     GetPage(
       name: "/settings",
       page: () => SettingsScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: "/privacy",
+      page: () => const PrivacyScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
