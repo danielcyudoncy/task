@@ -30,52 +30,69 @@ class TaskAssignmentScreen extends StatelessWidget {
           );
         }
 
-        return ListView.builder(
-          itemCount: taskController.tasks.length,
-          itemBuilder: (context, index) {
-            final task = taskController.tasks[index];
-
-            return Card(
-              elevation: 3,
-              margin: const EdgeInsets.all(10),
-              child: ListTile(
-                title: Text(
-                  task.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+        return Column(
+          children: [
+            if (authController.canAssignTask)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  icon: const Icon(Icons.add_task),
+                  label: const Text("Assign Task"),
+                  onPressed: () => _showAssignmentDialog(context, null),
                 ),
-                subtitle: Text(task.description),
-                trailing: authController.canAssignTask
-                    ? ElevatedButton(
-                        onPressed: () =>
-                            _showAssignmentDialog(context, task.taskId),
-                        child: const Text("Assign"),
-                      )
-                    : const Text(
-                        "No Permission",
-                        style: TextStyle(color: Colors.grey),
-                      ),
               ),
-            );
-          },
+            Expanded(
+              child: ListView.builder(
+                itemCount: taskController.tasks.length,
+                itemBuilder: (context, index) {
+                  final task = taskController.tasks[index];
+
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.all(10),
+                    child: ListTile(
+                      title: Text(
+                        task.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(task.description),
+                      trailing: authController.canAssignTask
+                          ? ElevatedButton(
+                              onPressed: () =>
+                                  _showAssignmentDialog(context, task.taskId),
+                              child: const Text("Assign"),
+                            )
+                          : const Text(
+                              "No Permission",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       }),
     );
   }
 
-  void _showAssignmentDialog(BuildContext context, String taskId) {
+  void _showAssignmentDialog(BuildContext context, String? taskId) {
     if (!authController.canAssignTask) {
       Get.snackbar(
           "Access Denied", "You do not have permission to assign tasks.");
       return;
     }
 
+    String? selectedTaskId = taskId;
     String? selectedReporter;
     String? selectedCameraman;
 
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
-        height: 350,
+        height: 400,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -89,14 +106,36 @@ class TaskAssignmentScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
+            // If taskId is null, show dropdown for selecting a task
+            if (taskId == null)
+              Obx(() {
+                if (taskController.tasks.isEmpty) {
+                  return const Text("No tasks available");
+                }
+                return DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: "Select Task"),
+                  items: taskController.tasks
+                      .map<DropdownMenuItem<String>>((task) =>
+                          DropdownMenuItem(
+                            value: task.taskId,
+                            child: Text(task.title),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    selectedTaskId = value;
+                  },
+                );
+              }),
+
+            const SizedBox(height: 10),
+
             // Assign to Reporter Dropdown
             Obx(() {
               if (userController.reporters.isEmpty) {
                 return const Text("No reporters available");
               }
               return DropdownButtonFormField<String>(
-                decoration:
-                    const InputDecoration(labelText: "Assign to Reporter"),
+                decoration: const InputDecoration(labelText: "Assign to Reporter"),
                 items: userController.reporters
                     .map<DropdownMenuItem<String>>((reporter) {
                   return DropdownMenuItem<String>(
@@ -135,28 +174,25 @@ class TaskAssignmentScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Assign Task Button (works if one or both roles are selected)
+            // Assign Task Button (works if task and at least one user is selected)
             Obx(() {
               return ElevatedButton(
                 onPressed: () {
-                  if (selectedReporter != null && selectedCameraman != null) {
-                    taskController.assignTaskToReporter(
-                        taskId, selectedReporter!);
-                    taskController.assignTaskToCameraman(
-                        taskId, selectedCameraman!);
-                    Get.snackbar("Success", "Task assigned successfully.");
-                  } else if (selectedReporter != null) {
-                    taskController.assignTaskToReporter(
-                        taskId, selectedReporter!);
-                    Get.snackbar("Success", "Task assigned to Reporter.");
-                  } else if (selectedCameraman != null) {
-                    taskController.assignTaskToCameraman(
-                        taskId, selectedCameraman!);
-                    Get.snackbar("Success", "Task assigned to Cameraman.");
-                  } else {
-                    Get.snackbar("Error", "Please select at least one person.");
+                  if (selectedTaskId == null) {
+                    Get.snackbar("Error", "Please select a task.");
+                    return;
                   }
-
+                  if (selectedReporter != null) {
+                    taskController.assignTaskToReporter(selectedTaskId!, selectedReporter!);
+                  }
+                  if (selectedCameraman != null) {
+                    taskController.assignTaskToCameraman(selectedTaskId!, selectedCameraman!);
+                  }
+                  if (selectedReporter == null && selectedCameraman == null) {
+                    Get.snackbar("Error", "Please select at least one person.");
+                    return;
+                  }
+                  Get.snackbar("Success", "Task assigned successfully.");
                   Get.back();
                 },
                 child: const Text("Assign Task"),
