@@ -23,6 +23,7 @@ class AuthController extends GetxController {
   RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
 
   final Rx<User?> user = Rx<User?>(null);
+  
 
   User? get currentUser => user.value;
 

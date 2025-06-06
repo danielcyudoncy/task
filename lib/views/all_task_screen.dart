@@ -153,6 +153,12 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                                         message:
                                             "Something went wrong loading users.");
                                   }
+                                  // FIX: Prevent null check operator on null value
+                                  if (!snapshot.hasData ||
+                                      snapshot.data == null) {
+                                    return const ErrorStateWidget(
+                                        message: "No tasks found.");
+                                  }
                                   var filteredTasks = snapshot.data!
                                       .where((task) =>
                                           (searchTerm.isEmpty ||
