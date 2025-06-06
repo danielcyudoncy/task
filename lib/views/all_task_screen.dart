@@ -21,7 +21,7 @@ class AllTaskScreen extends StatefulWidget {
 }
 
 class _AllTaskScreenState extends State<AllTaskScreen> {
-  final TaskController taskController = Get.put(TaskController());
+  final TaskController taskController = Get.find<TaskController>();
   final AuthController authController = Get.find<AuthController>();
 
   final int pageSize = 10;
@@ -81,13 +81,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
       backgroundColor: isLightMode
           ? Colors.white
           : Colors.black, // Background color changes based on theme
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.toNamed('/create_task'),
-        backgroundColor: const Color(0xFF171FA0),
-        tooltip: "Create New Task",
-        child: const Icon(Icons.add,
-            color: Colors.white, semanticLabel: 'Add Task'),
-      ),
+      
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -298,16 +292,30 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
         ),
       );
       if (confirm == true) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("Task deleted")));
+        try {
+          await FirebaseFirestore.instance
+              .collection('tasks')
+              .doc(taskData['taskId'])
+              .delete();
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Task deleted successfully")));
+        } catch (e) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Error deleting task: $e")));
+        }
       }
     } else if (choice == 'Mark as Completed') {
-      await FirebaseFirestore.instance
-          .collection('tasks')
-          .doc(taskData['taskId'])
-          .update({"status": "Completed"});
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Task marked as completed")));
+      try {
+        await FirebaseFirestore.instance
+            .collection('tasks')
+            .doc(taskData['taskId'])
+            .update({"status": "Completed"});
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Task marked as completed")));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error marking task as completed: $e")));
+      }
     }
   }
 }
