@@ -54,7 +54,7 @@ class AppRoutes {
     // Protected routes
     GetPage(
       name: "/home",
-      page: () => HomeScreen(),
+      page: () => const HomeScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
