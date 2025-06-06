@@ -16,4 +16,7 @@ class AppStrings {
   static const taskDetails = 'Task Details';
   static const close = 'Close';
   static const unknown = 'Unknown';
+  static const String totalTaskCreated = 'Total Task Created';
+  static const String taskAssigned = 'Task Assigned';
+  static const String unknownTask = 'Unknown Task';
 }

@@ -17,9 +17,9 @@ class AppBarWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: () => Get.back(),
+            onTap: () => Get.offAllNamed('/home'),
             child: Semantics(
-              label: "Back",
+              label: "Go to Home",
               button: true,
               child: Container(
                 padding: const EdgeInsets.all(6),
@@ -30,7 +30,7 @@ class AppBarWidget extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.arrow_back,
+                  Icons.home,
                   color: isDarkMode
                       ? Colors.white
                       : const Color(

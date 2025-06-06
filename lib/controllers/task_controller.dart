@@ -13,6 +13,8 @@ class TaskController extends GetxController {
 
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
+  var totalTaskCreated = 0.obs;
+  var taskAssigned = 0.obs;
 
   // In-memory cache for user names and task titles
   final Map<String, String> userNameCache = {};
@@ -24,6 +26,7 @@ class TaskController extends GetxController {
     await initializeCache();
     await preFetchUserNames();
     fetchTasks();
+    fetchTaskCounts();
   }
 
   @override
@@ -47,7 +50,6 @@ class TaskController extends GetxController {
     if (titleCache != null) {
       taskTitleCache.addAll(Map<String, String>.from(jsonDecode(titleCache)));
     }
-
   }
 
   // Save cache to local storage
@@ -62,7 +64,6 @@ class TaskController extends GetxController {
 
     // Save timestamp for cache expiration
     prefs.setInt("cacheTimestamp", DateTime.now().millisecondsSinceEpoch);
-
   }
 
   // Pre-fetch all user names and cache them
@@ -90,7 +91,6 @@ class TaskController extends GetxController {
 
       // Save updated cache
       saveCache();
-    // ignore: empty_catches
     } catch (e) {}
   }
 
@@ -137,10 +137,8 @@ class TaskController extends GetxController {
             assignedReporter: assignedReporterName,
             assignedCameraman: assignedCameramanName,
             status: taskData["status"] ?? "Pending",
-            comments: List<String>.from(
-                taskData["comments"] ?? []), // Fix missing comments
-            timestamp: taskData["timestamp"] ??
-                Timestamp.now(), // Fix missing timestamp
+            comments: List<String>.from(taskData["comments"] ?? []),
+            timestamp: taskData["timestamp"] ?? Timestamp.now(),
             createdById: taskData["createdBy"] ?? "",
             assignedReporterId: taskData["assignedReporter"],
             assignedCameramanId: taskData["assignedCameraman"],
@@ -161,7 +159,6 @@ class TaskController extends GetxController {
                   (task.createdById == userId))
               .toList();
         }
-        // Other roles see all tasks
 
         tasks.value = updatedTasks;
         saveCache(); // Save the updated cache
@@ -170,6 +167,26 @@ class TaskController extends GetxController {
       Get.snackbar("Error", "Failed to fetch tasks: ${e.toString()}");
     } finally {
       isLoading(false);
+    }
+  }
+
+  // Fetch task counts
+  Future<void> fetchTaskCounts() async {
+    try {
+      String userId = authController.auth.currentUser!.uid;
+
+      final queryCreated = await _firebaseService.getAllTasks().first;
+      totalTaskCreated.value =
+          queryCreated.docs.where((doc) => doc["createdBy"] == userId).length;
+
+      final queryAssigned = await _firebaseService.getAllTasks().first;
+      taskAssigned.value = queryAssigned.docs
+          .where((doc) =>
+              doc["assignedReporter"] == userId ||
+              doc["assignedCameraman"] == userId)
+          .length;
+    } catch (e) {
+      print('Error fetching task counts: $e');
     }
   }
 
