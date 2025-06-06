@@ -73,7 +73,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
     final isLargeScreen = media.size.width > 600;
-    final textScale = media.textScaleFactor;
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
     final basePadding = isLargeScreen ? 32.0 : 16.0;
     final isLightMode = Theme.of(context).brightness == Brightness.light;
 
