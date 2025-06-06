@@ -1,6 +1,7 @@
 // views/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../widgets/user_nav_bar.dart';
@@ -27,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    taskController.fetchTasks();
+    taskController.fetchTaskCounts();
   }
 
   @override
@@ -74,8 +77,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     ? userName[0].toUpperCase()
                                     : '?',
                                 style: TextStyle(
-                                  color:
-                                      isDark ? AppColors.primaryColor : Colors.white,
+                                  color: isDark
+                                      ? AppColors.primaryColor
+                                      : Colors.white,
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -96,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w400,
-                              fontSize: 13,
+                              fontSize: 16,
                             ),
                           ),
                           Text(
@@ -104,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 13,
+                              fontSize: 18,
                             ),
                           ),
                         ],
@@ -159,17 +163,20 @@ class _HomeScreenState extends State<HomeScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   children: [
-                    _statCard(
-                      icon: Icons.groups,
-                      label: AppStrings.totalUsers,
-                      color: const Color(0xFF9FA8DA),
-                    ),
+                    Obx(() => _statCard(
+                          icon: Icons.create,
+                          label: AppStrings.totalTaskCreated,
+                          value:
+                              taskController.totalTaskCreated.value.toString(),
+                          color: const Color(0xFF9FA8DA),
+                        )),
                     const SizedBox(width: 16),
-                    _statCard(
-                      icon: Icons.edit_note_rounded,
-                      label: AppStrings.totalTasks,
-                      color: const Color(0xFF9FA8DA),
-                    ),
+                    Obx(() => _statCard(
+                          icon: Icons.assignment,
+                          label: AppStrings.taskAssigned,
+                          value: taskController.taskAssigned.value.toString(),
+                          color: const Color(0xFF9FA8DA),
+                        )),
                   ],
                 ),
               ),
@@ -255,19 +262,11 @@ class _HomeScreenState extends State<HomeScreen>
                       // TabBarView for not completed and completed tasks
                       Expanded(
                         child: Obx(() {
-                          final user = authController.currentUser;
-                          final userId = user?.uid;
                           final notCompletedTasks = taskController.tasks
-                              .where((t) =>
-                                  t.status != "Completed" &&
-                                  (t.assignedReporterId == userId ||
-                                      t.assignedCameramanId == userId))
+                              .where((t) => t.status != "Completed")
                               .toList();
                           final completedTasks = taskController.tasks
-                              .where((t) =>
-                                  t.status == "Completed" &&
-                                  (t.assignedReporterId == userId ||
-                                      t.assignedCameramanId == userId))
+                              .where((t) => t.status == "Completed")
                               .toList();
 
                           return TabBarView(
@@ -302,6 +301,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _statCard({
     required IconData icon,
     required String label,
+    required String value,
     required Color color,
   }) {
     return Expanded(
@@ -327,6 +327,10 @@ class _HomeScreenState extends State<HomeScreen>
             Text(
               label,
               style: AppStyles.cardTitleStyle,
+            ),
+            Text(
+              value,
+              style: AppStyles.cardValueStyle,
             ),
           ],
         ),
@@ -399,10 +403,8 @@ class _TaskListTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  t.assignedReporterName ??
-                      t.assignedCameramanName ??
-                      AppStrings.unknownUser,
+               Text(
+                  "Due Date ${t.timestamp != null ? DateFormat('yyyy-MM-dd').format(t.timestamp!.toDate()) : 'N/A'}",
                   style: AppStyles.cardValueStyle.copyWith(
                     color: subTextColor,
                     fontSize: 13,
@@ -410,14 +412,7 @@ class _TaskListTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  "Due Date ${t.dueDate ?? 'N/A'}",
-                  style: AppStyles.cardValueStyle.copyWith(
-                    color: subTextColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
+               
                 const SizedBox(height: 8),
                 const Align(
                   alignment: Alignment.bottomRight,
