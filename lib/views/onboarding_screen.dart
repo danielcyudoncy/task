@@ -74,7 +74,7 @@ class OnboardingScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
-                      fontFamily: AppFontsStyles.openSans,
+                      fontFamily: AppFontsStyles.montserrat,
                       foreground: Paint()
                         ..style = PaintingStyle.stroke
                         ..strokeWidth = 4
@@ -88,7 +88,7 @@ class OnboardingScreen extends StatelessWidget {
                       color: isDark ? appPrimaryColor : Colors.black,
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
-                      fontFamily: AppFontsStyles.openSans,
+                      fontFamily: AppFontsStyles.montserrat,
                       shadows: const [
                         Shadow(
                           color: Colors.black26,
@@ -110,7 +110,7 @@ class OnboardingScreen extends StatelessWidget {
                 style: TextStyle(
                   color: isDark ? Colors.white : Colors.black,
                   fontSize: 18,
-                  fontFamily: AppFontsStyles.montserrat,
+                  fontFamily: AppFontsStyles.openSans,
                   fontWeight: FontWeight.w400,
                 ),
               ),
