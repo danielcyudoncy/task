@@ -1,4 +1,3 @@
-// views/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
@@ -21,8 +20,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     with SingleTickerProviderStateMixin {
   final AdminController adminController = Get.find<AdminController>();
   final AuthController authController = Get.find<AuthController>();
-  final ManageUsersController manageUsersController =
-      Get.find<ManageUsersController>();
+  final ManageUsersController manageUsersController = Get.find<ManageUsersController>();
 
   late TabController _tabController;
 
@@ -44,20 +42,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color sectionTitleColor =
-        isDark ? Colors.white : const Color(0xFF3739B7);
-    final Color tabSelectedColor =
-        isDark ? Colors.white : const Color(0xFF3739B7);
-    final Color tabUnselectedColor = isDark ? Colors.white70 : Colors.black54;
-    final Color addBtnColor = isDark ? Colors.white : const Color(0xFF3739B7);
-    final Color addIconColor = isDark ? const Color(0xFF3739B7) : Colors.white;
 
     return Obx(() {
-      if (adminController.isLoading.value ||
-          adminController.isStatsLoading.value) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+      if (adminController.isLoading.value || adminController.isStatsLoading.value) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
 
       return Scaffold(
@@ -75,18 +63,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header, dashboard, etc. remain with padding
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       HeaderWidget(authController: authController),
                       const SizedBox(height: 30),
-                      Text(AppStrings.dailyAssignments,
-                          style: AppStyles.sectionTitleStyle.copyWith(
-                            color: sectionTitleColor,
-                          )),
+                      Text(
+                        AppStrings.dailyAssignments,
+                        style: AppStyles.sectionTitleStyle.copyWith(
+                          color: isDark ? Colors.white : const Color(0xFF3739B7),
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       DashboardCardsWidget(
                         adminController: adminController,
@@ -105,14 +94,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
-                            color: sectionTitleColor,
+                            color: isDark ? Colors.white : const Color(0xFF3739B7),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                // White/dark container is edge-to-edge (no left/right margin)
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -124,51 +112,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       ),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Add button row (with left and right padding for button only)
                         Padding(
-                          padding: const EdgeInsets.only(
-                            top: 18,
-                            left: 16,
-                            right: 16,
-                            bottom: 10,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               GestureDetector(
-                                onTap: () => Get.toNamed('/task-creation'),
+                                onTap: () => Get.toNamed('/create-task'),
                                 child: Container(
                                   width: 34,
                                   height: 34,
                                   decoration: BoxDecoration(
-                                    color: addBtnColor,
+                                    color: isDark ? Colors.white : const Color(0xFF3739B7),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(Icons.add,
-                                      color: addIconColor, size: 22),
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 22,
+                                    color: isDark ? const Color(0xFF3739B7) : Colors.white,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        // Tab Bar (edge-to-edge)
                         TabBar(
                           controller: _tabController,
-                          indicatorColor: tabSelectedColor,
-                          indicatorWeight: 2.5,
-                          labelColor: tabSelectedColor,
-                          unselectedLabelColor: tabUnselectedColor,
-                          labelStyle: const TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 15),
+                          indicatorColor: isDark ? Colors.white : const Color(0xFF3739B7),
+                          labelColor: isDark ? Colors.white : const Color(0xFF3739B7),
+                          unselectedLabelColor: isDark ? Colors.white70 : Colors.black54,
+                          labelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
                           tabs: const [
                             Tab(text: "Not Completed"),
                             Tab(text: "Completed"),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        // TabBarView with task cards (edge-to-edge)
                         Expanded(
                           child: TabBarView(
                             controller: _tabController,
@@ -219,12 +199,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               itemCount: manageUsersController.usersList.length,
               itemBuilder: (context, index) {
                 final user = manageUsersController.usersList[index];
-                final userName = user['fullname']?.isNotEmpty == true
+                final userName = user['fullname']?.toString().isNotEmpty == true
                     ? user['fullname']
                     : AppStrings.unknownUser;
                 return ListTile(
                   title: Text(userName),
-                  subtitle: Text("Role: ${user['role']}"),
+                  subtitle: Text("Role: ${user['role'] ?? 'Unknown'}"),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -286,6 +266,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   void _showTaskDetailDialog(String title) {
+    final doc = adminController.taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
     Get.defaultDialog(
       title: AppStrings.taskDetails,
       content: Column(
@@ -295,7 +276,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           const SizedBox(height: 6),
           Text("Status: ${_getTaskStatus(title)}"),
           const SizedBox(height: 6),
-          Text("Created by: ${_getCreatedBy(title)}"),
+          Text("Created by: ${doc?['createdByName'] ?? AppStrings.unknown}"),
         ],
       ),
       textConfirm: AppStrings.close,
@@ -312,15 +293,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       return AppStrings.unknown;
     }
   }
-
-  String _getCreatedBy(String title) {
-    final task = adminController.taskSnapshotDocs
-        .firstWhereOrNull((doc) => doc['title'] == title);
-    return task?['createdByName'] ?? AppStrings.unknown;
-  }
 }
 
-// ---- Custom TaskList for the Cards ----
 class _TasksTab extends StatelessWidget {
   final List<dynamic> tasks;
   final List<dynamic> taskDocs;
@@ -336,25 +310,26 @@ class _TasksTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color cardColor =
-        isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
+    final Color cardColor = isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
     const Color textColor = Colors.white;
-    const Color subTextColor = Colors.white;
+    const Color subTextColor = Colors.white70;
     final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;
 
     if (tasks.isEmpty) {
       return Center(
-          child: Text("No tasks.", style: TextStyle(color: emptyListColor)));
+        child: Text("No tasks.", style: TextStyle(color: emptyListColor)),
+      );
     }
+
     return ListView.builder(
-      // Remove left/right padding so task cards go edge-to-edge (minus card padding)
-      padding: const EdgeInsets.only(top: 12, bottom: 20),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final title = tasks[index];
         final doc = taskDocs.firstWhereOrNull((d) => d['title'] == title);
+
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 7.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: GestureDetector(
             onTap: () => onTaskTap(title),
             child: Container(
@@ -369,47 +344,27 @@ class _TasksTab extends StatelessWidget {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title ?? "",
+                    title,
                     style: const TextStyle(
                       color: textColor,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(height: 7),
-                  Text(
-                    doc?['details'] ?? "Task Details",
-                    style: const TextStyle(
-                        color: subTextColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    "Assigned Name", // Replace with actual logic if available
-                    style: TextStyle(
-                        color: subTextColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400),
-                  ),
                   const SizedBox(height: 6),
                   Text(
-                    "Due Date ${doc?['dueDate'] ?? 'N/A'}",
-                    style: const TextStyle(
-                        color: subTextColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400),
+                    doc?['details'] ?? "Task details not available.",
+                    style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
-                  const SizedBox(height: 8),
-                  const Align(
-                    alignment: Alignment.bottomRight,
-                    child: Icon(Icons.edit_note_rounded,
-                        color: textColor, size: 22),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Assigned to: ${doc?['assignedName'] ?? AppStrings.unknown}",
+                    style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                 ],
               ),
