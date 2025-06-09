@@ -67,6 +67,7 @@ dependencies:
   shimmer: ^3.0.0
   supabase_flutter: ^2.9.0
   firebase_admin: ^0.3.0+2
+  firebase-functions: ^11.0.0
 
 dev_dependencies:
   flutter_test:
