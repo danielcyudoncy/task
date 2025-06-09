@@ -1,63 +1,19 @@
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-admin.initializeApp();
+/**
+ * Import function triggers from their respective submodules:
+ *
+ * const {onCall} = require("firebase-functions/v2/https");
+ * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
+ *
+ * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ */
 
-const db = admin.firestore();
+const {onRequest} = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
 
-async function updateTaskMetrics() {
-  const tasksSnapshot = await db.collection('tasks').get();
+// Create and deploy your first functions
+// https://firebase.google.com/docs/functions/get-started
 
-  let total = 0;
-  let completed = 0;
-  let pending = 0;
-  let overdue = 0;
-
-  const now = new Date();
-
-  tasksSnapshot.forEach(doc => {
-    const task = doc.data();
-    total++;
-
-    if (task.status?.toLowerCase() === 'completed') {
-      completed++;
-    } else {
-      const dueDate = task.dueDate?.toDate?.();
-      if (dueDate && dueDate < now) {
-        overdue++;
-      } else {
-        pending++;
-      }
-    }
-  });
-
-  await db.collection('dashboard_metrics').doc('summary').set({
-    tasks: {
-      total,
-      completed,
-      pending,
-      overdue,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    }
-  }, { merge: true });
-}
-
-exports.onTaskChange = functions.firestore
-  .document('tasks/{taskId}')
-  .onWrite(async (change, context) => {
-    await updateTaskMetrics();
-  });
-
-exports.deleteUserFromAuth = functions.firestore
-  .document('users/{userId}')
-  .onDelete(async (snap, context) => {
-    const userId = context.params.userId;
-
-    try {
-      await admin.auth().deleteUser(userId);
-      console.log(`✅ Successfully deleted user ${userId} from Firebase Auth`);
-    } catch (error) {
-      console.error(`❌ Error deleting user ${userId}:`, error.message);
-    }
-
-    return null;
-  });
+// exports.helloWorld = onRequest((request, response) => {
+//   logger.info("Hello logs!", {structuredData: true});
+//   response.send("Hello from Firebase!");
+// });
