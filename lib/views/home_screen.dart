@@ -1,5 +1,6 @@
 // views/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/auth_controller.dart';
@@ -80,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   color: isDark
                                       ? AppColors.primaryColor
                                       : Colors.white,
-                                  fontSize: 22,
+                                  fontSize: 22.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                               )
@@ -100,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w400,
-                              fontSize: 16,
+                              fontSize: 16.sp,
                             ),
                           ),
                           Text(
@@ -108,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen>
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 18,
+                              fontSize: 18.sp,
                             ),
                           ),
                         ],
@@ -117,8 +118,8 @@ class _HomeScreenState extends State<HomeScreen>
                     const Spacer(),
                     // Circular Logo
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 40.w,
+                      height: 40.h,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -218,8 +219,8 @@ class _HomeScreenState extends State<HomeScreen>
                             GestureDetector(
                               onTap: () => Get.toNamed('/create-task'),
                               child: Container(
-                                width: 34,
-                                height: 34,
+                                width: 34.w,
+                                height: 34.h,
                                 decoration: BoxDecoration(
                                   color: isDark
                                       ? AppColors.white
@@ -398,7 +399,7 @@ class _TaskListTab extends StatelessWidget {
                   t.description ?? AppStrings.taskDetails,
                   style: AppStyles.cardValueStyle.copyWith(
                     color: subTextColor,
-                    fontSize: 13,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -407,7 +408,7 @@ class _TaskListTab extends StatelessWidget {
                   "Due Date ${t.timestamp != null ? DateFormat('yyyy-MM-dd').format(t.timestamp!.toDate()) : 'N/A'}",
                   style: AppStyles.cardValueStyle.copyWith(
                     color: subTextColor,
-                    fontSize: 13,
+                    fontSize: 13.sp, 
                     fontWeight: FontWeight.w400,
                   ),
                 ),
