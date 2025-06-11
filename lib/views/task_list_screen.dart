@@ -5,7 +5,6 @@ import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/auth_controller.dart';
 
-
 class TaskListScreen extends StatelessWidget {
   final TaskController taskController = Get.put(TaskController());
   final AuthController authController = Get.find<AuthController>();
@@ -30,18 +29,28 @@ class TaskListScreen extends StatelessWidget {
           );
         }
 
-        // ✅ Fix: Filter tasks correctly
+        // CORRECT: Filter tasks for role using userId
+        String userRole = authController.userRole.value;
+        String userId = authController.auth.currentUser?.uid ?? "";
         var filteredTasks = taskController.tasks.where((task) {
-          String userRole = authController.userRole.value;
-          String userName =
-              authController.fullName.value; // ✅ Compare names instead of UID
-
-          if (userRole == "Reporter" || userRole == "Cameraman") {
-            return task.createdBy ==
-                userName; // ✅ Compare with userName, not userId
+          if (userRole == "Reporter") {
+            return task.assignedReporterId == userId ||
+                task.createdById == userId;
+          } else if (userRole == "Cameraman") {
+            return task.assignedCameramanId == userId ||
+                task.createdById == userId;
           }
-          return true; // Show all tasks for privileged roles
+          return true;
         }).toList();
+
+        if (filteredTasks.isEmpty) {
+          return const Center(
+            child: Text(
+              "No tasks to show for your role.",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          );
+        }
 
         return ListView.builder(
           itemCount: filteredTasks.length,
@@ -63,6 +72,7 @@ class TaskListScreen extends StatelessWidget {
                         "Assigned Reporter: ${task.assignedReporter ?? "Not Assigned"}"),
                     Text(
                         "Assigned Cameraman: ${task.assignedCameraman ?? "Not Assigned"}"),
+                    Text("Status: ${task.status}"),
                   ],
                 ),
                 trailing: Row(
@@ -85,12 +95,11 @@ class TaskListScreen extends StatelessWidget {
         onPressed: () => _showAddTaskDialog(context),
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar:
-          const UserNavBar(currentIndex: 1), // <-- Add this line
+      bottomNavigationBar: const UserNavBar(currentIndex: 1),
     );
   }
 
-  // ✅ Task Status Indicator
+  // Task Status Indicator
   Widget _buildStatusIndicator(String status) {
     Color statusColor = status == "Completed" ? Colors.green : Colors.orange;
     return Container(
@@ -107,7 +116,7 @@ class TaskListScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Show dialog to update task
+  // Show dialog to update task
   void _showUpdateTaskDialog(BuildContext context, dynamic task) {
     final TextEditingController titleController =
         TextEditingController(text: task.title);
@@ -186,7 +195,7 @@ class TaskListScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Show dialog to add a new task
+  // Show dialog to add a new task
   void _showAddTaskDialog(BuildContext context) {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
@@ -232,7 +241,6 @@ class TaskListScreen extends StatelessWidget {
                   return;
                 }
 
-                // ✅ Fix: Call createTask with only 2 arguments (no userId)
                 taskController.createTask(
                   titleController.text.trim(),
                   descriptionController.text.trim(),

@@ -36,7 +36,8 @@ class TaskAssignmentScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: Colors.green),
                   icon: const Icon(Icons.add_task),
                   label: const Text("Assign Task"),
                   onPressed: () => _showAssignmentDialog(context, null),
@@ -79,20 +80,16 @@ class TaskAssignmentScreen extends StatelessWidget {
   }
 
   void _showAssignmentDialog(BuildContext context, String? taskId) {
-    if (!authController.canAssignTask) {
-      Get.snackbar(
-          "Access Denied", "You do not have permission to assign tasks.");
-      return;
-    }
-
     String? selectedTaskId = taskId;
-    String? selectedReporter;
-    String? selectedCameraman;
+    String? selectedReporterId;
+    String? selectedReporterName;
+    String? selectedCameramanId;
+    String? selectedCameramanName;
 
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
-        height: 400,
+        height: 480,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -106,7 +103,7 @@ class TaskAssignmentScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // If taskId is null, show dropdown for selecting a task
+            // Select Task (if not already picked)
             if (taskId == null)
               Obx(() {
                 if (taskController.tasks.isEmpty) {
@@ -115,14 +112,13 @@ class TaskAssignmentScreen extends StatelessWidget {
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: "Select Task"),
                   items: taskController.tasks
-                      .map<DropdownMenuItem<String>>((task) =>
-                          DropdownMenuItem(
+                      .map<DropdownMenuItem<String>>((task) => DropdownMenuItem(
                             value: task.taskId,
                             child: Text(task.title),
                           ))
                       .toList(),
                   onChanged: (value) {
-                    selectedTaskId = value;
+                    selectedTaskId = value!;
                   },
                 );
               }),
@@ -135,7 +131,8 @@ class TaskAssignmentScreen extends StatelessWidget {
                 return const Text("No reporters available");
               }
               return DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "Assign to Reporter"),
+                decoration:
+                    const InputDecoration(labelText: "Assign to Reporter"),
                 items: userController.reporters
                     .map<DropdownMenuItem<String>>((reporter) {
                   return DropdownMenuItem<String>(
@@ -144,7 +141,11 @@ class TaskAssignmentScreen extends StatelessWidget {
                   );
                 }).toList(),
                 onChanged: (value) {
-                  selectedReporter = value;
+                  final reporter = userController.reporters
+                      .firstWhere((r) => r["id"] == value, orElse: () => {});
+                  selectedReporterId = value;
+                  selectedReporterName =
+                      reporter.isNotEmpty ? reporter["name"] : null;
                 },
               );
             }),
@@ -167,35 +168,42 @@ class TaskAssignmentScreen extends StatelessWidget {
                   );
                 }).toList(),
                 onChanged: (value) {
-                  selectedCameraman = value;
+                  final cameraman = userController.cameramen
+                      .firstWhere((c) => c["id"] == value, orElse: () => {});
+                  selectedCameramanId = value;
+                  selectedCameramanName =
+                      cameraman.isNotEmpty ? cameraman["name"] : null;
                 },
               );
             }),
 
             const SizedBox(height: 20),
 
-            // Assign Task Button (works if task and at least one user is selected)
+            // Assign button
             Obx(() {
-              return ElevatedButton(
-                onPressed: () {
-                  if (selectedTaskId == null) {
-                    Get.snackbar("Error", "Please select a task.");
-                    return;
-                  }
-                  if (selectedReporter != null) {
-                    taskController.assignTaskToReporter(selectedTaskId!, selectedReporter!);
-                  }
-                  if (selectedCameraman != null) {
-                    taskController.assignTaskToCameraman(selectedTaskId!, selectedCameraman!);
-                  }
-                  if (selectedReporter == null && selectedCameraman == null) {
-                    Get.snackbar("Error", "Please select at least one person.");
-                    return;
-                  }
-                  Get.snackbar("Success", "Task assigned successfully.");
-                  Get.back();
-                },
-                child: const Text("Assign Task"),
+              return Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  onPressed: () async {
+                    if (selectedTaskId == null ||
+                        (selectedReporterId == null &&
+                            selectedCameramanId == null)) {
+                      Get.snackbar("Error",
+                          "Please select a task and at least one assignee.");
+                      return;
+                    }
+                    await taskController.assignTaskWithNames(
+                      taskId: selectedTaskId!,
+                      reporterId: selectedReporterId,
+                      reporterName: selectedReporterName,
+                      cameramanId: selectedCameramanId,
+                      cameramanName: selectedCameramanName,
+                    );
+                    Get.snackbar("Success", "Task assigned successfully.");
+                    Get.back();
+                  },
+                  child: const Text("Assign Task"),
+                ),
               );
             }),
           ],
