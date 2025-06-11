@@ -1,3 +1,4 @@
+// views/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
@@ -20,7 +21,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     with SingleTickerProviderStateMixin {
   final AdminController adminController = Get.find<AdminController>();
   final AuthController authController = Get.find<AuthController>();
-  final ManageUsersController manageUsersController = Get.find<ManageUsersController>();
+  final ManageUsersController manageUsersController =
+      Get.find<ManageUsersController>();
 
   late TabController _tabController;
 
@@ -44,7 +46,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Obx(() {
-      if (adminController.isLoading.value || adminController.isStatsLoading.value) {
+      if (adminController.isLoading.value ||
+          adminController.isStatsLoading.value) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
 
@@ -73,7 +76,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       Text(
                         AppStrings.dailyAssignments,
                         style: AppStyles.sectionTitleStyle.copyWith(
-                          color: isDark ? Colors.white : const Color(0xFF3739B7),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF3739B7),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -94,7 +98,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
-                            color: isDark ? Colors.white : const Color(0xFF3739B7),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF3739B7),
                           ),
                         ),
                       ),
@@ -114,7 +119,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     child: Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -124,13 +130,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   width: 34,
                                   height: 34,
                                   decoration: BoxDecoration(
-                                    color: isDark ? Colors.white : const Color(0xFF3739B7),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF3739B7),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
                                     Icons.add,
                                     size: 22,
-                                    color: isDark ? const Color(0xFF3739B7) : Colors.white,
+                                    color: isDark
+                                        ? const Color(0xFF3739B7)
+                                        : Colors.white,
                                   ),
                                 ),
                               ),
@@ -139,10 +149,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         ),
                         TabBar(
                           controller: _tabController,
-                          indicatorColor: isDark ? Colors.white : const Color(0xFF3739B7),
-                          labelColor: isDark ? Colors.white : const Color(0xFF3739B7),
-                          unselectedLabelColor: isDark ? Colors.white70 : Colors.black54,
-                          labelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+                          indicatorColor:
+                              isDark ? Colors.white : const Color(0xFF3739B7),
+                          labelColor:
+                              isDark ? Colors.white : const Color(0xFF3739B7),
+                          unselectedLabelColor:
+                              isDark ? Colors.white70 : Colors.black54,
+                          labelStyle: const TextStyle(
+                              fontWeight: FontWeight.w500, fontSize: 15),
                           tabs: const [
                             Tab(text: "Not Completed"),
                             Tab(text: "Completed"),
@@ -266,7 +280,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   void _showTaskDetailDialog(String title) {
-    final doc = adminController.taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
+    final doc = adminController.taskSnapshotDocs
+        .firstWhereOrNull((d) => d['title'] == title);
     Get.defaultDialog(
       title: AppStrings.taskDetails,
       content: Column(
@@ -310,7 +325,8 @@ class _TasksTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color cardColor = isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
+    final Color cardColor =
+        isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
     const Color textColor = Colors.white;
     const Color subTextColor = Colors.white70;
     final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;
@@ -358,12 +374,17 @@ class _TasksTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    doc?['details'] ?? "Task details not available.",
+                    doc != null &&
+                            doc is Map<String, dynamic> &&
+                            doc.containsKey('details')
+                        ? doc['details']?.toString() ??
+                            "Task details not available."
+                        : "Task details not available.",
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Assigned to: ${doc?['assignedName'] ?? AppStrings.unknown}",
+                    "Assigned to: ${doc != null && doc is Map<String, dynamic> && doc.containsKey('assignedName') ? doc['assignedName'] : AppStrings.unknown}",
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                 ],
