@@ -1,5 +1,6 @@
 // widgets/dashboard_cards_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/constants/app_styles.dart';
@@ -73,7 +74,7 @@ class DashboardCardsWidget extends StatelessWidget {
             Text(
               title,
               style: AppStyles.cardTitleStyle.copyWith(
-                fontSize: 16 * textScale,
+                fontSize: 16.sp * textScale,
                 color: innerText,
               ),
             ),
@@ -81,7 +82,7 @@ class DashboardCardsWidget extends StatelessWidget {
             Text(
               value,
               style: AppStyles.cardValueStyle.copyWith(
-                fontSize: 28 * textScale,
+                fontSize: 28.sp * textScale,
                 color: innerText,
               ),
             ),
@@ -99,7 +100,7 @@ class DashboardCardsWidget extends StatelessWidget {
                   child: Text(
                     buttonText,
                     style:
-                        TextStyle(fontSize: 14 * textScale, color: innerText),
+                        TextStyle(fontSize: 14.sp * textScale, color: innerText),
                   ),
                 ),
               ),

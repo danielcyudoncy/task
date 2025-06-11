@@ -1,3 +1,4 @@
+// controllers/admin_controller.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,7 +28,6 @@ class AdminController extends GetxController {
   var completedTaskTitles = <String>[].obs;
   var pendingTaskTitles = <String>[].obs;
   var overdueTaskTitles = <String>[].obs;
-  
 
   var isLoading = false.obs;
   var isProfileLoading = false.obs;
@@ -37,7 +37,7 @@ class AdminController extends GetxController {
   var selectedUserName = ''.obs;
   var selectedTaskTitle = ''.obs;
 
-  List<QueryDocumentSnapshot> taskSnapshotDocs = [];
+  var taskSnapshotDocs = <Map<String, dynamic>>[].obs; // Store as Map
 
   @override
   void onInit() {
@@ -54,49 +54,48 @@ class AdminController extends GetxController {
       if (snapshot.docs.isNotEmpty) {
         final data = snapshot.docs.first.data();
         totalUsers.value = data['totalUsers'] ?? 0;
-        totalTasks.value = data['tasks']['total'] ?? 0;
-        completedTasks.value = data['tasks']['completed'] ?? 0;
-        pendingTasks.value = data['tasks']['pending'] ?? 0;
-        overdueTasks.value = data['tasks']['overdue'] ?? 0;
+        totalTasks.value = data['tasks']?['total'] ?? 0;
+        completedTasks.value = data['tasks']?['completed'] ?? 0;
+        pendingTasks.value = data['tasks']?['pending'] ?? 0;
+        overdueTasks.value = data['tasks']?['overdue'] ?? 0;
       }
     });
   }
 
   Future<void> fetchDashboardData() async {
-  isLoading.value = true;
+    isLoading.value = true;
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('tasks').get();
+      final allDocs = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+      taskSnapshotDocs.assignAll(allDocs);
 
-  try {
-    final querySnapshot =
-        await FirebaseFirestore.instance.collection('tasks').get();
+      pendingTaskTitles.clear();
+      completedTaskTitles.clear();
 
-    final allDocs = querySnapshot.docs;
-    taskSnapshotDocs.assignAll(allDocs);
+      for (var doc in allDocs) {
+        final title = doc['title'] ?? '';
+        final status = (doc['status'] ?? '').toString().toLowerCase();
 
-    // Clear old data
-    pendingTaskTitles.clear();
-    completedTaskTitles.clear();
-
-    for (var doc in allDocs) {
-      final title = doc['title'];
-      final status = doc['status']?.toLowerCase();
-
-      if (status == 'completed') {
-        completedTaskTitles.add(title);
-      } else {
-        pendingTaskTitles.add(title);
+        if (status == 'completed') {
+          completedTaskTitles.add(title);
+        } else {
+          pendingTaskTitles.add(title);
+        }
       }
+
+      totalTasks.value = allDocs.length;
+      completedTasks.value = completedTaskTitles.length;
+      pendingTasks.value = pendingTaskTitles.length;
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load dashboard data: $e");
     }
-
-    totalTasks.value = allDocs.length;
-    completedTasks.value = completedTaskTitles.length;
-    pendingTasks.value = pendingTaskTitles.length;
-  } catch (e) {
-    Get.snackbar("Error", "Failed to load dashboard data: $e");
+    isLoading.value = false;
   }
-
-  isLoading.value = false;
-}
-
 
   Future<void> initializeAdminData() async {
     try {
@@ -156,41 +155,72 @@ class AdminController extends GetxController {
       isStatsLoading(true);
       final now = DateTime.now();
 
-      final userSnapshot = await _firestore.collection('users').get().timeout(const Duration(seconds: 10));
-      final taskSnapshot = await _firestore.collection('tasks').get().timeout(const Duration(seconds: 10));
+      final userSnapshot = await _firestore
+          .collection('users')
+          .get()
+          .timeout(const Duration(seconds: 10));
+      final taskSnapshot = await _firestore
+          .collection('tasks')
+          .get()
+          .timeout(const Duration(seconds: 10));
 
       final userDocs = userSnapshot.docs;
-      final taskDocs = taskSnapshot.docs;
-      taskSnapshotDocs = taskDocs;
+      final taskDocs = taskSnapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          })
+          .whereType<Map<String, dynamic>>()
+          .toList();
+      taskSnapshotDocs.assignAll(taskDocs);
 
       totalUsers.value = userDocs.length;
       totalTasks.value = taskDocs.length;
-      completedTasks.value = taskDocs.where((doc) => doc['status'] == 'completed').length;
-      pendingTasks.value = taskDocs.where((doc) => doc['status'] == 'pending').length;
+      completedTasks.value = taskDocs
+          .where((doc) =>
+              (doc['status'] ?? '').toString().toLowerCase() == 'completed')
+          .length;
+      pendingTasks.value = taskDocs
+          .where((doc) =>
+              (doc['status'] ?? '').toString().toLowerCase() == 'pending')
+          .length;
       overdueTasks.value = taskDocs.where((doc) {
-        final due = doc['dueDate'] as Timestamp?;
-        return due != null && due.toDate().isBefore(now) && doc['status'] != 'completed';
+        final due = doc['dueDate'];
+        return due is Timestamp &&
+            due.toDate().isBefore(now) &&
+            (doc['status'] ?? '').toString().toLowerCase() != 'completed';
       }).length;
 
-      userNames.value = userDocs.map((doc) => doc['fullName'] ?? "Unknown User").cast<String>().toList();
-      taskTitles.value = taskDocs.map((doc) => doc['title'] ?? 'Untitled').cast<String>().toList();
+      userNames.value = userDocs
+          .map((doc) => doc['fullName'] ?? "Unknown User")
+          .cast<String>()
+          .toList();
+      taskTitles.value = taskDocs
+          .map((doc) => doc['title'] ?? 'Untitled')
+          .cast<String>()
+          .toList();
 
       completedTaskTitles.value = taskDocs
-          .where((doc) => doc['status'] == 'completed')
+          .where((doc) =>
+              (doc['status'] ?? '').toString().toLowerCase() == 'completed')
           .map((doc) => doc['title'] ?? '')
           .cast<String>()
           .toList();
 
       pendingTaskTitles.value = taskDocs
-          .where((doc) => doc['status'] == 'pending')
+          .where((doc) =>
+              (doc['status'] ?? '').toString().toLowerCase() != 'completed')
           .map((doc) => doc['title'] ?? '')
           .cast<String>()
           .toList();
 
       overdueTaskTitles.value = taskDocs
           .where((doc) {
-            final due = doc['dueDate'] as Timestamp?;
-            return due != null && due.toDate().isBefore(now) && doc['status'] != 'completed';
+            final due = doc['dueDate'];
+            return due is Timestamp &&
+                due.toDate().isBefore(now) &&
+                (doc['status'] ?? '').toString().toLowerCase() != 'completed';
           })
           .map((doc) => doc['title'] ?? '')
           .cast<String>()
@@ -206,26 +236,31 @@ class AdminController extends GetxController {
 
   void filterTasksByUser(String fullName) {
     final userTasks = taskSnapshotDocs.where((doc) =>
-        (doc['createdByName']?.toString().toLowerCase() ?? '') == fullName.toLowerCase());
+        (doc['createdByName']?.toString().toLowerCase() ?? '') ==
+        fullName.toLowerCase());
 
     final now = DateTime.now();
 
     completedTaskTitles.value = userTasks
-        .where((doc) => doc['status'] == 'completed')
+        .where((doc) =>
+            (doc['status'] ?? '').toString().toLowerCase() == 'completed')
         .map((doc) => doc['title'] ?? '')
         .cast<String>()
         .toList();
 
     pendingTaskTitles.value = userTasks
-        .where((doc) => doc['status'] != 'completed')
+        .where((doc) =>
+            (doc['status'] ?? '').toString().toLowerCase() != 'completed')
         .map((doc) => doc['title'] ?? '')
         .cast<String>()
         .toList();
 
     overdueTaskTitles.value = userTasks
         .where((doc) {
-          final due = doc['dueDate'] as Timestamp?;
-          return due != null && due.toDate().isBefore(now) && doc['status'] != 'completed';
+          final due = doc['dueDate'];
+          return due is Timestamp &&
+              due.toDate().isBefore(now) &&
+              (doc['status'] ?? '').toString().toLowerCase() != 'completed';
         })
         .map((doc) => doc['title'] ?? '')
         .cast<String>()
@@ -333,6 +368,7 @@ class AdminController extends GetxController {
 
     selectedUserName.value = '';
     selectedTaskTitle.value = '';
+    taskSnapshotDocs.clear();
   }
 
   Future<void> deleteUser(String userId) async {
@@ -353,7 +389,7 @@ class AdminController extends GetxController {
       });
 
       Get.snackbar("Success", "User and their tasks deleted successfully");
-      fetchStatistics(); // Refresh dashboard
+      fetchStatistics();
     } catch (e) {
       Get.snackbar("Error", "Delete failed: ${e.toString()}");
     } finally {
@@ -364,12 +400,51 @@ class AdminController extends GetxController {
   Future<void> fetchTasks() async {
     try {
       var snapshot = await FirebaseFirestore.instance.collection('tasks').get();
-      var tasks = snapshot.docs.map((doc) => Task.fromMap(doc.data(), doc.id)).toList();
+      var tasks =
+          snapshot.docs.map((doc) => Task.fromMap(doc.data(), doc.id)).toList();
 
-      pendingTasks.value = tasks.where((task) => task.status == 'Pending').length;
-      completedTasks.value = tasks.where((task) => task.status == 'Completed').length;
+      pendingTasks.value =
+          tasks.where((task) => task.status == 'Pending').length;
+      completedTasks.value =
+          tasks.where((task) => task.status == 'Completed').length;
     } catch (e) {
       print("Error fetching tasks: $e");
     }
+  }
+
+  /// Assign a task to a user and also store assignedName for easy display
+  Future<void> assignTaskToUser(String userId, String taskTitle) async {
+    final firestore = FirebaseFirestore.instance;
+    final tasks = await firestore
+        .collection('tasks')
+        .where('title', isEqualTo: taskTitle)
+        .get();
+
+    if (tasks.docs.isEmpty) {
+      throw Exception("Task not found.");
+    }
+    final taskDoc = tasks.docs.first.reference;
+
+    // Fetch user's display name for assignment
+    final userSnapshot = await firestore.collection('users').doc(userId).get();
+    final userData = userSnapshot.data();
+    final assignedName = userData?['fullName'] ?? 'Unknown';
+
+    await taskDoc.update({
+      'assignedTo': userId,
+      'assignedName': assignedName,
+      'assignedAt': FieldValue.serverTimestamp(), // <-- Add this line
+    });
+
+    await firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .add({
+      'type': 'task_assignment',
+      'title': taskTitle,
+      'timestamp': FieldValue.serverTimestamp(),
+      'read': false,
+    });
   }
 }

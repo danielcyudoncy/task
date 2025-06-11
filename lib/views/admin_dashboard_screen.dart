@@ -1,5 +1,6 @@
 // views/admin_dashboard_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/constants/app_styles.dart';
@@ -25,6 +26,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       Get.find<ManageUsersController>();
 
   late TabController _tabController;
+
+  // --- Assign Task Dialog (with null safety)
+  void _showAssignTaskDialog(Map<String, dynamic> user) async {
+    String? selectedTaskTitle;
+    await Get.defaultDialog(
+      title: "Assign Task to ${user['fullname']}",
+      content: Obx(() {
+        final tasks = adminController.taskTitles;
+        if (tasks.isEmpty) {
+          return const Text("No tasks available");
+        }
+        return StatefulBuilder(
+          builder: (context, setState) => DropdownButton<String>(
+            value: selectedTaskTitle,
+            hint: const Text("Select Task"),
+            items: tasks
+                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                .toList(),
+            onChanged: (val) => setState(() => selectedTaskTitle = val),
+          ),
+        );
+      }),
+      textConfirm: "Assign",
+      onConfirm: () async {
+        if (selectedTaskTitle == null) {
+          Get.snackbar("Error", "Please select a task");
+          return;
+        }
+        // Correction: Accept both 'uid' and fallback to 'id'
+        final userId = user['uid'] ?? user['id'];
+        if (userId == null) {
+          Get.snackbar("Error", "User ID is missing");
+          return;
+        }
+        try {
+          await adminController.assignTaskToUser(userId, selectedTaskTitle!);
+          Get.back(); // Close dialog
+          Get.snackbar("Success", "Task assigned to ${user['fullname']}");
+        } catch (e) {
+          Get.snackbar("Error", "Failed to assign task: $e");
+        }
+      },
+    );
+  }
+  // --- END: Assign Task Dialog
 
   @override
   void initState() {
@@ -97,7 +143,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           "TASK",
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            fontSize: 16,
+                            fontSize: 16.sp,
                             color:
                                 isDark ? Colors.white : const Color(0xFF3739B7),
                           ),
@@ -127,8 +173,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               GestureDetector(
                                 onTap: () => Get.toNamed('/create-task'),
                                 child: Container(
-                                  width: 34,
-                                  height: 34,
+                                  width: 34.w,
+                                  height: 34.h,
                                   decoration: BoxDecoration(
                                     color: isDark
                                         ? Colors.white
@@ -137,7 +183,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   ),
                                   child: Icon(
                                     Icons.add,
-                                    size: 22,
+                                    size: 22.sp,
                                     color: isDark
                                         ? const Color(0xFF3739B7)
                                         : Colors.white,
@@ -201,7 +247,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         child: Container(
           padding: const EdgeInsets.all(16.0),
-          height: 500,
+          height: 500.h,
           child: Obx(() {
             if (manageUsersController.isLoading.value) {
               return const Center(child: CircularProgressIndicator());
@@ -224,8 +270,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     children: [
                       IconButton(
                         icon: const Icon(Icons.assignment, color: Colors.blue),
-                        onPressed: () => Get.snackbar(
-                            "Assign Task", "Task assigned to $userName"),
+                        onPressed: () => _showAssignTaskDialog(user),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
@@ -263,7 +308,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
 
     if (result == true) {
-      final userId = user['uid'];
+      final userId = user['uid'] ?? user['id'];
       if (userId != null) {
         await manageUsersController.deleteUser(userId);
         Get.snackbar("Success", "User deleted successfully",
@@ -309,6 +354,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     }
   }
 }
+
+// Only the _TasksTab widget, showing assigned user name
 
 class _TasksTab extends StatelessWidget {
   final List<dynamic> tasks;
@@ -384,7 +431,8 @@ class _TasksTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Assigned to: ${doc != null && doc is Map<String, dynamic> && doc.containsKey('assignedName') ? doc['assignedName'] : AppStrings.unknown}",
+                    // This line shows the assigned user name (or Unassigned)
+                    "Assigned to: ${doc?['assignedName'] ?? 'Unassigned'}",
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                 ],

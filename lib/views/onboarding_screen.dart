@@ -1,5 +1,6 @@
 // views/onboarding_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
@@ -63,16 +64,16 @@ class OnboardingScreen extends StatelessWidget {
             children: [
               Image.asset(
                 AppIcons.logo,
-                width: 250,
-                height: 250,
+                width: 250.w,
+                height: 250.h,
               ),
-              const SizedBox(height: 60),
+              const SizedBox(height: 20),
               Stack(
                 children: [
                   Text(
                     'Welcome!',
                     style: TextStyle(
-                      fontSize: 40,
+                      fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: AppFontsStyles.montserrat,
                       foreground: Paint()
@@ -86,7 +87,7 @@ class OnboardingScreen extends StatelessWidget {
                     'Welcome!',
                     style: TextStyle(
                       color: isDark ? appPrimaryColor : Colors.black,
-                      fontSize: 40,
+                      fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: AppFontsStyles.montserrat,
                       shadows: const [
@@ -109,18 +110,18 @@ class OnboardingScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: isDark ? Colors.white : Colors.black,
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   fontFamily: AppFontsStyles.openSans,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 300),
+              const SizedBox(height: 150),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: 144,
-                    height: 38,
+                    width: 144.w,
+                    height: 38.h,
                     child: ElevatedButton(
                       onPressed: _handleGetStarted,
                       style: ElevatedButton.styleFrom(
@@ -147,8 +148,8 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 26),
                   SizedBox(
-                    width: 144,
-                    height: 38,
+                    width: 144.w,
+                    height: 38.h,
                     child: OutlinedButton(
                       onPressed: _handleMyAccount,
                       style: OutlinedButton.styleFrom(
