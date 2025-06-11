@@ -53,8 +53,10 @@ class ManageUsersController extends GetxController {
       if (snapshot.docs.isNotEmpty) {
         final newUsers = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
+          // --- Correction: Ensure 'uid' is present, and also keep 'id' if you use it elsewhere
           return {
             'id': doc.id,
+            'uid': doc.id, // <--- Always provide 'uid' for dialog assignment!
             'fullname': data['fullName'] ?? 'Unknown User',
             'role': data['role'] ?? 'No Role',
             'email': data['email'] ?? 'No Email',
@@ -87,7 +89,8 @@ class ManageUsersController extends GetxController {
   Future<void> fetchTasks() async {
     try {
       isLoading.value = true;
-      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('tasks').get();
+      QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('tasks').get();
       if (snapshot.docs.isNotEmpty) {
         tasksList.value = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
@@ -123,8 +126,10 @@ class ManageUsersController extends GetxController {
   Future<bool> deleteUser(String userId) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();
-      usersList.removeWhere((user) => user['id'] == userId);
-      filteredUsersList.removeWhere((user) => user['id'] == userId);
+      usersList
+          .removeWhere((user) => user['id'] == userId || user['uid'] == userId);
+      filteredUsersList
+          .removeWhere((user) => user['id'] == userId || user['uid'] == userId);
       isHovered.assignAll(List.filled(usersList.length, false));
       return true;
     } catch (e) {
@@ -135,10 +140,14 @@ class ManageUsersController extends GetxController {
   /// Promote user to admin (Firestore only; use Admin SDK for real custom claims)
   Future<void> promoteToAdmin(String userId) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({'role': 'admin'});
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({'role': 'admin'});
       Get.snackbar('Success', 'User promoted to admin');
       // Optionally update in usersList as well
-      int idx = usersList.indexWhere((u) => u['id'] == userId);
+      int idx =
+          usersList.indexWhere((u) => u['id'] == userId || u['uid'] == userId);
       if (idx != -1) {
         usersList[idx]['role'] = 'admin';
         filteredUsersList.assignAll(usersList);
@@ -154,10 +163,11 @@ class ManageUsersController extends GetxController {
       filteredUsersList.assignAll(usersList);
     } else {
       filteredUsersList.assignAll(
-        usersList.where((user) =>
-          user['fullname'].toLowerCase().contains(query.toLowerCase()) ||
-          user['email'].toLowerCase().contains(query.toLowerCase())
-        ).toList(),
+        usersList
+            .where((user) =>
+                user['fullname'].toLowerCase().contains(query.toLowerCase()) ||
+                user['email'].toLowerCase().contains(query.toLowerCase()))
+            .toList(),
       );
     }
   }
@@ -171,7 +181,8 @@ class ManageUsersController extends GetxController {
 
   /// Infinite scroll: loads next page if not loading/finished and scrolled near bottom
   void _scrollListener() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       fetchUsers(isNextPage: true);
     }
   }

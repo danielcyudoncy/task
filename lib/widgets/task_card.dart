@@ -1,5 +1,6 @@
 // widgets/task_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'status_chip.dart';
 
 class TaskCard extends StatelessWidget {
@@ -96,8 +97,8 @@ class TaskCard extends StatelessWidget {
                                   color: accent,
                                   fontWeight: FontWeight.bold,
                                   fontSize: isLargeScreen
-                                      ? 20 * textScale
-                                      : 15 * textScale,
+                                      ? 20.sp * textScale
+                                      : 15.sp * textScale,
                                 ),
                               )
                             : null,
@@ -109,7 +110,7 @@ class TaskCard extends StatelessWidget {
                           style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             fontSize:
-                                isLargeScreen ? 18 * textScale : 14 * textScale,
+                                isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
                             color: mainText,
                           ),
                         ),
@@ -128,7 +129,7 @@ class TaskCard extends StatelessWidget {
                     title,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: isLargeScreen ? 20 * textScale : 16 * textScale,
+                      fontSize: isLargeScreen ? 20 * textScale : 16.sp * textScale,
                       color: accent,
                     ),
                   ),
@@ -136,7 +137,7 @@ class TaskCard extends StatelessWidget {
                   Text(
                     description,
                     style: textTheme.bodyMedium?.copyWith(
-                      fontSize: isLargeScreen ? 16 * textScale : 13 * textScale,
+                      fontSize: isLargeScreen ? 16.sp * textScale : 13.sp * textScale,
                       color: mainText,
                     ),
                   ),
@@ -149,7 +150,7 @@ class TaskCard extends StatelessWidget {
                         Text(
                           formattedTimestamp,
                           style: textTheme.bodySmall?.copyWith(
-                            fontSize: 13 * textScale,
+                            fontSize: 13.sp * textScale,
                             color: subText,
                           ),
                         ),

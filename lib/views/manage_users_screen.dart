@@ -1,5 +1,6 @@
 // views/manage_users_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/task_list_dialog.dart';
@@ -22,7 +23,9 @@ class ManageUsersScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Manage Users',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontSize: 20, 
+          fontWeight: FontWeight.bold, 
+          color: Colors.white),
         ),
         backgroundColor: const Color(0xFF0B189B),
       ),
@@ -36,7 +39,7 @@ class ManageUsersScreen extends StatelessWidget {
               textField: true,
               child: TextField(
                 onChanged: (query) => manageUsersController.searchUsers(query),
-                style: TextStyle(fontSize: 16 * textScale),
+                style: TextStyle(fontSize: 16.sp * textScale),
                 decoration: const InputDecoration(
                   labelText: 'Search Users',
                   prefixIcon: Icon(Icons.search),
