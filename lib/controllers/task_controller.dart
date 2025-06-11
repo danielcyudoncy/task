@@ -106,24 +106,21 @@ class TaskController extends GetxController {
 
       taskStream.listen((snapshot) async {
         List<Task> updatedTasks = [];
-        // Move userId here, where it's actually used
         String userId = authController.auth.currentUser!.uid;
 
         for (var doc in snapshot.docs) {
           var taskData = doc.data() as Map<String, dynamic>;
 
-          // Replace creator's UID with name
+          // Get name fields if available, fall back to UID→name lookup if not
           String createdByName = await _getUserName(taskData["createdBy"]);
-
-          // Replace assigned reporter UID with name
-          String assignedReporterName = taskData["assignedReporter"] != null
-              ? await _getUserName(taskData["assignedReporter"])
-              : "Not Assigned";
-
-          // Replace assigned cameraman UID with name
-          String assignedCameramanName = taskData["assignedCameraman"] != null
-              ? await _getUserName(taskData["assignedCameraman"])
-              : "Not Assigned";
+          String assignedReporterName = taskData["assignedReporterName"] ??
+              (taskData["assignedReporterId"] != null
+                  ? await _getUserName(taskData["assignedReporterId"])
+                  : "Not Assigned");
+          String assignedCameramanName = taskData["assignedCameramanName"] ??
+              (taskData["assignedCameramanId"] != null
+                  ? await _getUserName(taskData["assignedCameramanId"])
+                  : "Not Assigned");
 
           // Cache task title
           String taskTitle = taskData["title"];
@@ -140,8 +137,8 @@ class TaskController extends GetxController {
             comments: List<String>.from(taskData["comments"] ?? []),
             timestamp: taskData["timestamp"] ?? Timestamp.now(),
             createdById: taskData["createdBy"] ?? "",
-            assignedReporterId: taskData["assignedReporter"],
-            assignedCameramanId: taskData["assignedCameraman"],
+            assignedReporterId: taskData["assignedReporterId"],
+            assignedCameramanId: taskData["assignedCameramanId"],
           ));
         }
 
@@ -170,7 +167,42 @@ class TaskController extends GetxController {
     }
   }
 
-  // Fetch task counts
+  // Assign a task to a reporter and/or cameraman, saving both the UID and Name for each.
+  Future<void> assignTaskWithNames({
+    required String taskId,
+    String? reporterId,
+    String? reporterName,
+    String? cameramanId,
+    String? cameramanName,
+  }) async {
+    try {
+      final updateData = <String, dynamic>{};
+      if (reporterId != null && reporterName != null) {
+        updateData['assignedReporterId'] = reporterId;
+        updateData['assignedReporterName'] = reporterName;
+      } else {
+        updateData['assignedReporterId'] = null;
+        updateData['assignedReporterName'] = null;
+      }
+      if (cameramanId != null && cameramanName != null) {
+        updateData['assignedCameramanId'] = cameramanId;
+        updateData['assignedCameramanName'] = cameramanName;
+      } else {
+        updateData['assignedCameramanId'] = null;
+        updateData['assignedCameramanName'] = null;
+      }
+      updateData['assignedAt'] = FieldValue.serverTimestamp();
+
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .update(updateData);
+    } catch (e) {
+      Get.snackbar("Assignment Error", "Failed to assign task: $e");
+    }
+  }
+
+  // Fetch task counts using the new fields
   Future<void> fetchTaskCounts() async {
     try {
       String userId = authController.auth.currentUser!.uid;
@@ -182,8 +214,8 @@ class TaskController extends GetxController {
       final queryAssigned = await _firebaseService.getAllTasks().first;
       taskAssigned.value = queryAssigned.docs
           .where((doc) =>
-              doc["assignedReporter"] == userId ||
-              doc["assignedCameraman"] == userId)
+              doc["assignedReporterId"] == userId ||
+              doc["assignedCameramanId"] == userId)
           .length;
     } catch (e) {
       print('Error fetching task counts: $e');
@@ -218,11 +250,12 @@ class TaskController extends GetxController {
     }
   }
 
-  // Assign Task to Reporter
+  // Assign Task to Reporter (legacy, not recommended)
   Future<void> assignTaskToReporter(String taskId, String reporterId) async {
     try {
       isLoading(true);
-      await _firebaseService.assignTask(taskId, reporterId, "assignedReporter");
+      await _firebaseService.assignTask(
+          taskId, reporterId, "assignedReporterId");
       Get.snackbar("Success", "Task assigned to Reporter successfully");
     } catch (e) {
       Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
@@ -231,12 +264,12 @@ class TaskController extends GetxController {
     }
   }
 
-  // Assign Task to Cameraman
+  // Assign Task to Cameraman (legacy, not recommended)
   Future<void> assignTaskToCameraman(String taskId, String cameramanId) async {
     try {
       isLoading(true);
       await _firebaseService.assignTask(
-          taskId, cameramanId, "assignedCameraman");
+          taskId, cameramanId, "assignedCameramanId");
       Get.snackbar("Success", "Task assigned to Cameraman successfully");
     } catch (e) {
       Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
@@ -255,8 +288,10 @@ class TaskController extends GetxController {
         "title": title,
         "description": description,
         "createdBy": userId,
-        "assignedReporter": null,
-        "assignedCameraman": null,
+        "assignedReporterId": null,
+        "assignedReporterName": null,
+        "assignedCameramanId": null,
+        "assignedCameramanName": null,
         "status": "Pending",
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
