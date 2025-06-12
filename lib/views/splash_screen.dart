@@ -1,7 +1,10 @@
+// views/splash_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_icons.dart';
+import 'package:task/utils/constants/app_sizes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,15 +32,15 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             Image.asset(
               AppIcons.logo, // Using the logo from your AppIcons class
-              width: 100, // Adjust size as needed
-              height: 100,
+              width: 200.w, // Adjust size as needed
+              height: 200.h,
             ),
             const SizedBox(height: 16),
             const Text(
               'Your home for news',
               style: TextStyle(
                 color: Colors.white, // Slightly transparent white
-                fontSize: 18,
+                fontSize: AppSizes.fontVeryLarge, // Use the size from your AppSizes class
                 letterSpacing: 0.5,
               ),
             ),

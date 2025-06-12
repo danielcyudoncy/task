@@ -1,5 +1,6 @@
 // views/signup_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_icons.dart';
@@ -248,7 +249,7 @@ class SignUpScreen extends StatelessWidget {
                                         horizontal: 8),
                                     child: Text(
                                       "Or sign up with",
-                                      style: textTheme.bodySmall,
+                                      style: textTheme.bodyMedium,
                                     ),
                                   ),
                                   const Expanded(child: Divider()),
@@ -261,7 +262,7 @@ class SignUpScreen extends StatelessWidget {
                                 children: [
                                   IconButton(
                                     icon: Image.asset(AppIcons.google,
-                                        width: 48, height: 48),
+                                        width: 48.w, height: 48.h),
                                     onPressed: () {
                                       Get.snackbar("Coming Soon",
                                           "Google sign-up not yet implemented.");
@@ -270,7 +271,7 @@ class SignUpScreen extends StatelessWidget {
                                   const SizedBox(width: 20),
                                   IconButton(
                                     icon: Image.asset(AppIcons.apple,
-                                        width: 48, height: 48),
+                                        width: 48.w, height: 48.h),
                                     onPressed: () {
                                       Get.snackbar("Coming Soon",
                                           "Apple sign-up not yet implemented.");
@@ -284,13 +285,13 @@ class SignUpScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     "Don't have an account? ",
-                                    style: textTheme.bodySmall,
+                                    style: textTheme.bodyMedium,
                                   ),
                                   GestureDetector(
                                     onTap: () => Get.toNamed('/login'),
                                     child: Text(
                                       "Sign In",
-                                      style: textTheme.bodySmall?.copyWith(
+                                      style: textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.primary,
                                         fontWeight: FontWeight.bold,
                                       ),
