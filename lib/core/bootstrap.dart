@@ -8,6 +8,7 @@ import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/myApp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // <-- Don't forget this import
 
 /// Initializes Firestore dashboard metrics if they do not exist.
 Future<void> _initializeFirestoreMetrics() async {
@@ -33,9 +34,18 @@ Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await dotenv.load(fileName: "assets/.env");
+
+    // Initialize Supabase
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+      debug: true,
+    );
+
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
     // Register controllers globally
     Get.put(ThemeController(), permanent: true);
     Get.put(SettingsController(), permanent: true);
@@ -45,8 +55,8 @@ Future<void> bootstrapApp() async {
 
     runApp(const MyApp());
   } catch (e) {
-    debugPrint("❌ Firebase Initialization Failed: $e");
-    runApp(const ErrorApp(error: "Failed to initialize Firebase."));
+    debugPrint("❌ Initialization Failed: $e");
+    runApp(const ErrorApp(error: "Failed to initialize Firebase or Supabase."));
   }
 }
 
