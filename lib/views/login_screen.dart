@@ -1,5 +1,6 @@
 // views/login_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
@@ -228,7 +229,7 @@ class LoginScreen extends StatelessWidget {
                                           horizontal: 8),
                                       child: Text(
                                         "or continue with",
-                                        style: textTheme.bodySmall?.copyWith(
+                                        style: textTheme.bodyMedium?.copyWith(
                                           color: isDark
                                               ? Colors.white70
                                               : Colors.black54,
@@ -247,7 +248,7 @@ class LoginScreen extends StatelessWidget {
                                   children: [
                                     IconButton(
                                       icon: Image.asset(AppIcons.google,
-                                          width: 48, height: 48),
+                                          width: 48.w, height: 48.h),
                                       onPressed: () {
                                         Get.snackbar("Coming Soon",
                                             "Google sign-up not yet implemented.");
@@ -273,7 +274,7 @@ class LoginScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       "Don't have an account? ",
-                                      style: textTheme.bodySmall?.copyWith(
+                                      style: textTheme.bodyMedium?.copyWith(
                                         color: isDark
                                             ? Colors.white70
                                             : Colors.black54,
@@ -283,7 +284,7 @@ class LoginScreen extends StatelessWidget {
                                       onTap: () => Get.toNamed('/signup'),
                                       child: Text(
                                         "Create Account",
-                                        style: textTheme.bodySmall?.copyWith(
+                                        style: textTheme.bodyMedium?.copyWith(
                                           color: colorScheme.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -301,7 +302,7 @@ class LoginScreen extends StatelessWidget {
                                   child: Text(
                                     "Forget password?",
                                     textAlign: TextAlign.center,
-                                    style: textTheme.bodySmall?.copyWith(
+                                    style: textTheme.bodyMedium?.copyWith(
                                       decoration: TextDecoration.underline,
                                       color: isDark
                                           ? Colors.white70

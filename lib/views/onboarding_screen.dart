@@ -93,8 +93,8 @@ class OnboardingScreen extends StatelessWidget {
                       shadows: const [
                         Shadow(
                           color: Colors.black26,
-                          offset: Offset(0, 3),
-                          blurRadius: 12,
+                          offset: Offset(0, 6.0),
+                          blurRadius: 12.0,
                         ),
                       ],
                     ),
@@ -140,7 +140,7 @@ class OnboardingScreen extends StatelessWidget {
                       child: const Text(
                         'Get Started',
                         style: TextStyle(
-                          fontSize: AppSizes.fontVerySmall,
+                          fontSize: AppSizes.fontNormal,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -166,7 +166,7 @@ class OnboardingScreen extends StatelessWidget {
                       child: const Text(
                         'My Account',
                         style: TextStyle(
-                          fontSize: AppSizes.fontVerySmall,
+                          fontSize: AppSizes.fontNormal,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
