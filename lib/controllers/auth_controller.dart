@@ -23,7 +23,6 @@ class AuthController extends GetxController {
   RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
 
   final Rx<User?> user = Rx<User?>(null);
-  
 
   User? get currentUser => user.value;
 
@@ -335,7 +334,8 @@ class AuthController extends GetxController {
       return;
     }
 
-    const String bucket = 'photos'; // use your actual Supabase bucket name
+    const String bucket =
+        'profile_pics'; // use your actual Supabase bucket name
 
     try {
       isLoading.value = true;
@@ -346,14 +346,15 @@ class AuthController extends GetxController {
 
       // Delete old image from Supabase, if any
       String oldPhotoUrl = profilePic.value;
-      String newFilePath = "profile_pictures/${user.uid}.jpg";
+      String newFilePath =
+          "profile_pictures/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg";
 
       // Only attempt to delete if photoUrl is a Supabase URL and is not empty
       if (oldPhotoUrl.isNotEmpty && oldPhotoUrl.contains("supabase")) {
         try {
           Uri uri = Uri.parse(oldPhotoUrl);
-          // Supabase URL: .../storage/v1/object/public/photos/profile_pictures/xxxx.jpg
-          // pathSegments: [storage, v1, object, public, photos, profile_pictures, ...]
+          // Supabase URL: .../storage/v1/object/public/profile_pics/profile_pictures/xxxx.jpg
+          // pathSegments: [storage, v1, object, public, profile_pics, profile_pictures, ...]
           int bucketIndex = uri.pathSegments.indexOf(bucket);
           if (bucketIndex > -1 && uri.pathSegments.length > bucketIndex + 1) {
             String path = uri.pathSegments.sublist(bucketIndex + 1).join('/');
@@ -379,6 +380,7 @@ class AuthController extends GetxController {
           path: newFilePath,
         );
 
+        // Save the Supabase URL in Firebase Firestore user profile
         await _firestore.collection('users').doc(user.uid).update({
           'photoUrl': url,
         });

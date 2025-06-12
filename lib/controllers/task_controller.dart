@@ -279,7 +279,12 @@ class TaskController extends GetxController {
   }
 
   // Create a new task
-  Future<void> createTask(String title, String description) async {
+  Future<void> createTask(
+    String title,
+    String description, {
+    String priority = 'Normal',
+    DateTime? dueDate,
+  }) async {
     try {
       isLoading(true);
       String userId = authController.auth.currentUser!.uid;
@@ -293,6 +298,8 @@ class TaskController extends GetxController {
         "assignedCameramanId": null,
         "assignedCameramanName": null,
         "status": "Pending",
+        "priority": priority,
+        "dueDate": dueDate?.toIso8601String(),
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
       });
