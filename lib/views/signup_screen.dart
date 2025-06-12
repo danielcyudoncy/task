@@ -44,16 +44,15 @@ class SignUpScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: Stack(
-            fit: StackFit.expand,
             children: [
-              // Scrollable Main Content
+              // Main Scrollable Content
               Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10, left: 25, right: 25),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                      top: 10, left: 25, right: 25, bottom: 25),
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-                      // Logo
                       Center(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
@@ -64,7 +63,6 @@ class SignUpScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Form Container
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
@@ -99,8 +97,6 @@ class SignUpScreen extends StatelessWidget {
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 24),
-
-                              // Full Name
                               _buildTextField(
                                 context: context,
                                 controller: fullNameController,
@@ -114,8 +110,6 @@ class SignUpScreen extends StatelessWidget {
                                 },
                               ),
                               const SizedBox(height: 12),
-
-                              // Email
                               _buildTextField(
                                 context: context,
                                 controller: emailController,
@@ -133,8 +127,6 @@ class SignUpScreen extends StatelessWidget {
                                 },
                               ),
                               const SizedBox(height: 12),
-
-                              // Password
                               _buildTextField(
                                 context: context,
                                 controller: passwordController,
@@ -152,8 +144,6 @@ class SignUpScreen extends StatelessWidget {
                                 },
                               ),
                               const SizedBox(height: 12),
-
-                              // Confirm Password
                               _buildTextField(
                                 context: context,
                                 controller: confirmPasswordController,
@@ -171,8 +161,6 @@ class SignUpScreen extends StatelessWidget {
                                 },
                               ),
                               const SizedBox(height: 12),
-
-                              // Role Dropdown
                               Obx(() => DropdownButtonFormField<String>(
                                     value: authController
                                             .selectedRole.value.isEmpty
@@ -214,8 +202,6 @@ class SignUpScreen extends StatelessWidget {
                                     }).toList(),
                                   )),
                               const SizedBox(height: 20),
-
-                              // Sign Up Button
                               Obx(() => authController.isLoading.value
                                   ? const CircularProgressIndicator()
                                   : SizedBox(
@@ -247,16 +233,13 @@ class SignUpScreen extends StatelessWidget {
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8),
-                                    child: Text(
-                                      "Or sign up with",
-                                      style: textTheme.bodyMedium,
-                                    ),
+                                    child: Text("Or sign up with",
+                                        style: textTheme.bodyMedium),
                                   ),
                                   const Expanded(child: Divider()),
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              // Google and Apple Buttons
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -283,10 +266,8 @@ class SignUpScreen extends StatelessWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    "Don't have an account? ",
-                                    style: textTheme.bodyMedium,
-                                  ),
+                                  Text("Already have an account? ",
+                                      style: textTheme.bodyMedium),
                                   GestureDetector(
                                     onTap: () => Get.toNamed('/login'),
                                     child: Text(
@@ -308,15 +289,14 @@ class SignUpScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Back Arrow on Top Layer
+
+              // Back Arrow
               Positioned(
                 top: 10,
                 left: 20,
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: colorScheme.primary),
-                  onPressed: () {
-                    Get.back(); // Navigates back to the previous screen
-                  },
+                  onPressed: () => Get.back(),
                 ),
               ),
             ],

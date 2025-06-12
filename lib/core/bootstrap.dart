@@ -8,7 +8,7 @@ import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/myApp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // <-- Don't forget this import
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Initializes Firestore dashboard metrics if they do not exist.
 Future<void> _initializeFirestoreMetrics() async {
@@ -32,30 +32,39 @@ Future<void> _initializeFirestoreMetrics() async {
 /// Bootstraps the Flutter app by initializing essential services and controllers.
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   try {
+    // Load environment variables
     await dotenv.load(fileName: "assets/.env");
 
-    // Initialize Supabase
+    // ✅ Initialize Firebase FIRST
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // ✅ Then initialize Supabase
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL']!,
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
       debug: true,
     );
 
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
     // Register controllers globally
     Get.put(ThemeController(), permanent: true);
     Get.put(SettingsController(), permanent: true);
 
-    // Initialize metrics BEFORE running the app
-    await _initializeFirestoreMetrics();
+    // Initialize metrics (safely)
+    try {
+      await _initializeFirestoreMetrics();
+    } catch (e) {
+      debugPrint("⚠️ Firestore metric initialization failed: $e");
+    }
 
     runApp(const MyApp());
-  } catch (e) {
+  } catch (e, stackTrace) {
     debugPrint("❌ Initialization Failed: $e");
+    debugPrint("📌 StackTrace: $stackTrace");
+
     runApp(const ErrorApp(error: "Failed to initialize Firebase or Supabase."));
   }
 }
@@ -64,12 +73,21 @@ Future<void> bootstrapApp() async {
 class ErrorApp extends StatelessWidget {
   final String error;
   const ErrorApp({super.key, required this.error});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        backgroundColor: Colors.black,
         body: Center(
-          child: Text(error, style: const TextStyle(color: Colors.red)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Text(
+              error,
+              style: const TextStyle(color: Colors.red, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
       ),
     );
