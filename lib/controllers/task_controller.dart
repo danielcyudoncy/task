@@ -351,4 +351,43 @@ class TaskController extends GetxController {
       isLoading(false);
     }
   }
+
+  // --- ADDED: Delete Task
+  Future<void> deleteTask(String taskId) async {
+    try {
+      isLoading(true);
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
+      tasks.removeWhere((task) => task.taskId == taskId);
+      tasks.refresh();
+      Get.snackbar("Success", "Task deleted successfully");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to delete task: ${e.toString()}");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // --- ADDED: Update Task Status
+  Future<void> updateTaskStatus(String taskId, String newStatus) async {
+    try {
+      isLoading(true);
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .update({'status': newStatus});
+      int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      if (taskIndex != -1) {
+        Task updatedTask = tasks[taskIndex].copyWith(
+          status: newStatus,
+        );
+        tasks[taskIndex] = updatedTask;
+        tasks.refresh();
+      }
+      Get.snackbar("Success", "Task status updated");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to update task status: ${e.toString()}");
+    } finally {
+      isLoading(false);
+    }
+  }
 }
