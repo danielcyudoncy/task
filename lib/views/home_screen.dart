@@ -438,9 +438,9 @@ class _TaskListTab extends StatelessWidget {
                 status,
               );
               Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Task updated successfully")),
-              );
+              // Use Get.snackbar for safe, context-free messaging
+              Get.snackbar("Success", "Task updated successfully",
+                  snackPosition: SnackPosition.BOTTOM);
             },
             child: const Text("Save"),
           ),
@@ -449,20 +449,18 @@ class _TaskListTab extends StatelessWidget {
     );
   }
 
-  void _deleteTask(BuildContext context, dynamic task) async {
+  void _deleteTask(dynamic task) async {
     final taskController = Get.find<TaskController>();
     await taskController.deleteTask(task.taskId);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Task deleted")),
-    );
+    Get.snackbar("Success", "Task deleted",
+        snackPosition: SnackPosition.BOTTOM);
   }
 
-  void _completeTask(BuildContext context, dynamic task) async {
+  void _completeTask(dynamic task) async {
     final taskController = Get.find<TaskController>();
     await taskController.updateTaskStatus(task.taskId, "Completed");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Task marked as completed")),
-    );
+    Get.snackbar("Success", "Task marked as completed",
+        snackPosition: SnackPosition.BOTTOM);
   }
 
   @override
@@ -517,7 +515,7 @@ class _TaskListTab extends StatelessWidget {
           ),
           confirmDismiss: (direction) async {
             if (direction == DismissDirection.startToEnd && !isCompleted) {
-              _completeTask(context, t);
+              _completeTask(t);
               return false;
             } else if (direction == DismissDirection.endToStart) {
               return await showDialog(
@@ -544,7 +542,7 @@ class _TaskListTab extends StatelessWidget {
           },
           onDismissed: (direction) {
             if (direction == DismissDirection.endToStart) {
-              _deleteTask(context, t);
+              _deleteTask(t);
             }
           },
           child: Padding(
