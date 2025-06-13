@@ -334,8 +334,7 @@ class AuthController extends GetxController {
       return;
     }
 
-    const String bucket =
-        'profile_pics'; // use your actual Supabase bucket name
+    const String bucket = 'photos'; // use your actual Supabase bucket name
 
     try {
       isLoading.value = true;
@@ -353,8 +352,8 @@ class AuthController extends GetxController {
       if (oldPhotoUrl.isNotEmpty && oldPhotoUrl.contains("supabase")) {
         try {
           Uri uri = Uri.parse(oldPhotoUrl);
-          // Supabase URL: .../storage/v1/object/public/profile_pics/profile_pictures/xxxx.jpg
-          // pathSegments: [storage, v1, object, public, profile_pics, profile_pictures, ...]
+          // Supabase URL: .../storage/v1/object/public/photos/profile_pictures/xxxx.jpg
+          // pathSegments: [storage, v1, object, public, photos, profile_pictures, ...]
           int bucketIndex = uri.pathSegments.indexOf(bucket);
           if (bucketIndex > -1 && uri.pathSegments.length > bucketIndex + 1) {
             String path = uri.pathSegments.sublist(bucketIndex + 1).join('/');

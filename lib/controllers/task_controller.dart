@@ -206,17 +206,26 @@ class TaskController extends GetxController {
   Future<void> fetchTaskCounts() async {
     try {
       String userId = authController.auth.currentUser!.uid;
+      print("Current logged-in user: $userId");
 
       final queryCreated = await _firebaseService.getAllTasks().first;
-      totalTaskCreated.value =
-          queryCreated.docs.where((doc) => doc["createdBy"] == userId).length;
+      for (var doc in queryCreated.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        print("Task: ${doc.id}, createdBy: ${data["createdBy"]}");
+      }
+
+      totalTaskCreated.value = queryCreated.docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data["createdBy"] == userId;
+      }).length;
+      print("Total Task Created: ${totalTaskCreated.value}");
 
       final queryAssigned = await _firebaseService.getAllTasks().first;
-      taskAssigned.value = queryAssigned.docs
-          .where((doc) =>
-              doc["assignedReporterId"] == userId ||
-              doc["assignedCameramanId"] == userId)
-          .length;
+      taskAssigned.value = queryAssigned.docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data["assignedReporterId"] == userId ||
+            data["assignedCameramanId"] == userId;
+      }).length;
     } catch (e) {
       print('Error fetching task counts: $e');
     }
