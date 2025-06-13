@@ -134,12 +134,13 @@ class AppRoutes {
     ),
     GetPage(
       name: "/create-task",
-      page: () => TaskCreationScreen(),
+      page: () => const TaskCreationScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
+    
     GetPage(
       name: "/notifications",
       page: () => NotificationScreen(),

@@ -173,7 +173,30 @@ class _HomeScreenState extends State<HomeScreen>
                         )),
                     const SizedBox(width: 16),
                     Obx(() => _statCard(
-                          icon: Icons.assignment,
+                          // Here is the notification bell with red dot
+                          iconWidget: Stack(
+                            children: [
+                              const Icon(Icons.notifications,
+                                  color: Color(0xFF9FA8DA), size: 32),
+                              if (taskController.taskAssigned.value > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          icon: Icons
+                              .assignment, // fallback in case iconWidget is null
                           label: AppStrings.taskAssigned,
                           value: taskController.taskAssigned.value.toString(),
                           color: const Color(0xFF9FA8DA),
@@ -301,6 +324,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _statCard({
     required IconData icon,
+    Widget? iconWidget,
     required String label,
     required String value,
     required Color color,
@@ -323,7 +347,9 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
+            iconWidget ??
+                Icon(icon,
+                    color: color, size: 32), // Prefer iconWidget if provided
             const SizedBox(height: 8),
             Text(
               label,
@@ -404,16 +430,15 @@ class _TaskListTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-               Text(
+                Text(
                   "Due Date ${t.timestamp != null ? DateFormat('yyyy-MM-dd').format(t.timestamp!.toDate()) : 'N/A'}",
                   style: AppStyles.cardValueStyle.copyWith(
                     color: subTextColor,
-                    fontSize: 13.sp, 
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
                 const SizedBox(height: 6),
-               
                 const SizedBox(height: 8),
                 const Align(
                   alignment: Alignment.bottomRight,
