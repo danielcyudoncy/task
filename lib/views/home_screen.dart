@@ -139,10 +139,11 @@ class _HomeScreenState extends State<HomeScreen>
                     IconButton(
                       icon: const Icon(Icons.logout,
                           color: Colors.white, size: 28),
-                      onPressed: () {
-                        // Add your logout logic here
+                      onPressed: () async {
+                        await authController.logout();
                         Get.offAllNamed("/login");
                       },
+
                       tooltip: "Logout",
                     ),
                   ],
