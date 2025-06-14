@@ -1,6 +1,7 @@
 // widgets/app_bar.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/auth_controller.dart';
 
 class AppBarWidget extends StatelessWidget {
   final double basePadding;
@@ -8,8 +9,8 @@ class AppBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check the current theme mode (light or dark)
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final AuthController authController = Get.find<AuthController>();
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: basePadding, vertical: 10),
@@ -17,7 +18,7 @@ class AppBarWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: () => Get.offAllNamed('/home'),
+            onTap: () => authController.goToHome(),
             child: Semantics(
               label: "Go to Home",
               button: true,
@@ -31,10 +32,7 @@ class AppBarWidget extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.home,
-                  color: isDarkMode
-                      ? Colors.white
-                      : const Color(
-                          0xFF171FA0), // Change icon color based on theme
+                  color: isDarkMode ? Colors.white : const Color(0xFF171FA0),
                 ),
               ),
             ),
@@ -54,10 +52,7 @@ class AppBarWidget extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.account_circle,
-                  color: isDarkMode
-                      ? Colors.white
-                      : const Color(
-                          0xFF171FA0), // Change icon color based on theme
+                  color: isDarkMode ? Colors.white : const Color(0xFF171FA0),
                 ),
               ),
             ),

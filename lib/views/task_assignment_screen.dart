@@ -106,12 +106,20 @@ class TaskAssignmentScreen extends StatelessWidget {
             // Select Task (if not already picked)
             if (taskId == null)
               Obx(() {
-                if (taskController.tasks.isEmpty) {
-                  return const Text("No tasks available");
+                final unassignedTasks = taskController.tasks
+                    .where((task) =>
+                        (task.assignedReporterId == null ||
+                            task.assignedReporterId!.isEmpty) &&
+                        (task.assignedCameramanId == null ||
+                            task.assignedCameramanId!.isEmpty))
+                    .toList();
+
+                if (unassignedTasks.isEmpty) {
+                  return const Text("No unassigned tasks available");
                 }
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: "Select Task"),
-                  items: taskController.tasks
+                  items: unassignedTasks
                       .map<DropdownMenuItem<String>>((task) => DropdownMenuItem(
                             value: task.taskId,
                             child: Text(task.title),

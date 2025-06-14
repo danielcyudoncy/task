@@ -1,8 +1,6 @@
 // views/all_task_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/widgets/app_bar.dart';
 import 'package:task/widgets/empty_state_widget.dart';
@@ -22,51 +20,27 @@ class AllTaskScreen extends StatefulWidget {
 
 class _AllTaskScreenState extends State<AllTaskScreen> {
   final TaskController taskController = Get.find<TaskController>();
-  final AuthController authController = Get.find<AuthController>();
-
-  final int pageSize = 10;
-  String searchTerm = '';
-  String filterStatus = 'All';
-  String sortBy = 'Newest';
-  DocumentSnapshot? lastDocument;
-  bool isLoadingMore = false;
-  bool hasMore = true;
-  List<DocumentSnapshot> loadedTasks = [];
-  final Map<String, Map<String, dynamic>> userCache = {};
 
   @override
   void initState() {
     super.initState();
-    _loadInitialTasks();
+    taskController.loadInitialTasks();
   }
 
-  Future<void> _loadInitialTasks() async {
-    setState(() {
-      loadedTasks = [];
-      lastDocument = null;
-      hasMore = true;
-      isLoadingMore = false;
-    });
-    await _loadMoreTasks();
+  void _onSearch(String val) {
+    taskController.loadInitialTasks(search: val.trim());
   }
 
-  Future<void> _loadMoreTasks() async {
-    if (!hasMore || isLoadingMore) return;
-    setState(() => isLoadingMore = true);
-    Query query = FirebaseFirestore.instance
-        .collection('tasks')
-        .orderBy('timestamp', descending: sortBy == "Newest")
-        .limit(pageSize);
-    if (lastDocument != null) query = query.startAfterDocument(lastDocument!);
-    final snapshot = await query.get();
-    if (snapshot.docs.isNotEmpty) {
-      loadedTasks.addAll(snapshot.docs);
-      lastDocument = snapshot.docs.last;
-      if (snapshot.docs.length < pageSize) hasMore = false;
-    } else {
-      hasMore = false;
+  void _onFilter(String? val) {
+    if (val != null) {
+      taskController.loadInitialTasks(filter: val);
     }
-    setState(() => isLoadingMore = false);
+  }
+
+  void _onSort(String? val) {
+    if (val != null) {
+      taskController.loadInitialTasks(sort: val);
+    }
   }
 
   @override
@@ -78,203 +52,108 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     final isLightMode = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: isLightMode
-          ? Colors.white
-          : Colors.black, // Background color changes based on theme
-      
+      backgroundColor: isLightMode ? Colors.white : Colors.black,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Column(
-              children: [
-                AppBarWidget(basePadding: basePadding),
-                FilterBarWidget(
-                  basePadding: basePadding,
-                  textScale: textScale,
-                  filterStatus: filterStatus,
-                  sortBy: sortBy,
-                  onSearch: (val) => setState(() => searchTerm = val.trim()),
-                  onFilter: (val) => setState(() {
-                    filterStatus = val!;
-                    _loadInitialTasks();
-                  }),
-                  onSort: (val) => setState(() {
-                    sortBy = val!;
-                    _loadInitialTasks();
-                  }),
-                ),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: isLightMode
-                          ? const Color(0xFF171FA0)
-                          : Colors.grey[900], // Change background color
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(32),
-                        topRight: Radius.circular(32),
-                      ),
-                    ),
+        child: Column(
+          children: [
+            AppBarWidget(basePadding: basePadding),
+            FilterBarWidget(
+              basePadding: basePadding,
+              textScale: textScale,
+              filterStatus: taskController.filterStatus,
+              sortBy: taskController.sortBy,
+              onSearch: _onSearch,
+              onFilter: _onFilter,
+              onSort: _onSort,
+            ),
+            Expanded(
+              child: Obx(() {
+                if (taskController.isLoading.value &&
+                    taskController.tasks.isEmpty) {
+                  return TaskSkeletonList(
+                      isLargeScreen: isLargeScreen, textScale: textScale);
+                }
+                if (taskController.errorMessage.isNotEmpty) {
+                  return ErrorStateWidget(
+                    message: taskController.errorMessage.value,
+                    onRetry: () => taskController.loadInitialTasks(),
+                  );
+                }
+                if (taskController.tasks.isEmpty) {
+                  return const EmptyStateWidget(
+                    icon: Icons.list_alt_outlined,
+                    title: "No tasks found",
+                    message: "Try adjusting your filters or search.",
+                  );
+                }
+                return NotificationListener<ScrollNotification>(
+                  onNotification: (scrollInfo) {
+                    if (!taskController.isLoading.value &&
+                        taskController.hasMore &&
+                        scrollInfo.metrics.pixels >=
+                            scrollInfo.metrics.maxScrollExtent - 100) {
+                      taskController.loadMoreTasks();
+                    }
+                    return false;
+                  },
+                  child: ListView.separated(
                     padding: EdgeInsets.symmetric(
                         horizontal: isLargeScreen ? 32 : 8, vertical: 20),
-                    child: RefreshIndicator(
-                      onRefresh: _loadInitialTasks,
-                      child: NotificationListener<ScrollNotification>(
-                        onNotification: (scrollInfo) {
-                          if (!isLoadingMore &&
-                              hasMore &&
-                              scrollInfo.metrics.pixels >=
-                                  scrollInfo.metrics.maxScrollExtent - 100) {
-                            _loadMoreTasks();
-                          }
-                          return false;
-                        },
-                        child: loadedTasks.isEmpty
-                            ? TaskSkeletonList(
-                                isLargeScreen: isLargeScreen,
-                                textScale: textScale)
-                            : FutureBuilder<List<Map<String, dynamic>>>(
-                                future: _addCreatorNames(loadedTasks),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return TaskSkeletonList(
-                                        isLargeScreen: isLargeScreen,
-                                        textScale: textScale);
-                                  }
-                                  if (snapshot.hasError) {
-                                    return const ErrorStateWidget(
-                                        message:
-                                            "Something went wrong loading users.");
-                                  }
-                                  // FIX: Prevent null check operator on null value
-                                  if (!snapshot.hasData ||
-                                      snapshot.data == null) {
-                                    return const ErrorStateWidget(
-                                        message: "No tasks found.");
-                                  }
-                                  var filteredTasks = snapshot.data!
-                                      .where((task) =>
-                                          (searchTerm.isEmpty ||
-                                              task['creatorName']
-                                                  .toString()
-                                                  .toLowerCase()
-                                                  .contains(searchTerm
-                                                      .toLowerCase())) &&
-                                          (filterStatus == "All" ||
-                                              (task['status']
-                                                      ?.toString()
-                                                      .toLowerCase() ==
-                                                  filterStatus.toLowerCase())))
-                                      .toList();
-                                  if (sortBy == "Oldest") {
-                                    filteredTasks =
-                                        filteredTasks.reversed.toList();
-                                  }
-                                  if (filteredTasks.isEmpty) {
-                                    return const EmptyStateWidget();
-                                  }
-                                  return ListView.separated(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
-                                    itemCount: filteredTasks.length +
-                                        (hasMore ? 1 : 0),
-                                    separatorBuilder: (_, __) => const Divider(
-                                      color: Colors.black12,
-                                      thickness: 1,
-                                      indent: 16,
-                                      endIndent: 16,
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      if (index >= filteredTasks.length) {
-                                        return const Center(
-                                          child: Padding(
-                                            padding: EdgeInsets.all(12.0),
-                                            child: CircularProgressIndicator(),
-                                          ),
-                                        );
-                                      }
-                                      final data = filteredTasks[index];
-                                      return TaskCard(
-                                        data: data,
-                                        isLargeScreen: isLargeScreen,
-                                        textScale: textScale,
-                                        onTap: () => showModalBottomSheet(
-                                          context: context,
-                                          shape: const RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.vertical(
-                                                top: Radius.circular(24)),
-                                          ),
-                                          builder: (_) => TaskDetailSheet(
-                                              data: data,
-                                              textScale: textScale,
-                                              isDark:
-                                                  !isLightMode), // Pass the theme condition
-                                        ),
-                                        onAction: (choice) => _handleTaskAction(
-                                            choice, data, context),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                      ),
+                    itemCount: taskController.tasks.length +
+                        (taskController.hasMore ? 1 : 0),
+                    separatorBuilder: (_, __) => const Divider(
+                      color: Colors.black12,
+                      thickness: 1,
+                      indent: 16,
+                      endIndent: 16,
                     ),
+                    itemBuilder: (context, index) {
+                      if (index >= taskController.tasks.length) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      final task = taskController.tasks[index];
+                      return TaskCard(
+                        data: task
+                            .toMapWithUserInfo(taskController.userNameCache),
+                        isLargeScreen: isLargeScreen,
+                        textScale: textScale,
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                          builder: (_) => TaskDetailSheet(
+                            data: task.toMapWithUserInfo(
+                                taskController.userNameCache),
+                            textScale: textScale,
+                            isDark: !isLightMode,
+                          ),
+                        ),
+                        onAction: (choice) =>
+                            _handleTaskAction(choice, task, context),
+                      );
+                    },
                   ),
-                ),
-              ],
-            );
-          },
+                );
+              }),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: const UserNavBar(currentIndex: 1),
     );
   }
 
-  Future<List<Map<String, dynamic>>> _addCreatorNames(
-      List<DocumentSnapshot> tasks) async {
-    List<Map<String, dynamic>> enrichedTasks = [];
-    for (var task in tasks) {
-      final data = task.data() as Map<String, dynamic>;
-      final createdBy = data['createdBy'] ?? '';
-      String creatorName = createdBy;
-      String? creatorAvatar;
-      if (createdBy.isNotEmpty) {
-        if (userCache.containsKey(createdBy)) {
-          creatorName = userCache[createdBy]!['name'];
-          creatorAvatar = userCache[createdBy]!['avatar'];
-        } else {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(createdBy)
-              .get();
-          final userData = userDoc.data();
-          if (userData != null) {
-            creatorName = userData['name'] ??
-                userData['displayName'] ??
-                userData['fullName'] ??
-                createdBy;
-            creatorAvatar = userData['photoURL'] ?? userData['avatarUrl'];
-            userCache[createdBy] = {
-              'name': creatorName,
-              'avatar': creatorAvatar
-            };
-          }
-        }
-      }
-      enrichedTasks.add({
-        ...data,
-        'creatorName': creatorName,
-        'creatorAvatar': creatorAvatar
-      });
-    }
-    return enrichedTasks;
-  }
-
-  Future<void> _handleTaskAction(String choice, Map<String, dynamic> taskData,
-      BuildContext context) async {
+  Future<void> _handleTaskAction(
+      String choice, dynamic task, BuildContext context) async {
     if (choice == 'Edit') {
-      Get.toNamed('/edit_task', arguments: taskData);
+      Get.toNamed('/edit_task', arguments: task);
     } else if (choice == 'Delete') {
       bool? confirm = await showDialog(
         context: context,
@@ -292,30 +171,10 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
         ),
       );
       if (confirm == true) {
-        try {
-          await FirebaseFirestore.instance
-              .collection('tasks')
-              .doc(taskData['taskId'])
-              .delete();
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Task deleted successfully")));
-        } catch (e) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Error deleting task: $e")));
-        }
+        await taskController.deleteTask(task.taskId);
       }
     } else if (choice == 'Mark as Completed') {
-      try {
-        await FirebaseFirestore.instance
-            .collection('tasks')
-            .doc(taskData['taskId'])
-            .update({"status": "Completed"});
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Task marked as completed")));
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error marking task as completed: $e")));
-      }
+      await taskController.updateTaskStatus(task.taskId, "Completed");
     }
   }
 }
