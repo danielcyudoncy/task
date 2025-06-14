@@ -13,39 +13,43 @@ class TaskController extends GetxController {
 
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
+  var errorMessage = ''.obs;
   var totalTaskCreated = 0.obs;
   var taskAssigned = 0.obs;
 
-  // In-memory cache for user names and task titles
   final Map<String, String> userNameCache = {};
   final Map<String, String> taskTitleCache = {};
+
+  // Pagination, filter, and search
+  DocumentSnapshot? lastDocument;
+  bool hasMore = true;
+  final int pageSize = 10;
+  String searchTerm = '';
+  String filterStatus = 'All';
+  String sortBy = 'Newest';
 
   @override
   void onInit() async {
     super.onInit();
     await initializeCache();
     await preFetchUserNames();
-    fetchTasks();
+    await loadInitialTasks();
     fetchTaskCounts();
   }
 
   @override
   void onClose() {
-    saveCache(); // Save the cache when the controller is disposed
+    saveCache();
     super.onClose();
   }
 
   // Initialize cache from local storage if available
   Future<void> initializeCache() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // Load user name cache
     String? userCache = prefs.getString("userNameCache");
     if (userCache != null) {
       userNameCache.addAll(Map<String, String>.from(jsonDecode(userCache)));
     }
-
-    // Load task title cache
     String? titleCache = prefs.getString("taskTitleCache");
     if (titleCache != null) {
       taskTitleCache.addAll(Map<String, String>.from(jsonDecode(titleCache)));
@@ -55,120 +59,163 @@ class TaskController extends GetxController {
   // Save cache to local storage
   Future<void> saveCache() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // Save user name cache
     prefs.setString("userNameCache", jsonEncode(userNameCache));
-
-    // Save task title cache
     prefs.setString("taskTitleCache", jsonEncode(taskTitleCache));
-
-    // Save timestamp for cache expiration
     prefs.setInt("cacheTimestamp", DateTime.now().millisecondsSinceEpoch);
   }
 
   // Pre-fetch all user names and cache them
   Future<void> preFetchUserNames() async {
     try {
-      // Check if cache needs to be refreshed
       final prefs = await SharedPreferences.getInstance();
       int? lastUpdate = prefs.getInt("cacheTimestamp");
       if (lastUpdate != null &&
           DateTime.now().millisecondsSinceEpoch - lastUpdate < 86400000) {
         return;
       }
-
       QuerySnapshot usersSnapshot =
           await FirebaseFirestore.instance.collection("users").get();
-
       for (var doc in usersSnapshot.docs) {
         var data = doc.data() as Map<String, dynamic>;
         String uid = doc.id;
         String fullName = data["fullName"] ?? "Unknown";
-
-        // Add all users to the cache
         userNameCache[uid] = fullName;
       }
-
-      // Save updated cache
       saveCache();
     } catch (e) {}
   }
 
-  // Fetch tasks and replace UIDs with real names and titles
-  void fetchTasks() {
-    isLoading(true);
+  // --- PAGINATED, FILTERED, SEARCHABLE TASK LOADING ---
+  Future<void> loadInitialTasks(
+      {String? search, String? filter, String? sort}) async {
+    tasks.clear();
+    lastDocument = null;
+    hasMore = true;
+    errorMessage.value = '';
+    searchTerm = search ?? searchTerm;
+    filterStatus = filter ?? filterStatus;
+    sortBy = sort ?? sortBy;
+    await loadMoreTasks(reset: true);
+  }
+
+  Future<void> loadMoreTasks({bool reset = false}) async {
+    if (!hasMore || isLoading.value) return;
+    isLoading.value = true;
     try {
-      Stream<QuerySnapshot> taskStream;
+      Query query = FirebaseFirestore.instance
+          .collection('tasks')
+          .orderBy('timestamp', descending: sortBy == "Newest")
+          .limit(pageSize);
+
+      // Filter by status if not 'All'
+      if (filterStatus != 'All') {
+        query = query.where('status', isEqualTo: filterStatus);
+      }
+
+      // Search by title (simple prefix search)
+      if (searchTerm.isNotEmpty) {
+        query = query
+            .where('title', isGreaterThanOrEqualTo: searchTerm)
+            .where('title', isLessThanOrEqualTo: searchTerm + '\uf8ff');
+      }
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument!);
+      }
+
+      final snapshot = await query.get();
+
+      if (reset) {
+        tasks.clear();
+      }
+
+      List<Task> pageTasks = [];
       String userRole = authController.userRole.value;
+      String userId = authController.auth.currentUser?.uid ?? "";
 
-      // Always fetch all tasks, filtering by role below
-      taskStream = _firebaseService.getAllTasks();
+      for (var doc in snapshot.docs) {
+        var taskData = doc.data() as Map<String, dynamic>;
+        String createdByName = await _getUserName(taskData["createdBy"]);
+        String assignedReporterName = taskData["assignedReporterName"] ??
+            (taskData["assignedReporterId"] != null
+                ? await _getUserName(taskData["assignedReporterId"])
+                : "Not Assigned");
+        String assignedCameramanName = taskData["assignedCameramanName"] ??
+            (taskData["assignedCameramanId"] != null
+                ? await _getUserName(taskData["assignedCameramanId"])
+                : "Not Assigned");
+        String taskTitle = taskData["title"];
+        taskTitleCache[doc.id] = taskTitle;
 
-      taskStream.listen((snapshot) async {
-        List<Task> updatedTasks = [];
-        String userId = authController.auth.currentUser!.uid;
-
-        for (var doc in snapshot.docs) {
-          var taskData = doc.data() as Map<String, dynamic>;
-
-          // Get name fields if available, fall back to UID→name lookup if not
-          String createdByName = await _getUserName(taskData["createdBy"]);
-          String assignedReporterName = taskData["assignedReporterName"] ??
-              (taskData["assignedReporterId"] != null
-                  ? await _getUserName(taskData["assignedReporterId"])
-                  : "Not Assigned");
-          String assignedCameramanName = taskData["assignedCameramanName"] ??
-              (taskData["assignedCameramanId"] != null
-                  ? await _getUserName(taskData["assignedCameramanId"])
-                  : "Not Assigned");
-
-          // Cache task title
-          String taskTitle = taskData["title"];
-          taskTitleCache[doc.id] = taskTitle;
-
-          updatedTasks.add(Task(
-            taskId: doc.id,
-            title: taskTitle,
-            description: taskData["description"],
-            createdBy: createdByName,
-            assignedReporter: assignedReporterName,
-            assignedCameraman: assignedCameramanName,
-            status: taskData["status"] ?? "Pending",
-            comments: List<String>.from(taskData["comments"] ?? []),
-            timestamp: taskData["timestamp"] ?? Timestamp.now(),
-            createdById: taskData["createdBy"] ?? "",
-            assignedReporterId: taskData["assignedReporterId"],
-            assignedCameramanId: taskData["assignedCameramanId"],
-          ));
-        }
+        final task = Task(
+          taskId: doc.id,
+          title: taskTitle,
+          description: taskData["description"],
+          createdBy: createdByName,
+          assignedReporter: assignedReporterName,
+          assignedCameraman: assignedCameramanName,
+          status: taskData["status"] ?? "Pending",
+          comments: List<String>.from(taskData["comments"] ?? []),
+          timestamp: taskData["timestamp"] ?? Timestamp.now(),
+          createdById: taskData["createdBy"] ?? "",
+          assignedReporterId: taskData["assignedReporterId"],
+          assignedCameramanId: taskData["assignedCameramanId"],
+        );
 
         // Role-based filtering
         if (userRole == "Reporter") {
-          updatedTasks = updatedTasks
-              .where((task) =>
-                  (task.assignedReporterId == userId) ||
-                  (task.createdById == userId))
-              .toList();
+          if (task.assignedReporterId == userId || task.createdById == userId) {
+            pageTasks.add(task);
+          }
         } else if (userRole == "Cameraman") {
-          updatedTasks = updatedTasks
-              .where((task) =>
-                  (task.assignedCameramanId == userId) ||
-                  (task.createdById == userId))
-              .toList();
+          if (task.assignedCameramanId == userId ||
+              task.createdById == userId) {
+            pageTasks.add(task);
+          }
+        } else {
+          pageTasks.add(task);
         }
+      }
 
-        tasks.value = updatedTasks;
-        saveCache(); // Save the updated cache
-      });
+      tasks.addAll(pageTasks);
+      if (snapshot.docs.isNotEmpty) {
+        lastDocument = snapshot.docs.last;
+        if (snapshot.docs.length < pageSize) hasMore = false;
+      } else {
+        hasMore = false;
+      }
+      errorMessage.value = '';
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch tasks: ${e.toString()}");
+      errorMessage.value = 'Failed to load tasks: $e';
+      hasMore = false;
     } finally {
-      isLoading(false);
+      isLoading.value = false;
+    }
+  }
+
+  // Fetch user's full name using UID with caching
+  Future<String> _getUserName(String? uid) async {
+    if (uid == null) return "Not Assigned";
+    try {
+      if (userNameCache.containsKey(uid)) {
+        return userNameCache[uid]!;
+      }
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection("users").doc(uid).get();
+      if (userDoc.exists) {
+        String fullName = userDoc["fullName"] ?? "Unknown";
+        userNameCache[uid] = fullName;
+        return fullName;
+      } else {
+        return "User not found";
+      }
+    } catch (e) {
+      return "Error fetching user";
     }
   }
 
   // Assign a task to a reporter and/or cameraman, saving both the UID and Name for each.
-  Future<void> assignTaskWithNames({
+ Future<void> assignTaskWithNames({
     required String taskId,
     String? reporterId,
     String? reporterName,
@@ -197,6 +244,46 @@ class TaskController extends GetxController {
           .collection('tasks')
           .doc(taskId)
           .update(updateData);
+
+      // --- NEW: Send notification to assigned users ---
+      final taskDoc = await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .get();
+
+      final taskTitle = (taskDoc.data()?['title'] as String?) ?? 'A task';
+
+      // Reporter notification
+      if (reporterId != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(reporterId)
+            .collection('notifications')
+            .add({
+          'type': 'task_assigned',
+          'taskId': taskId,
+          'title': 'New Task Assigned',
+          'body': 'You have been assigned a new task: $taskTitle',
+          'isRead': false,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Cameraman notification
+      if (cameramanId != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(cameramanId)
+            .collection('notifications')
+            .add({
+          'type': 'task_assigned',
+          'taskId': taskId,
+          'title': 'New Task Assigned',
+          'body': 'You have been assigned a new task: $taskTitle',
+          'isRead': false,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
     } catch (e) {
       Get.snackbar("Assignment Error", "Failed to assign task: $e");
     }
@@ -206,20 +293,11 @@ class TaskController extends GetxController {
   Future<void> fetchTaskCounts() async {
     try {
       String userId = authController.auth.currentUser!.uid;
-      print("Current logged-in user: $userId");
-
       final queryCreated = await _firebaseService.getAllTasks().first;
-      for (var doc in queryCreated.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        print("Task: ${doc.id}, createdBy: ${data["createdBy"]}");
-      }
-
       totalTaskCreated.value = queryCreated.docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return data["createdBy"] == userId;
       }).length;
-      print("Total Task Created: ${totalTaskCreated.value}");
-
       final queryAssigned = await _firebaseService.getAllTasks().first;
       taskAssigned.value = queryAssigned.docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
@@ -231,63 +309,69 @@ class TaskController extends GetxController {
     }
   }
 
-  // Fetch user's full name using UID with caching
-  Future<String> _getUserName(String? uid) async {
-    if (uid == null) return "Not Assigned";
+  // --- LEGACY STREAMING (for other screens if needed) ---
+  void fetchTasks() {
+    isLoading(true);
     try {
-      // Check if the name is already in the cache
-      if (userNameCache.containsKey(uid)) {
-        return userNameCache[uid]!;
-      }
-
-      // If not in cache, fetch from Firestore
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection("users").doc(uid).get();
-
-      if (userDoc.exists) {
-        String fullName = userDoc["fullName"] ?? "Unknown";
-
-        // Add the name to the cache
-        userNameCache[uid] = fullName;
-
-        return fullName;
-      } else {
-        return "User not found";
-      }
+      Stream<QuerySnapshot> taskStream;
+      String userRole = authController.userRole.value;
+      taskStream = _firebaseService.getAllTasks();
+      taskStream.listen((snapshot) async {
+        List<Task> updatedTasks = [];
+        String userId = authController.auth.currentUser!.uid;
+        for (var doc in snapshot.docs) {
+          var taskData = doc.data() as Map<String, dynamic>;
+          String createdByName = await _getUserName(taskData["createdBy"]);
+          String assignedReporterName = taskData["assignedReporterName"] ??
+              (taskData["assignedReporterId"] != null
+                  ? await _getUserName(taskData["assignedReporterId"])
+                  : "Not Assigned");
+          String assignedCameramanName = taskData["assignedCameramanName"] ??
+              (taskData["assignedCameramanId"] != null
+                  ? await _getUserName(taskData["assignedCameramanId"])
+                  : "Not Assigned");
+          String taskTitle = taskData["title"];
+          taskTitleCache[doc.id] = taskTitle;
+          updatedTasks.add(Task(
+            taskId: doc.id,
+            title: taskTitle,
+            description: taskData["description"],
+            createdBy: createdByName,
+            assignedReporter: assignedReporterName,
+            assignedCameraman: assignedCameramanName,
+            status: taskData["status"] ?? "Pending",
+            comments: List<String>.from(taskData["comments"] ?? []),
+            timestamp: taskData["timestamp"] ?? Timestamp.now(),
+            createdById: taskData["createdBy"] ?? "",
+            assignedReporterId: taskData["assignedReporterId"],
+            assignedCameramanId: taskData["assignedCameramanId"],
+          ));
+        }
+        // Role-based filtering
+        if (userRole == "Reporter") {
+          updatedTasks = updatedTasks
+              .where((task) =>
+                  (task.assignedReporterId == userId) ||
+                  (task.createdById == userId))
+              .toList();
+        } else if (userRole == "Cameraman") {
+          updatedTasks = updatedTasks
+              .where((task) =>
+                  (task.assignedCameramanId == userId) ||
+                  (task.createdById == userId))
+              .toList();
+        }
+        tasks.value = updatedTasks;
+        saveCache();
+      });
     } catch (e) {
-      return "Error fetching user";
-    }
-  }
-
-  // Assign Task to Reporter (legacy, not recommended)
-  Future<void> assignTaskToReporter(String taskId, String reporterId) async {
-    try {
-      isLoading(true);
-      await _firebaseService.assignTask(
-          taskId, reporterId, "assignedReporterId");
-      Get.snackbar("Success", "Task assigned to Reporter successfully");
-    } catch (e) {
-      Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
+      Get.snackbar("Error", "Failed to fetch tasks: ${e.toString()}");
     } finally {
       isLoading(false);
     }
   }
 
-  // Assign Task to Cameraman (legacy, not recommended)
-  Future<void> assignTaskToCameraman(String taskId, String cameramanId) async {
-    try {
-      isLoading(true);
-      await _firebaseService.assignTask(
-          taskId, cameramanId, "assignedCameramanId");
-      Get.snackbar("Success", "Task assigned to Cameraman successfully");
-    } catch (e) {
-      Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
-    } finally {
-      isLoading(false);
-    }
-  }
-
-  // Create a new task
+  // --- TASK CRUD ---
   Future<void> createTask(
     String title,
     String description, {
@@ -297,7 +381,6 @@ class TaskController extends GetxController {
     try {
       isLoading(true);
       String userId = authController.auth.currentUser!.uid;
-
       await _firebaseService.createTask({
         "title": title,
         "description": description,
@@ -312,7 +395,6 @@ class TaskController extends GetxController {
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
       });
-
       Get.snackbar("Success", "Task created successfully");
     } catch (e) {
       Get.snackbar("Error", "Failed to create task: ${e.toString()}");
@@ -325,14 +407,11 @@ class TaskController extends GetxController {
       String taskId, String title, String description, String status) async {
     try {
       isLoading(true);
-      // Call Firestore service to update the task
       await _firebaseService.updateTask(taskId, {
         "title": title,
         "description": description,
         "status": status,
       });
-
-      // Update the local task list if necessary
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
         Task updatedTask = tasks[taskIndex].copyWith(
@@ -343,7 +422,6 @@ class TaskController extends GetxController {
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
       }
-
       Get.snackbar("Success", "Task updated successfully");
     } catch (e) {
       Get.snackbar("Error", "Failed to update task: ${e.toString()}");
@@ -352,7 +430,6 @@ class TaskController extends GetxController {
     }
   }
 
-  // --- ADDED: Delete Task
   Future<void> deleteTask(String taskId) async {
     try {
       isLoading(true);
@@ -367,7 +444,6 @@ class TaskController extends GetxController {
     }
   }
 
-  // --- ADDED: Update Task Status
   Future<void> updateTaskStatus(String taskId, String newStatus) async {
     try {
       isLoading(true);
@@ -386,6 +462,33 @@ class TaskController extends GetxController {
       Get.snackbar("Success", "Task status updated");
     } catch (e) {
       Get.snackbar("Error", "Failed to update task status: ${e.toString()}");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // --- LEGACY (optional) ---
+  Future<void> assignTaskToReporter(String taskId, String reporterId) async {
+    try {
+      isLoading(true);
+      await _firebaseService.assignTask(
+          taskId, reporterId, "assignedReporterId");
+      Get.snackbar("Success", "Task assigned to Reporter successfully");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> assignTaskToCameraman(String taskId, String cameramanId) async {
+    try {
+      isLoading(true);
+      await _firebaseService.assignTask(
+          taskId, cameramanId, "assignedCameramanId");
+      Get.snackbar("Success", "Task assigned to Cameraman successfully");
+    } catch (e) {
+      Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
     } finally {
       isLoading(false);
     }

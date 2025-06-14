@@ -89,6 +89,18 @@ class AuthController extends GetxController {
         role == 'Head of Department' ||
         role == 'Head of Unit';
   }
+  void goToHome() {
+    final role = userRole.value;
+    if (role == "Admin" ||
+        role == "Assignment Editor" ||
+        role == "Head of Department") {
+      Get.offAllNamed('/admin-dashboard');
+    } else if (role == "Reporter" || role == "Cameraman") {
+      Get.offAllNamed('/home');
+    } else {
+      Get.offAllNamed('/login');
+    }
+  }
 
   Future<void> _initializeUserSession() async {
     try {

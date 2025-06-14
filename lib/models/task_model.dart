@@ -80,4 +80,30 @@ class Task {
       assignedCameramanId: assignedCameramanId ?? this.assignedCameramanId,
     );
   }
+
+  /// Converts the Task to a Map for UI widgets, injecting human-readable names from cache if needed.
+  Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache) {
+    return {
+      'taskId': taskId,
+      'title': title,
+      'description': description,
+      'createdBy': createdById, // original user id
+      'creatorName': userNameCache[createdById] ?? createdBy,
+      'assignedReporter': assignedReporterId,
+      'assignedReporterName': assignedReporterId != null
+          ? (userNameCache[assignedReporterId!] ??
+              assignedReporter ??
+              'Not Assigned')
+          : 'Not Assigned',
+      'assignedCameraman': assignedCameramanId,
+      'assignedCameramanName': assignedCameramanId != null
+          ? (userNameCache[assignedCameramanId!] ??
+              assignedCameraman ??
+              'Not Assigned')
+          : 'Not Assigned',
+      'status': status,
+      'comments': comments,
+      'timestamp': timestamp,
+    };
+  }
 }

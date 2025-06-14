@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
+import '../controllers/notification_controller.dart'; // <-- Import NotificationController
 import '../widgets/user_nav_bar.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/constants/app_strings.dart';
@@ -22,6 +23,8 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final AuthController authController = Get.find<AuthController>();
   final TaskController taskController = Get.find<TaskController>();
+  final NotificationController notificationController =
+      Get.find<NotificationController>(); // <-- Add NotificationController
 
   late TabController _tabController;
 
@@ -31,6 +34,8 @@ class _HomeScreenState extends State<HomeScreen>
     _tabController = TabController(length: 2, vsync: this);
     taskController.fetchTasks();
     taskController.fetchTaskCounts();
+    notificationController
+        .fetchNotifications(); // Optionally fetch notifications
   }
 
   @override
@@ -54,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with user avatar, welcome, name, logo and logout button
+              // Header with user avatar, welcome, name, logo, notification and logout button
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -140,6 +145,47 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     ),
+                    // Notification icon with badge
+                    Obx(() {
+                      int unread = notificationController.unreadCount.value;
+                      return Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications,
+                                color: Colors.white, size: 28),
+                            onPressed: () {
+                              Get.toNamed('/notifications');
+                            },
+                            tooltip: "Notifications",
+                          ),
+                          if (unread > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  unread > 9 ? '9+' : '$unread',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
                     IconButton(
                       icon: const Icon(Icons.logout,
                           color: Colors.white, size: 28),
@@ -437,8 +483,9 @@ class _TaskListTab extends StatelessWidget {
                 descriptionController.text,
                 status,
               );
-              Navigator.of(ctx).pop();
-              // Use Get.snackbar for safe, context-free messaging
+              if (ctx.mounted) {
+                Navigator.of(ctx).pop();
+              }
               Get.snackbar("Success", "Task updated successfully",
                   snackPosition: SnackPosition.BOTTOM);
             },
