@@ -117,7 +117,7 @@ class DashboardCardsWidget extends StatelessWidget {
                     child: Text(
                       buttonText,
                       style: TextStyle(
-                          fontSize: 16.sp * textScale, color: innerText),
+                          fontSize: 14.sp * textScale, color: innerText),
                     ),
                   ),
                 ),
