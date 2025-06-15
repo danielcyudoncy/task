@@ -27,7 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       Get.find<ManageUsersController>();
 
   late TabController _tabController;
-  String? selectedTaskTitle; // For the dialog dropdown
+  String? selectedTaskTitle;
 
   @override
   void initState() {
@@ -44,10 +44,226 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     super.dispose();
   }
 
-  void _showAssignTaskDialog(Map<String, dynamic> user) async {
+  String _formatDueDate(dynamic dueDate) {
+    if (dueDate == null) return "Not set";
+    if (dueDate is Timestamp) {
+      final dt = dueDate.toDate();
+      return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+    }
+    if (dueDate is DateTime) {
+      return "${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}";
+    }
+    if (dueDate is String && dueDate.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(dueDate);
+        return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+      } catch (e) {
+        return dueDate;
+      }
+    }
+    return "Not set";
+  }
+
+  // Fetches the creator's full name from Firestore (users collection)
+  Future<String> _fetchCreatorName(Map<String, dynamic> doc) async {
+    // 1. Try createdByName field (if present in task - optional shortcut)
+    if (doc['createdByName'] != null &&
+        (doc['createdByName'] as String).trim().isNotEmpty) {
+      return doc['createdByName'];
+    }
+    // 2. Try fetching from users collection by UID, using correct field: fullName
+    if (doc['createdBy'] != null &&
+        (doc['createdBy'] as String).trim().isNotEmpty) {
+      try {
+        final uid = doc['createdBy'];
+        final userSnap =
+            await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        if (userSnap.exists) {
+          final data = userSnap.data();
+          if (data != null &&
+              data['fullName'] != null &&
+              (data['fullName'] as String).trim().isNotEmpty) {
+            return data['fullName'];
+          }
+        }
+      } catch (_) {}
+    }
+    // 3. Fallback
+    return 'Unknown';
+  }
+
+  void _showSelectTaskDialogWithDetails() async {
+    String? selectedTitle;
+    Map<String, dynamic>? selectedDoc;
+    await Get.defaultDialog(
+      title: "Select a Task",
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          final tasks = adminController.taskTitles;
+          final docs = adminController.taskSnapshotDocs;
+          if (tasks.isEmpty) {
+            return const Text("No tasks available");
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    Text(
+                      "Select Task: ",
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: selectedTitle,
+                          dropdownColor: Theme.of(context).cardColor,
+                          hint: Text(
+                            "Select Task",
+                            style: TextStyle(
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
+                          icon: Icon(Icons.arrow_drop_down,
+                              color: Theme.of(context).iconTheme.color),
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            fontSize: 16,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          items: tasks
+                              .map((t) =>
+                                  DropdownMenuItem(value: t, child: Text(t)))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              selectedTitle = val;
+                              selectedDoc = docs.firstWhere(
+                                (d) => d['title'] == val,
+                                orElse: () => <String, dynamic>{},
+                              );
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (selectedTitle != null &&
+                  selectedDoc != null &&
+                  selectedDoc?.isNotEmpty == true)
+                FutureBuilder<String>(
+                  future: _fetchCreatorName(selectedDoc!),
+                  builder: (context, snapshot) {
+                    String creatorName = 'Loading...';
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      creatorName = snapshot.data ?? 'Unknown';
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Task Details:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text("Title: ${selectedDoc?['title'] ?? ''}"),
+                        const SizedBox(height: 4),
+                        Text(
+                            "Description: ${selectedDoc?['description'] ?? ''}"),
+                        const SizedBox(height: 4),
+                        Text("Created by: $creatorName"),
+                        const SizedBox(height: 4),
+                        Text(
+                            "Due Date: ${_formatDueDate(selectedDoc?['dueDate'])}"),
+                        const SizedBox(height: 4),
+                        Text("Status: ${selectedDoc?['status'] ?? ''}"),
+                      ],
+                    );
+                  },
+                ),
+            ],
+          );
+        },
+      ),
+      textConfirm: "Close",
+      onConfirm: () => Get.back(),
+    );
+  }
+
+  void _showTaskDetailDialog(String title) {
+    final doc = adminController.taskSnapshotDocs
+            .firstWhereOrNull((d) => d['title'] == title) ??
+        <String, dynamic>{};
+    showDialog(
+      context: Get.context!,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(AppStrings.taskDetails),
+          content: doc.isNotEmpty
+              ? FutureBuilder<String>(
+                  future: _fetchCreatorName(doc),
+                  builder: (context, snapshot) {
+                    String creatorName = 'Loading...';
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      creatorName = snapshot.data ?? 'Unknown';
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("Title: $title"),
+                        const SizedBox(height: 6),
+                        Text("Status: ${_getTaskStatus(title)}"),
+                        const SizedBox(height: 6),
+                        Text("Created by: $creatorName"),
+                        const SizedBox(height: 6),
+                        Text("Due Date: ${_formatDueDate(doc['dueDate'])}"),
+                      ],
+                    );
+                  })
+              : const Text("Task not found"),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(AppStrings.close),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAssignTaskDialog([Map<String, dynamic>? user]) async {
     selectedTaskTitle = null;
     await Get.defaultDialog(
-      title: "Assign Task to ${user['fullname']}",
+      title: user != null
+          ? "Assign Task to ${user['fullName'] ?? user['fullname'] ?? ''}"
+          : "Select a Task",
       content: Obx(() {
         final tasks = adminController.taskTitles;
         if (tasks.isEmpty) {
@@ -111,10 +327,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           },
         );
       }),
-      textConfirm: "Assign",
+      textConfirm: user != null ? "Assign" : "Close",
       onConfirm: () async {
         if (selectedTaskTitle == null) {
           Get.snackbar("Error", "Please select a task");
+          return;
+        }
+        if (user == null) {
+          Get.back();
           return;
         }
         final userId = user['uid'] ?? user['id'];
@@ -136,14 +356,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         try {
           await adminController.assignTaskToUser(
             userId: userId,
-            assignedName: user['fullname'],
+            assignedName: user['fullName'] ?? user['fullname'] ?? '',
             taskTitle: selectedTaskTitle!,
             taskDescription: taskDescription,
             dueDate: dueDate,
             taskId: taskId,
           );
-          Get.back(); // Close dialog
-          Get.snackbar("Success", "Task assigned to ${user['fullname']}");
+          Get.back();
+          Get.snackbar("Success",
+              "Task assigned to ${user['fullName'] ?? user['fullname'] ?? ''}");
         } catch (e) {
           Get.snackbar("Error", "Failed to assign task: $e");
         }
@@ -175,13 +396,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           child: SafeArea(
             child: Column(
               children: [
-                // Sticky Header (never scrolls)
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: HeaderWidget(authController: authController),
                 ),
-                // Scrollable Content
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -203,13 +422,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: DashboardCardsWidget(
-                            adminController: adminController,
+                            usersCount:
+                                adminController.statistics['users'] ?? 0,
+                            tasksCount:
+                                adminController.statistics['tasks'] ?? 0,
                             onManageUsersTap: _showManageUsersDialog,
-                            onTaskSelected: (value) {
-                              if (value != null && value.isNotEmpty) {
-                                _showTaskDetailDialog(value);
-                              }
-                            },
+                            onTotalTasksTap: _showSelectTaskDialogWithDetails,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -284,7 +502,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              // TabBarView with scrolling lists
                               SizedBox(
                                 height:
                                     MediaQuery.of(context).size.height * 0.48,
@@ -344,9 +561,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               itemCount: manageUsersController.usersList.length,
               itemBuilder: (context, index) {
                 final user = manageUsersController.usersList[index];
-                final userName = user['fullname']?.toString().isNotEmpty == true
-                    ? user['fullname']
-                    : AppStrings.unknownUser;
+                final userName =
+                    (user['fullName']?.toString().isNotEmpty == true)
+                        ? user['fullName']
+                        : (user['fullname']?.toString().isNotEmpty == true)
+                            ? user['fullname']
+                            : AppStrings.unknownUser;
                 return ListTile(
                   title: Text(userName),
                   subtitle: Text("Role: ${user['role'] ?? 'Unknown'}"),
@@ -407,26 +627,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             snackPosition: SnackPosition.BOTTOM);
       }
     }
-  }
-
-  void _showTaskDetailDialog(String title) {
-    final doc = adminController.taskSnapshotDocs
-        .firstWhereOrNull((d) => d['title'] == title);
-    Get.defaultDialog(
-      title: AppStrings.taskDetails,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Title: $title"),
-          const SizedBox(height: 6),
-          Text("Status: ${_getTaskStatus(title)}"),
-          const SizedBox(height: 6),
-          Text("Created by: ${doc?['createdByName'] ?? AppStrings.unknown}"),
-        ],
-      ),
-      textConfirm: AppStrings.close,
-      onConfirm: () => Get.back(),
-    );
   }
 
   String _getTaskStatus(String title) {
