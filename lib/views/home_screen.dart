@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
-import '../controllers/notification_controller.dart'; // <-- Import NotificationController
+import '../controllers/notification_controller.dart';
 import '../widgets/user_nav_bar.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/constants/app_strings.dart';
@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen>
   final AuthController authController = Get.find<AuthController>();
   final TaskController taskController = Get.find<TaskController>();
   final NotificationController notificationController =
-      Get.find<NotificationController>(); // <-- Add NotificationController
+      Get.find<NotificationController>();
 
   late TabController _tabController;
 
@@ -34,8 +34,7 @@ class _HomeScreenState extends State<HomeScreen>
     _tabController = TabController(length: 2, vsync: this);
     taskController.fetchTasks();
     taskController.fetchTaskCounts();
-    notificationController
-        .fetchNotifications(); // Optionally fetch notifications
+    notificationController.fetchNotifications();
   }
 
   @override
@@ -109,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen>
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w400,
-                                fontSize: 16.sp,
+                                fontSize: 14.sp,
                               ),
                             ),
                             Text(
@@ -117,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen>
                               style: theme.textTheme.labelLarge?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 18.sp,
+                                fontSize: 12.sp,
                               ),
                             ),
                           ],
@@ -217,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen>
                     Expanded(
                       child: Obx(() => _statCard(
                             icon: Icons.create,
-                            label: AppStrings.taskCreated, // <-- UPDATED LABEL
+                            label: AppStrings.taskCreated,
                             value: taskController.totalTaskCreated.value
                                 .toString(),
                             color: const Color(0xFF9FA8DA),
@@ -339,11 +338,28 @@ class _HomeScreenState extends State<HomeScreen>
                       // TabBarView for not completed and completed tasks
                       Expanded(
                         child: Obx(() {
-                          final notCompletedTasks = taskController.tasks
-                              .where((t) => t.status != "Completed")
-                              .toList();
+                          final userId =
+                              authController.auth.currentUser?.uid ?? "";
+                          final notCompletedTasks =
+                              taskController.tasks.where((t) {
+                            // Show if not completed and assigned to or created by the user
+                            final assignedReporter = t.assignedReporterId;
+                            final assignedCameraman = t.assignedCameramanId;
+                            final assignedTo = t.assignedTo; 
+                            return (t.status != "Completed") &&
+                                (t.createdById == userId ||
+                                    assignedReporter == userId ||
+                                    assignedCameraman == userId ||
+                                    assignedTo == userId);
+                          }).toList();
+
                           final completedTasks = taskController.tasks
-                              .where((t) => t.status == "Completed")
+                              .where((t) =>
+                                  t.status == "Completed" &&
+                                  (t.createdById == userId ||
+                                      t.assignedReporterId == userId ||
+                                      t.assignedCameramanId == userId ||
+                                      (t.assignedTo == userId)))
                               .toList();
 
                           return TabBarView(

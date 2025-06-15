@@ -11,6 +11,7 @@ class Task {
   final String status;
   final List<String> comments;
   final Timestamp timestamp;
+  final String? assignedTo; 
 
   // New fields for robust filtering & permission checks
   final String createdById;
@@ -24,6 +25,7 @@ class Task {
     required this.createdBy,
     this.assignedReporter,
     this.assignedCameraman,
+    this.assignedTo,
     required this.status,
     required this.comments,
     required this.timestamp,
@@ -45,6 +47,7 @@ class Task {
       comments: List<String>.from(map['comments'] ?? []),
       timestamp: map['timestamp'] ?? Timestamp.now(),
       createdById: map['createdBy'] ?? '',
+      assignedTo: map['assignedTo'],
       assignedReporterId: map['assignedReporter'],
       assignedCameramanId: map['assignedCameraman'],
     );
