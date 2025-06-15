@@ -89,6 +89,7 @@ class AuthController extends GetxController {
         role == 'Head of Department' ||
         role == 'Head of Unit';
   }
+
   void goToHome() {
     final role = userRole.value;
     if (role == "Admin" ||
@@ -156,11 +157,14 @@ class AuthController extends GetxController {
           .get();
 
       if (userDoc.exists) {
-        final userData = userDoc.data()!;
-        fullName.value = userData['fullName'] ?? 'User';
-        profilePic.value = userData['photoUrl'] ?? '';
-        userRole.value = userData['role'] ?? '';
-        isProfileComplete.value = userData['profileComplete'] ?? false;
+        final data = userDoc.data()!;
+        fullName.value = data['fullName'] ?? 'User';
+        profilePic.value = data['photoUrl'] ?? '';
+        userRole.value = data['role'] ?? '';
+        isProfileComplete.value = data['profileComplete'] ?? false;
+
+        userData.assignAll(
+            data); // <-- This line ensures your profile screen works!
 
         if (userRole.value.isEmpty) {
           throw Exception("User role not found");
@@ -171,6 +175,7 @@ class AuthController extends GetxController {
     } catch (e) {
       debugPrint("Error loading user data: $e");
       resetUserData();
+      userData.clear();
       rethrow;
     }
   }
@@ -180,6 +185,7 @@ class AuthController extends GetxController {
     profilePic.value = '';
     userRole.value = '';
     isProfileComplete.value = false;
+    userData.clear();
   }
 
   Future<void> completeProfile() async {

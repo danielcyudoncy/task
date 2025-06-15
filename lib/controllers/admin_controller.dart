@@ -40,6 +40,9 @@ class AdminController extends GetxController {
 
   var taskSnapshotDocs = <Map<String, dynamic>>[].obs; // Store as Map
 
+  // Add a statistics RxMap for dashboard compatibility
+  final RxMap<String, dynamic> statistics = <String, dynamic>{}.obs;
+
   @override
   void onInit() {
     fetchDashboardData();
@@ -59,6 +62,13 @@ class AdminController extends GetxController {
         completedTasks.value = data['tasks']?['completed'] ?? 0;
         pendingTasks.value = data['tasks']?['pending'] ?? 0;
         overdueTasks.value = data['tasks']?['overdue'] ?? 0;
+
+        // Update statistics map
+        statistics['users'] = totalUsers.value;
+        statistics['tasks'] = totalTasks.value;
+        statistics['completed'] = completedTasks.value;
+        statistics['pending'] = pendingTasks.value;
+        statistics['overdue'] = overdueTasks.value;
       }
     });
   }
@@ -92,6 +102,11 @@ class AdminController extends GetxController {
       totalTasks.value = allDocs.length;
       completedTasks.value = completedTaskTitles.length;
       pendingTasks.value = pendingTaskTitles.length;
+
+      // Update statistics map
+      statistics['tasks'] = totalTasks.value;
+      statistics['completed'] = completedTasks.value;
+      statistics['pending'] = pendingTasks.value;
     } catch (e) {
       Get.snackbar("Error", "Failed to load dashboard data: $e");
     }
@@ -226,6 +241,13 @@ class AdminController extends GetxController {
           .map((doc) => doc['title'] ?? '')
           .cast<String>()
           .toList();
+
+      // Update statistics map
+      statistics['users'] = totalUsers.value;
+      statistics['tasks'] = totalTasks.value;
+      statistics['completed'] = completedTasks.value;
+      statistics['pending'] = pendingTasks.value;
+      statistics['overdue'] = overdueTasks.value;
     } on TimeoutException {
       Get.snackbar('Error', 'Fetching statistics timed out');
     } catch (e) {
@@ -270,6 +292,11 @@ class AdminController extends GetxController {
     completedTasks.value = completedTaskTitles.length;
     pendingTasks.value = pendingTaskTitles.length;
     overdueTasks.value = overdueTaskTitles.length;
+
+    // Update statistics map
+    statistics['completed'] = completedTasks.value;
+    statistics['pending'] = pendingTasks.value;
+    statistics['overdue'] = overdueTasks.value;
   }
 
   Future<void> createAdminProfile({
@@ -370,6 +397,8 @@ class AdminController extends GetxController {
     selectedUserName.value = '';
     selectedTaskTitle.value = '';
     taskSnapshotDocs.clear();
+
+    statistics.clear();
   }
 
   Future<void> deleteUser(String userId) async {
