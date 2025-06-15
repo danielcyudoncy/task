@@ -49,101 +49,123 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     final isLargeScreen = media.size.width > 600;
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
     final basePadding = isLargeScreen ? 32.0 : 16.0;
-    final isLightMode = Theme.of(context).brightness == Brightness.light;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final dividerColor = Theme.of(context).dividerColor;
+
+    // Gradient colors: white to app blue (primary)
+    final Color gradientStart = Colors.white;
+    final Color gradientEnd = colorScheme.primary; // or a custom blue
 
     return Scaffold(
-      backgroundColor: isLightMode ? Colors.white : Colors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppBarWidget(basePadding: basePadding),
-            FilterBarWidget(
-              basePadding: basePadding,
-              textScale: textScale,
-              filterStatus: taskController.filterStatus,
-              sortBy: taskController.sortBy,
-              onSearch: _onSearch,
-              onFilter: _onFilter,
-              onSort: _onSort,
-            ),
-            Expanded(
-              child: Obx(() {
-                if (taskController.isLoading.value &&
-                    taskController.tasks.isEmpty) {
-                  return TaskSkeletonList(
-                      isLargeScreen: isLargeScreen, textScale: textScale);
-                }
-                if (taskController.errorMessage.isNotEmpty) {
-                  return ErrorStateWidget(
-                    message: taskController.errorMessage.value,
-                    onRetry: () => taskController.loadInitialTasks(),
-                  );
-                }
-                if (taskController.tasks.isEmpty) {
-                  return const EmptyStateWidget(
-                    icon: Icons.list_alt_outlined,
-                    title: "No tasks found",
-                    message: "Try adjusting your filters or search.",
-                  );
-                }
-                return NotificationListener<ScrollNotification>(
-                  onNotification: (scrollInfo) {
-                    if (!taskController.isLoading.value &&
-                        taskController.hasMore &&
-                        scrollInfo.metrics.pixels >=
-                            scrollInfo.metrics.maxScrollExtent - 100) {
-                      taskController.loadMoreTasks();
-                    }
-                    return false;
-                  },
-                  child: ListView.separated(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: isLargeScreen ? 32 : 8, vertical: 20),
-                    itemCount: taskController.tasks.length +
-                        (taskController.hasMore ? 1 : 0),
-                    separatorBuilder: (_, __) => const Divider(
-                      color: Colors.black12,
-                      thickness: 1,
-                      indent: 16,
-                      endIndent: 16,
-                    ),
-                    itemBuilder: (context, index) {
-                      if (index >= taskController.tasks.length) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              gradientStart,
+              gradientEnd,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBarWidget(basePadding: basePadding),
+              // Blending FilterBarWidget by making it transparent inside FilterBarWidget
+              FilterBarWidget(
+                basePadding: basePadding,
+                textScale: textScale,
+                filterStatus: taskController.filterStatus,
+                sortBy: taskController.sortBy,
+                onSearch: _onSearch,
+                onFilter: _onFilter,
+                onSort: _onSort,
+                // TIP: In your FilterBarWidget, make sure containers/cards have color: Colors.transparent,
+                // and TextFields use fillColor: Colors.white.withOpacity(0.18) (or similar, see note below)
+              ),
+              Expanded(
+                child: Obx(() {
+                  if (taskController.isLoading.value &&
+                      taskController.tasks.isEmpty) {
+                    return TaskSkeletonList(
+                        isLargeScreen: isLargeScreen, textScale: textScale);
+                  }
+                  if (taskController.errorMessage.isNotEmpty) {
+                    return ErrorStateWidget(
+                      message: taskController.errorMessage.value,
+                      onRetry: () => taskController.loadInitialTasks(),
+                    );
+                  }
+                  if (taskController.tasks.isEmpty) {
+                    return const EmptyStateWidget(
+                      icon: Icons.list_alt_outlined,
+                      title: "No tasks found",
+                      message: "Try adjusting your filters or search.",
+                    );
+                  }
+                  return NotificationListener<ScrollNotification>(
+                    onNotification: (scrollInfo) {
+                      if (!taskController.isLoading.value &&
+                          taskController.hasMore &&
+                          scrollInfo.metrics.pixels >=
+                              scrollInfo.metrics.maxScrollExtent - 100) {
+                        taskController.loadMoreTasks();
                       }
-                      final task = taskController.tasks[index];
-                      return TaskCard(
-                        data: task
-                            .toMapWithUserInfo(taskController.userNameCache),
-                        isLargeScreen: isLargeScreen,
-                        textScale: textScale,
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(24)),
-                          ),
-                          builder: (_) => TaskDetailSheet(
-                            data: task.toMapWithUserInfo(
-                                taskController.userNameCache),
-                            textScale: textScale,
-                            isDark: !isLightMode,
-                          ),
-                        ),
-                        onAction: (choice) =>
-                            _handleTaskAction(choice, task, context),
-                      );
+                      return false;
                     },
-                  ),
-                );
-              }),
-            ),
-          ],
+                    child: ListView.separated(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: isLargeScreen ? 32 : 8, vertical: 20),
+                      itemCount: taskController.tasks.length +
+                          (taskController.hasMore ? 1 : 0),
+                      separatorBuilder: (_, __) => Divider(
+                        color: dividerColor,
+                        thickness: 1,
+                        indent: 16,
+                        endIndent: 16,
+                      ),
+                      itemBuilder: (context, index) {
+                        if (index >= taskController.tasks.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        final task = taskController.tasks[index];
+                        return TaskCard(
+                          data: task
+                              .toMapWithUserInfo(taskController.userNameCache),
+                          isLargeScreen: isLargeScreen,
+                          textScale: textScale,
+                          onTap: () => showModalBottomSheet(
+                            context: context,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(24)),
+                            ),
+                            builder: (_) => TaskDetailSheet(
+                              data: task.toMapWithUserInfo(
+                                  taskController.userNameCache),
+                              textScale: textScale,
+                              isDark: Theme.of(context).brightness ==
+                                  Brightness.dark,
+                            ),
+                          ),
+                          onAction: (choice) =>
+                              _handleTaskAction(choice, task, context),
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: const UserNavBar(currentIndex: 1),

@@ -14,18 +14,32 @@ class TaskAssignmentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    // Use app theme's default background for the scaffold
+    final scaffoldBg = Theme.of(context).colorScheme.surface;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Assign Tasks")),
+      appBar: AppBar(
+        title: const Text("Assign Tasks"),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        elevation: 0,
+      ),
+      backgroundColor: scaffoldBg,
       body: Obx(() {
         if (taskController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (taskController.tasks.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               "No tasks available",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
             ),
           );
         }
@@ -36,11 +50,14 @@ class TaskAssignmentScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton.icon(
-                  style:
-                      ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.secondary,
+                    foregroundColor: colorScheme.onSecondary,
+                  ),
                   icon: const Icon(Icons.add_task),
                   label: const Text("Assign Task"),
-                  onPressed: () => _showAssignmentDialog(context, null),
+                  onPressed: () => _showAssignmentDialog(
+                      context, null, colorScheme, scaffoldBg),
                 ),
               ),
             Expanded(
@@ -50,23 +67,36 @@ class TaskAssignmentScreen extends StatelessWidget {
                   final task = taskController.tasks[index];
 
                   return Card(
+                    color: colorScheme.surface,
                     elevation: 3,
                     margin: const EdgeInsets.all(10),
                     child: ListTile(
                       title: Text(
                         task.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
-                      subtitle: Text(task.description),
+                      subtitle: Text(
+                        task.description,
+                        style: TextStyle(
+                            color: colorScheme.onSurface),
+                      ),
                       trailing: authController.canAssignTask
                           ? ElevatedButton(
-                              onPressed: () =>
-                                  _showAssignmentDialog(context, task.taskId),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                              ),
+                              onPressed: () => _showAssignmentDialog(context,
+                                  task.taskId, colorScheme, scaffoldBg),
                               child: const Text("Assign"),
                             )
-                          : const Text(
+                          : Text(
                               "No Permission",
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                  color: colorScheme.onSurface),
                             ),
                     ),
                   );
@@ -79,7 +109,8 @@ class TaskAssignmentScreen extends StatelessWidget {
     );
   }
 
-  void _showAssignmentDialog(BuildContext context, String? taskId) {
+  void _showAssignmentDialog(BuildContext context, String? taskId,
+      ColorScheme colorScheme, Color scaffoldBg) {
     String? selectedTaskId = taskId;
     String? selectedReporterId;
     String? selectedReporterName;
@@ -90,16 +121,20 @@ class TaskAssignmentScreen extends StatelessWidget {
       Container(
         padding: const EdgeInsets.all(20),
         height: 480,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: scaffoldBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "Assign Task",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 10),
 
@@ -115,14 +150,23 @@ class TaskAssignmentScreen extends StatelessWidget {
                     .toList();
 
                 if (unassignedTasks.isEmpty) {
-                  return const Text("No unassigned tasks available");
+                  return Text("No unassigned tasks available",
+                      style: TextStyle(color: colorScheme.onSurface));
                 }
                 return DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: "Select Task"),
+                  decoration: InputDecoration(
+                    labelText: "Select Task",
+                    labelStyle: TextStyle(color: colorScheme.primary),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colorScheme.primary),
+                    ),
+                  ),
+                  dropdownColor: scaffoldBg,
                   items: unassignedTasks
                       .map<DropdownMenuItem<String>>((task) => DropdownMenuItem(
                             value: task.taskId,
-                            child: Text(task.title),
+                            child: Text(task.title,
+                                style: TextStyle(color: colorScheme.onSurface)),
                           ))
                       .toList(),
                   onChanged: (value) {
@@ -136,16 +180,24 @@ class TaskAssignmentScreen extends StatelessWidget {
             // Assign to Reporter Dropdown
             Obx(() {
               if (userController.reporters.isEmpty) {
-                return const Text("No reporters available");
+                return Text("No reporters available",
+                    style: TextStyle(color: colorScheme.onSurface));
               }
               return DropdownButtonFormField<String>(
-                decoration:
-                    const InputDecoration(labelText: "Assign to Reporter"),
+                decoration: InputDecoration(
+                  labelText: "Assign to Reporter",
+                  labelStyle: TextStyle(color: colorScheme.primary),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colorScheme.primary),
+                  ),
+                ),
+                dropdownColor: scaffoldBg,
                 items: userController.reporters
                     .map<DropdownMenuItem<String>>((reporter) {
                   return DropdownMenuItem<String>(
                     value: reporter["id"],
-                    child: Text(reporter["name"]),
+                    child: Text(reporter["name"],
+                        style: TextStyle(color: colorScheme.onSurface)),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -163,16 +215,24 @@ class TaskAssignmentScreen extends StatelessWidget {
             // Assign to Cameraman Dropdown
             Obx(() {
               if (userController.cameramen.isEmpty) {
-                return const Text("No cameramen available");
+                return Text("No cameramen available",
+                    style: TextStyle(color: colorScheme.onSurface));
               }
               return DropdownButtonFormField<String>(
-                decoration:
-                    const InputDecoration(labelText: "Assign to Cameraman"),
+                decoration: InputDecoration(
+                  labelText: "Assign to Cameraman",
+                  labelStyle: TextStyle(color: colorScheme.primary),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colorScheme.primary),
+                  ),
+                ),
+                dropdownColor: scaffoldBg,
                 items: userController.cameramen
                     .map<DropdownMenuItem<String>>((cameraman) {
                   return DropdownMenuItem<String>(
                     value: cameraman["id"],
-                    child: Text(cameraman["name"]),
+                    child: Text(cameraman["name"],
+                        style: TextStyle(color: colorScheme.onSurface)),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -191,7 +251,10 @@ class TaskAssignmentScreen extends StatelessWidget {
             Obx(() {
               return Center(
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                  ),
                   onPressed: () async {
                     if (selectedTaskId == null ||
                         (selectedReporterId == null &&
@@ -217,6 +280,7 @@ class TaskAssignmentScreen extends StatelessWidget {
           ],
         ),
       ),
+      isScrollControlled: true,
     );
   }
 }
