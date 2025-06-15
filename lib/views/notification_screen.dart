@@ -16,7 +16,8 @@ class NotificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.black : Colors.white;
-    final cardColor = isDark ? const Color(0xFF24243e) : const  Color(0xFF007AFF);
+    final cardColor =
+        isDark ? const Color(0xFF24243e) : const Color(0xFF007AFF);
     final titleColor = isDark ? Colors.white : Colors.white;
     final subtitleColor = isDark ? Colors.white70 : Colors.white;
 
@@ -30,7 +31,11 @@ class NotificationScreen extends StatelessWidget {
       ),
       backgroundColor: backgroundColor,
       body: Obx(() {
-        final notifications = notificationController.notifications;
+        // Only show unread notifications
+        final notifications = notificationController.notifications
+            .where((n) => !(n['isRead'] ?? false))
+            .toList();
+
         if (notifications.isEmpty) {
           return Center(
             child: Text(

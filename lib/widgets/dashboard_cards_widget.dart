@@ -1,7 +1,7 @@
 // widgets/dashboard_cards_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
+
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/constants/app_styles.dart';
 import '../../controllers/admin_controller.dart';
@@ -22,29 +22,32 @@ class DashboardCardsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final textScaler = MediaQuery.textScalerOf(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Row(
-      children: [
-        _dashboardCard(
-          title: AppStrings.totalUsers,
-          value: adminController.totalUsers.value.toString(),
-          onTap: onManageUsersTap,
-          buttonText: AppStrings.manageUsers,
-          textScale: textScaler.scale(1),
-          isDark: isDark,
-        ),
-        const SizedBox(width: 12),
-        _dashboardCard(
-          title: AppStrings.totalTasks,
-          value: adminController.totalTasks.value.toString(),
-          dropdownItems: adminController.taskTitles,
-          onDropdownChanged: onTaskSelected,
-          selectedValue: adminController.selectedTaskTitle.value.isEmpty
-              ? null
-              : adminController.selectedTaskTitle.value,
-          textScale: textScaler.scale(1),
-          isDark: isDark,
-        ),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _dashboardCard(
+            title: AppStrings.totalUsers,
+            value: adminController.totalUsers.value.toString(),
+            onTap: onManageUsersTap,
+            buttonText: AppStrings.manageUsers,
+            textScale: textScaler.scale(1),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 12),
+          _dashboardCard(
+            title: AppStrings.totalTasks,
+            value: adminController.totalTasks.value.toString(),
+            dropdownItems: adminController.taskTitles,
+            onDropdownChanged: onTaskSelected,
+            selectedValue: adminController.selectedTaskTitle.value.isEmpty
+                ? null
+                : adminController.selectedTaskTitle.value,
+            textScale: textScaler.scale(1),
+            isDark: isDark,
+          ),
+        ],
+      ),
     );
   }
 
@@ -64,76 +67,127 @@ class DashboardCardsWidget extends StatelessWidget {
 
     return Expanded(
       child: Container(
+        constraints: BoxConstraints(minHeight: 180.h), // Set a minimum height
         padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           gradient: AppStyles.cardGradient,
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              style: AppStyles.cardTitleStyle.copyWith(
-                fontSize: 16.sp * textScale,
-                color: innerText,
+            Center(
+              child: Text(
+                title,
+                style: AppStyles.cardTitleStyle.copyWith(
+                  fontSize: 16.sp * textScale,
+                  color: innerText,
+                ),
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              value,
-              style: AppStyles.cardValueStyle.copyWith(
-                fontSize: 28.sp * textScale,
-                color: innerText,
+            Center(
+              child: Text(
+                value,
+                style: AppStyles.cardValueStyle.copyWith(
+                  fontSize: 28.sp * textScale,
+                  color: innerText,
+                ),
               ),
             ),
             const SizedBox(height: 12),
             if (onTap != null && buttonText != null)
-              GestureDetector(
-                onTap: onTap,
+              Center(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: innerBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    buttonText,
-                    style:
-                        TextStyle(fontSize: 14.sp * textScale, color: innerText),
+                  height: 50.h, // <-- Fixed height
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  child: ElevatedButton(
+                    onPressed: onTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: innerBg,
+                      foregroundColor: innerText,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: EdgeInsets.zero,
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      buttonText,
+                      style: TextStyle(
+                          fontSize: 16.sp * textScale, color: innerText),
+                    ),
                   ),
                 ),
               ),
             if (dropdownItems != null && onDropdownChanged != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: innerBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Obx(() {
-                  final sortedTasks = [...dropdownItems]..sort();
-                  return DropdownButton<String>(
-                    isExpanded: true,
-                    value: selectedValue,
-                    dropdownColor: innerBg,
-                    hint: Text(
-                      AppStrings.selectTask,
-                      style: TextStyle(color: innerText),
+              Center(
+                child: Container(
+                  height: 50.h, // Matches button height
+                  
+                  
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12), // More padding for better look
+                  decoration: BoxDecoration(
+                    color: innerBg, // Match your app's card/button background
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: innerText.withOpacity(0.15), // Subtle border
+                      width: 1,
                     ),
-                    underline: const SizedBox(),
-                    icon: Icon(Icons.arrow_drop_down, color: innerText),
-                    items: sortedTasks
-                        .map((title) => DropdownMenuItem<String>(
-                              value: title,
-                              child: Text(title,
-                                  style: TextStyle(color: innerText)),
-                            ))
-                        .toList(),
-                    onChanged: onDropdownChanged,
-                  );
-                }),
-              ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        "${AppStrings.selectTask}: ",
+                        style: TextStyle(
+                          color: innerText,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14.sp * textScale,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: selectedValue,
+                            dropdownColor: innerBg,
+                            hint: Text(
+                              AppStrings.selectTask,
+                              style:
+                                  TextStyle(color: innerText.withOpacity(0.7)),
+                            ),
+                            icon: Icon(Icons.arrow_drop_down, color: innerText),
+                            style: TextStyle(
+                              color: innerText,
+                              fontSize: 14.sp * textScale,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            items: dropdownItems.map((title) {
+                              return DropdownMenuItem<String>(
+                                value: title,
+                                child: Text(title,
+                                    style: TextStyle(color: innerText)),
+                              );
+                            }).toList(),
+                            onChanged: onDropdownChanged,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
           ],
         ),
       ),

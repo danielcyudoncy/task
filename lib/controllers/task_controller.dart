@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart'; // <-- make sure to import this!
 import '../models/task_model.dart';
 import '../controllers/auth_controller.dart';
 import '../service/firebase_service.dart';
@@ -215,7 +216,7 @@ class TaskController extends GetxController {
   }
 
   // Assign a task to a reporter and/or cameraman, saving both the UID and Name for each.
- Future<void> assignTaskWithNames({
+  Future<void> assignTaskWithNames({
     required String taskId,
     String? reporterId,
     String? reporterName,
@@ -251,7 +252,22 @@ class TaskController extends GetxController {
           .doc(taskId)
           .get();
 
-      final taskTitle = (taskDoc.data()?['title'] as String?) ?? 'A task';
+      final String taskTitle =
+          (taskDoc.data()?['title'] as String?) ?? 'A task';
+      final String taskDescription =
+          (taskDoc.data()?['description'] as String?) ?? '';
+      // --- Handle dueDate which could be null or ISO string or Firestore Timestamp ---
+      DateTime dueDate;
+      final dueDateRaw = taskDoc.data()?['dueDate'];
+      if (dueDateRaw is Timestamp) {
+        dueDate = dueDateRaw.toDate();
+      } else if (dueDateRaw is String) {
+        dueDate = DateTime.tryParse(dueDateRaw) ?? DateTime.now();
+      } else {
+        dueDate = DateTime.now();
+      }
+      final String formattedDate =
+          DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
 
       // Reporter notification
       if (reporterId != null) {
@@ -262,8 +278,8 @@ class TaskController extends GetxController {
             .add({
           'type': 'task_assigned',
           'taskId': taskId,
-          'title': 'New Task Assigned',
-          'body': 'You have been assigned a new task: $taskTitle',
+          'title': taskTitle,
+          'message': 'Description: $taskDescription\nDue: $formattedDate',
           'isRead': false,
           'timestamp': FieldValue.serverTimestamp(),
         });
@@ -278,8 +294,8 @@ class TaskController extends GetxController {
             .add({
           'type': 'task_assigned',
           'taskId': taskId,
-          'title': 'New Task Assigned',
-          'body': 'You have been assigned a new task: $taskTitle',
+          'title': taskTitle,
+          'message': 'Description: $taskDescription\nDue: $formattedDate',
           'isRead': false,
           'timestamp': FieldValue.serverTimestamp(),
         });
