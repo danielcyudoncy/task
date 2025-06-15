@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/task_list_dialog.dart';
 import 'package:task/widgets/user_hover_card.dart';
@@ -23,7 +24,7 @@ class ManageUsersScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Manage Users',
-          style: TextStyle(fontSize: 20, 
+          style: TextStyle(fontSize: AppSizes.titleNormal, 
           fontWeight: FontWeight.bold, 
           color: Colors.white),
         ),

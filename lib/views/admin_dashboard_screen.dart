@@ -1,4 +1,5 @@
 // views/admin_dashboard_screen.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -26,51 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       Get.find<ManageUsersController>();
 
   late TabController _tabController;
-
-  // --- Assign Task Dialog (with null safety)
-  void _showAssignTaskDialog(Map<String, dynamic> user) async {
-    String? selectedTaskTitle;
-    await Get.defaultDialog(
-      title: "Assign Task to ${user['fullname']}",
-      content: Obx(() {
-        final tasks = adminController.taskTitles;
-        if (tasks.isEmpty) {
-          return const Text("No tasks available");
-        }
-        return StatefulBuilder(
-          builder: (context, setState) => DropdownButton<String>(
-            value: selectedTaskTitle,
-            hint: const Text("Select Task"),
-            items: tasks
-                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                .toList(),
-            onChanged: (val) => setState(() => selectedTaskTitle = val),
-          ),
-        );
-      }),
-      textConfirm: "Assign",
-      onConfirm: () async {
-        if (selectedTaskTitle == null) {
-          Get.snackbar("Error", "Please select a task");
-          return;
-        }
-        // Correction: Accept both 'uid' and fallback to 'id'
-        final userId = user['uid'] ?? user['id'];
-        if (userId == null) {
-          Get.snackbar("Error", "User ID is missing");
-          return;
-        }
-        try {
-          await adminController.assignTaskToUser(userId, selectedTaskTitle!);
-          Get.back(); // Close dialog
-          Get.snackbar("Success", "Task assigned to ${user['fullname']}");
-        } catch (e) {
-          Get.snackbar("Error", "Failed to assign task: $e");
-        }
-      },
-    );
-  }
-  // --- END: Assign Task Dialog
+  String? selectedTaskTitle; // For the dialog dropdown
 
   @override
   void initState() {
@@ -85,6 +42,113 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _showAssignTaskDialog(Map<String, dynamic> user) async {
+    selectedTaskTitle = null;
+    await Get.defaultDialog(
+      title: "Assign Task to ${user['fullname']}",
+      content: Obx(() {
+        final tasks = adminController.taskTitles;
+        if (tasks.isEmpty) {
+          return const Text("No tasks available");
+        }
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 8),
+                  Text(
+                    "Select Task: ",
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: selectedTaskTitle,
+                        dropdownColor: Theme.of(context).cardColor,
+                        hint: Text(
+                          "Select Task",
+                          style: TextStyle(
+                            color: Theme.of(context).hintColor,
+                          ),
+                        ),
+                        icon: Icon(Icons.arrow_drop_down,
+                            color: Theme.of(context).iconTheme.color),
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                          fontSize: 16,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        items: tasks
+                            .map((t) =>
+                                DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => selectedTaskTitle = val),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+            );
+          },
+        );
+      }),
+      textConfirm: "Assign",
+      onConfirm: () async {
+        if (selectedTaskTitle == null) {
+          Get.snackbar("Error", "Please select a task");
+          return;
+        }
+        final userId = user['uid'] ?? user['id'];
+        if (userId == null) {
+          Get.snackbar("Error", "User ID is missing");
+          return;
+        }
+        final selectedTaskDoc = adminController.taskSnapshotDocs
+            .firstWhere((d) => d['title'] == selectedTaskTitle);
+
+        final String taskId =
+            selectedTaskDoc['id'] ?? selectedTaskDoc['taskId'];
+        final String taskDescription = selectedTaskDoc['description'] ?? "";
+        final DateTime dueDate = (selectedTaskDoc['dueDate'] is Timestamp)
+            ? (selectedTaskDoc['dueDate'] as Timestamp).toDate()
+            : DateTime.tryParse(selectedTaskDoc['dueDate']?.toString() ?? "") ??
+                DateTime.now();
+
+        try {
+          await adminController.assignTaskToUser(
+            userId: userId,
+            assignedName: user['fullname'],
+            taskTitle: selectedTaskTitle!,
+            taskDescription: taskDescription,
+            dueDate: dueDate,
+            taskId: taskId,
+          );
+          Get.back(); // Close dialog
+          Get.snackbar("Success", "Task assigned to ${user['fullname']}");
+        } catch (e) {
+          Get.snackbar("Error", "Failed to assign task: $e");
+        }
+      },
+    );
   }
 
   @override
@@ -110,124 +174,145 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
           child: SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Sticky Header (never scrolls)
                 Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      HeaderWidget(authController: authController),
-                      const SizedBox(height: 30),
-                      Text(
-                        AppStrings.dailyAssignments,
-                        style: AppStyles.sectionTitleStyle.copyWith(
-                          color:
-                              isDark ? Colors.white : const Color(0xFF3739B7),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      DashboardCardsWidget(
-                        adminController: adminController,
-                        onManageUsersTap: _showManageUsersDialog,
-                        onTaskSelected: (value) {
-                          if (value != null && value.isNotEmpty) {
-                            _showTaskDetailDialog(value);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8, bottom: 8),
-                        child: Text(
-                          "TASK",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16.sp,
-                            color:
-                                isDark ? Colors.white : const Color(0xFF3739B7),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: HeaderWidget(authController: authController),
+                ),
+                // Scrollable Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 14),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            AppStrings.dailyAssignments,
+                            style: AppStyles.sectionTitleStyle.copyWith(
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF3739B7),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey[900] : Colors.white,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(26),
-                        topRight: Radius.circular(26),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
+                        const SizedBox(height: 20),
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: DashboardCardsWidget(
+                            adminController: adminController,
+                            onManageUsersTap: _showManageUsersDialog,
+                            onTaskSelected: (value) {
+                              if (value != null && value.isNotEmpty) {
+                                _showTaskDetailDialog(value);
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 24, bottom: 8),
+                          child: Text(
+                            "TASK",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16.sp,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF3739B7),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.grey[900] : Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(26),
+                              topRight: Radius.circular(26),
+                            ),
+                          ),
+                          child: Column(
                             children: [
-                              GestureDetector(
-                                onTap: () => Get.toNamed('/create-task'),
-                                child: Container(
-                                  width: 34.w,
-                                  height: 34.h,
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF3739B7),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.add,
-                                    size: 22.sp,
-                                    color: isDark
-                                        ? const Color(0xFF3739B7)
-                                        : Colors.white,
-                                  ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => Get.toNamed('/create-task'),
+                                      child: Container(
+                                        width: 34.w,
+                                        height: 34.h,
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF3739B7),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.add,
+                                          size: 22.sp,
+                                          color: isDark
+                                              ? const Color(0xFF3739B7)
+                                              : Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              TabBar(
+                                controller: _tabController,
+                                indicatorColor: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF3739B7),
+                                labelColor: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF3739B7),
+                                unselectedLabelColor:
+                                    isDark ? Colors.white70 : Colors.black54,
+                                labelStyle: const TextStyle(
+                                    fontWeight: FontWeight.w500, fontSize: 15),
+                                tabs: const [
+                                  Tab(text: "Not Completed"),
+                                  Tab(text: "Completed"),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              // TabBarView with scrolling lists
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.48,
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    _TasksTab(
+                                      tasks: adminController.pendingTaskTitles,
+                                      taskDocs:
+                                          adminController.taskSnapshotDocs,
+                                      onTaskTap: _showTaskDetailDialog,
+                                      isDark: isDark,
+                                    ),
+                                    _TasksTab(
+                                      tasks:
+                                          adminController.completedTaskTitles,
+                                      taskDocs:
+                                          adminController.taskSnapshotDocs,
+                                      onTaskTap: _showTaskDetailDialog,
+                                      isDark: isDark,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        TabBar(
-                          controller: _tabController,
-                          indicatorColor:
-                              isDark ? Colors.white : const Color(0xFF3739B7),
-                          labelColor:
-                              isDark ? Colors.white : const Color(0xFF3739B7),
-                          unselectedLabelColor:
-                              isDark ? Colors.white70 : Colors.black54,
-                          labelStyle: const TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 15),
-                          tabs: const [
-                            Tab(text: "Not Completed"),
-                            Tab(text: "Completed"),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: TabBarView(
-                            controller: _tabController,
-                            children: [
-                              _TasksTab(
-                                tasks: adminController.pendingTaskTitles,
-                                taskDocs: adminController.taskSnapshotDocs,
-                                onTaskTap: _showTaskDetailDialog,
-                                isDark: isDark,
-                              ),
-                              _TasksTab(
-                                tasks: adminController.completedTaskTitles,
-                                taskDocs: adminController.taskSnapshotDocs,
-                                onTaskTap: _showTaskDetailDialog,
-                                isDark: isDark,
-                              ),
-                            ],
-                          ),
-                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -355,8 +440,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 }
 
-// Only the _TasksTab widget, showing assigned user name
-
 class _TasksTab extends StatelessWidget {
   final List<dynamic> tasks;
   final List<dynamic> taskDocs;
@@ -423,15 +506,14 @@ class _TasksTab extends StatelessWidget {
                   Text(
                     doc != null &&
                             doc is Map<String, dynamic> &&
-                            doc.containsKey('details')
-                        ? doc['details']?.toString() ??
+                            doc.containsKey('description')
+                        ? doc['description']?.toString() ??
                             "Task details not available."
                         : "Task details not available.",
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    // This line shows the assigned user name (or Unassigned)
                     "Assigned to: ${doc?['assignedName'] ?? 'Unassigned'}",
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),

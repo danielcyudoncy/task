@@ -10,6 +10,7 @@ import 'package:task/models/task_model.dart';
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   var adminName = "".obs;
   var adminEmail = "".obs;
@@ -413,38 +414,40 @@ class AdminController extends GetxController {
   }
 
   /// Assign a task to a user and also store assignedName for easy display
-  Future<void> assignTaskToUser(String userId, String taskTitle) async {
-    final firestore = FirebaseFirestore.instance;
-    final tasks = await firestore
-        .collection('tasks')
-        .where('title', isEqualTo: taskTitle)
-        .get();
+  Future<void> assignTaskToUser({
+    required String userId,
+    required String assignedName,
+    required String taskTitle,
+    required String taskDescription,
+    required DateTime dueDate,
+    required String taskId,
+  }) async {
+    try {
+      // Update the task assignment
+      await firestore.collection('tasks').doc(taskId).update({
+        'assignedTo': userId,
+        'assignedName': assignedName,
+        'assignedAt': FieldValue.serverTimestamp(),
+      });
 
-    if (tasks.docs.isEmpty) {
-      throw Exception("Task not found.");
+      // Format the due date
+      final String formattedDate =
+          DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
+
+      // Add notification with message field
+      await firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .add({
+        'type': 'task_assignment',
+        'title': taskTitle,
+        'message': 'Description: $taskDescription\nDue: $formattedDate',
+        'timestamp': FieldValue.serverTimestamp(),
+        'read': false,
+      });
+    } catch (e) {
+      Get.snackbar("Error", "Failed to assign task or notify user: $e");
     }
-    final taskDoc = tasks.docs.first.reference;
-
-    // Fetch user's display name for assignment
-    final userSnapshot = await firestore.collection('users').doc(userId).get();
-    final userData = userSnapshot.data();
-    final assignedName = userData?['fullName'] ?? 'Unknown';
-
-    await taskDoc.update({
-      'assignedTo': userId,
-      'assignedName': assignedName,
-      'assignedAt': FieldValue.serverTimestamp(), // <-- Add this line
-    });
-
-    await firestore
-        .collection('users')
-        .doc(userId)
-        .collection('notifications')
-        .add({
-      'type': 'task_assignment',
-      'title': taskTitle,
-      'timestamp': FieldValue.serverTimestamp(),
-      'read': false,
-    });
   }
 }
