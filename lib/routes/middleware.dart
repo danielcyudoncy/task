@@ -12,10 +12,12 @@ class AuthMiddleware extends GetMiddleware {
     final auth = Get.find<AuthController>();
 
     // Always allow these routes
-    if (route == '/' ||
+   if (route == '/' ||
         route == '/login' ||
         route == '/signup' ||
-        route == '/profile-update') {
+        route == '/profile-update' ||
+        route == '/forgot-password' ||
+        route == '/onboarding') {
       return null;
     }
 
