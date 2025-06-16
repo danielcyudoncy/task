@@ -9,38 +9,53 @@ class HeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.grey.shade300,
-              backgroundImage: authController.profilePic.value.isNotEmpty
-                  ? NetworkImage(authController.profilePic.value)
-                  : null,
-              child: authController.profilePic.value.isEmpty
-                  ? Text(
-                      authController.fullName.value.isNotEmpty
-                          ? authController.fullName.value[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Welcome',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              authController.fullName.value,
-              style: const TextStyle(fontSize: 24),
-            ),
-          ],
+        Expanded(
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.grey.shade300,
+                backgroundImage: authController.profilePic.value.isNotEmpty
+                    ? NetworkImage(authController.profilePic.value)
+                    : null,
+                child: authController.profilePic.value.isEmpty
+                    ? Text(
+                        authController.fullName.value.isNotEmpty
+                            ? authController.fullName.value[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color:
+                              Color(0xFF0B189B), // Set text color to blue
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Welcome',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      authController.fullName.value,
+                      style: const TextStyle(fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         Row(
           children: [
