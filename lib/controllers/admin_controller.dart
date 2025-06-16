@@ -438,7 +438,7 @@ class AdminController extends GetxController {
       completedTasks.value =
           tasks.where((task) => task.status == 'Completed').length;
     } catch (e) {
-      print("Error fetching tasks: $e");
+      Get.snackbar("Error", "Failed to fetch tasks: ${e.toString()}");
     }
   }
 
