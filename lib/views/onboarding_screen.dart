@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_sizes.dart';
@@ -10,11 +11,15 @@ import 'package:task/utils/constants/app_sizes.dart';
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
-  void _handleGetStarted() {
-    Get.offAllNamed("/signup"); // Use offAllNamed to clear the stack
+  void _handleGetStarted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    Get.offAllNamed("/signup");
   }
 
-  void _handleMyAccount() {
+  void _handleMyAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       Get.offAllNamed("/home");
@@ -81,16 +86,14 @@ class OnboardingScreen extends StatelessWidget {
                       foreground: Paint()
                         ..style = PaintingStyle.stroke
                         ..strokeWidth = 4
-                        ..color = isDark
-                            ? colorScheme.onSurface
-                            : Colors.white,
+                        ..color = isDark ? colorScheme.onSurface : Colors.white,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   Text(
                     'Welcome!',
                     style: TextStyle(
-                      color: isDark ? appPrimaryColor : Colors.black,
+                      color: isDark ? Colors.white : Colors.black,
                       fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: AppFontsStyles.montserrat,
