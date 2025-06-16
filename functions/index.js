@@ -10,6 +10,32 @@
 // const {onRequest} = require("firebase-functions/v2/https");
 // const logger = require("firebase-functions/logger");
 
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
+
+exports.adminDeleteUser = functions.https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.token.admin) {
+    throw new functions.https.HttpsError(
+        "permission-denied",
+        "Only admins can delete users.",
+    );
+  }
+
+  const uid = data.uid;
+  if (!uid) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "User ID is required.",
+    );
+  }
+
+  await admin.auth().deleteUser(uid);
+  await admin.firestore().collection("users").doc(uid).delete();
+
+  return {success: true};
+});
+
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
 
