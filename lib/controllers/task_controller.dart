@@ -83,6 +83,7 @@ class TaskController extends GetxController {
         userNameCache[uid] = fullName;
       }
       saveCache();
+    // ignore: empty_catches
     } catch (e) {}
   }
 
@@ -321,7 +322,7 @@ class TaskController extends GetxController {
             data["assignedCameramanId"] == userId;
       }).length;
     } catch (e) {
-      print('Error fetching task counts: $e');
+      Get.snackbar("Error", "Failed to fetch task counts: ${e.toString()}");
     }
   }
 

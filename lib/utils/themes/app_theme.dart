@@ -1,127 +1,158 @@
 // utils/themes/app_theme.dart
 import 'package:flutter/material.dart';
-import 'package:task/utils/constants/app_colors.dart';
-import 'package:task/utils/themes/app_text_theme.dart';
 
 class AppTheme {
-  // Main color palette
-  static const Color _lightPrimary = Color(0xFF05168E);
-  static const Color _lightOnPrimary = Colors.white;
-  static const Color _lightSecondary = Color(0xFF2F80ED);
-  static const Color _lightOnSecondary = Colors.white;
-  static const Color _lightSurface = AppColors.white;
-  static const Color _lightOnSurface = Colors.black;
-  static const Color _lightBackground = AppColors.white;
-  static const Color _lightOnBackground = Colors.black;
-
-  static const Color _darkPrimary = Color(0xFF22223B); // deep indigo/blue
-  static const Color _darkOnPrimary = Colors.white;
-  static const Color _darkSecondary = Color(0xFF2F80ED);
-  static const Color _darkOnSecondary = Colors.white;
-  static const Color _darkSurface = Color(0xFF181826);
-  static const Color _darkOnSurface = Colors.white;
-  static const Color _darkBackground = Colors.black;
-  static const Color _darkOnBackground = Colors.white;
+  static const Color _primaryBlue = Color(0xFF2E3BB5);
+  static const Color _secondaryBlue = Color(0xFF00B0FF);
 
   static ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
     brightness: Brightness.light,
-    primaryColor: _lightPrimary,
-    scaffoldBackgroundColor: _lightBackground,
-    colorScheme:  const ColorScheme(
-      brightness: Brightness.light,
-      primary: _lightPrimary,
-      onPrimary: _lightOnPrimary,
-      secondary: _lightSecondary,
-      onSecondary: _lightOnSecondary,
-      surface: _lightSurface,
-      onSurface: _lightOnSurface,
-      background: _lightBackground,
-      onBackground: _lightOnBackground,
+    colorScheme: const ColorScheme.light(
+      primary: _primaryBlue,
+      onPrimary: Colors.white,
+      secondary: _secondaryBlue,
+      onSecondary: Colors.white,
+      background: Colors.white,
+      onBackground: Colors.black,
+      surface: Colors.white,
+      onSurface: Colors.black,
       error: Colors.red,
       onError: Colors.white,
-      tertiary: Color(0xFF0E9B6C),
-      onTertiary: Colors.white,
-      outline: Color(0xFFBDBDBD),
-      shadow: Colors.black54,
-      inverseSurface: Colors.black,
-      onInverseSurface: Colors.white,
-      inversePrimary: _lightSecondary,
-      surfaceContainerHighest: Color(0xFFF5F6FA),
-      onSurfaceVariant: _lightOnSurface,
-      scrim: Colors.black38,
+      primaryContainer: Color(0xFFDDE1F9),
+      onPrimaryContainer: _primaryBlue,
+      surfaceVariant: Color(0xFFF3F6FD),
     ),
-    textTheme: AppTextTheme.lightTextTheme,
-    appBarTheme:  const AppBarTheme(
-      backgroundColor: _lightPrimary,
-      foregroundColor: _lightOnPrimary,
+    scaffoldBackgroundColor: Colors.white,
+    dividerTheme: const DividerThemeData(
+      color: Colors.black12,
+      thickness: 1,
+      space: 1,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.white,
+      foregroundColor: _primaryBlue,
       elevation: 0,
-      centerTitle: true,
-    ),
-    cardTheme:  const CardTheme(
-      color: _lightSurface,
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(16)),
+      iconTheme: IconThemeData(color: _primaryBlue),
+      titleTextStyle: TextStyle(
+        color: _primaryBlue,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
       ),
-      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
     ),
-    useMaterial3: true,
+    inputDecorationTheme: const InputDecorationTheme(
+      filled: true,
+      fillColor: Color(0xFFF3F6FD), // Solid color, not opacity
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide.none,
+      ),
+      hintStyle: TextStyle(color: Colors.black54),
+    ),
+    elevatedButtonTheme: const ElevatedButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStatePropertyAll(_primaryBlue),
+        foregroundColor: WidgetStatePropertyAll(Colors.white),
+        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        )),
+        elevation: WidgetStatePropertyAll(0),
+      ),
+    ),
+    outlinedButtonTheme: const OutlinedButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: WidgetStatePropertyAll(_primaryBlue),
+        side: WidgetStatePropertyAll(BorderSide(color: _primaryBlue)),
+        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        )),
+      ),
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(
-    brightness: Brightness.dark,
-    primaryColor: _darkPrimary,
-    scaffoldBackgroundColor: _darkBackground,
-    colorScheme:   const ColorScheme(
-      brightness: Brightness.dark,
-      primary: _darkPrimary,
-      onPrimary: _darkOnPrimary,
-      secondary: _darkSecondary,
-      onSecondary: _darkOnSecondary,
-      surface: _darkSurface,
-      onSurface: _darkOnSurface,
-      background: _darkBackground,
-      onBackground: _darkOnBackground,
-      error: Colors.redAccent,
-      onError: Colors.black,
-      tertiary: Color(0xFF52CBA7),
-      onTertiary: Colors.black,
-      outline: Color(0xFF757575),
-      shadow: Colors.black,
-      inverseSurface: Colors.white,
-      onInverseSurface: Colors.black,
-      inversePrimary: _darkSecondary,
-      surfaceContainerHighest: Color(0xFF181826),
-      onSurfaceVariant: _darkOnSurface,
-      scrim: Colors.black26,
-    ),
-    textTheme: AppTextTheme.darkTextTheme,
-    appBarTheme:  const AppBarTheme(
-      backgroundColor: _darkPrimary,
-      foregroundColor: _darkOnPrimary,
-      elevation: 0,
-      centerTitle: true,
-    ),
-    cardTheme:  const CardTheme(
-      color: _darkSurface,
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(16)),
-      ),
-      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-    ),
     useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: const ColorScheme.dark(
+      primary: _primaryBlue,
+      onPrimary: Colors.white,
+      secondary: _secondaryBlue,
+      onSecondary: Colors.black,
+      background: Color(0xFF181B2A),
+      onBackground: Colors.white,
+      surface: Color(0xFF23243A),
+      onSurface: Colors.white,
+      error: Colors.red,
+      onError: Colors.black,
+      primaryContainer: Color(0xFF23243A),
+      onPrimaryContainer: Colors.white,
+      surfaceVariant: Color(0xFF23243A),
+    ),
+    scaffoldBackgroundColor: const Color(0xFF181B2A),
+    dividerTheme: const DividerThemeData(
+      color: Colors.white24,
+      thickness: 1,
+      space: 1,
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF181B2A),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      iconTheme: IconThemeData(color: Colors.white),
+      titleTextStyle: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+      ),
+    ),
+    inputDecorationTheme: const InputDecorationTheme(
+      filled: true,
+      fillColor: Color(0xFF23243A), // Solid color, not opacity
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide.none,
+      ),
+      hintStyle: TextStyle(color: Colors.white70),
+    ),
+    elevatedButtonTheme: const ElevatedButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStatePropertyAll(_primaryBlue),
+        foregroundColor: WidgetStatePropertyAll(Colors.white),
+        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        )),
+        elevation: WidgetStatePropertyAll(0),
+      ),
+    ),
+    outlinedButtonTheme: const OutlinedButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: WidgetStatePropertyAll(Colors.white),
+        side: WidgetStatePropertyAll(BorderSide(color: _primaryBlue)),
+        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        )),
+      ),
+    ),
   );
 
-  /// Returns the appropriate gradient based on theme brightness.
+  // Centralized gradient getter for screens that want the app's signature gradient
   static LinearGradient getGradient(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
       colors: isDark
-          ? [_darkPrimary, _darkSurface]
-          : [_lightPrimary, _lightSecondary],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+          ? [
+              colorScheme.background,
+              colorScheme.surfaceVariant,
+              colorScheme.background,
+            ]
+          : [
+              Colors.white,
+              colorScheme.primary,
+            ],
+      stops: isDark ? const [0.0, 0.7, 1.0] : const [0.0, 1.0],
     );
   }
 }
