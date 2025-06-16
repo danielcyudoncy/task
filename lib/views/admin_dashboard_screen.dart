@@ -63,6 +63,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         refresh();
         return {"name": name, "role": role};
       }
+    // ignore: empty_catches
     } catch (e) {}
     userCache[userId] = {"name": userId, "role": "Unknown"};
     refresh();
@@ -338,14 +339,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
     Get.defaultDialog(
       title: "Pending Tasks",
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 300,
-          maxHeight: MediaQuery.of(context).size.height * 0.5,
-        ),
+      content: SizedBox(
+        width: 300, // or whatever width you want
+        height: MediaQuery.of(context).size.height * 0.5, // fixed height!
         child: StatefulBuilder(
           builder: (ctx, setState) => ListView.builder(
-            shrinkWrap: true,
             itemCount: tasks.length,
             itemBuilder: (context, index) {
               final title = tasks[index];
@@ -608,14 +606,19 @@ class _TasksTabState extends State<_TasksTab> {
     }
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 10),
       itemCount: widget.tasks.length,
       itemBuilder: (context, index) {
         final title = widget.tasks[index];
-        final doc =
-            widget.taskDocs.firstWhereOrNull((d) => d['title'] == title);
+        final Map<String, dynamic> doc = widget.taskDocs.firstWhere(
+          (d) => d['title'] == title,
+          orElse: () => <String, dynamic>{}, // Return an empty map if not found
+        );
 
-        final creatorId = doc?['createdBy'] ?? 'Unknown';
+        final creatorId =
+            doc.isNotEmpty ? (doc['createdBy'] ?? 'Unknown') : 'Unknown';
         final userInfo = widget.userCache[creatorId];
         if (userInfo == null && creatorId != 'Unknown') {
           widget.getUserNameAndRole(creatorId, () => setState(() {}));
@@ -624,7 +627,7 @@ class _TasksTabState extends State<_TasksTab> {
         final creatorRole = userInfo?["role"] ?? "Unknown";
 
         String dateStr = 'Unknown';
-        if (doc?['timestamp'] != null) {
+        if (doc.isNotEmpty && doc['timestamp'] != null) {
           final createdAt = doc['timestamp'];
           DateTime dt;
           if (createdAt is Timestamp) {
@@ -670,9 +673,7 @@ class _TasksTabState extends State<_TasksTab> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    doc != null &&
-                            doc is Map<String, dynamic> &&
-                            doc.containsKey('description')
+                    doc.isNotEmpty && doc.containsKey('description')
                         ? doc['description']?.toString() ??
                             "Task details not available."
                         : "Task details not available.",
@@ -680,7 +681,7 @@ class _TasksTabState extends State<_TasksTab> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Assigned to: ${doc?['assignedName'] ?? 'Unassigned'}",
+                    "Assigned to: ${doc.isNotEmpty ? (doc['assignedName'] ?? 'Unassigned') : 'Unassigned'}",
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
