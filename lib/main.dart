@@ -4,5 +4,6 @@ import 'core/bootstrap.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   await bootstrapApp();
 }

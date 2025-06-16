@@ -28,7 +28,7 @@ class DashboardCardsWidget extends StatelessWidget {
           child: GestureDetector(
             onTap: onManageUsersTap,
             child: Card(
-              color: colorScheme.primary, // Always from theme!
+              color: colorScheme.primary,
               elevation: 4,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -69,7 +69,7 @@ class DashboardCardsWidget extends StatelessWidget {
           child: GestureDetector(
             onTap: onTotalTasksTap,
             child: Card(
-              color: colorScheme.secondary, // Always from theme!
+              color: colorScheme.secondary,
               elevation: 4,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),

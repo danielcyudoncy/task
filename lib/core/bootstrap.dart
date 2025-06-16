@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:task/controllers/auth_controller.dart';
 import 'package:task/firebase_options.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/controllers/user_controller.dart';
+import 'package:task/service/mock_user_deletion_service.dart';
+// For production, use: import 'package:task/services/cloud_function_user_deletion_service.dart';
 import 'package:task/myApp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -52,6 +56,12 @@ Future<void> bootstrapApp() async {
     // Register controllers globally
     Get.put(ThemeController(), permanent: true);
     Get.put(SettingsController(), permanent: true);
+    Get.put(AuthController(), permanent: true);
+
+    // ✅ Inject UserController here (with deletion service)
+    Get.put(UserController(MockUserDeletionService()));
+    // For production, use:
+    // Get.put(UserController(CloudFunctionUserDeletionService()));
 
     // Initialize metrics (safely)
     try {
