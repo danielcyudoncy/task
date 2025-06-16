@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 
@@ -14,11 +15,18 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  @override
+    @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
-      Get.offAllNamed('/onboarding'); // Use offAllNamed to clear the stack
+    Timer(const Duration(seconds: 3), () async {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+
+      if (!hasSeenOnboarding) {
+        Get.offAllNamed('/onboarding');
+      } else {
+        Get.offAllNamed('/login');
+      }
     });
   }
 

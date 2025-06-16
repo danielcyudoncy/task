@@ -5,6 +5,7 @@ import 'package:task/routes/middleware.dart';
 import 'package:task/routes/profile_complete_middleware.dart';
 import 'package:task/views/admin_dashboard_screen.dart';
 import 'package:task/views/all_task_screen.dart';
+import 'package:task/views/forget_password_screen.dart';
 import 'package:task/views/home_screen.dart';
 import 'package:task/views/login_screen.dart';
 import 'package:task/views/manage_users_screen.dart';
@@ -103,6 +104,14 @@ class AppRoutes {
     GetPage(
       name: "/all-tasks",
       page: () => const AllTaskScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: "/forgot-password",
+      page: () =>  ForgotPasswordScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
