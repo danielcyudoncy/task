@@ -7,7 +7,7 @@ class TasksTab extends StatelessWidget {
   final void Function(String title) onTaskTap;
   final bool isDark;
 
-  const TasksTab({
+  const TasksTab({super.key, 
     required this.tasks,
     required this.taskDocs,
     required this.onTaskTap,
@@ -33,8 +33,8 @@ class TasksTab extends StatelessWidget {
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final title = tasks[index];
-        final doc =
-            taskDocs.firstWhere((d) => d['title'] == title, orElse: () => null);
+        final doc = taskDocs.firstWhere((d) => d['title'] == title,
+            orElse: () => <String, dynamic>{});
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -66,9 +66,7 @@ class TasksTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    doc != null &&
-                            doc is Map<String, dynamic> &&
-                            doc.containsKey('description')
+                    doc.isNotEmpty && doc.containsKey('description')
                         ? doc['description']?.toString() ??
                             "Task details not available."
                         : "Task details not available.",
@@ -76,7 +74,7 @@ class TasksTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Assigned to: ${doc?['assignedName'] ?? 'Unassigned'}",
+                    "Assigned to: ${doc['assignedName'] ?? 'Unassigned'}",
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                 ],

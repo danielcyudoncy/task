@@ -2,8 +2,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/service/user_deletion_service.dart';
+
 
 class ManageUsersController extends GetxController {
+  final UserDeletionService userDeletionService;
+
+  ManageUsersController(this.userDeletionService);
+
   // Observables
   var isLoading = false.obs;
   var usersList = <Map<String, dynamic>>[].obs;
@@ -53,10 +59,9 @@ class ManageUsersController extends GetxController {
       if (snapshot.docs.isNotEmpty) {
         final newUsers = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          // --- Correction: Ensure 'uid' is present, and also keep 'id' if you use it elsewhere
           return {
             'id': doc.id,
-            'uid': doc.id, // <--- Always provide 'uid' for dialog assignment!
+            'uid': doc.id,
             'fullname': data['fullName'] ?? 'Unknown User',
             'role': data['role'] ?? 'No Role',
             'email': data['email'] ?? 'No Email',
@@ -122,17 +127,18 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Remove user from Firestore. (Full Auth account deletion requires a Cloud Function)
+  /// Remove user from Firestore and Auth (via service)
   Future<bool> deleteUser(String userId) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+      await userDeletionService.deleteUserByAdmin(userId);
       usersList
           .removeWhere((user) => user['id'] == userId || user['uid'] == userId);
-      filteredUsersList
-          .removeWhere((user) => user['id'] == userId || user['uid'] == userId);
+      filteredUsersList.assignAll(usersList);
       isHovered.assignAll(List.filled(usersList.length, false));
+      Get.snackbar('Success', 'User deleted successfully');
       return true;
     } catch (e) {
+      Get.snackbar('Error', 'Failed to delete user: $e');
       return false;
     }
   }
@@ -145,7 +151,6 @@ class ManageUsersController extends GetxController {
           .doc(userId)
           .update({'role': 'admin'});
       Get.snackbar('Success', 'User promoted to admin');
-      // Optionally update in usersList as well
       int idx =
           usersList.indexWhere((u) => u['id'] == userId || u['uid'] == userId);
       if (idx != -1) {

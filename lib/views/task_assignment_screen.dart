@@ -7,7 +7,7 @@ import '../controllers/auth_controller.dart';
 
 class TaskAssignmentScreen extends StatelessWidget {
   final TaskController taskController = Get.put(TaskController());
-  final UserController userController = Get.put(UserController());
+  final UserController userController = Get.find<UserController>();
   final AuthController authController = Get.find<AuthController>();
 
   TaskAssignmentScreen({super.key});
