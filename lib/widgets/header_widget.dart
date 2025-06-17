@@ -1,5 +1,6 @@
 // widgets/header_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../controllers/auth_controller.dart';
 
 class HeaderWidget extends StatelessWidget {
@@ -27,11 +28,11 @@ class HeaderWidget extends StatelessWidget {
                         authController.fullName.value.isNotEmpty
                             ? authController.fullName.value[0].toUpperCase()
                             : '?',
-                        style: const TextStyle(
-                          fontSize: 20,
+                        style: TextStyle(
+                          fontSize: 20.sp,
                           fontWeight: FontWeight.bold,
                           color:
-                              Color(0xFF0B189B), // Set text color to blue
+                              const Color(0xFF08169D), // Set text color to blue
                         ),
                       )
                     : null,
@@ -41,14 +42,14 @@ class HeaderWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                     Text(
                       'Welcome',
                       style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
                     ),
                     Text(
                       authController.fullName.value,
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16.sp),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -76,7 +77,7 @@ class HeaderWidget extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white,
-          border: Border.all(color: const Color(0xFF0B189B), width: 1.5),
+          border: Border.all(color: const Color(0xFF08169D), width: 1.5),
           boxShadow: const [
             BoxShadow(
               color: Colors.blue,
@@ -85,7 +86,7 @@ class HeaderWidget extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, color: const Color(0xFF0B189B), size: 20),
+        child: Icon(icon, color: const Color(0xFF08169D), size: 20),
       ),
     );
   }

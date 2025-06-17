@@ -5,7 +5,6 @@ import '../controllers/task_controller.dart';
 import 'package:task/utils/constants/app_styles.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/utils/devices/app_devices.dart';
-import 'package:task/utils/themes/app_theme.dart';
 
 class TaskCreationScreen extends StatefulWidget {
   const TaskCreationScreen({super.key});
@@ -162,9 +161,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
         backgroundColor: Theme.of(context).primaryColor,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.getGradient(context),
-        ),
+        
         padding:
             EdgeInsets.all(isTablet ? AppSizes.medium * 2 : AppSizes.medium),
         child: Center(

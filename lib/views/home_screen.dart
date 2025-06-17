@@ -10,7 +10,6 @@ import '../widgets/user_nav_bar.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/constants/app_strings.dart';
 import '../utils/constants/app_styles.dart';
-import '../utils/themes/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -52,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: AppTheme.getGradient(context),
+          
         ),
         child: SafeArea(
           child: Column(
