@@ -1,6 +1,7 @@
 // core/bootstrap.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:task/controllers/auth_controller.dart';
@@ -94,7 +95,7 @@ class ErrorApp extends StatelessWidget {
             padding: const EdgeInsets.all(24.0),
             child: Text(
               error,
-              style: const TextStyle(color: Colors.red, fontSize: 16),
+              style: TextStyle(color: Colors.red, fontSize: 16.sp),
               textAlign: TextAlign.center,
             ),
           ),

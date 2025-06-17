@@ -49,8 +49,8 @@ class LoginScreen extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.white,
-                        Color(0xFF2e3bb5),
+                        Color(0xFF08169D),
+                        Color(0xFF08169D),
                       ],
                     ),
             ),
@@ -105,8 +105,8 @@ class LoginScreen extends StatelessWidget {
                                   "Welcome Back",
                                   style: textTheme.headlineMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 24,
-                                    fontFamily: 'Poppins',
+                                    fontSize: 24.sp,
+                                    fontFamily: 'Raleway',
                                     color: textTheme.headlineMedium?.color,
                                   ),
                                   textAlign: TextAlign.center,
@@ -115,7 +115,7 @@ class LoginScreen extends StatelessWidget {
                                 Text(
                                   "Fill out the information below in order to access your account.",
                                   style: textTheme.bodyMedium?.copyWith(
-                                    fontSize: 14,
+                                    fontSize: 14.sp,
                                     color: isDark
                                         ? Colors.white70
                                         : Colors.black87,
@@ -214,6 +214,7 @@ class LoginScreen extends StatelessWidget {
                                           "Sign In",
                                           style: textTheme.bodyLarge?.copyWith(
                                               fontWeight: FontWeight.bold,
+                                              fontFamily: 'Raleway',
                                               color: colorScheme.onPrimary),
                                         ),
                                       )),
@@ -310,6 +311,7 @@ class LoginScreen extends StatelessWidget {
                                           ? Colors.white70
                                           : Colors.black87,
                                       fontWeight: FontWeight.bold,
+                                      fontFamily: 'Raleway',
                                     ),
                                   ),
                                 ),
