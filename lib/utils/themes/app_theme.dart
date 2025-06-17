@@ -1,8 +1,11 @@
 // utils/themes/app_theme.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 class AppTheme {
-  static const Color _primaryBlue = Color(0xFF2E3BB5);
+  static const Color _primaryBlue = Color(0xFF08169D);
   static const Color _secondaryBlue = Color(0xFF00B0FF);
 
   static ThemeData lightTheme = ThemeData(
@@ -24,25 +27,26 @@ class AppTheme {
       surfaceVariant: Color(0xFFF3F6FD),
     ),
     scaffoldBackgroundColor: Colors.white,
+    textTheme: GoogleFonts.ralewayTextTheme(),
     dividerTheme: const DividerThemeData(
       color: Colors.black12,
       thickness: 1,
       space: 1,
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.white,
       foregroundColor: _primaryBlue,
       elevation: 0,
-      iconTheme: IconThemeData(color: _primaryBlue),
-      titleTextStyle: TextStyle(
+      iconTheme: const IconThemeData(color: _primaryBlue),
+      titleTextStyle: GoogleFonts.raleway(
         color: _primaryBlue,
         fontWeight: FontWeight.bold,
-        fontSize: 20,
+        fontSize: 20.sp,
       ),
     ),
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,
-      fillColor: Color(0xFFF3F6FD), // Solid color, not opacity
+      fillColor: Color(0xFFF3F6FD),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
         borderSide: BorderSide.none,
@@ -89,25 +93,26 @@ class AppTheme {
       surfaceVariant: Color(0xFF23243A),
     ),
     scaffoldBackgroundColor: const Color(0xFF181B2A),
+    textTheme: GoogleFonts.ralewayTextTheme(ThemeData.dark().textTheme),
     dividerTheme: const DividerThemeData(
       color: Colors.white24,
       thickness: 1,
       space: 1,
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF181B2A),
+    appBarTheme: AppBarTheme(
+      backgroundColor: const Color(0xFF181B2A),
       foregroundColor: Colors.white,
       elevation: 0,
-      iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(
+      iconTheme: const IconThemeData(color: Colors.white),
+      titleTextStyle: GoogleFonts.raleway(
         color: Colors.white,
         fontWeight: FontWeight.bold,
-        fontSize: 20,
+        fontSize: 20.sp,
       ),
     ),
     inputDecorationTheme: const InputDecorationTheme(
       filled: true,
-      fillColor: Color(0xFF23243A), // Solid color, not opacity
+      fillColor: Color(0xFF23243A),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(12)),
         borderSide: BorderSide.none,
@@ -135,24 +140,4 @@ class AppTheme {
     ),
   );
 
-  // Centralized gradient getter for screens that want the app's signature gradient
-  static LinearGradient getGradient(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-    return LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: isDark
-          ? [
-              colorScheme.background,
-              colorScheme.surfaceVariant,
-              colorScheme.background,
-            ]
-          : [
-              Colors.white,
-              colorScheme.primary,
-            ],
-      stops: isDark ? const [0.0, 0.7, 1.0] : const [0.0, 1.0],
-    );
-  }
 }
