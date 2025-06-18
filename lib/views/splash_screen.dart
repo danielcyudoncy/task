@@ -47,7 +47,8 @@ class _SplashScreenState extends State<SplashScreen> {
             const Text(
               'Your home for news',
               style: TextStyle(
-                color: Colors.white, // Slightly transparent white
+                color: Colors.white,
+                fontFamily: 'Raleway',
                 fontSize: AppSizes.fontVeryLarge, // Use the size from your AppSizes class
                 letterSpacing: 0.5,
               ),

@@ -1,5 +1,6 @@
 // widgets/task_detail_sheet.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'status_chip.dart';
 
 class TaskDetailSheet extends StatelessWidget {
@@ -40,7 +41,7 @@ class TaskDetailSheet extends StatelessWidget {
     final Color mainText = isDark ? Colors.white : Colors.black;
     final Color subText = isDark ? Colors.white70 : Colors.black54;
     final Color avatarBg = isDark ? Colors.grey[850]! : Colors.grey[200]!;
-    const Color accent = Color(0xFF171FA0);
+    const Color accent = Color(0xFF08169D);
 
     return Container(
       color: bgColor,
@@ -77,6 +78,7 @@ class TaskDetailSheet extends StatelessWidget {
                   data['creatorName'] ?? '',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
+                    fontFamily: 'raleway',
                     fontSize: 16 * textScale,
                     color: accent,
                   ),
@@ -90,14 +92,14 @@ class TaskDetailSheet extends StatelessWidget {
               data['title'] ?? '',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 20 * textScale,
+                fontSize: 20.sp * textScale,
                 color: mainText,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               data['description'] ?? '',
-              style: TextStyle(fontSize: 15 * textScale, color: mainText),
+              style: TextStyle(fontSize: 15.sp * textScale, color: mainText),
             ),
             const SizedBox(height: 16),
             Row(
@@ -108,7 +110,7 @@ class TaskDetailSheet extends StatelessWidget {
                   formattedTimestamp.isNotEmpty
                       ? formattedTimestamp
                       : 'No date',
-                  style: TextStyle(fontSize: 13 * textScale, color: subText),
+                  style: TextStyle(fontSize: 13.sp * textScale, color: subText),
                 ),
               ],
             ),

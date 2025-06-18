@@ -28,7 +28,7 @@ class DashboardCardsWidget extends StatelessWidget {
           child: GestureDetector(
             onTap: onManageUsersTap,
             child: Card(
-              color: colorScheme.primary,
+              color: colorScheme.secondary, // Changed to secondary
               elevation: 4,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -39,14 +39,17 @@ class DashboardCardsWidget extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.people, size: 36, color: colorScheme.onPrimary),
+                    Icon(Icons.people,
+                        size: 36,
+                        color:
+                            colorScheme.onSecondary), // Changed to onSecondary
                     const SizedBox(height: 10),
                     Text(
                       '$usersCount',
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.onPrimary,
+                        color: colorScheme.onSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -54,7 +57,7 @@ class DashboardCardsWidget extends StatelessWidget {
                       'Users',
                       style: TextStyle(
                         fontSize: 16.sp,
-                        color: colorScheme.onPrimary,
+                        color: colorScheme.onSecondary,
                       ),
                     ),
                   ],

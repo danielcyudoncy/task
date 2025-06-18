@@ -1,6 +1,8 @@
 // views/profile_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/utils/constants/app_fonts_family.dart';
 import '../controllers/auth_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -15,7 +17,7 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       // Background color based on the theme
-      backgroundColor: isLightMode ? const Color(0xFFF6F7FB) : Colors.black,
+      backgroundColor: isLightMode ? const Color(0xFF08169D) : Colors.black,
       body: SafeArea(
         child: Obx(() {
           final fullName = authController.fullName.value;
@@ -41,15 +43,15 @@ class ProfileScreen extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.transparent,
-                          border: Border.all(color: const Color(0xFF3739B7)),
+                          border: Border.all(color: Colors.white),
                           borderRadius: BorderRadius.circular(32),
                         ),
                         child: IconButton(
                           icon: Icon(
                             Icons.home_outlined,
                             color: isLightMode
-                                ? const Color(
-                                    0xFF3739B7) // Retain original color in light mode
+                                ? Colors
+                                    .white // Retain original color in light mode
                                 : Colors.white, // White in dark mode
                           ),
                           onPressed: () {
@@ -71,15 +73,14 @@ class ProfileScreen extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.transparent,
-                          border: Border.all(color: const Color(0xFF3739B7)),
+                          border: Border.all(color: Colors.white),
                           borderRadius: BorderRadius.circular(32),
                         ),
                         child: IconButton(
                           icon: Icon(
                             Icons.settings,
                             color: isLightMode
-                                ? const Color(
-                                    0xFF3739B7) // Retain original color in light mode
+                                ? Colors.white // Retain original color in light mode
                                 : Colors.white, // White in dark mode
                           ),
                           onPressed: () {
@@ -107,22 +108,22 @@ class ProfileScreen extends StatelessWidget {
                     child: profilePicUrl.isNotEmpty
                         ? Image.network(
                             profilePicUrl,
-                            width: 140,
-                            height: 140,
+                            width: 140.w,
+                            height: 140.h,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
                               color: Colors.grey[300],
-                              width: 140,
-                              height: 140,
+                              width: 140.w,
+                              height: 140.h,
                               child: Icon(Icons.person,
                                   size: 72, color: Colors.grey[600]),
                             ),
                           )
                         : Container(
                             color: Colors.grey[300],
-                            width: 140,
-                            height: 140,
+                            width: 140.w,
+                            height: 140.h,
                             child: Icon(Icons.person,
                                 size: 72, color: Colors.grey[600]),
                           ),
@@ -132,9 +133,10 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   fullName,
                   style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w500,
-                    color: isLightMode ? const Color(0xFF3739B7) : Colors.white,
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: AppFontsStyles.raleway,
+                    color: Colors.white,
                     letterSpacing: 0.5,
                   ),
                 ),

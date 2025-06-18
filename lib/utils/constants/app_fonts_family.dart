@@ -2,5 +2,5 @@
 class AppFontsStyles {
   static const openSans = "OpenSans";
   static const montserrat = "Montserrat";
-  static const relaway = "Relaway";
+  static const String raleway = 'Raleway';
 }

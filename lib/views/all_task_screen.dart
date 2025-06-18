@@ -52,29 +52,17 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
 
     final colorScheme = Theme.of(context).colorScheme;
     final dividerColor = Theme.of(context).dividerColor;
-
-    // Gradient colors: white to app blue (primary)
-    final Color gradientStart = Colors.white;
-    final Color gradientEnd = colorScheme.primary; // or a custom blue
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              gradientStart,
-              gradientEnd,
-            ],
-          ),
+          color: isDark ? Colors.black : colorScheme.primary,
         ),
         child: SafeArea(
           child: Column(
             children: [
               AppBarWidget(basePadding: basePadding),
-              // Blending FilterBarWidget by making it transparent inside FilterBarWidget
               FilterBarWidget(
                 basePadding: basePadding,
                 textScale: textScale,
@@ -83,8 +71,6 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                 onSearch: _onSearch,
                 onFilter: _onFilter,
                 onSort: _onSort,
-                // TIP: In your FilterBarWidget, make sure containers/cards have color: Colors.transparent,
-                // and TextFields use fillColor: Colors.white.withOpacity(0.18) (or similar, see note below)
               ),
               Expanded(
                 child: Obx(() {
@@ -152,8 +138,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                               data: task.toMapWithUserInfo(
                                   taskController.userNameCache),
                               textScale: textScale,
-                              isDark: Theme.of(context).brightness ==
-                                  Brightness.dark,
+                              isDark: isDark,
                             ),
                           ),
                           onAction: (choice) =>
