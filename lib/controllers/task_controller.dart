@@ -17,6 +17,7 @@ class TaskController extends GetxController {
   var errorMessage = ''.obs;
   var totalTaskCreated = 0.obs;
   var taskAssigned = 0.obs;
+  var newTaskCount = 0.obs; // Added newTaskCount variable
 
   final Map<String, String> userNameCache = {};
   final Map<String, String> taskTitleCache = {};
@@ -36,6 +37,7 @@ class TaskController extends GetxController {
     await preFetchUserNames();
     await loadInitialTasks();
     fetchTaskCounts();
+    calculateNewTaskCount(); // Calculate new task count on init
   }
 
   @override
@@ -83,7 +85,7 @@ class TaskController extends GetxController {
         userNameCache[uid] = fullName;
       }
       saveCache();
-    // ignore: empty_catches
+      // ignore: empty_catches
     } catch (e) {}
   }
 
@@ -98,44 +100,70 @@ class TaskController extends GetxController {
     filterStatus = filter ?? filterStatus;
     sortBy = sort ?? sortBy;
     await loadMoreTasks(reset: true);
+    calculateNewTaskCount(); // Calculate new task count after loading tasks
   }
 
   Future<void> loadMoreTasks({bool reset = false}) async {
     if (!hasMore || isLoading.value) return;
     isLoading.value = true;
     try {
-      Query query = FirebaseFirestore.instance
-          .collection('tasks')
-          .orderBy('timestamp', descending: sortBy == "Newest")
-          .limit(pageSize);
-
-      // Filter by status if not 'All'
-      if (filterStatus != 'All') {
-        query = query.where('status', isEqualTo: filterStatus);
-      }
-
-      // Search by title (simple prefix search)
-      if (searchTerm.isNotEmpty) {
-        query = query
-            .where('title', isGreaterThanOrEqualTo: searchTerm)
-            .where('title', isLessThanOrEqualTo: searchTerm + '\uf8ff');
-      }
-
-      if (lastDocument != null) {
-        query = query.startAfterDocument(lastDocument!);
-      }
-
-      final snapshot = await query.get();
-
       if (reset) {
         tasks.clear();
+        lastDocument = null;
+      }
+
+      List<QueryDocumentSnapshot> docs = [];
+
+      // --- CASE 1: Search by title and user ---
+      if (searchTerm.isNotEmpty) {
+        final titleQuery = FirebaseFirestore.instance
+            .collection('tasks')
+            .where('title', isGreaterThanOrEqualTo: searchTerm)
+            .where('title', isLessThanOrEqualTo: searchTerm + '\uf8ff')
+            .orderBy('title')
+            .limit(pageSize);
+
+        final nameQuery = FirebaseFirestore.instance
+            .collection('tasks')
+            .where('createdByName', isGreaterThanOrEqualTo: searchTerm)
+            .where('createdByName', isLessThanOrEqualTo: searchTerm + '\uf8ff')
+            .orderBy('createdByName')
+            .limit(pageSize);
+
+        final titleSnap = await titleQuery.get();
+        final nameSnap = await nameQuery.get();
+
+        // Merge and deduplicate by document ID
+        final seen = <String>{};
+        docs = [...titleSnap.docs, ...nameSnap.docs]
+            .where((doc) => seen.add(doc.id))
+            .toList();
+      }
+      // --- CASE 2: No search ---
+      else {
+        Query query = FirebaseFirestore.instance
+            .collection('tasks')
+            .orderBy('timestamp', descending: sortBy == "Newest")
+            .limit(pageSize);
+
+        // Apply status filter
+        if (filterStatus != 'All') {
+          query = query.where('status', isEqualTo: filterStatus);
+        }
+
+        if (lastDocument != null) {
+          query = query.startAfterDocument(lastDocument!);
+        }
+
+        final snapshot = await query.get();
+        docs = snapshot.docs;
       }
 
       List<Task> pageTasks = [];
       String userRole = authController.userRole.value;
       String userId = authController.auth.currentUser?.uid ?? "";
 
-      for (var doc in snapshot.docs) {
+      for (var doc in docs) {
         var taskData = doc.data() as Map<String, dynamic>;
         String createdByName = await _getUserName(taskData["createdBy"]);
         String assignedReporterName = taskData["assignedReporterName"] ??
@@ -180,12 +208,14 @@ class TaskController extends GetxController {
       }
 
       tasks.addAll(pageTasks);
-      if (snapshot.docs.isNotEmpty) {
-        lastDocument = snapshot.docs.last;
-        if (snapshot.docs.length < pageSize) hasMore = false;
+
+      if (docs.isNotEmpty) {
+        lastDocument = docs.last;
+        if (docs.length < pageSize) hasMore = false;
       } else {
         hasMore = false;
       }
+
       errorMessage.value = '';
     } catch (e) {
       errorMessage.value = 'Failed to load tasks: $e';
@@ -194,6 +224,16 @@ class TaskController extends GetxController {
       isLoading.value = false;
     }
   }
+
+
+  // Calculate new task count
+  void calculateNewTaskCount() {
+  String userId = authController.auth.currentUser?.uid ?? "";
+  newTaskCount.value = tasks.where((task) {
+    return (task.assignedReporterId == userId || task.assignedCameramanId == userId) &&
+        task.status != "Completed";
+  }).length;
+}
 
   // Fetch user's full name using UID with caching
   Future<String> _getUserName(String? uid) async {
@@ -301,6 +341,7 @@ class TaskController extends GetxController {
           'timestamp': FieldValue.serverTimestamp(),
         });
       }
+      calculateNewTaskCount(); // Calculate new task count after assigning task
     } catch (e) {
       Get.snackbar("Assignment Error", "Failed to assign task: $e");
     }
@@ -321,6 +362,7 @@ class TaskController extends GetxController {
         return data["assignedReporterId"] == userId ||
             data["assignedCameramanId"] == userId;
       }).length;
+      calculateNewTaskCount(); // Calculate new task count after fetching task counts
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch task counts: ${e.toString()}");
     }
@@ -379,6 +421,7 @@ class TaskController extends GetxController {
               .toList();
         }
         tasks.value = updatedTasks;
+        calculateNewTaskCount(); // Calculate new task count after fetching tasks
         saveCache();
       });
     } catch (e) {
@@ -413,6 +456,7 @@ class TaskController extends GetxController {
         "timestamp": FieldValue.serverTimestamp(),
       });
       Get.snackbar("Success", "Task created successfully");
+      calculateNewTaskCount(); // Calculate new task count after creating task
     } catch (e) {
       Get.snackbar("Error", "Failed to create task: ${e.toString()}");
     } finally {
@@ -440,6 +484,7 @@ class TaskController extends GetxController {
         tasks.refresh();
       }
       Get.snackbar("Success", "Task updated successfully");
+      calculateNewTaskCount(); // Calculate new task count after updating task
     } catch (e) {
       Get.snackbar("Error", "Failed to update task: ${e.toString()}");
     } finally {
@@ -454,6 +499,7 @@ class TaskController extends GetxController {
       tasks.removeWhere((task) => task.taskId == taskId);
       tasks.refresh();
       Get.snackbar("Success", "Task deleted successfully");
+      calculateNewTaskCount(); // Calculate new task count after deleting task
     } catch (e) {
       Get.snackbar("Error", "Failed to delete task: ${e.toString()}");
     } finally {
@@ -477,13 +523,13 @@ class TaskController extends GetxController {
         tasks.refresh();
       }
       Get.snackbar("Success", "Task status updated");
+      calculateNewTaskCount(); // Calculate new task count after updating task status
     } catch (e) {
       Get.snackbar("Error", "Failed to update task status: ${e.toString()}");
     } finally {
       isLoading(false);
     }
   }
-
   // --- LEGACY (optional) ---
   Future<void> assignTaskToReporter(String taskId, String reporterId) async {
     try {
