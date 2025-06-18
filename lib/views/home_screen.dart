@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:task/utils/constants/app_colors.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/notification_controller.dart';
@@ -206,7 +207,9 @@ class _HomeScreenState extends State<HomeScreen>
                             label: AppStrings.taskCreated,
                             value: taskController.totalTaskCreated.value
                                 .toString(),
-                            color: Colors.white,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.secondaryColor,
                           )),
                     ),
                     const SizedBox(width: 16),
@@ -214,20 +217,35 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Obx(() => _statCard(
                             iconWidget: Stack(
                               children: [
-                                const Icon(Icons.notifications,
-                                    color: Colors.white, size: 32),
-                                if (taskController.taskAssigned.value > 0)
+                                Icon(Icons.assignment,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.secondaryColor,
+                                    size: 32),
+                                if (taskController.newTaskCount.value > 0)
                                   Positioned(
                                     right: 0,
                                     top: 0,
                                     child: Container(
-                                      width: 12,
-                                      height: 12,
-                                      decoration: BoxDecoration(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: const BoxDecoration(
                                         color: Colors.red,
                                         shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: Colors.white, width: 2),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minWidth: 16.w,
+                                        minHeight: 16.h,
+                                      ),
+                                      child: Text(
+                                        taskController.newTaskCount.value > 9
+                                            ? '9+'
+                                            : '${taskController.newTaskCount.value}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
                                   ),
@@ -236,7 +254,9 @@ class _HomeScreenState extends State<HomeScreen>
                             icon: Icons.assignment,
                             label: AppStrings.taskAssigned,
                             value: taskController.taskAssigned.value.toString(),
-                            color: const Color(0xFF9FA8DA),
+                            color: isDark
+                                ? const Color(0xFF9FA8DA)
+                                : AppColors.secondaryColor,
                           )),
                     ),
                   ],
@@ -389,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.13),
+        color: AppColors.saveColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
