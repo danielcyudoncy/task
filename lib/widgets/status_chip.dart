@@ -1,4 +1,6 @@
+// widgets/status_chip.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class StatusChip extends StatelessWidget {
   final String status;
@@ -33,7 +35,8 @@ class StatusChip extends StatelessWidget {
           style: TextStyle(
             color: textColor,
             fontWeight: FontWeight.bold,
-            fontSize: 12 * textScale,
+            fontFamily: 'raleway',
+            fontSize: 12.sp * textScale,
           ),
         ),
         backgroundColor: chipColor,
