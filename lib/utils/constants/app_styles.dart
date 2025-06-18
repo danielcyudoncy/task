@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class AppStyles {
   static const gradientBackground = LinearGradient(
-    colors: [Colors.white, Color(0xFF0B189B)],
+    colors:  [Color(0xFF08169D), Color(0xFF08169D)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );

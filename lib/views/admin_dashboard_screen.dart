@@ -426,14 +426,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 14),
-                        Padding(
+                       Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             AppStrings.dailyAssignments,
-                            style: AppStyles.sectionTitleStyle.copyWith(
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF3739B7),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18.sp,
+                              color: Colors.white,
                             ),
                           ),
                         ),
@@ -457,9 +457,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 16.sp,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF3739B7),
+                              color: Colors.white,
                             ),
                           ),
                         ),

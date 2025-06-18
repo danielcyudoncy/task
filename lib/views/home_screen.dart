@@ -1,4 +1,5 @@
 // views/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -7,7 +8,6 @@ import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../widgets/user_nav_bar.dart';
-import '../utils/constants/app_colors.dart';
 import '../utils/constants/app_strings.dart';
 import '../utils/constants/app_styles.dart';
 
@@ -17,7 +17,6 @@ class HomeScreen extends StatefulWidget {
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
-
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final AuthController authController = Get.find<AuthController>();
@@ -45,21 +44,20 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final theme = Theme.of(context);
+    
 
     return Scaffold(
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          
+          color: isDark ? Colors.black : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with user avatar, welcome, name, logo, notification and logout button
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(10.0),
                 child: Row(
                   children: [
                     Obx(() {
@@ -69,9 +67,8 @@ class _HomeScreenState extends State<HomeScreen>
                           : AppStrings.unknownUser;
                       final photoUrl = user?.photoURL;
                       return CircleAvatar(
-                        radius: 24,
-                        backgroundColor:
-                            isDark ? AppColors.white : AppColors.primaryColor,
+                        radius: 20.sp,
+                        backgroundColor: Colors.white,
                         backgroundImage:
                             (photoUrl != null && photoUrl.isNotEmpty)
                                 ? NetworkImage(photoUrl)
@@ -82,10 +79,8 @@ class _HomeScreenState extends State<HomeScreen>
                                     ? userName[0].toUpperCase()
                                     : '?',
                                 style: TextStyle(
-                                  color: isDark
-                                      ? AppColors.primaryColor
-                                      : AppColors.white,
-                                  fontSize: 22.sp,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 20.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                               )
@@ -104,29 +99,33 @@ class _HomeScreenState extends State<HomeScreen>
                           children: [
                             Text(
                               AppStrings.welcome,
-                              style: theme.textTheme.labelMedium?.copyWith(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'raleway',
+                                fontSize: 24.sp,
                               ),
                             ),
-                            Text(
-                              userName,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12.sp,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  userName,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12.sp,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         );
                       }),
                     ),
-                    const Spacer(),
-                    // Circular Logo
+                    
                     Container(
-                      width: 40.w,
-                      height: 40.h,
+                      width: 30.w,
+                      height: 30.h,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -138,12 +137,11 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       child: ClipOval(
                         child: Image.asset(
-                          'assets/png/logo.png', // <-- Replace with your logo asset path
+                          'assets/png/logo.png',
                           fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                    // Notification icon with badge
                     Obx(() {
                       int unread = notificationController.unreadCount.value;
                       return Stack(
@@ -166,15 +164,15 @@ class _HomeScreenState extends State<HomeScreen>
                                   color: Colors.red,
                                   shape: BoxShape.circle,
                                 ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 16,
-                                  minHeight: 16,
+                                constraints:  BoxConstraints(
+                                  minWidth: 16.w,
+                                  minHeight: 16.h,
                                 ),
                                 child: Text(
                                   unread > 9 ? '9+' : '$unread',
-                                  style: const TextStyle(
+                                  style:  TextStyle(
                                     color: Colors.white,
-                                    fontSize: 10,
+                                    fontSize: 10.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   textAlign: TextAlign.center,
@@ -196,18 +194,8 @@ class _HomeScreenState extends State<HomeScreen>
                   ],
                 ),
               ),
-              // Stat cards row
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  AppStrings.dailyAssignments,
-                  style: AppStyles.sectionTitleStyle.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+             
               const SizedBox(height: 18),
-              // Stat cards row (fixed and label updated)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
@@ -218,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen>
                             label: AppStrings.taskCreated,
                             value: taskController.totalTaskCreated.value
                                 .toString(),
-                            color: const Color(0xFF9FA8DA),
+                            color: Colors.white,
                           )),
                     ),
                     const SizedBox(width: 16),
@@ -227,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen>
                             iconWidget: Stack(
                               children: [
                                 const Icon(Icons.notifications,
-                                    color: Color(0xFF9FA8DA), size: 32),
+                                    color: Colors.white, size: 32),
                                 if (taskController.taskAssigned.value > 0)
                                   Positioned(
                                     right: 0,
@@ -260,11 +248,10 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Text(
                   AppStrings.task,
                   style: AppStyles.sectionTitleStyle.copyWith(
-                    color: isDark ? AppColors.white : const Color(0xFF3739B7),
+                    color: Colors.white,
                   ),
                 ),
               ),
-              // White (or dark) container with task tabs and cards
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -278,7 +265,6 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Add button row
                       Padding(
                         padding: const EdgeInsets.only(
                           top: 18,
@@ -296,14 +282,14 @@ class _HomeScreenState extends State<HomeScreen>
                                 height: 34.h,
                                 decoration: BoxDecoration(
                                   color: isDark
-                                      ? AppColors.white
-                                      : const Color(0xFF3739B7),
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.primary,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
                                   Icons.add,
                                   color: isDark
-                                      ? const Color(0xFF3739B7)
+                                      ? Theme.of(context).colorScheme.primary
                                       : Colors.white,
                                   size: 22,
                                 ),
@@ -312,15 +298,16 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                         ),
                       ),
-                      // Tabs
                       TabBar(
                         controller: _tabController,
                         isScrollable: false,
-                        indicatorColor:
-                            isDark ? AppColors.white : const Color(0xFF3739B7),
+                        indicatorColor: isDark
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.primary,
                         indicatorWeight: 2.5,
-                        labelColor:
-                            isDark ? AppColors.white : const Color(0xFF3739B7),
+                        labelColor: isDark
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.primary,
                         unselectedLabelColor:
                             isDark ? Colors.white70 : Colors.black54,
                         labelStyle: AppStyles.tabSelectedStyle.copyWith(
@@ -334,17 +321,15 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
                       const SizedBox(height: 8),
-                      // TabBarView for not completed and completed tasks
                       Expanded(
                         child: Obx(() {
                           final userId =
                               authController.auth.currentUser?.uid ?? "";
                           final notCompletedTasks =
                               taskController.tasks.where((t) {
-                            // Show if not completed and assigned to or created by the user
                             final assignedReporter = t.assignedReporterId;
                             final assignedCameraman = t.assignedCameramanId;
-                            final assignedTo = t.assignedTo; 
+                            final assignedTo = t.assignedTo;
                             return (t.status != "Completed") &&
                                 (t.createdById == userId ||
                                     assignedReporter == userId ||
@@ -430,7 +415,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// Task list tab widget
 class _TaskListTab extends StatelessWidget {
   final bool isCompleted;
   final bool isDark;
@@ -514,7 +498,7 @@ class _TaskListTab extends StatelessWidget {
   void _deleteTask(dynamic task) async {
     final taskController = Get.find<TaskController>();
     await taskController.deleteTask(task.taskId);
-    Get.snackbar("Success", "Task deleted",
+    Get.snackbar("Success: Success", "Task deleted",
         snackPosition: SnackPosition.BOTTOM);
   }
 

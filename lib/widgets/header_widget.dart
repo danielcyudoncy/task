@@ -45,11 +45,16 @@ class HeaderWidget extends StatelessWidget {
                      Text(
                       'Welcome',
                       style:
-                          TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 24.sp,
+                          fontFamily: 'Raleway',
+                          color: const ColorScheme.light().onPrimary,
+                           fontWeight: FontWeight.bold),
                     ),
                     Text(
                       authController.fullName.value,
-                      style: TextStyle(fontSize: 16.sp),
+                      style: TextStyle(fontSize: 16.sp,
+                      fontWeight:  FontWeight.w700,
+                      color: const ColorScheme.light().onPrimary),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],

@@ -9,7 +9,6 @@ class AppBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final AuthController authController = Get.find<AuthController>();
 
     return Padding(
@@ -25,14 +24,12 @@ class AppBarWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                      color:
-                          isDarkMode ? Colors.white : const Color(0xFF171FA0)),
+                  border: Border.all(color: Colors.white),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.home,
-                  color: isDarkMode ? Colors.white : const Color(0xFF171FA0),
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -45,14 +42,12 @@ class AppBarWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                      color:
-                          isDarkMode ? Colors.white : const Color(0xFF171FA0)),
+                  border: Border.all(color: Colors.white),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.account_circle,
-                  color: isDarkMode ? Colors.white : const Color(0xFF171FA0),
+                  color: Colors.white,
                 ),
               ),
             ),
