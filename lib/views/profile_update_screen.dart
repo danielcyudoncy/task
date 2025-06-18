@@ -1,5 +1,6 @@
 // views/profile_update_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/widgets/save_success_screen.dart';
 import '../controllers/auth_controller.dart';
@@ -29,13 +30,7 @@ class ProfileUpdateScreen extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [Colors.black, Colors.grey.shade900]
-                : [Colors.white, const Color(0xFF2e3bb5)],
-          ),
+          color: isDark ? Colors.black : AppColors.primaryColor,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -48,7 +43,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    color: isDark ? Colors.white : AppColors.primaryColor,
+                    color: isDark ? Colors.white : Colors.white,
                     onPressed: () => Get.back(),
                   ),
                 ),
@@ -57,8 +52,8 @@ class ProfileUpdateScreen extends StatelessWidget {
                 // App logo
                 Image.asset(
                   AppIcons.logo,
-                  width: 80,
-                  height: 80,
+                  width: 80.w,
+                  height: 80.h,
                 ),
                 const SizedBox(height: 24),
 
@@ -91,6 +86,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                               .headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
+                                fontFamily: 'raleway',
                                 color: isDark ? Colors.white : Colors.black,
                               ),
                           textAlign: TextAlign.center,
@@ -100,7 +96,9 @@ class ProfileUpdateScreen extends StatelessWidget {
                         Text(
                           'Adjust the content below to update your profile.',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 14.sp,
+                            fontFamily: 'raleway',
+                            fontWeight: FontWeight.w500,
                             color: isDark ? Colors.white70 : Colors.black87,
                           ),
                           textAlign: TextAlign.center,
