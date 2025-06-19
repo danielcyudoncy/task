@@ -341,48 +341,47 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Expanded(
-                        child: Obx(() {
-                          final userId =
-                              authController.auth.currentUser?.uid ?? "";
-                          final notCompletedTasks =
-                              taskController.tasks.where((t) {
-                            final assignedReporter = t.assignedReporterId;
-                            final assignedCameraman = t.assignedCameramanId;
-                            final assignedTo = t.assignedTo;
-                            return (t.status != "Completed") &&
-                                (t.createdById == userId ||
-                                    assignedReporter == userId ||
-                                    assignedCameraman == userId ||
-                                    assignedTo == userId);
-                          }).toList();
+                    Expanded(
+  child: Obx(() {
+    final userId = authController.auth.currentUser?.uid ?? "";
+    final tasks = taskController.tasks;
 
-                          final completedTasks = taskController.tasks
-                              .where((t) =>
-                                  t.status == "Completed" &&
-                                  (t.createdById == userId ||
-                                      t.assignedReporterId == userId ||
-                                      t.assignedCameramanId == userId ||
-                                      (t.assignedTo == userId)))
-                              .toList();
+    final taskMap = { for (var task in tasks) task.taskId : task };
 
-                          return TabBarView(
-                            controller: _tabController,
-                            children: [
-                              _TaskListTab(
-                                isCompleted: false,
-                                isDark: isDark,
-                                tasks: notCompletedTasks,
-                              ),
-                              _TaskListTab(
-                                isCompleted: true,
-                                isDark: isDark,
-                                tasks: completedTasks,
-                              ),
-                            ],
-                          );
-                        }),
-                      ),
+    final notCompletedTasks = taskMap.values.where((t) {
+      return (t.status != "Completed") &&
+          (t.createdById == userId ||
+              t.assignedTo == userId ||
+              t.assignedReporterId == userId ||
+              t.assignedCameramanId == userId);
+    }).toList();
+
+    final completedTasks = taskMap.values
+        .where((t) =>
+            t.status == "Completed" &&
+            (t.createdById == userId ||
+                t.assignedTo == userId ||
+                t.assignedReporterId == userId ||
+                t.assignedCameramanId == userId))
+        .toList();
+
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _TaskListTab(
+          isCompleted: false,
+          isDark: isDark,
+          tasks: notCompletedTasks,
+        ),
+        _TaskListTab(
+          isCompleted: true,
+          isDark: isDark,
+          tasks: completedTasks,
+        ),
+      ],
+    );
+  }),
+),
                     ],
                   ),
                 ),
