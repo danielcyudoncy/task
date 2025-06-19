@@ -1,4 +1,5 @@
 // controllers/task_controller.dart
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -351,20 +352,26 @@ class TaskController extends GetxController {
   Future<void> fetchTaskCounts() async {
     try {
       String userId = authController.auth.currentUser!.uid;
-      final queryCreated = await _firebaseService.getAllTasks().first;
-      totalTaskCreated.value = queryCreated.docs.where((doc) {
+      final querySnapshot = await _firebaseService.getAllTasks().first;
+      final docs = querySnapshot.docs;
+
+      // Single query for both counts
+      totalTaskCreated.value = docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return data["createdBy"] == userId;
       }).length;
-      final queryAssigned = await _firebaseService.getAllTasks().first;
-      taskAssigned.value = queryAssigned.docs.where((doc) {
+
+      taskAssigned.value = docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return data["assignedReporterId"] == userId ||
+        return data["assignedTo"] == userId ||
+            data["assignedReporterId"] == userId ||
             data["assignedCameramanId"] == userId;
       }).length;
-      calculateNewTaskCount(); // Calculate new task count after fetching task counts
+
+      calculateNewTaskCount();
     } catch (e) {
       Get.snackbar("Error", "Failed to fetch task counts: ${e.toString()}");
+      debugPrint("Error in fetchTaskCounts: $e");
     }
   }
 
