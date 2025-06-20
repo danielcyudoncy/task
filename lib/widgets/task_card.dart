@@ -82,48 +82,42 @@ class TaskCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    children: [
-                      CircleAvatar(
-                        radius: isLargeScreen ? 25 : 18,
-                        backgroundColor: avatarBg,
-                        backgroundImage: creatorAvatar != null
-                            ? NetworkImage(creatorAvatar)
-                            : null,
-                        child: creatorAvatar == null
-                            ? Text(
-                                (creatorName.isNotEmpty ? creatorName[0] : "?")
-                                    .toUpperCase(),
-                                style: TextStyle(
-                                  color: accent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: isLargeScreen
-                                      ? 20.sp * textScale
-                                      : 15.sp * textScale,
-                                ),
-                              )
-                            : null,
-                      ),
-                      SizedBox(width: isLargeScreen ? 20 : 12),
-                      Expanded(
-                        child: Text(
-                          creatorName,
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize:
-                                isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
-                            color: mainText,
-                          ),
-                        ),
-                      ),
-                      StatusChip(status: status, textScale: textScale),
-                      _TaskActionMenu(
-                        taskData: data,
-                        onAction: onAction,
-                        accent: accent,
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
+  children: [
+    CircleAvatar(
+      radius: isLargeScreen ? 25 : 18,
+      backgroundColor: avatarBg,
+      backgroundImage: creatorAvatar != null
+          ? NetworkImage(creatorAvatar)
+          : null,
+      child: creatorAvatar == null
+          ? Text(
+              (creatorName.isNotEmpty ? creatorName[0] : "?")
+                  .toUpperCase(),
+              style: TextStyle(
+                color: accent,
+                fontWeight: FontWeight.bold,
+                fontSize: isLargeScreen
+                    ? 20.sp * textScale
+                    : 15.sp * textScale,
+              ),
+            )
+          : null,
+    ),
+    SizedBox(width: isLargeScreen ? 20 : 12),
+    Expanded(
+      child: Text(
+        creatorName,
+        style: textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize:
+              isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
+          color: mainText,
+        ),
+      ),
+    ),
+    StatusChip(status: status, textScale: textScale),
+  ],
+),
                   SizedBox(height: isLargeScreen ? 16 : 10),
                   Text(
                     title,
@@ -166,44 +160,3 @@ class TaskCard extends StatelessWidget {
   }
 }
 
-class _TaskActionMenu extends StatelessWidget {
-  final Map<String, dynamic> taskData;
-  final ValueChanged<String> onAction;
-  final Color accent;
-  final bool isDark;
-  const _TaskActionMenu({
-    required this.taskData,
-    required this.onAction,
-    required this.accent,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert, color: accent),
-      onSelected: onAction,
-      itemBuilder: (context) {
-        List<PopupMenuEntry<String>> items = [
-          const PopupMenuItem<String>(
-            value: 'Edit',
-            child: Text('Edit'),
-          ),
-          const PopupMenuItem<String>(
-            value: 'Delete',
-            child: Text('Delete'),
-          ),
-        ];
-        if (taskData['status'] != "Completed") {
-          items.insert(
-              0,
-              const PopupMenuItem<String>(
-                value: 'Mark as Completed',
-                child: Text('Mark as Completed'),
-              ));
-        }
-        return items;
-      },
-    );
-  }
-}
