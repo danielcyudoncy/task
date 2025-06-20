@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class NotificationBadge extends StatelessWidget {
   const NotificationBadge({super.key});
@@ -26,8 +27,8 @@ class NotificationBadge extends StatelessWidget {
                 right: 0,
                 top: 0,
                 child: Container(
-                  width: 10,
-                  height: 10,
+                  width: 10.w,
+                  height: 10.h,
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
