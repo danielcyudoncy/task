@@ -66,7 +66,7 @@ class LoginScreen extends StatelessWidget {
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
-                        const SizedBox(height: 40),
+                        
 
                         // App Logo
                         Center(
@@ -79,7 +79,7 @@ class LoginScreen extends StatelessWidget {
                           ),
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 2),
 
                         // Main box container
                         Container(
@@ -111,7 +111,7 @@ class LoginScreen extends StatelessWidget {
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 Text(
                                   "Fill out the information below in order to access your account.",
                                   style: textTheme.bodyMedium?.copyWith(
@@ -122,7 +122,7 @@ class LoginScreen extends StatelessWidget {
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 10),
 
                                 // Email Field
                                 TextFormField(
@@ -191,7 +191,7 @@ class LoginScreen extends StatelessWidget {
                                   },
                                 ),
 
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 20),
 
                                 // Sign In Button
                                 Obx(() => _auth.isLoading.value
@@ -219,7 +219,7 @@ class LoginScreen extends StatelessWidget {
                                         ),
                                       )),
 
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 20),
 
                                 // Divider with text
                                 Row(
@@ -241,7 +241,7 @@ class LoginScreen extends StatelessWidget {
                                   ],
                                 ),
 
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 10),
 
                                 // Animated Google & Apple Login Buttons
                                 Row(
@@ -267,7 +267,7 @@ class LoginScreen extends StatelessWidget {
                                   ],
                                 ),
 
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 14),
 
                                 // Bottom text
                                 Row(
