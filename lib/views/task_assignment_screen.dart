@@ -1,5 +1,6 @@
 // views/task_assignment_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/user_controller.dart';
@@ -131,7 +132,7 @@ class TaskAssignmentScreen extends StatelessWidget {
             Text(
               "Assign Task",
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
                 color: colorScheme.primary,
               ),
@@ -256,23 +257,46 @@ class TaskAssignmentScreen extends StatelessWidget {
                     foregroundColor: colorScheme.onPrimary,
                   ),
                   onPressed: () async {
+                    print("🔘 ASSIGN BUTTON PRESSED!");
+                    print("Selected Task ID: $selectedTaskId");
+                    print("Selected Reporter ID: $selectedReporterId");
+                    print("Selected Reporter Name: $selectedReporterName");
+                    print("Selected Cameraman ID: $selectedCameramanId");
+                    print("Selected Cameraman Name: $selectedCameramanName");
+
                     if (selectedTaskId == null ||
                         (selectedReporterId == null &&
                             selectedCameramanId == null)) {
+                      print("❌ Validation failed - missing task or assignee");
                       Get.snackbar("Error",
                           "Please select a task and at least one assignee.");
                       return;
                     }
-                    await taskController.assignTaskWithNames(
-                      taskId: selectedTaskId!,
-                      reporterId: selectedReporterId,
-                      reporterName: selectedReporterName,
-                      cameramanId: selectedCameramanId,
-                      cameramanName: selectedCameramanName,
-                    );
-                    Get.snackbar("Success", "Task assigned successfully.");
-                    Get.back();
+
+                    print("✅ Validation passed - calling assignTaskWithNames");
+
+                    try {
+                      // Close the dialog BEFORE calling the assignment
+                      Get.back();
+
+                      await taskController.assignTaskWithNames(
+                        taskId: selectedTaskId!,
+                        reporterId: selectedReporterId,
+                        reporterName: selectedReporterName,
+                        cameramanId: selectedCameramanId,
+                        cameramanName: selectedCameramanName,
+                      );
+
+                      print("🔘 Assignment method completed!");
+
+                      // Show success message
+                      Get.snackbar("Success", "Task assigned successfully!");
+                    } catch (e) {
+                      print("❌ Assignment error: $e");
+                      Get.snackbar("Error", "Failed to assign task: $e");
+                    }
                   },
+
                   child: const Text("Assign Task"),
                 ),
               );
