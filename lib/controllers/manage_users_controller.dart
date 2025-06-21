@@ -130,6 +130,7 @@ class ManageUsersController extends GetxController {
   /// Remove user from Firestore and Auth (via service)
   Future<bool> deleteUser(String userId) async {
     try {
+       print('Deleting user with ID: $userId');
       await userDeletionService.deleteUserByAdmin(userId);
       usersList
           .removeWhere((user) => user['id'] == userId || user['uid'] == userId);
@@ -138,6 +139,7 @@ class ManageUsersController extends GetxController {
       Get.snackbar('Success', 'User deleted successfully');
       return true;
     } catch (e) {
+      print('Error deleting user: $e');
       Get.snackbar('Error', 'Failed to delete user: $e');
       return false;
     }
