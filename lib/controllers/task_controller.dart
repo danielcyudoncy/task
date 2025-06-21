@@ -104,7 +104,7 @@ class TaskController extends GetxController {
     calculateNewTaskCount(); // Calculate new task count after loading tasks
   }
 
-  Future<void> loadMoreTasks({bool reset = false}) async {
+ Future<void> loadMoreTasks({bool reset = false}) async {
     if (!hasMore || isLoading.value) return;
     isLoading.value = true;
     try {
@@ -120,14 +120,14 @@ class TaskController extends GetxController {
         final titleQuery = FirebaseFirestore.instance
             .collection('tasks')
             .where('title', isGreaterThanOrEqualTo: searchTerm)
-            .where('title', isLessThanOrEqualTo: searchTerm + '\uf8ff')
+            .where('title', isLessThanOrEqualTo: '$searchTerm\uf8ff')
             .orderBy('title')
             .limit(pageSize);
 
         final nameQuery = FirebaseFirestore.instance
             .collection('tasks')
             .where('createdByName', isGreaterThanOrEqualTo: searchTerm)
-            .where('createdByName', isLessThanOrEqualTo: searchTerm + '\uf8ff')
+            .where('createdByName', isLessThanOrEqualTo: '$searchTerm\uf8ff')
             .orderBy('createdByName')
             .limit(pageSize);
 
@@ -161,8 +161,6 @@ class TaskController extends GetxController {
       }
 
       List<Task> pageTasks = [];
-      String userRole = authController.userRole.value;
-      String userId = authController.auth.currentUser?.uid ?? "";
 
       for (var doc in docs) {
         var taskData = doc.data() as Map<String, dynamic>;
@@ -178,7 +176,8 @@ class TaskController extends GetxController {
         String taskTitle = taskData["title"];
         taskTitleCache[doc.id] = taskTitle;
 
-        final task = Task(
+        // REMOVED THE ROLE-BASED FILTERING - JUST ADD ALL TASKS
+        pageTasks.add(Task(
           taskId: doc.id,
           title: taskTitle,
           description: taskData["description"],
@@ -191,21 +190,7 @@ class TaskController extends GetxController {
           createdById: taskData["createdBy"] ?? "",
           assignedReporterId: taskData["assignedReporterId"],
           assignedCameramanId: taskData["assignedCameramanId"],
-        );
-
-        // Role-based filtering
-        if (userRole == "Reporter") {
-          if (task.assignedReporterId == userId || task.createdById == userId) {
-            pageTasks.add(task);
-          }
-        } else if (userRole == "Cameraman") {
-          if (task.assignedCameramanId == userId ||
-              task.createdById == userId) {
-            pageTasks.add(task);
-          }
-        } else {
-          pageTasks.add(task);
-        }
+        ));
       }
 
       tasks.addAll(pageTasks);
@@ -561,6 +546,196 @@ class TaskController extends GetxController {
       Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
     } finally {
       isLoading(false);
+    }
+  }
+  // ========== ADD THESE NEW METHODS TO YOUR EXISTING CONTROLLER ========== //
+
+  /// Get all tasks without any filters or pagination
+  Future<List<Task>> getAllTasks() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      return await Future.wait(snapshot.docs.map((doc) async {
+        final data = doc.data();
+        final createdByName = await _getUserName(data["createdBy"]);
+        final assignedReporterName = data["assignedReporterName"] ??
+            (data["assignedReporterId"] != null
+                ? await _getUserName(data["assignedReporterId"])
+                : "Not Assigned");
+        final assignedCameramanName = data["assignedCameramanName"] ??
+            (data["assignedCameramanId"] != null
+                ? await _getUserName(data["assignedCameramanId"])
+                : "Not Assigned");
+
+        return Task(
+          taskId: doc.id,
+          title: data["title"],
+          description: data["description"],
+          createdBy: createdByName,
+          assignedReporter: assignedReporterName,
+          assignedCameraman: assignedCameramanName,
+          status: data["status"] ?? "Pending",
+          comments: List<String>.from(data["comments"] ?? []),
+          timestamp: data["timestamp"] ?? Timestamp.now(),
+          createdById: data["createdBy"] ?? "",
+          assignedReporterId: data["assignedReporterId"],
+          assignedCameramanId: data["assignedCameramanId"],
+        );
+      }));
+    } catch (e) {
+      errorMessage.value = 'Failed to get all tasks: $e';
+      return [];
+    }
+  }
+
+  /// Get tasks assigned to current user
+   /// Get tasks assigned to current user
+  Future<List<Task>> getMyAssignedTasks() async {
+    try {
+      final userId = authController.auth.currentUser?.uid ?? "";
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedReporterId', isEqualTo: userId)
+          .get();
+
+      return await Future.wait(snapshot.docs.map((doc) async {
+        final data = doc.data();
+        final createdByName = await _getUserName(data["createdBy"]);
+        final assignedReporterName = data["assignedReporterName"] ?? 
+            (data["assignedReporterId"] != null 
+                ? await _getUserName(data["assignedReporterId"]) 
+                : "Not Assigned");
+        final assignedCameramanName = data["assignedCameramanName"] ?? 
+            (data["assignedCameramanId"] != null 
+                ? await _getUserName(data["assignedCameramanId"]) 
+                : "Not Assigned");
+
+        return Task(
+          taskId: doc.id,
+          title: data["title"] ?? "",
+          description: data["description"] ?? "",
+          createdBy: createdByName,
+          assignedReporter: assignedReporterName,
+          assignedCameraman: assignedCameramanName,
+          status: data["status"] ?? "Pending",
+          comments: List<String>.from(data["comments"] ?? []),
+          timestamp: data["timestamp"] ?? Timestamp.now(),
+          createdById: data["createdBy"] ?? "",
+          assignedReporterId: data["assignedReporterId"],
+          assignedCameramanId: data["assignedCameramanId"],
+        );
+      }));
+    } catch (e) {
+      errorMessage.value = 'Failed to get assigned tasks: $e';
+      return [];
+    }
+  }
+
+  /// Get tasks created by current user
+  Future<List<Task>> getMyCreatedTasks() async {
+    try {
+      final userId = authController.auth.currentUser?.uid ?? "";
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('createdBy', isEqualTo: userId)
+          .get();
+
+      return await Future.wait(snapshot.docs.map((doc) async {
+        final data = doc.data();
+        final createdByName = await _getUserName(data["createdBy"]);
+        final assignedReporterName = data["assignedReporterName"] ?? 
+            (data["assignedReporterId"] != null 
+                ? await _getUserName(data["assignedReporterId"]) 
+                : "Not Assigned");
+        final assignedCameramanName = data["assignedCameramanName"] ?? 
+            (data["assignedCameramanId"] != null 
+                ? await _getUserName(data["assignedCameramanId"]) 
+                : "Not Assigned");
+
+        return Task(
+          taskId: doc.id,
+          title: data["title"] ?? "",
+          description: data["description"] ?? "",
+          createdBy: createdByName,
+          assignedReporter: assignedReporterName,
+          assignedCameraman: assignedCameramanName,
+          status: data["status"] ?? "Pending",
+          comments: List<String>.from(data["comments"] ?? []),
+          timestamp: data["timestamp"] ?? Timestamp.now(),
+          createdById: data["createdBy"] ?? "",
+          assignedReporterId: data["assignedReporterId"],
+          assignedCameramanId: data["assignedCameramanId"],
+        );
+      }));
+    } catch (e) {
+      errorMessage.value = 'Failed to get created tasks: $e';
+      return [];
+    }
+  }
+
+  /// Get task by ID
+  Future<Task?> getTaskById(String taskId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final createdByName = await _getUserName(data["createdBy"]);
+        final assignedReporterName = data["assignedReporterName"] ?? 
+            (data["assignedReporterId"] != null 
+                ? await _getUserName(data["assignedReporterId"]) 
+                : "Not Assigned");
+        final assignedCameramanName = data["assignedCameramanName"] ?? 
+            (data["assignedCameramanId"] != null 
+                ? await _getUserName(data["assignedCameramanId"]) 
+                : "Not Assigned");
+
+        return Task(
+          taskId: doc.id,
+          title: data["title"] ?? "",
+          description: data["description"] ?? "",
+          createdBy: createdByName,
+          assignedReporter: assignedReporterName,
+          assignedCameraman: assignedCameramanName,
+          status: data["status"] ?? "Pending",
+          comments: List<String>.from(data["comments"] ?? []),
+          timestamp: data["timestamp"] ?? Timestamp.now(),
+          createdById: data["createdBy"] ?? "",
+          assignedReporterId: data["assignedReporterId"],
+          assignedCameramanId: data["assignedCameramanId"],
+        );
+      }
+      return null;
+    } catch (e) {
+      errorMessage.value = 'Failed to get task: $e';
+      return null;
+    }
+  }
+
+  /// Add comment to a task (no changes needed to this one as it was correct)
+  Future<void> addComment(String taskId, String comment) async {
+    try {
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
+        'comments': FieldValue.arrayUnion([comment]),
+        'lastUpdated': FieldValue.serverTimestamp()
+      });
+
+      // Update local task if it exists
+      final index = tasks.indexWhere((t) => t.taskId == taskId);
+      if (index != -1) {
+        final updatedTask = tasks[index]
+            .copyWith(comments: [...tasks[index].comments, comment]);
+        tasks[index] = updatedTask;
+        tasks.refresh();
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Failed to add comment: ${e.toString()}");
     }
   }
 }
