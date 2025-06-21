@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:intl/intl.dart'; // <-- make sure to import this!
+import 'dart:convert'; // <-- make sure to import this!
 import '../models/task_model.dart';
 import '../controllers/auth_controller.dart';
 import '../service/firebase_service.dart';
@@ -18,7 +18,9 @@ class TaskController extends GetxController {
   var errorMessage = ''.obs;
   var totalTaskCreated = 0.obs;
   var taskAssigned = 0.obs;
-  var newTaskCount = 0.obs; // Added newTaskCount variable
+  var newTaskCount = 0.obs;
+  var isLoadingStats = false.obs;
+  var isRefreshing = false.obs; // Added newTaskCount variable
 
   final Map<String, String> userNameCache = {};
   final Map<String, String> taskTitleCache = {};
@@ -251,107 +253,193 @@ class TaskController extends GetxController {
     String? cameramanName,
   }) async {
     try {
+      print("=== ASSIGNMENT DEBUG ===");
+      print("Task ID: $taskId");
+      print("Reporter ID: $reporterId");
+      print("Reporter Name: $reporterName");
+
       final updateData = <String, dynamic>{};
+
       if (reporterId != null && reporterName != null) {
         updateData['assignedReporterId'] = reporterId;
         updateData['assignedReporterName'] = reporterName;
+        print("✅ Setting reporter: $reporterId");
       } else {
         updateData['assignedReporterId'] = null;
         updateData['assignedReporterName'] = null;
+        print("❌ Clearing reporter fields");
       }
+
       if (cameramanId != null && cameramanName != null) {
         updateData['assignedCameramanId'] = cameramanId;
         updateData['assignedCameramanName'] = cameramanName;
+        print("✅ Setting cameraman: $cameramanId");
       } else {
         updateData['assignedCameramanId'] = null;
         updateData['assignedCameramanName'] = null;
+        print("❌ Clearing cameraman fields");
       }
+
       updateData['assignedAt'] = FieldValue.serverTimestamp();
 
+      print("📝 Update data: $updateData");
+
+      // Update the task document
       await FirebaseFirestore.instance
           .collection('tasks')
           .doc(taskId)
           .update(updateData);
 
-      // --- NEW: Send notification to assigned users ---
+      print("✅ Task document updated successfully!");
+
+      // Get task details for notification
       final taskDoc = await FirebaseFirestore.instance
           .collection('tasks')
           .doc(taskId)
           .get();
 
-      final String taskTitle =
-          (taskDoc.data()?['title'] as String?) ?? 'A task';
-      final String taskDescription =
-          (taskDoc.data()?['description'] as String?) ?? '';
-      // --- Handle dueDate which could be null or ISO string or Firestore Timestamp ---
-      DateTime dueDate;
-      final dueDateRaw = taskDoc.data()?['dueDate'];
-      if (dueDateRaw is Timestamp) {
-        dueDate = dueDateRaw.toDate();
-      } else if (dueDateRaw is String) {
-        dueDate = DateTime.tryParse(dueDateRaw) ?? DateTime.now();
-      } else {
-        dueDate = DateTime.now();
-      }
-      final String formattedDate =
-          DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
+      print("📖 Task doc retrieved: ${taskDoc.exists}");
 
-      // Reporter notification
-      if (reporterId != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(reporterId)
-            .collection('notifications')
-            .add({
-          'type': 'task_assigned',
-          'taskId': taskId,
-          'title': taskTitle,
-          'message': 'Description: $taskDescription\nDue: $formattedDate',
-          'isRead': false,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
+      if (taskDoc.exists) {
+        final String taskTitle =
+            (taskDoc.data()?['title'] as String?) ?? 'A task';
+        final String taskDescription =
+            (taskDoc.data()?['description'] as String?) ?? '';
+
+        DateTime dueDate;
+        final dueDateRaw = taskDoc.data()?['dueDate'];
+        if (dueDateRaw is Timestamp) {
+          dueDate = dueDateRaw.toDate();
+        } else if (dueDateRaw is String) {
+          dueDate = DateTime.tryParse(dueDateRaw) ?? DateTime.now();
+        } else {
+          dueDate = DateTime.now();
+        }
+
+        final String formattedDate =
+            DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
+
+        // Send notifications without awaiting to prevent blocking
+        if (reporterId != null) {
+          print("📧 Sending notification to reporter: $reporterId");
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(reporterId)
+              .collection('notifications')
+              .add({
+                'type': 'task_assigned',
+                'taskId': taskId,
+                'title': taskTitle,
+                'message': 'Description: $taskDescription\nDue: $formattedDate',
+                'isRead': false,
+                'timestamp': FieldValue.serverTimestamp(),
+              })
+              .then((_) => print("✅ Reporter notification sent"))
+              .catchError((e) => print("❌ Reporter notification error: $e"));
+        }
+
+        if (cameramanId != null) {
+          print("📧 Sending notification to cameraman: $cameramanId");
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(cameramanId)
+              .collection('notifications')
+              .add({
+                'type': 'task_assigned',
+                'taskId': taskId,
+                'title': taskTitle,
+                'message': 'Description: $taskDescription\nDue: $formattedDate',
+                'isRead': false,
+                'timestamp': FieldValue.serverTimestamp(),
+              })
+              .then((_) => print("✅ Cameraman notification sent"))
+              .catchError((e) => print("❌ Cameraman notification error: $e"));
+        }
       }
 
-      // Cameraman notification
-      if (cameramanId != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(cameramanId)
-            .collection('notifications')
-            .add({
-          'type': 'task_assigned',
-          'taskId': taskId,
-          'title': taskTitle,
-          'message': 'Description: $taskDescription\nDue: $formattedDate',
-          'isRead': false,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-      }
-      calculateNewTaskCount(); // Calculate new task count after assigning task
+      // Use a delayed call to avoid setState after dispose
+      Future.delayed(Duration(milliseconds: 100), () {
+        calculateNewTaskCount();
+        print("🔄 Task count recalculated");
+      });
+
+      print("=== ASSIGNMENT COMPLETE ===");
     } catch (e) {
-      Get.snackbar("Assignment Error", "Failed to assign task: $e");
+      print("❌ Assignment error: $e");
+      print("Stack trace: ${StackTrace.current}");
+      // Don't show snackbar here since dialog might be closed
     }
   }
+
+
 
   // Fetch task counts using the new fields
   Future<void> fetchTaskCounts() async {
     try {
       String userId = authController.auth.currentUser!.uid;
+      String userRole = authController.userRole.value;
       final querySnapshot = await _firebaseService.getAllTasks().first;
       final docs = querySnapshot.docs;
 
-      // Single query for both counts
-      totalTaskCreated.value = docs.where((doc) {
+      print("=== ENHANCED DEBUG ===");
+      print("Current User ID: $userId");
+      print("User Role: $userRole");
+      print("Total tasks in database: ${docs.length}");
+
+      // Check ALL tasks and their assignment fields
+      for (int i = 0; i < docs.length; i++) {
+        final doc = docs[i];
+        final data = doc.data() as Map<String, dynamic>;
+
+        print("\n--- Task ${i + 1}: ${doc.id} ---");
+        print("Title: ${data['title']}");
+        print("createdBy: ${data['createdBy']}");
+        print("assignedTo: ${data['assignedTo']}");
+        print("assignedReporterId: ${data['assignedReporterId']}");
+        print("assignedCameramanId: ${data['assignedCameramanId']}");
+        print("assignedReporterName: ${data['assignedReporterName']}");
+        print("assignedCameramanName: ${data['assignedCameramanName']}");
+
+        // Check each condition
+        bool createdByUser = data["createdBy"] == userId;
+        bool assignedToUser = data["assignedTo"] == userId;
+        bool assignedAsReporter = data["assignedReporterId"] == userId;
+        bool assignedAsCameraman = data["assignedCameramanId"] == userId;
+
+        print("Created by current user: $createdByUser");
+        print("Assigned to current user (general): $assignedToUser");
+        print("Assigned as reporter: $assignedAsReporter");
+        print("Assigned as cameraman: $assignedAsCameraman");
+
+        if (createdByUser ||
+            assignedToUser ||
+            assignedAsReporter ||
+            assignedAsCameraman) {
+          print("*** THIS TASK SHOULD BE COUNTED ***");
+        }
+      }
+
+      // Count tasks created by user
+      var createdTasks = docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return data["createdBy"] == userId;
-      }).length;
+      }).toList();
 
-      taskAssigned.value = docs.where((doc) {
+      totalTaskCreated.value = createdTasks.length;
+      print("\nTasks created by user: ${createdTasks.length}");
+
+      // Count tasks assigned to user
+      var assignedTasks = docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return data["assignedTo"] == userId ||
             data["assignedReporterId"] == userId ||
             data["assignedCameramanId"] == userId;
-      }).length;
+      }).toList();
+
+      taskAssigned.value = assignedTasks.length;
+      print("Tasks assigned to user: ${assignedTasks.length}");
+
+      print("=== END ENHANCED DEBUG ===\n");
 
       calculateNewTaskCount();
     } catch (e) {
@@ -359,6 +447,8 @@ class TaskController extends GetxController {
       debugPrint("Error in fetchTaskCounts: $e");
     }
   }
+
+
 
   // --- LEGACY STREAMING (for other screens if needed) ---
   void fetchTasks() {
