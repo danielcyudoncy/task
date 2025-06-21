@@ -5,7 +5,6 @@ import 'package:task/controllers/task_controller.dart';
 import 'package:task/widgets/app_bar.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/error_state_widget.dart';
-import 'package:task/widgets/filter_bar.dart';
 import 'package:task/widgets/task_card.dart';
 import 'package:task/widgets/task_detail_sheet.dart';
 import 'package:task/widgets/task_skeleton_list.dart';
@@ -20,27 +19,46 @@ class AllTaskScreen extends StatefulWidget {
 
 class _AllTaskScreenState extends State<AllTaskScreen> {
   final TaskController taskController = Get.find<TaskController>();
+  final TextEditingController _searchController = TextEditingController();
+  final RxString _searchQuery = ''.obs;
+  final RxString _selectedFilter = 'All'.obs;
+  final RxList<String> _selectedTasks = <String>[].obs;
+  
 
   @override
   void initState() {
     super.initState();
     taskController.loadInitialTasks();
+    _searchController.addListener(() {
+      _searchQuery.value = _searchController.text;
+      _filterTasks();
+    });
   }
 
-  void _onSearch(String val) {
-    taskController.loadInitialTasks(search: val.trim());
+  void _filterTasks() {
+    final filteredTasks = taskController.tasks.where((task) {
+      final matchesSearch =
+          task.title.toLowerCase().contains(_searchQuery.value.toLowerCase()) ||
+              task.description
+                  .toLowerCase()
+                  .contains(_searchQuery.value.toLowerCase());
+
+      final matchesFilter = _selectedFilter.value == 'All' ||
+          (_selectedFilter.value == 'Completed' &&
+              task.status == 'Completed') ||
+          (_selectedFilter.value == 'Pending' && task.status == 'Pending');
+      // Removed the High Priority check since Task model doesn't have priority field
+
+      return matchesSearch && matchesFilter;
+    }).toList();
+
+    taskController.tasks.assignAll(filteredTasks);
   }
 
-  void _onFilter(String? val) {
-    if (val != null) {
-      taskController.loadInitialTasks(filter: val);
-    }
-  }
-
-  void _onSort(String? val) {
-    if (val != null) {
-      taskController.loadInitialTasks(sort: val);
-    }
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -63,15 +81,78 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
           child: Column(
             children: [
               AppBarWidget(basePadding: basePadding),
-              FilterBarWidget(
-                basePadding: basePadding,
-                textScale: textScale,
-                filterStatus: taskController.filterStatus,
-                sortBy: taskController.sortBy,
-                onSearch: _onSearch,
-                onFilter: _onFilter,
-                onSort: _onSort,
+              // Search and Filter Row
+              Padding(
+                padding:
+                    EdgeInsets.symmetric(horizontal: basePadding, vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search tasks...',
+                          prefixIcon:
+                              Icon(Icons.search, color: colorScheme.onSurface),
+                          filled: true,
+                          fillColor:
+                              isDark ? Colors.grey[900] : Colors.grey[200],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Obx(() => DropdownButton<String>(
+                          value: _selectedFilter.value,
+                          items:
+                              ['All', 'Completed', 'Pending']
+                                  .map((filter) => DropdownMenuItem(
+                                        value: filter,
+                                        child: Text(filter),
+                                      ))
+                                  .toList(),
+                          onChanged: (value) {
+                            _selectedFilter.value = value!;
+                            _filterTasks();
+                          },
+                          dropdownColor:
+                              isDark ? Colors.grey[900] : Colors.white,
+                          style: TextStyle(color: colorScheme.onSurface),
+                        )),
+                  ],
+                ),
               ),
+              // Batch Selection Indicator
+              Obx(() => _selectedTasks.isNotEmpty
+                  ? Container(
+                      padding: EdgeInsets.symmetric(
+                          vertical: 8, horizontal: basePadding),
+                      color: isDark ? Colors.blueGrey[900] : Colors.blue[100],
+                      child: Row(
+                        children: [
+                          Text(
+                            '${_selectedTasks.length} selected',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.blue[900],
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(Icons.close,
+                                color:
+                                    isDark ? Colors.white : Colors.blue[900]),
+                            onPressed: () => _selectedTasks.clear(),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+              // Main Content
               Expanded(
                 child: Obx(() {
                   if (taskController.isLoading.value &&
@@ -92,15 +173,11 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                       message: "Try adjusting your filters or search.",
                     );
                   }
-                  return NotificationListener<ScrollNotification>(
-                    onNotification: (scrollInfo) {
-                      if (!taskController.isLoading.value &&
-                          taskController.hasMore &&
-                          scrollInfo.metrics.pixels >=
-                              scrollInfo.metrics.maxScrollExtent - 100) {
-                        taskController.loadMoreTasks();
-                      }
-                      return false;
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      _selectedTasks.clear();
+                      await taskController.loadInitialTasks();
+                      _filterTasks();
                     },
                     child: ListView.separated(
                       padding: EdgeInsets.symmetric(
@@ -123,26 +200,52 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           );
                         }
                         final task = taskController.tasks[index];
-                        return TaskCard(
-                          data: task
-                              .toMapWithUserInfo(taskController.userNameCache),
-                          isLargeScreen: isLargeScreen,
-                          textScale: textScale,
-                          onTap: () => showModalBottomSheet(
-                            context: context,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(24)),
-                            ),
-                            builder: (_) => TaskDetailSheet(
+                        return GestureDetector(
+                          onLongPress: () {
+                            if (_selectedTasks.contains(task.taskId)) {
+                              _selectedTasks.remove(task.taskId);
+                            } else {
+                              _selectedTasks.add(task.taskId);
+                            }
+                          },
+                          child: Container(
+                            color: _selectedTasks.contains(task.taskId)
+                                ? (isDark
+                                    ? Colors.blueGrey[800]
+                                    : Colors.blue[50])
+                                : Colors.transparent,
+                            child: TaskCard(
                               data: task.toMapWithUserInfo(
                                   taskController.userNameCache),
+                              isLargeScreen: isLargeScreen,
                               textScale: textScale,
-                              isDark: isDark,
+                              onTap: () {
+                                if (_selectedTasks.isNotEmpty) {
+                                  if (_selectedTasks.contains(task.taskId)) {
+                                    _selectedTasks.remove(task.taskId);
+                                  } else {
+                                    _selectedTasks.add(task.taskId);
+                                  }
+                                } else {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(24)),
+                                    ),
+                                    builder: (_) => TaskDetailSheet(
+                                      data: task.toMapWithUserInfo(
+                                          taskController.userNameCache),
+                                      textScale: textScale,
+                                      isDark: isDark,
+                                    ),
+                                  );
+                                }
+                              },
+                              onAction:
+                                  (_) {}, // Empty function for view-only mode
                             ),
                           ),
-                          onAction: (choice) =>
-                              _handleTaskAction(choice, task, context),
                         );
                       },
                     ),
@@ -155,33 +258,5 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
       ),
       bottomNavigationBar: const UserNavBar(currentIndex: 1),
     );
-  }
-
-  Future<void> _handleTaskAction(
-      String choice, dynamic task, BuildContext context) async {
-    if (choice == 'Edit') {
-      Get.toNamed('/edit_task', arguments: task);
-    } else if (choice == 'Delete') {
-      bool? confirm = await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Delete Task"),
-          content: const Text("Are you sure you want to delete this task?"),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancel")),
-            TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Delete")),
-          ],
-        ),
-      );
-      if (confirm == true) {
-        await taskController.deleteTask(task.taskId);
-      }
-    } else if (choice == 'Mark as Completed') {
-      await taskController.updateTaskStatus(task.taskId, "Completed");
-    }
   }
 }
