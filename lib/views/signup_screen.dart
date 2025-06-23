@@ -29,27 +29,15 @@ class SignUpScreen extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: theme.brightness == Brightness.light
-              ? const LinearGradient(
-                  colors: [Colors.white, Color(0xFF2e3bb5)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
-              : LinearGradient(
-                  colors: [colorScheme.surface, Colors.grey.shade900],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-        ),
+        color: const Color(0xFF08169D), // primaryBlue background
+
         child: SafeArea(
           child: Stack(
             children: [
-              // Main Scrollable Content
               Positioned.fill(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(
-                      top: 10, left: 25, right: 25, bottom: 25),
+                      top: 5, left: 20, right: 15, bottom: 20),
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
@@ -87,7 +75,7 @@ class SignUpScreen extends StatelessWidget {
                                 "Create Account",
                                 style: textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'raleway',
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -97,6 +85,8 @@ class SignUpScreen extends StatelessWidget {
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 24),
+
+                              // Full Name
                               _buildTextField(
                                 context: context,
                                 controller: fullNameController,
@@ -110,6 +100,8 @@ class SignUpScreen extends StatelessWidget {
                                 },
                               ),
                               const SizedBox(height: 12),
+
+                              // Email
                               _buildTextField(
                                 context: context,
                                 controller: emailController,
@@ -127,40 +119,72 @@ class SignUpScreen extends StatelessWidget {
                                 },
                               ),
                               const SizedBox(height: 12),
-                              _buildTextField(
-                                context: context,
-                                controller: passwordController,
-                                icon: Icons.lock,
-                                hint: "Password",
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return "Password cannot be empty";
-                                  }
-                                  if (value.length < 6) {
-                                    return "Password must be at least 6 characters";
-                                  }
-                                  return null;
-                                },
-                              ),
+
+                              // Password with visibility toggle
+                              Obx(() => _buildTextField(
+                                    context: context,
+                                    controller: passwordController,
+                                    obscureText: authController
+                                        .isSignUpPasswordHidden.value,
+                                    icon: Icons.lock,
+                                    hint: "Password",
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return "Password cannot be empty";
+                                      }
+                                      if (value.length < 6) {
+                                        return "Password must be at least 6 characters";
+                                      }
+                                      return null;
+                                    },
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        authController
+                                                .isSignUpPasswordHidden.value
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                      ),
+                                      onPressed: () {
+                                        authController.isSignUpPasswordHidden
+                                            .toggle();
+                                      },
+                                    ),
+                                  )),
                               const SizedBox(height: 12),
-                              _buildTextField(
-                                context: context,
-                                controller: confirmPasswordController,
-                                icon: Icons.lock,
-                                hint: "Confirm Password",
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return "Please confirm your password";
-                                  }
-                                  if (value != passwordController.text) {
-                                    return "Passwords do not match";
-                                  }
-                                  return null;
-                                },
-                              ),
+
+                              // Confirm Password with visibility toggle
+                              Obx(() => _buildTextField(
+                                    context: context,
+                                    controller: confirmPasswordController,
+                                    obscureText: authController
+                                        .isConfirmPasswordHidden.value,
+                                    icon: Icons.lock,
+                                    hint: "Confirm Password",
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return "Please confirm your password";
+                                      }
+                                      if (value != passwordController.text) {
+                                        return "Passwords do not match";
+                                      }
+                                      return null;
+                                    },
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        authController
+                                                .isConfirmPasswordHidden.value
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                      ),
+                                      onPressed: () {
+                                        authController.isConfirmPasswordHidden
+                                            .toggle();
+                                      },
+                                    ),
+                                  )),
                               const SizedBox(height: 12),
+
+                              // Role Dropdown
                               Obx(() => DropdownButtonFormField<String>(
                                     value: authController
                                             .selectedRole.value.isEmpty
@@ -202,6 +226,8 @@ class SignUpScreen extends StatelessWidget {
                                     }).toList(),
                                   )),
                               const SizedBox(height: 20),
+
+                              // Sign Up Button
                               Obx(() => authController.isLoading.value
                                   ? const CircularProgressIndicator()
                                   : SizedBox(
@@ -222,11 +248,14 @@ class SignUpScreen extends StatelessWidget {
                                           style: textTheme.bodyLarge?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: colorScheme.onPrimary,
+                                            fontFamily: 'raleway',
                                           ),
                                         ),
                                       ),
                                     )),
+
                               const SizedBox(height: 20),
+
                               Row(
                                 children: [
                                   const Expanded(child: Divider()),
@@ -240,6 +269,7 @@ class SignUpScreen extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 16),
+
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -275,6 +305,7 @@ class SignUpScreen extends StatelessWidget {
                                       style: textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.primary,
                                         fontWeight: FontWeight.bold,
+                                        fontFamily: 'raleway',
                                       ),
                                     ),
                                   ),
@@ -314,6 +345,7 @@ class SignUpScreen extends StatelessWidget {
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     required String? Function(String?) validator,
+    Widget? suffixIcon,
   }) {
     final theme = Theme.of(context);
 
@@ -326,6 +358,7 @@ class SignUpScreen extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: theme.brightness == Brightness.light
             ? Colors.grey[200]

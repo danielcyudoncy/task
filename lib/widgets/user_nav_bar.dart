@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:task/utils/constants/app_colors.dart';
 
 class UserNavBar extends StatelessWidget {
   final int currentIndex;
@@ -23,7 +24,7 @@ class UserNavBar extends StatelessWidget {
     return ConvexAppBar(
       style: TabStyle.react,
       backgroundColor: isLightMode ? Colors.white : Colors.black,
-      activeColor: Colors.blue,
+      activeColor: AppColors.primaryColor,
       color: Colors.grey,
       elevation: 12,
       initialActiveIndex: currentIndex,

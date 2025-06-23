@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2E3BB5), // Using the specified blue color
+      backgroundColor: const Color(0xFF08169D), // Using the specified blue color
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -45,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Your home for news',
+              'Your Home For News',
               style: TextStyle(
                 color: Colors.white,
                 fontFamily: 'Raleway',
