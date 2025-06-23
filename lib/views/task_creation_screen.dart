@@ -27,7 +27,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   TimeOfDay? _selectedTime;
 
   final List<String> _priorities = ['Low', 'Medium', 'High', 'Normal'];
-  RxBool _navigated = false.obs; // For robust navigation
+  final RxBool _navigated = false.obs; // For robust navigation
 
   @override
   void dispose() {
@@ -151,16 +151,22 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text(
-          "Create Task",
-          style: AppStyles.sectionTitleStyle.copyWith(
-            fontSize: isTablet ? AppSizes.titleLarge : AppSizes.titleNormal,
-            color: isDarkTheme ? Colors.white : Colors.indigo,
+        title: Padding(
+          padding: const EdgeInsets.all(68.0),
+          child: Text(
+            "Create Task",
+            style: AppStyles.sectionTitleStyle.copyWith(
+              fontSize: isTablet ? AppSizes.titleLarge : AppSizes.titleNormal,
+              color: isDarkTheme ? Colors.white : Colors.white,
+            ),
           ),
         ),
         backgroundColor: Theme.of(context).primaryColor,
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Theme.of(context).primaryColor,
         
         padding:
             EdgeInsets.all(isTablet ? AppSizes.medium * 2 : AppSizes.medium),
@@ -208,7 +214,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                           labelText: "Task Title",
                           labelStyle: TextStyle(
                             fontSize: AppSizes.fontSmall,
-                            color: isDarkTheme ? Colors.white70 : Colors.indigo,
+                            color: isDarkTheme ? Colors.white70 : Colors.black,
                           ),
                           filled: true,
                           fillColor:
@@ -234,7 +240,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                           labelText: "Priority",
                           labelStyle: TextStyle(
                             fontSize: AppSizes.fontSmall,
-                            color: isDarkTheme ? Colors.white70 : Colors.indigo,
+                            color: isDarkTheme ? Colors.white70 : Colors.black,
                           ),
                           filled: true,
                           fillColor:

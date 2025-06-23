@@ -159,37 +159,46 @@ class LoginScreen extends StatelessWidget {
                                 const SizedBox(height: 16),
 
                                 // Password Field
-                                TextFormField(
-                                  controller: _passwordController,
-                                  obscureText: true,
-                                  style: textTheme.bodyMedium,
-                                  decoration: InputDecoration(
-                                    labelText: "Password",
-                                    labelStyle: textTheme.bodyMedium,
-                                    hintStyle: textTheme.bodyMedium,
-                                    prefixIcon: Icon(Icons.lock,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.black54),
-                                    filled: true,
-                                    fillColor: isDark
-                                        ? Colors.grey[800]
-                                        : Colors.grey[200],
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return "Please enter your password";
-                                    }
-                                    if (value.length < 6) {
-                                      return "Password must be at least 6 characters";
-                                    }
-                                    return null;
-                                  },
-                                ),
+                                Obx(() => TextFormField(
+      controller: _passwordController,
+      obscureText: _auth.isLoginPasswordHidden.value,
+      style: textTheme.bodyMedium,
+      decoration: InputDecoration(
+        labelText: "Password",
+        labelStyle: textTheme.bodyMedium,
+        hintStyle: textTheme.bodyMedium,
+        prefixIcon: Icon(Icons.lock,
+            color: isDark ? Colors.white70 : Colors.black54),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _auth.isLoginPasswordHidden.value
+                ? Icons.visibility_off
+                : Icons.visibility,
+            color: isDark ? Colors.white70 : Colors.black54,
+          ),
+          onPressed: () {
+            _auth.isLoginPasswordHidden.value =
+                !_auth.isLoginPasswordHidden.value;
+          },
+        ),
+        filled: true,
+        fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "Please enter your password";
+        }
+        if (value.length < 6) {
+          return "Password must be at least 6 characters";
+        }
+        return null;
+      },
+    )),
+
 
                                 const SizedBox(height: 20),
 
