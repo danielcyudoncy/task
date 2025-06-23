@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/constants/app_styles.dart';
+import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
 import 'package:task/widgets/header_widget.dart';
 import 'package:task/widgets/user_nav_bar.dart';
@@ -402,6 +403,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       }
 
       return Scaffold(
+        drawer: AppDrawer(),
+        appBar: AppBar(
+          title: const Text(''),
+        ),
         body: Container(
           decoration: BoxDecoration(
             gradient: isDark
