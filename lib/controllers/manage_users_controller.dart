@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/service/user_deletion_service.dart';
 
-
 class ManageUsersController extends GetxController {
   final UserDeletionService userDeletionService;
 
@@ -12,13 +11,14 @@ class ManageUsersController extends GetxController {
 
   // Observables
   var isLoading = false.obs;
+  var isDeletingUser = false.obs; // Separate loading state for deletion
   var usersList = <Map<String, dynamic>>[].obs;
   var filteredUsersList = <Map<String, dynamic>>[].obs;
   var tasksList = <Map<String, dynamic>>[].obs;
-  DocumentSnapshot? lastDocument; // For pagination
+  DocumentSnapshot? lastDocument;
   var hasMoreUsers = true.obs;
   var isHovered = <bool>[].obs;
-  final int usersLimit = 15; // Page size
+  final int usersLimit = 15;
 
   late ScrollController _scrollController;
   ScrollController get scrollController => _scrollController;
@@ -26,7 +26,7 @@ class ManageUsersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchUsers(); // Initial page
+    fetchUsers();
     fetchTasks();
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
@@ -60,8 +60,9 @@ class ManageUsersController extends GetxController {
         final newUsers = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
           return {
-            'id': doc.id,
             'uid': doc.id,
+            'id': doc.id,
+            'fullName': data['fullName'] ?? 'Unknown User',
             'fullname': data['fullName'] ?? 'Unknown User',
             'role': data['role'] ?? 'No Role',
             'email': data['email'] ?? 'No Email',
@@ -74,10 +75,7 @@ class ManageUsersController extends GetxController {
           usersList.value = newUsers;
         }
 
-        // Keep filtered in sync
         filteredUsersList.assignAll(usersList);
-
-        // Update isHovered for new items
         isHovered.assignAll(List.filled(usersList.length, false));
 
         lastDocument = snapshot.docs.last;
@@ -85,6 +83,8 @@ class ManageUsersController extends GetxController {
       } else {
         hasMoreUsers.value = false;
       }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch users: $e');
     } finally {
       isLoading.value = false;
     }
@@ -93,7 +93,6 @@ class ManageUsersController extends GetxController {
   /// Fetch all tasks for assignment
   Future<void> fetchTasks() async {
     try {
-      isLoading.value = true;
       QuerySnapshot snapshot =
           await FirebaseFirestore.instance.collection('tasks').get();
       if (snapshot.docs.isNotEmpty) {
@@ -107,12 +106,12 @@ class ManageUsersController extends GetxController {
       } else {
         tasksList.clear();
       }
-    } finally {
-      isLoading.value = false;
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch tasks: $e');
     }
   }
 
-  /// Assign a task to a user (creates/overwrites under assignedTasks)
+  /// Assign a task to a user
   Future<void> assignTaskToUser(String userId, String taskId) async {
     try {
       await FirebaseFirestore.instance
@@ -127,25 +126,102 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Remove user from Firestore and Auth (via service)
+  /// Enhanced delete user method with better error handling
   Future<bool> deleteUser(String userId) async {
+    // Prevent multiple simultaneous deletions
+    if (isDeletingUser.value) {
+      Get.snackbar('Warning', 'Another deletion is in progress');
+      return false;
+    }
+
+    // Find user to delete
+    final userToDelete =
+        usersList.firstWhereOrNull((user) => user['uid'] == userId);
+    if (userToDelete == null) {
+      Get.snackbar('Error', 'User not found');
+      return false;
+    }
+
+    // Confirm deletion
+    bool? confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: Text(
+            'Are you sure you want to delete ${userToDelete['fullName']}?\n\nThis action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return false;
+
+    // Create backups
+    final backupUsersList = List<Map<String, dynamic>>.from(usersList);
+    final backupFilteredList =
+        List<Map<String, dynamic>>.from(filteredUsersList);
+
     try {
-       print('Deleting user with ID: $userId');
-      await userDeletionService.deleteUserByAdmin(userId);
-      usersList
-          .removeWhere((user) => user['id'] == userId || user['uid'] == userId);
-      filteredUsersList.assignAll(usersList);
+      isDeletingUser.value = true;
+
+      print('Starting deletion process for user: $userId');
+      print('User details: ${userToDelete.toString()}');
+
+      // Optimistic UI update
+      usersList.removeWhere((user) => user['uid'] == userId);
+      filteredUsersList.removeWhere((user) => user['uid'] == userId);
       isHovered.assignAll(List.filled(usersList.length, false));
-      Get.snackbar('Success', 'User deleted successfully');
+
+      // Perform actual deletion
+      await userDeletionService.deleteUserByAdmin(userId);
+
+      print('User deletion completed successfully');
+      Get.snackbar(
+        'Success',
+        'User ${userToDelete['fullName']} deleted successfully',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
       return true;
     } catch (e) {
+      // Restore from backup if deletion failed
+      usersList.assignAll(backupUsersList);
+      filteredUsersList.assignAll(backupFilteredList);
+      isHovered.assignAll(List.filled(usersList.length, false));
+
       print('Error deleting user: $e');
-      Get.snackbar('Error', 'Failed to delete user: $e');
+
+      String errorMessage = 'Failed to delete user';
+      if (e.toString().contains('Insufficient permissions')) {
+        errorMessage = 'You do not have permission to delete users';
+      } else if (e.toString().contains('Cloud function')) {
+        errorMessage = 'Server error: Unable to delete user account';
+      } else if (e.toString().contains('network')) {
+        errorMessage = 'Network error: Please check your connection';
+      }
+
+      Get.snackbar(
+        'Error',
+        errorMessage,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
       return false;
+    } finally {
+      isDeletingUser.value = false;
     }
   }
 
-  /// Promote user to admin (Firestore only; use Admin SDK for real custom claims)
+  /// Promote user to admin
   Future<void> promoteToAdmin(String userId) async {
     try {
       await FirebaseFirestore.instance
@@ -164,7 +240,7 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Search by name or email in the current loaded users
+  /// Search by name or email
   void searchUsers(String query) {
     if (query.isEmpty) {
       filteredUsersList.assignAll(usersList);
@@ -179,14 +255,14 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Update hover state (useful for web/desktop UI)
+  /// Update hover state
   void updateHoverState(int index, bool value) {
     if (index >= 0 && index < isHovered.length) {
       isHovered[index] = value;
     }
   }
 
-  /// Infinite scroll: loads next page if not loading/finished and scrolled near bottom
+  /// Infinite scroll listener
   void _scrollListener() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {

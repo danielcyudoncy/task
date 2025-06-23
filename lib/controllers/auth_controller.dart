@@ -23,6 +23,11 @@ class AuthController extends GetxController {
   RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
 
   final Rx<User?> user = Rx<User?>(null);
+  RxBool isLoginPasswordHidden = true.obs;
+  RxBool isSignUpPasswordHidden = true.obs;
+  RxBool isConfirmPasswordHidden = true.obs;
+
+
 
   User? get currentUser => user.value;
 

@@ -144,7 +144,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           Get.snackbar("Error", "Please select a task");
           return;
         }
-        final userId = user['uid'] ?? user['id'];
+        final userId = user['uid'];
         if (userId == null) {
           Get.snackbar("Error", "User ID is missing");
           return;
@@ -182,7 +182,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   void _showManageUsersDialog() {
     final currentUserId = authController.user.value?.uid;
     final otherUsers = manageUsersController.usersList
-        .where((user) => user['uid'] != currentUserId)
+        .where((user) => user['uid'] != currentUserId) // Use uid consistently
         .toList();
 
     Get.dialog(
@@ -254,7 +254,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
 
     if (result == true) {
-      final userId = user['uid'] ?? user['id'];
+      final userId = user['uid'];
       if (userId != null) {
         await manageUsersController.deleteUser(userId);
         Get.snackbar("Success", "User deleted successfully",
@@ -432,6 +432,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             AppStrings.dailyAssignments,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'raleway',
                               fontSize: 18.sp,
                               color: Colors.white,
                             ),
@@ -456,6 +457,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             "TASK",
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
+                              fontFamily: 'raleway',
                               fontSize: 16.sp,
                               color: Colors.white,
                             ),
