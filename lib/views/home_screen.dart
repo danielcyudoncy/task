@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/stats_section.dart';
 import 'package:task/widgets/task_section.dart';
 import '../controllers/auth_controller.dart';
@@ -52,6 +53,15 @@ class _HomeScreenState extends State<HomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      drawer: AppDrawer(),
+      
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.blue),
+        title: const Text(''),
+        
+      ),
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
