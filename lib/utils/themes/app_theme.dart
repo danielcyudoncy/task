@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 class AppTheme {
   static const Color _primaryBlue = Color(0xFF08169D);
   static const Color _secondaryBlue = Color(0xFF00B0FF);
@@ -11,6 +10,7 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+    scaffoldBackgroundColor: Colors.white,
     colorScheme: const ColorScheme.light(
       primary: _primaryBlue,
       onPrimary: Colors.white,
@@ -26,7 +26,6 @@ class AppTheme {
       onPrimaryContainer: _primaryBlue,
       surfaceVariant: Color(0xFFF3F6FD),
     ),
-    scaffoldBackgroundColor: Colors.white,
     textTheme: GoogleFonts.ralewayTextTheme(),
     dividerTheme: const DividerThemeData(
       color: Colors.black12,
@@ -34,12 +33,11 @@ class AppTheme {
       space: 1,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: Colors.white,
-      foregroundColor: _primaryBlue,
+      backgroundColor: const Color(0xFF181B2A), // allow override
       elevation: 0,
-      iconTheme: const IconThemeData(color: _primaryBlue),
+      iconTheme: const IconThemeData(color: Colors.white), // white hamburger
       titleTextStyle: GoogleFonts.raleway(
-        color: _primaryBlue,
+        color: Colors.white,
         fontWeight: FontWeight.bold,
         fontSize: 20.sp,
       ),
@@ -77,6 +75,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+    scaffoldBackgroundColor: const Color(0xFF181B2A),
     colorScheme: const ColorScheme.dark(
       primary: _primaryBlue,
       onPrimary: Colors.white,
@@ -92,7 +91,6 @@ class AppTheme {
       onPrimaryContainer: Colors.white,
       surfaceVariant: Color(0xFF23243A),
     ),
-    scaffoldBackgroundColor: const Color(0xFF181B2A),
     textTheme: GoogleFonts.ralewayTextTheme(ThemeData.dark().textTheme),
     dividerTheme: const DividerThemeData(
       color: Colors.white24,
@@ -100,8 +98,7 @@ class AppTheme {
       space: 1,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFF181B2A),
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.transparent, // allow override
       elevation: 0,
       iconTheme: const IconThemeData(color: Colors.white),
       titleTextStyle: GoogleFonts.raleway(
@@ -139,5 +136,4 @@ class AppTheme {
       ),
     ),
   );
-
 }
