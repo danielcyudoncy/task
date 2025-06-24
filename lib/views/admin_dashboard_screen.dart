@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/notification_controller.dart';
 import 'package:task/utils/constants/app_strings.dart';
-import 'package:task/utils/constants/app_styles.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
-import 'package:task/widgets/header_widget.dart';
+import 'package:task/widgets/user_header.dart';
 import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/admin_controller.dart';
 import '../controllers/auth_controller.dart';
@@ -24,12 +24,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     with SingleTickerProviderStateMixin {
   final AdminController adminController = Get.find<AdminController>();
   final AuthController authController = Get.find<AuthController>();
+  final NotificationController notificationController = Get.find();
   final ManageUsersController manageUsersController =
       Get.find<ManageUsersController>();
 
   late TabController _tabController;
   String? selectedTaskTitle;
   final Map<String, Map<String, String>> userCache = {};
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     adminController.fetchStatistics();
     adminController.fetchDashboardData();
     manageUsersController.fetchUsers();
+    
   }
 
   @override
@@ -291,33 +294,55 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
     }
 
-    Get.defaultDialog(
-      title: AppStrings.taskDetails,
-      content: StatefulBuilder(
-        builder: (context, setState) {
-          final userInfo = userCache[creatorId];
-          if (userInfo == null && creatorId != 'Unknown') {
-            getUserNameAndRole(creatorId, () => setState(() {}));
-          }
-          final creatorName = userInfo?["name"] ?? creatorId;
-          final creatorRole = userInfo?["role"] ?? "Unknown";
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Title: $title"),
-              const SizedBox(height: 6),
-              Text("Status: ${_getTaskStatus(title)}"),
-              const SizedBox(height: 6),
-              Text("Created by: $creatorName"),
-              Text("Role: $creatorRole"),
-              Text("Date: $dateStr"),
-            ],
-          );
-        },
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(AppStrings.taskDetails),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            final userInfo = userCache[creatorId];
+            if (userInfo == null && creatorId != 'Unknown') {
+              getUserNameAndRole(creatorId, () => setState(() {}));
+            }
+            final creatorName = userInfo?["name"] ?? creatorId;
+            final creatorRole = userInfo?["role"] ?? "Unknown";
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Title: $title"),
+                const SizedBox(height: 6),
+                Text("Status: ${_getTaskStatus(title)}"),
+                const SizedBox(height: 6),
+                Text("Created by: $creatorName"),
+                Text("Role: $creatorRole"),
+                Text("Date: $dateStr"),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.blueAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              AppStrings.close,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
-      textConfirm: AppStrings.close,
-      onConfirm: () => Get.back(),
     );
+
   }
 
   String _getTaskStatus(String title) {
@@ -403,27 +428,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       }
 
       return Scaffold(
-        drawer: AppDrawer(),
-        appBar: AppBar(
-          title: const Text(''),
-        ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: isDark
-                ? const LinearGradient(
-                    colors: [Colors.black, Colors.black87],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  )
-                : AppStyles.gradientBackground,
-          ),
-          child: SafeArea(
+        key: _scaffoldKey,
+        drawer: const AppDrawer(),
+        body: SafeArea(
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color:
+                  isDark ? Colors.black : Theme.of(context).colorScheme.primary,
+            ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
+                UserHeader(isDark: isDark, scaffoldKey: _scaffoldKey),
+                
+                const Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  child: HeaderWidget(authController: authController),
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                  
                 ),
                 Expanded(
                   child: SingleChildScrollView(

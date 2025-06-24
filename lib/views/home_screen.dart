@@ -12,7 +12,6 @@ import '../widgets/user_nav_bar.dart';
 import '../utils/constants/app_strings.dart';
 import '../utils/constants/app_styles.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -28,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen>
       Get.find<NotificationController>();
 
   late TabController _tabController;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -53,15 +53,8 @@ class _HomeScreenState extends State<HomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      drawer: AppDrawer(),
-      
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.blue),
-        title: const Text(''),
-        
-      ),
+      key: _scaffoldKey,
+      drawer: const AppDrawer(),
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -71,141 +64,134 @@ class _HomeScreenState extends State<HomeScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Your existing header section here
+              // New Header Implementation
               Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                child: Column(
                   children: [
-                    Obx(() {
-                      final user = authController.currentUser;
-                      final userName = authController.fullName.value.isNotEmpty
-                          ? authController.fullName.value
-                          : AppStrings.unknownUser;
-                      final photoUrl = user?.photoURL;
-
-                      return CircleAvatar(
-                        radius: 20.sp,
-                        backgroundColor: Colors.white,
-                        backgroundImage:
-                            (photoUrl != null && photoUrl.isNotEmpty)
-                                ? NetworkImage(photoUrl)
-                                : null,
-                        child: (photoUrl == null || photoUrl.isEmpty)
-                            ? Text(
-                                userName.isNotEmpty
-                                    ? userName[0].toUpperCase()
-                                    : '?',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      );
-                    }),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Obx(() {
-                        final userName =
-                            authController.fullName.value.isNotEmpty
-                                ? authController.fullName.value
-                                : AppStrings.unknownUser;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppStrings.welcome,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'raleway',
-                                fontSize: 24.sp,
-                              ),
-                            ),
-                            Row(
+                    // First Row: Menu + Avatar with Notification
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.menu,
+                              color: Colors.white, size: 28.sp),
+                          onPressed: () {
+                            if (_scaffoldKey.currentState != null) {
+                              _scaffoldKey.currentState!.openDrawer();
+                            }
+                          },
+                        ),
+                        // Clickable Avatar with Notification Badge
+                        GestureDetector(
+                          onTap: () => Get.toNamed('/notifications'),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Stack(
+                              clipBehavior: Clip.none,
                               children: [
-                                Text(
-                                  userName,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12.sp,
+                                // Avatar
+                                Obx(() {
+                                  final user = authController.currentUser;
+                                  final photoUrl = user?.photoURL;
+                                  return CircleAvatar(
+                                    radius: 20.sp,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage: (photoUrl != null &&
+                                            photoUrl.isNotEmpty)
+                                        ? NetworkImage(photoUrl)
+                                        : null,
+                                    child:
+                                        (photoUrl == null || photoUrl.isEmpty)
+                                            ? Text(
+                                                authController.fullName.value
+                                                        .isNotEmpty
+                                                    ? authController
+                                                        .fullName.value[0]
+                                                        .toUpperCase()
+                                                    : '?',
+                                                style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                                  fontSize: 20.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
+                                            : null,
+                                  );
+                                }),
+                                // Notification Badge
+                                Positioned(
+                                  right: -4,
+                                  top: -4,
+                                  child: Obx(
+                                    () => notificationController
+                                                .unreadCount.value >
+                                            0
+                                        ? Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 2),
+                                            ),
+                                            constraints: BoxConstraints(
+                                              minWidth: 20.w,
+                                              minHeight: 20.h,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                notificationController
+                                                            .unreadCount.value >
+                                                        9
+                                                    ? '9+'
+                                                    : '${notificationController.unreadCount.value}',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : const SizedBox(),
                                   ),
                                 ),
                               ],
                             ),
-                          ],
-                        );
-                      }),
-                    ),
-                    Container(
-                      width: 30.w,
-                      height: 30.h,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.transparent,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/png/logo.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Obx(() {
-                      int unread = notificationController.unreadCount.value;
-                      return Stack(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications,
-                                color: Colors.white, size: 28),
-                            onPressed: () {
-                              Get.toNamed('/notifications');
-                            },
-                            tooltip: "Notifications",
                           ),
-                          if (unread > 0)
-                            Positioned(
-                              right: 8,
-                              top: 8,
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: BoxConstraints(
-                                  minWidth: 16.w,
-                                  minHeight: 16.h,
-                                ),
-                                child: Text(
-                                  unread > 9 ? '9+' : '$unread',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
+                        ),
+                      ],
+                    ),
+                    // Second Row: Greeting + Email
+                    Padding(
+                      padding: EdgeInsets.only(left: 8.w, top: 8.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Hello, ${authController.fullName.value}",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Raleway',
                             ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            authController.currentUser?.email ?? '',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.sp,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
-                      );
-                    }),
-                    IconButton(
-                      icon: const Icon(Icons.logout,
-                          color: Colors.white, size: 28),
-                      onPressed: () async {
-                        await authController.logout();
-                        Get.offAllNamed("/login");
-                      },
-                      tooltip: "Logout",
+                      ),
                     ),
                   ],
                 ),
