@@ -1,115 +1,175 @@
 // controllers/notification_controller.dart
-import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class NotificationController extends GetxController {
-  var notifications = <Map<String, dynamic>>[].obs;
-  var unreadCount = 0.obs;
+  final RxList<Map<String, dynamic>> notifications =
+      <Map<String, dynamic>>[].obs;
+  final RxInt unreadCount = 0.obs;
+  final RxInt totalNotifications = 0.obs;
+  final RxBool isLoading = false.obs;
 
   @override
   void onInit() {
-    super.onInit();
     fetchNotifications();
+    super.onInit();
   }
 
-  // ✅ Fetch notifications in real-time
-  void fetchNotifications() {
-    String? uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+  Future<void> fetchNotifications() async {
+    try {
+      isLoading.value = true;
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
 
-    notifications.bindStream(
-      FirebaseFirestore.instance
-          .collection("users")
-          .doc(uid)
-          .collection("notifications")
-          .orderBy("timestamp", descending: true)
-          .snapshots()
-          .map((snapshot) {
-        return snapshot.docs.map((doc) {
-          final data = doc.data(); // <-- SAFELY get the map
-          return {
-            "id": doc.id,
-            "title": data["title"] ?? "No Title",
-            "message": data["message"] ?? "No Message",
-            "timestamp": data["timestamp"],
-            "isRead": data["isRead"] ?? false,
-          };
-        }).toList();
-      }),
-    );
+      notifications.bindStream(
+        FirebaseFirestore.instance
+            .collection("users")
+            .doc(uid)
+            .collection("notifications")
+            .orderBy("timestamp", descending: true)
+            .snapshots()
+            .handleError((error) {
+          Get.snackbar("Error", "Failed to load notifications");
+          debugPrint("Notification Error: $error");
+        }).map((snapshot) {
+          final docs = snapshot.docs;
+          totalNotifications.value = docs.length;
 
-    notifications.listen((_) => updateUnreadCount());
+          final parsedNotifications = docs.map((doc) {
+            try {
+              final data = doc.data() as Map<String, dynamic>? ?? {};
+              return {
+                'id': doc.id,
+                'title': data['title']?.toString() ?? 'No Title',
+                'message': data['message']?.toString() ?? 'No Message',
+                'timestamp': data['timestamp'] as Timestamp?,
+                'isRead': data['isRead'] as bool? ?? false,
+                'type': data['type']?.toString(),
+              };
+            } catch (e) {
+              debugPrint('Error parsing notification ${doc.id}: $e');
+              return {
+                'id': doc.id,
+                'title': 'Invalid Notification',
+                'message': 'Could not load this notification',
+                'timestamp': Timestamp.now(),
+                'isRead': true,
+              };
+            }
+          }).toList();
+
+          updateUnreadCount(parsedNotifications);
+          return parsedNotifications;
+        }),
+      );
+    } catch (e) {
+      debugPrint('Fetch Notifications Error: $e');
+      Get.snackbar('Error', 'Failed to setup notifications stream');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  // ... rest of your controller unchanged ...
-  void updateUnreadCount() {
-    unreadCount.value =
-        notifications.where((n) => !(n["isRead"] ?? true)).length;
+  void updateUnreadCount(List<Map<String, dynamic>>? currentNotifications) {
+    try {
+      final notificationsList = currentNotifications ?? notifications;
+      unreadCount.value = notificationsList.where((n) {
+        final isRead = n['isRead'] as bool? ?? true;
+        return !isRead;
+      }).length;
+    } catch (e) {
+      debugPrint('Update Unread Count Error: $e');
+      unreadCount.value = 0;
+    }
   }
 
   Future<void> markAsRead(String notificationId) async {
     try {
-      String? uid = FirebaseAuth.instance.currentUser?.uid;
+      final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
 
       await FirebaseFirestore.instance
-          .collection("users")
+          .collection('users')
           .doc(uid)
-          .collection("notifications")
+          .collection('notifications')
           .doc(notificationId)
-          .update({"isRead": true});
+          .update({'isRead': true});
 
-      fetchNotifications();
+      // Update local state immediately
+      final index = notifications.indexWhere((n) => n['id'] == notificationId);
+      if (index != -1) {
+        notifications[index]['isRead'] = true;
+        updateUnreadCount(notifications);
+      }
     } catch (e) {
-      Get.snackbar("Error", "Failed to mark as read: ${e.toString()}");
+      debugPrint('Mark as Read Error: $e');
+      Get.snackbar('Error', 'Failed to mark notification as read');
     }
   }
 
-  Future<void> deleteNotification(String notificationId) async {
+  Future<void> markAllAsRead() async {
     try {
-      String? uid = FirebaseAuth.instance.currentUser?.uid;
+      final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
 
-      await FirebaseFirestore.instance
-          .collection("users")
+      final batch = FirebaseFirestore.instance.batch();
+      final collectionRef = FirebaseFirestore.instance
+          .collection('users')
           .doc(uid)
-          .collection("notifications")
+          .collection('notifications');
+
+      final unreadNotifications =
+          notifications.where((n) => !(n['isRead'] as bool)).toList();
+
+      for (final notification in unreadNotifications) {
+        batch.update(
+          collectionRef.doc(notification['id']),
+          {'isRead': true},
+        );
+      }
+
+      await batch.commit();
+
+      // Update local state
+      for (final notification in notifications) {
+        notification['isRead'] = true;
+      }
+      unreadCount.value = 0;
+    } catch (e) {
+      debugPrint('Mark All as Read Error: $e');
+      Get.snackbar('Error', 'Failed to mark all notifications as read');
+    }
+  }
+
+  // Add this method to your NotificationController class
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+
+      // Remove from Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('notifications')
           .doc(notificationId)
           .delete();
 
-      fetchNotifications();
-      Get.snackbar("Success", "Notification deleted");
+      // Remove from local state
+      notifications.removeWhere((n) => n['id'] == notificationId);
+
+      // Update counts
+      totalNotifications.value = notifications.length;
+      updateUnreadCount(notifications);
+
+      Get.snackbar('Success', 'Notification deleted',
+          snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar("Error", "Failed to delete: ${e.toString()}");
-    }
-  }
-
-  Future<void> saveTaskNotification({
-    required String userId,
-    required String taskTitle,
-    required String taskDescription,
-    required DateTime taskDateTime,
-  }) async {
-    final formattedDate = DateFormat('yyyy-MM-dd – kk:mm').format(taskDateTime);
-    final message = 'Description: $taskDescription\nDue: $formattedDate';
-
-    try {
-      await FirebaseFirestore.instance
-          .collection("users")
-          .doc(userId)
-          .collection("notifications")
-          .add({
-        "title": taskTitle,
-        "message": message,
-        "timestamp": FieldValue.serverTimestamp(),
-        "isRead": false,
-      });
-
-      fetchNotifications();
-    } catch (e) {
-      Get.snackbar("Error", "Failed to save notification.");
+      debugPrint('Delete Notification Error: $e');
+      Get.snackbar('Error', 'Failed to delete notification',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 }

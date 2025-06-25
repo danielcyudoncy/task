@@ -19,7 +19,7 @@ class FallbackApp extends StatelessWidget {
   const FallbackApp({super.key, required this.error});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {  
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text('Error')),

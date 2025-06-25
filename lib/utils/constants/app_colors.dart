@@ -9,4 +9,9 @@ class AppColors {
   static const secondaryColor = Color(0xFFEF882B);
   static const tertiaryColor = Color(0xFF333333);
   static const saveColor = Color(0xFF007AFF);
+  static const Color darkBackground = Color(0xFF121212);
+  static const Color darkCard = Color(0xFF1E1E1E);
+  static const Color darkAppBar = Color(0xFF1A1A1A);
+  static const Color primaryText = Color(0xFF333333);
+  static const Color secondaryText = Color(0xFF666666);
 }
