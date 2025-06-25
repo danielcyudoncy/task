@@ -2,7 +2,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:task/controllers/auth_controller.dart';
@@ -10,20 +9,18 @@ import 'package:task/firebase_options.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/user_controller.dart';
-import 'package:task/service/mock_user_deletion_service.dart'; // Mock only
+import 'package:task/controllers/chat_controller.dart';
 import 'package:task/myApp.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:task/service/mock_user_deletion_service.dart';
+import 'package:task/service/presence_service.dart';
 
-// ▶️ Warn if mock service is used in production
 void _validateMockUsage() {
   if (kReleaseMode) {
     debugPrint("""
     ⚠️ WARNING: Using MockUserDeletionService in production!
     Replace with CloudFunctionUserDeletionService once Firebase payments are ready.
     """);
-    // Optional: Throw an exception to force attention in production
-    // throw Exception("Mock service detected in production!");
   }
 }
 
@@ -53,22 +50,19 @@ Future<void> bootstrapApp() async {
     Get.put(ThemeController(), permanent: true);
     Get.put(SettingsController(), permanent: true);
     Get.put(AuthController(), permanent: true);
-    Get.put(UserController(MockUserDeletionService())); // ◀️ Mock only
 
-    // 6. Initialize Firestore metrics (optional)
-    try {
-      final docRef = FirebaseFirestore.instance
-          .collection('dashboard_metrics')
-          .doc('summary');
-      if (!(await docRef.get()).exists) {
-        await docRef.set({
-          'totalUsers': 0,
-          'tasks': {'total': 0, 'completed': 0, 'pending': 0, 'overdue': 0},
-        });
-      }
-    } catch (e) {
-      debugPrint("⚠️ Firestore metrics skipped: $e");
-    }
+    // Initialize UserController with required service
+    Get.put(UserController(MockUserDeletionService()), permanent: true);
+
+    // Initialize Chat-related services
+    Get.put(PresenceService(), permanent: true);
+    Get.put(ChatController(), permanent: true);
+
+     // Initialize presence
+    await Get.find<PresenceService>().setOnline();
+
+    // Set initial online status
+    await Get.find<UserController>().updateUserPresence(true);
 
     // 7. Run the app
     runApp(const MyApp());
@@ -79,28 +73,10 @@ Future<void> bootstrapApp() async {
     StackTrace: $stackTrace
     """);
     runApp(
-        const ErrorApp(error: "App initialization failed. Please try again later."));
-  }
-}
-
-/// Error widget (unchanged)
-class ErrorApp extends StatelessWidget {
-  final String error;
-  const ErrorApp({super.key, required this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(24.w),
-            child: Text(
-              error,
-              style: TextStyle(color: Colors.red, fontSize: 16.sp),
-              textAlign: TextAlign.center,
-            ),
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text('App initialization failed. Please try again later.'),
           ),
         ),
       ),

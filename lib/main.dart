@@ -1,30 +1,64 @@
 // main.dart
 import 'package:flutter/material.dart';
 import 'package:task/core/bootstrap.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:task/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    // Load environment variables early
+    await dotenv.load(fileName: "assets/.env");
+
+    // Initialize Firebase before app starts
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
     await bootstrapApp();
   } catch (error, stackTrace) {
-    // Log errors to Crashlytics/Sentry or show a fallback UI
     debugPrint('Bootstrap failed: $error\n$stackTrace');
-    runApp(FallbackApp(error: error)); // Custom error widget
+    runApp(FallbackApp(error: error.toString()));
   }
 }
+
 class FallbackApp extends StatelessWidget {
-  final Object error;
+  final String error;
 
   const FallbackApp({super.key, required this.error});
 
   @override
-  Widget build(BuildContext context) {  
+  Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: Center(
-          child: Text('An error occurred: $error'),
+        backgroundColor: Colors.grey[900],
+        appBar: AppBar(title: const Text('Initialization Error')),
+        body: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 60, color: Colors.red),
+              const SizedBox(height: 20),
+              Text(
+                'App failed to initialize',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                error,
+                style: const TextStyle(color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () => main(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       ),
     );
