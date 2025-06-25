@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:task/views/chat_screen.dart';
 import '../controllers/auth_controller.dart';
+import 'chat_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -20,6 +20,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   String searchQuery = '';
   TextEditingController searchController = TextEditingController();
   int totalUnread = 0;
+  String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +30,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
       appBar: AppBar(
         title: const Text('Chats'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              final result = await showSearch(
+                context: context,
+                delegate: ChatSearchDelegate(currentUserId),
+              );
+              if (result != null) {
+                // Future: open selected chat
+              }
+            },
+          ),
           Stack(
             alignment: Alignment.topRight,
             children: [
@@ -37,18 +50,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 onPressed: () {},
               ),
               if (totalUnread > 0)
-                Container(
-                  margin: EdgeInsets.only(top: 8.h, right: 8.w),
-                  padding: EdgeInsets.all(5.r),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+                Positioned(
+                  right: 8.w,
+                  top: 8.h,
+                  child: Container(
+                    padding: EdgeInsets.all(5.r),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      totalUnread.toString(),
+                      style: TextStyle(fontSize: 10.sp, color: Colors.white),
+                    ),
                   ),
-                  child: Text(
-                    totalUnread.toString(),
-                    style: TextStyle(fontSize: 10.sp, color: Colors.white),
-                  ),
-                ),
+                )
             ],
           ),
         ],
@@ -61,17 +77,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               decoration: InputDecoration(
                 hintText: 'Search by name...',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            searchQuery = '';
-                            searchController.clear();
-                          });
-                        },
-                      )
-                    : null,
+                suffixIcon: queryClearIcon(isDark),
                 filled: true,
                 fillColor: isDark ? Colors.grey[900] : Colors.grey[200],
                 border: OutlineInputBorder(
@@ -91,8 +97,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('conversations')
-            .where('participants',
-                arrayContains: FirebaseAuth.instance.currentUser!.uid)
+            .where('participants', arrayContains: currentUserId)
             .orderBy('lastMessageTime', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
@@ -101,31 +106,61 @@ class _ChatListScreenState extends State<ChatListScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildEmptyState();
+
+          final docs = snapshot.data?.docs ?? [];
+
+          // Build empty state if no conversations
+          if (docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.chat, size: 48.sp, color: Colors.grey),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'No conversations yet',
+                    style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
           }
 
-          final conversations = snapshot.data!.docs;
+          // Sort so that pinned chats come first
+          docs.sort((a, b) {
+            final aPinned = (a['pinnedUsers'] ?? []).contains(currentUserId);
+            final bPinned = (b['pinnedUsers'] ?? []).contains(currentUserId);
+            if (aPinned && !bPinned) return -1;
+            if (!aPinned && bPinned) return 1;
+            return 0; // Leave order based on Firestore sort
+          });
 
+          // Build list
           return ListView.builder(
             padding: EdgeInsets.symmetric(vertical: 8.h),
-            itemCount: conversations.length,
+            itemCount: docs.length,
             itemBuilder: (context, index) {
-              final conversation =
-                  conversations[index].data() as Map<String, dynamic>;
+              final conversation = docs[index];
+              final data = conversation.data() as Map<String, dynamic>;
               final participants =
-                  conversation['participants'] as List<dynamic>;
-              final receiverId = participants.firstWhere(
-                  (id) => id != FirebaseAuth.instance.currentUser!.uid);
-              final lastMessage = conversation['lastMessage'] ?? '';
+                  List<String>.from(data['participants'] ?? []);
+              final receiverId =
+                  participants.firstWhere((id) => id != currentUserId);
+              final lastMessage = data['lastMessage'] as String? ?? '';
               final lastMessageTime =
-                  conversation['lastMessageTime'] as Timestamp?;
-              final unreadCount = (conversation['unreadCount'] ?? 0) as int;
+                  (data['lastMessageTime'] as Timestamp?)?.toDate();
+              final unreadCountMap =
+                  Map<String, dynamic>.from(data['unreadCount'] ?? {});
+              final unreadCount = (unreadCountMap[currentUserId] ?? 0).toInt();
+              final pinnedList = List<String>.from(data['pinnedUsers'] ?? []);
+              final pinned = pinnedList.contains(currentUserId);
 
-              totalUnread += unreadCount;
+              totalUnread += (unreadCount as int);
+
 
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
@@ -133,14 +168,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     .doc(receiverId)
                     .get(),
                 builder: (context, userSnapshot) {
-                  if (!userSnapshot.hasData) return const SizedBox();
+                  if (!userSnapshot.hasData) {
+                    return const ListTile(title: Text('Loading...'));
+                  }
+
                   final userData =
                       userSnapshot.data!.data() as Map<String, dynamic>;
-                  final userName = userData['name'] ?? 'Unknown';
-                  final userAvatar = userData['profilePic'] ?? '';
-                  final isOnline = userData['isOnline'] ?? false;
-                  final lastSeen = userData['lastSeen'];
+                  final userName = userData['name'] as String? ?? 'Unknown';
+                  final userAvatar = userData['profilePic'] as String? ?? '';
+                  final isOnline = userData['isOnline'] as bool? ?? false;
+                  final lastSeenTimestamp =
+                      (userData['lastSeen'] as Timestamp?)?.toDate();
 
+                  // Hide if not matching search query
                   if (searchQuery.isNotEmpty &&
                       !userName
                           .toLowerCase()
@@ -149,116 +189,35 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   }
 
                   return Dismissible(
-                    key: Key(conversations[index].id),
+                    key: Key(conversation.id),
                     direction: DismissDirection.endToStart,
+                    confirmDismiss: (_) => Future.value(true),
                     background: Container(
                       alignment: Alignment.centerRight,
                       padding: EdgeInsets.only(right: 20.w),
                       color: Colors.red,
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
-                    confirmDismiss: (_) =>
-                        _confirmDelete(conversations[index].id),
+                    onDismissed: (_) {
+                      FirebaseFirestore.instance
+                          .collection('conversations')
+                          .doc(conversation.id)
+                          .delete();
+                    },
                     child: GestureDetector(
-                      onLongPress: () =>
-                          _confirmDelete(conversations[index].id),
-                      child: Card(
-                        margin: EdgeInsets.symmetric(
-                            horizontal: 16.w, vertical: 4.h),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r)),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: userAvatar.isNotEmpty
-                                ? NetworkImage(userAvatar)
-                                : null,
-                            child: userAvatar.isEmpty
-                                ? Text(
-                                    userName[0].toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 18.sp,
-                                      color:
-                                          isDark ? Colors.black : Colors.white,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          title: Text(
-                            userName,
-                            style: TextStyle(
-                              fontWeight: unreadCount > 0
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              fontSize: 16.sp,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                lastMessage,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 13.sp, color: Colors.grey),
-                              ),
-                              Text(
-                                isOnline
-                                    ? 'Online'
-                                    : lastSeen != null
-                                        ? 'Last seen ${_timeAgo(DateTime.fromMillisecondsSinceEpoch(lastSeen))}'
-                                        : 'Offline',
-                                style: TextStyle(
-                                    fontSize: 11.sp,
-                                    color:
-                                        isOnline ? Colors.green : Colors.grey),
-                              ),
-                            ],
-                          ),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              if (lastMessageTime != null)
-                                Text(
-                                  _formatTime(lastMessageTime.toDate()),
-                                  style: TextStyle(
-                                      fontSize: 12.sp, color: Colors.grey),
-                                ),
-                              if (unreadCount > 0)
-                                TweenAnimationBuilder(
-                                  tween: Tween<double>(begin: 0.8, end: 1.0),
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                  builder: (context, scale, child) {
-                                    return Transform.scale(
-                                      scale: scale,
-                                      child: Container(
-                                        padding: EdgeInsets.all(6.r),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).primaryColor,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Text(
-                                          unreadCount.toString(),
-                                          style: TextStyle(
-                                              fontSize: 10.sp,
-                                              color: Colors.white),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                            ],
-                          ),
-                          onTap: () {
-                            Get.to(() => ChatScreen(
-                                  receiverId: receiverId,
-                                  receiverName: userName,
-                                  receiverAvatar: userAvatar,
-                                ));
-                          },
-                        ),
+                      onLongPress: () async {
+                        await togglePin(conversation.id, pinned);
+                      },
+                      child: buildChatTile(
+                        conversation.id,
+                        userName,
+                        userAvatar,
+                        isOnline,
+                        lastSeenTimestamp,
+                        lastMessage,
+                        lastMessageTime,
+                        unreadCount,
+                        pinned,
                       ),
                     ),
                   );
@@ -270,71 +229,228 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
     );
   }
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.chat_bubble_outline, size: 48.sp, color: Colors.grey),
-          SizedBox(height: 16.h),
-          Text('No conversations yet',
-              style: TextStyle(fontSize: 16.sp, color: Colors.grey)),
-        ],
+  Widget queryClearIcon(bool isDark) {
+    if (searchQuery.isNotEmpty) {
+      return IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          setState(() {
+            searchQuery = '';
+            searchController.clear();
+          });
+        },
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget buildChatTile(
+      String conversationId,
+      String userName,
+      String userAvatar,
+      bool isOnline,
+      DateTime? lastSeenTimestamp,
+      String lastMessage,
+      DateTime? lastMessageTime,
+      int unreadCount,
+      bool pinned) {
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: ListTile(
+        leading: buildAvatar(userAvatar, userName, isOnline),
+        title: buildTitleRow(userName, pinned, unreadCount),
+        subtitle: buildSubtitle(conversationId, lastMessage),
+        trailing: buildTrailing(lastMessageTime, unreadCount),
+        onTap: () => openChatScreen(conversationId, userName, userAvatar),
       ),
     );
   }
 
-  Future<bool> _confirmDelete(String conversationId) async {
-    final confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Conversation'),
-        content: const Text('Are you sure you want to delete this chat?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              await FirebaseFirestore.instance
-                  .collection('conversations')
-                  .doc(conversationId)
-                  .delete();
-              Navigator.pop(context, true);
-            },
-            child: const Text('Delete'),
+  Widget buildAvatar(String avatarUrl, String name, bool online) {
+    return Stack(
+      children: [
+        CircleAvatar(
+          radius: 24.r,
+          backgroundImage: avatarUrl.isEmpty ? null : NetworkImage(avatarUrl),
+          child: avatarUrl.isEmpty ? Text(name[0].toUpperCase()) : null,
+        ),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: CircleAvatar(
+            radius: 6.r,
+            backgroundColor: online ? Colors.green : Colors.grey,
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildTitleRow(String name, bool pinned, int unreadCount) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            name,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+        if (pinned) Icon(Icons.push_pin, size: 18.sp, color: Colors.grey),
+      ],
+    );
+  }
+
+  Widget buildSubtitle(String conversationId, String lastMessage) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('typingStatus')
+          .doc(currentUserId == FirebaseAuth.instance.currentUser!.uid
+              ? '' // ignore
+              : FirebaseAuth.instance.currentUser!.uid)
+          .snapshots(),
+      builder: (context, typingSnapshot) {
+        final data = typingSnapshot.data?.data() as Map<String, dynamic>?;
+        final isTyping = data?['isTyping'] == true;
+        final text = isTyping ? 'Typing...' : lastMessage;
+        return Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontStyle: isTyping ? FontStyle.italic : FontStyle.normal,
+            color: isTyping ? Colors.blue : Colors.grey[600],
+          ),
+        );
+      },
+    );
+  }
+  Widget buildTrailing(DateTime? time, int unreadCount) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          time != null ? _formatTime(time) : '',
+          style: TextStyle(fontSize: 12.sp),
+        ),
+        if (unreadCount > 0)
+          Container(
+            margin: EdgeInsets.only(top: 4.h),
+            padding: EdgeInsets.all(6.r),
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              unreadCount.toString(),
+              style: TextStyle(fontSize: 10.sp, color: Colors.white),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> togglePin(String conversationId, bool currentlyPinned) async {
+    final convoRef = FirebaseFirestore.instance
+        .collection('conversations')
+        .doc(conversationId);
+    await convoRef.update({
+      if (currentlyPinned)
+        'pinnedUsers': FieldValue.arrayRemove([currentUserId])
+      else
+        'pinnedUsers': FieldValue.arrayUnion([currentUserId])
+    });
+  }
+
+  void openChatScreen(String conversationId, String name, String avatarUrl) {
+    Get.to(
+      () => ChatScreen(
+        receiverId: conversationId,
+        receiverName: name,
+        receiverAvatar: avatarUrl,
       ),
     );
-    return confirm ?? false;
   }
 
   String _formatTime(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final messageDate = DateTime(date.year, date.month, date.day);
-
-    if (messageDate == today) {
-      return DateFormat('hh:mm a').format(date);
-    } else if (messageDate == yesterday) {
+    final msgDate = DateTime(date.year, date.month, date.day);
+    if (msgDate == today) {
+      return DateFormat('HH:mm').format(date);
+    } else if (msgDate == yesterday) {
       return 'Yesterday';
     } else {
-      return DateFormat('MMM d').format(date);
+      return DateFormat('MMM dd').format(date);
     }
   }
+}
 
-  String _timeAgo(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
+// Search delegate remains the same
+class ChatSearchDelegate extends SearchDelegate<String> {
+  final String currentUserId;
+  ChatSearchDelegate(this.currentUserId);
 
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) {
-      return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
-    }
-    if (diff.inDays == 1) return 'yesterday';
-    return '${diff.inDays} days ago';
+  @override
+  List<Widget>? buildActions(BuildContext context) => [
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () => query = '',
+        ),
+      ];
+
+  @override
+  Widget? buildLeading(BuildContext context) => IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => close(context, ''),
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => const SizedBox.shrink();
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return FutureBuilder<QuerySnapshot>(
+      future: FirebaseFirestore.instance.collection('users').get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final suggestions = snapshot.data!.docs.where((doc) {
+          final name = (doc.data() as Map)['name'] as String? ?? '';
+          return name.toLowerCase().contains(query.toLowerCase());
+        }).toList();
+
+        return ListView.builder(
+          itemCount: suggestions.length,
+          itemBuilder: (context, index) {
+            final doc = suggestions[index];
+            final data = doc.data() as Map<String, dynamic>;
+            final name = data['name'] as String? ?? 'Unknown';
+            final avatar = data['profilePic'] as String? ?? '';
+            final uid = doc.id;
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundImage: avatar.isEmpty ? null : NetworkImage(avatar),
+                child: avatar.isEmpty ? Text(name[0].toUpperCase()) : null,
+              ),
+              title: Text(name),
+              onTap: () {
+                close(context, uid);
+              },
+            );
+          },
+        );
+      },
+    );
   }
 }
