@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
+import 'package:task/service/presence_service.dart';
 import 'package:task/service/supabase_storage_service.dart';
 
 class AuthController extends GetxController {
@@ -26,6 +27,7 @@ class AuthController extends GetxController {
   RxBool isLoginPasswordHidden = true.obs;
   RxBool isSignUpPasswordHidden = true.obs;
   RxBool isConfirmPasswordHidden = true.obs;
+ 
 
 
 
@@ -55,6 +57,7 @@ class AuthController extends GetxController {
     "Head of Unit",
     "Admin"
   ];
+  bool get isLoggedIn => currentUser != null;
 
   @override
   void onInit() {
@@ -63,8 +66,10 @@ class AuthController extends GetxController {
       user.value = userValue;
       if (userValue == null) {
         debugPrint("User signed out");
+        _handlePresence(false); // Set offline when user logs out
       } else {
         debugPrint("User signed in: ${userValue.uid}");
+        _handlePresence(true); // Set online when user logs in
       }
     });
   }
@@ -105,6 +110,17 @@ class AuthController extends GetxController {
       Get.offAllNamed('/home');
     } else {
       Get.offAllNamed('/login');
+    }
+  }
+
+  Future<void> _handlePresence(bool isOnline) async {
+    if (Get.isRegistered<PresenceService>()) {
+      final presence = Get.find<PresenceService>();
+      if (isOnline) {
+        await presence.setOnline();
+      } else {
+        await presence.setOffline();
+      }
     }
   }
 
@@ -464,7 +480,7 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> signIn(String email, String password) async {
+    Future<void> signIn(String email, String password) async {
     try {
       isLoading(true);
       final UserCredential credential = await _auth.signInWithEmailAndPassword(
@@ -476,6 +492,7 @@ class AuthController extends GetxController {
 
       await loadUserData();
       lastActivity.value = DateTime.now();
+      await _handlePresence(true); // Set presence after successful login
 
       if (!isProfileComplete.value) {
         Get.offAllNamed("/profile-update");
@@ -507,6 +524,7 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     try {
       isLoading.value = true;
+      await _handlePresence(false); // Set offline before signing out
       await _auth.signOut();
       resetUserData();
       Get.offAllNamed("/login");
