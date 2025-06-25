@@ -17,7 +17,7 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       // Background color based on the theme
-      backgroundColor: isLightMode ? const Color(0xFF08169D) : Colors.black,
+      backgroundColor: isLightMode ? const Color(0xFF08169D) : const Color(0xFF181B2A),
       body: SafeArea(
         child: Obx(() {
           final fullName = authController.fullName.value;

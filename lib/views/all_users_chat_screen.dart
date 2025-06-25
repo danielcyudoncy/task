@@ -11,31 +11,53 @@ class AllUsersChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      return const Scaffold(
+        body: Center(child: Text('Please sign in to chat')),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('All Users')),
+      appBar: AppBar(
+        title: const Text('All Users'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              // Implement search functionality
+            },
+          ),
+        ],
+      ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .where('uid', isNotEqualTo: currentUserId) // Exclude current user
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final users = snapshot.data!.docs
-              .where((doc) => doc.id != currentUserId)
-              .toList();
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-          if (users.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text('No other users found'));
           }
+
+          final users = snapshot.data!.docs;
 
           return ListView.builder(
             itemCount: users.length,
             itemBuilder: (context, index) {
               final user = users[index];
-              final name = user['name'] ?? 'Unnamed';
-              final avatar = user['photoUrl'] ?? '';
+              final userData = user.data() as Map<String, dynamic>;
+              final name = userData['name'] ?? 'Unknown';
+              final email = userData['email'] ?? '';
+              final avatar = userData['profilePic'] ?? '';
 
               return ListTile(
                 leading: CircleAvatar(
@@ -44,7 +66,7 @@ class AllUsersChatScreen extends StatelessWidget {
                   child: avatar.isEmpty ? Text(name[0].toUpperCase()) : null,
                 ),
                 title: Text(name),
-                subtitle: Text(user['email'] ?? ''),
+                subtitle: Text(email),
                 onTap: () {
                   Get.to(() => ChatScreen(
                         receiverId: user.id,

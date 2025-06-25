@@ -73,8 +73,8 @@ class TaskCardWidget extends StatelessWidget {
               Align(
                 alignment: Alignment.bottomRight,
                 child: IconButton(
-                  icon: const Icon(Icons.edit_note_rounded,
-                      color: textColor, size: 22),
+                  icon:  Icon(Icons.edit_note_rounded,
+                      color: textColor, size: 22.sp),
                   onPressed: () => TaskActions.editTask(context, task),
                   tooltip: "Edit Task",
                 ),
