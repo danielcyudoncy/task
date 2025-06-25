@@ -144,7 +144,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/chat-list",
-      page: () =>  ChatListScreen(),
+      page: () =>  const ChatListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
