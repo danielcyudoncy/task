@@ -57,7 +57,7 @@ class _AppDrawerState extends State<AppDrawer> {
         child: Column(
           children: [
             /// Header
-           Container(
+            Container(
               height: 200.h,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -79,9 +79,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       painter: ConcentricCirclePainter(
                         centerOffset:
                             Offset(70.w, 90.h), // match avatar position
-                        ringColor: isDark
-                            ? Colors.white54
-                            : Colors.white,
+                        ringColor: isDark ? Colors.white54 : Colors.white,
                       ),
                     ),
                   ),
@@ -149,11 +147,6 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
 
-
-
-
-
-            /// Calendar Toggle
             /// Calendar Toggle
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -179,7 +172,6 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
               ),
             ),
-
 
             if (_showCalendar)
               Container(
@@ -231,6 +223,8 @@ class _AppDrawerState extends State<AppDrawer> {
                 children: [
                   _buildCardTile(Icons.home, 'Home', '/home'),
                   _buildCardTile(Icons.person, 'Profile', '/profile'),
+                  _buildCardTile(
+                      Icons.chat, 'Chat', '/chat-list'), // New chat button
                   _buildCardTile(Icons.settings, 'Settings', '/settings'),
                   _buildMyTasksCard(),
                   _buildDarkModeCard(isDark),
