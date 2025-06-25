@@ -6,134 +6,138 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   static const Color _primaryBlue = Color(0xFF08169D);
   static const Color _secondaryBlue = Color(0xFF00B0FF);
+  static const Color _lightSurfaceVariant = Color(0xFFF3F6FD);
+  static const Color _darkSurfaceVariant = Color(0xFF23243A);
 
-  static ThemeData lightTheme = ThemeData(
-    useMaterial3: true,
+  static ThemeData lightTheme = _baseTheme(
     brightness: Brightness.light,
-    scaffoldBackgroundColor: Colors.white,
-    colorScheme: const ColorScheme.light(
-      primary: _primaryBlue,
-      onPrimary: Colors.white,
-      secondary: _secondaryBlue,
-      onSecondary: Colors.white,
-      background: Colors.white,
-      onBackground: Colors.black,
-      surface: Colors.white,
-      onSurface: Colors.black,
-      error: Colors.red,
-      onError: Colors.white,
-      primaryContainer: Color(0xFFDDE1F9),
-      onPrimaryContainer: _primaryBlue,
-      surfaceVariant: Color(0xFFF3F6FD),
-    ),
-    textTheme: GoogleFonts.ralewayTextTheme(),
-    dividerTheme: const DividerThemeData(
-      color: Colors.black12,
-      thickness: 1,
-      space: 1,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFF181B2A), // allow override
-      elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white), // white hamburger
-      titleTextStyle: GoogleFonts.raleway(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-        fontSize: 20.sp,
-      ),
-    ),
-    inputDecorationTheme: const InputDecorationTheme(
-      filled: true,
-      fillColor: Color(0xFFF3F6FD),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        borderSide: BorderSide.none,
-      ),
-      hintStyle: TextStyle(color: Colors.black54),
-    ),
-    elevatedButtonTheme: const ElevatedButtonThemeData(
-      style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(_primaryBlue),
-        foregroundColor: WidgetStatePropertyAll(Colors.white),
-        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        )),
-        elevation: WidgetStatePropertyAll(0),
-      ),
-    ),
-    outlinedButtonTheme: const OutlinedButtonThemeData(
-      style: ButtonStyle(
-        foregroundColor: WidgetStatePropertyAll(_primaryBlue),
-        side: WidgetStatePropertyAll(BorderSide(color: _primaryBlue)),
-        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        )),
-      ),
-    ),
+    primaryColor: _primaryBlue,
+    secondaryColor: _secondaryBlue,
+    background: Colors.white,
+    onBackground: Colors.black,
+    surface: Colors.white,
+    onSurface: Colors.black,
+    surfaceVariant: _lightSurfaceVariant,
+    onSurfaceVariant: Colors.black54,
+    primaryContainer: const Color(0xFFDDE1F9),
+    onPrimaryContainer: _primaryBlue,
+    dividerColor: Colors.black12,
+    hintColor: Colors.black54,
+    appBarBackgroundColor: const Color(0xFF181B2A),
+    inputFillColor: _lightSurfaceVariant,
+    textColor: Colors.black,
+    isDark: false,
   );
 
-  static ThemeData darkTheme = ThemeData(
-    useMaterial3: true,
+  static ThemeData darkTheme = _baseTheme(
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF181B2A),
-    colorScheme: const ColorScheme.dark(
-      primary: _primaryBlue,
-      onPrimary: Colors.white,
-      secondary: _secondaryBlue,
-      onSecondary: Colors.black,
-      background: Color(0xFF181B2A),
-      onBackground: Colors.white,
-      surface: Color(0xFF23243A),
-      onSurface: Colors.white,
-      error: Colors.red,
-      onError: Colors.black,
-      primaryContainer: Color(0xFF23243A),
-      onPrimaryContainer: Colors.white,
-      surfaceVariant: Color(0xFF23243A),
-    ),
-    textTheme: GoogleFonts.ralewayTextTheme(ThemeData.dark().textTheme),
-    dividerTheme: const DividerThemeData(
-      color: Colors.white24,
-      thickness: 1,
-      space: 1,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.transparent, // allow override
-      elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
-      titleTextStyle: GoogleFonts.raleway(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-        fontSize: 20.sp,
-      ),
-    ),
-    inputDecorationTheme: const InputDecorationTheme(
-      filled: true,
-      fillColor: Color(0xFF23243A),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        borderSide: BorderSide.none,
-      ),
-      hintStyle: TextStyle(color: Colors.white70),
-    ),
-    elevatedButtonTheme: const ElevatedButtonThemeData(
-      style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(_primaryBlue),
-        foregroundColor: WidgetStatePropertyAll(Colors.white),
-        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        )),
-        elevation: WidgetStatePropertyAll(0),
-      ),
-    ),
-    outlinedButtonTheme: const OutlinedButtonThemeData(
-      style: ButtonStyle(
-        foregroundColor: WidgetStatePropertyAll(Colors.white),
-        side: WidgetStatePropertyAll(BorderSide(color: _primaryBlue)),
-        shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        )),
-      ),
-    ),
+    primaryColor: _primaryBlue,
+    secondaryColor: _secondaryBlue,
+    background: const Color(0xFF181B2A),
+    onBackground: Colors.white,
+    surface: const Color(0xFF23243A),
+    onSurface: Colors.white,
+    surfaceVariant: _darkSurfaceVariant,
+    onSurfaceVariant: Colors.white70,
+    primaryContainer: const Color(0xFF23243A),
+    onPrimaryContainer: Colors.white,
+    dividerColor: Colors.white24,
+    hintColor: Colors.white70,
+    appBarBackgroundColor: Colors.transparent,
+    inputFillColor: _darkSurfaceVariant,
+    textColor: Colors.white,
+    isDark: true,
   );
+
+  static ThemeData _baseTheme({
+    required Brightness brightness,
+    required Color primaryColor,
+    required Color secondaryColor,
+    required Color background,
+    required Color onBackground,
+    required Color surface,
+    required Color onSurface,
+    required Color surfaceVariant,
+    required Color onSurfaceVariant,
+    required Color primaryContainer,
+    required Color onPrimaryContainer,
+    required Color dividerColor,
+    required Color hintColor,
+    required Color appBarBackgroundColor,
+    required Color inputFillColor,
+    required Color textColor,
+    required bool isDark,
+  }) {
+    final colorScheme = ColorScheme(
+      brightness: brightness,
+      primary: primaryColor,
+      onPrimary: Colors.white,
+      secondary: secondaryColor,
+      onSecondary: isDark ? Colors.black : Colors.white,
+      background: background,
+      onBackground: onBackground,
+      surface: surface,
+      onSurface: onSurface,
+      error: Colors.red,
+      onError: isDark ? Colors.black : Colors.white,
+      primaryContainer: primaryContainer,
+      onPrimaryContainer: onPrimaryContainer,
+      surfaceVariant: surfaceVariant,
+      onSurfaceVariant: onSurfaceVariant,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      scaffoldBackgroundColor: background,
+      colorScheme: colorScheme,
+      textTheme: GoogleFonts.ralewayTextTheme(
+        isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
+      ),
+      dividerTheme: DividerThemeData(
+        color: dividerColor,
+        thickness: 1,
+        space: 1,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: appBarBackgroundColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: GoogleFonts.raleway(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 20.sp,
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: inputFillColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        hintStyle: TextStyle(color: hintColor),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStatePropertyAll(primaryColor),
+          foregroundColor: const WidgetStatePropertyAll(Colors.white),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          elevation: const WidgetStatePropertyAll(0),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          foregroundColor:
+              WidgetStatePropertyAll(isDark ? Colors.white : primaryColor),
+          side: WidgetStatePropertyAll(BorderSide(color: primaryColor)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      ),
+    );
+  }
 }
