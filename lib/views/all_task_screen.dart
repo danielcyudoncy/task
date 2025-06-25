@@ -47,7 +47,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
           (_selectedFilter.value == 'Completed' &&
               task.status == 'Completed') ||
           (_selectedFilter.value == 'Pending' && task.status == 'Pending');
-      // Removed the High Priority check since Task model doesn't have priority field
+      
 
       return matchesSearch && matchesFilter;
     }).toList();
@@ -112,7 +112,9 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                               ['All', 'Completed', 'Pending']
                                   .map((filter) => DropdownMenuItem(
                                         value: filter,
-                                        child: Text(filter),
+                                        child: Text(filter,
+                                            style: const TextStyle(
+                                                color: Colors.white)),
                                       ))
                                   .toList(),
                           onChanged: (value) {
@@ -120,7 +122,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                             _filterTasks();
                           },
                           dropdownColor:
-                              isDark ? Colors.grey[900] : Colors.white,
+                              isDark ? Colors.grey[900] : Colors.blue,
                           style: TextStyle(color: colorScheme.onSurface),
                         )),
                   ],
