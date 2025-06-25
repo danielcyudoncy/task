@@ -1,5 +1,6 @@
 // views/settings_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/settings_controller.dart';
 import '../controllers/theme_controller.dart';
@@ -17,20 +18,21 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: isLightMode
           ? const Color(0xFF05168E)
-          : Colors.black, // Keep your custom color in light mode
+          : const Color(0xFF181B2A), // Keep your custom color in light mode
       appBar: AppBar(
         elevation: 0,
         backgroundColor: isLightMode
             ? const Color(0xFF05168E)
-            : Colors.black, // Match the app bar background
+            : const Color(0xFF181B2A), // Match the app bar background
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title:  Text(
           'Settings',
           style: TextStyle(
-              color: Colors.white, fontSize: 33, fontWeight: FontWeight.w700),
+            fontFamily: 'raleway',
+              color: Colors.white, fontSize: 30.sp, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
       ),

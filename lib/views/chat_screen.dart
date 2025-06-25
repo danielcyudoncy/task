@@ -1,10 +1,11 @@
 // views/chat_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+
+import '../controllers/chat_controller.dart';
 
 class ChatScreen extends StatefulWidget {
   final String receiverId;
@@ -25,8 +26,56 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  final ChatController _chatController = Get.find<ChatController>();
   bool _isSending = false;
+  String? _conversationId;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeConversation();
+  }
+
+  Future<void> _initializeConversation() async {
+    _conversationId =
+        await _chatController.getOrCreateConversation(widget.receiverId);
+    setState(() {});
+  }
+
+  Future<void> _sendMessage() async {
+    if (_messageController.text.trim().isEmpty || _conversationId == null) {
+      return;
+    }
+
+    setState(() => _isSending = true);
+    final message = _messageController.text.trim();
+    _messageController.clear();
+
+    try {
+      final success = await _chatController.sendMessage(
+        conversationId: _conversationId!,
+        content: message,
+      );
+
+      if (success) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      } else {
+        Get.snackbar('Error', 'Failed to send message');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to send message');
+    } finally {
+      setState(() => _isSending = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -35,63 +84,9 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
-
-    setState(() => _isSending = true);
-    final message = _messageController.text.trim();
-    _messageController.clear();
-
-    try {
-      // Get or create conversation ID
-      final conversationId = _getConversationId(widget.receiverId);
-
-      // Add message to subcollection
-      await FirebaseFirestore.instance
-          .collection('conversations')
-          .doc(conversationId)
-          .collection('messages')
-          .add({
-        'senderId': currentUserId,
-        'content': message,
-        'timestamp': FieldValue.serverTimestamp(),
-        'read': false,
-      });
-
-      // Update conversation last message
-      await FirebaseFirestore.instance
-          .collection('conversations')
-          .doc(conversationId)
-          .update({
-        'lastMessage': message,
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'unreadCount': FieldValue.increment(1),
-      });
-
-      // Scroll to bottom
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      });
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to send message');
-    } finally {
-      setState(() => _isSending = false);
-    }
-  }
-
-  String _getConversationId(String receiverId) {
-    final ids = [currentUserId, receiverId]..sort();
-    return ids.join('_');
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final conversationId = _getConversationId(widget.receiverId);
 
     return Scaffold(
       appBar: AppBar(
@@ -125,12 +120,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       .doc(widget.receiverId)
                       .snapshots(),
                   builder: (context, snapshot) {
-                    final status = snapshot.data?['status'] ?? 'offline';
+                    final isOnline = snapshot.data?['isOnline'] ?? false;
+                    final lastSeen = snapshot.data?['lastSeen'] as Timestamp?;
                     return Text(
-                      status == 'online' ? 'Online' : 'Offline',
+                      isOnline
+                          ? 'Online'
+                          : 'Last seen ${_formatLastSeen(lastSeen?.toDate())}',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: status == 'online' ? Colors.green : Colors.grey,
+                        color: isOnline ? Colors.green : Colors.grey,
                       ),
                     );
                   },
@@ -151,106 +149,113 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('conversations')
-                  .doc(conversationId)
-                  .collection('messages')
-                  .orderBy('timestamp', descending: false)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: _conversationId == null
+                ? const Center(child: CircularProgressIndicator())
+                : StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('conversations')
+                        .doc(_conversationId)
+                        .collection('messages')
+                        .orderBy('timestamp', descending: false)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'Start a conversation with ${widget.receiverName}',
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  );
-                }
-
-                final messages = snapshot.data!.docs;
-
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _scrollController.jumpTo(
-                    _scrollController.position.maxScrollExtent,
-                  );
-                });
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: EdgeInsets.all(16.w),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message =
-                        messages[index].data() as Map<String, dynamic>;
-                    final isMe = message['senderId'] == currentUserId;
-                    final timestamp =
-                        (message['timestamp'] as Timestamp?)?.toDate();
-
-                    return Align(
-                      alignment:
-                          isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75,
-                        ),
-                        margin: EdgeInsets.symmetric(vertical: 4.h),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 12.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isMe
-                              ? Theme.of(context).primaryColor
-                              : isDark
-                                  ? Colors.grey[800]
-                                  : Colors.grey[200],
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(isMe ? 16.r : 4.r),
-                            topRight: Radius.circular(isMe ? 4.r : 16.r),
-                            bottomLeft: Radius.circular(16.r),
-                            bottomRight: Radius.circular(16.r),
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Start a conversation with ${widget.receiverName}',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              message['content'],
-                              style: TextStyle(
-                                color: isMe ? Colors.white : null,
-                                fontSize: 14.sp,
+                        );
+                      }
+
+                      final messages = snapshot.data!.docs;
+
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController.jumpTo(
+                            _scrollController.position.maxScrollExtent,
+                          );
+                        }
+                      });
+
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: EdgeInsets.all(16.w),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message =
+                              messages[index].data() as Map<String, dynamic>;
+                          final isMe = message['senderId'] ==
+                              _chatController.currentUserId;
+                          final timestamp =
+                              (message['timestamp'] as Timestamp?)?.toDate();
+
+                          return Align(
+                            alignment: isMe
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.75,
                               ),
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              timestamp != null
-                                  ? DateFormat('h:mm a').format(timestamp)
-                                  : '',
-                              style: TextStyle(
+                              margin: EdgeInsets.symmetric(vertical: 4.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16.w,
+                                vertical: 12.h,
+                              ),
+                              decoration: BoxDecoration(
                                 color: isMe
-                                    ? Colors.white70
+                                    ? Theme.of(context).primaryColor
                                     : isDark
-                                        ? Colors.grey[400]
-                                        : Colors.grey[600],
-                                fontSize: 10.sp,
+                                        ? Colors.grey[800]
+                                        : Colors.grey[200],
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(isMe ? 16.r : 4.r),
+                                  topRight: Radius.circular(isMe ? 4.r : 16.r),
+                                  bottomLeft: Radius.circular(16.r),
+                                  bottomRight: Radius.circular(16.r),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    message['content'],
+                                    style: TextStyle(
+                                      color: isMe ? Colors.white : null,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    timestamp != null
+                                        ? DateFormat('h:mm a').format(timestamp)
+                                        : '',
+                                    style: TextStyle(
+                                      color: isMe
+                                          ? Colors.white70
+                                          : isDark
+                                              ? Colors.grey[400]
+                                              : Colors.grey[600],
+                                      fontSize: 10.sp,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
           Container(
             padding: EdgeInsets.symmetric(
@@ -313,5 +318,23 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
+  }
+
+  String _formatLastSeen(DateTime? lastSeen) {
+    if (lastSeen == null) return 'a long time ago';
+
+    final now = DateTime.now();
+    final difference = now.difference(lastSeen);
+
+    if (difference.inSeconds < 60) return 'just now';
+    if (difference.inMinutes < 60) return '${difference.inMinutes} min ago';
+    if (difference.inHours < 24) {
+      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+    }
+    if (difference.inDays < 7) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    }
+
+    return DateFormat('MMM d').format(lastSeen);
   }
 }

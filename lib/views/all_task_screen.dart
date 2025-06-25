@@ -75,7 +75,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          color: isDark ? Colors.black : colorScheme.primary,
+          color: isDark ? const Color(0xFF181B2A) : colorScheme.primary,
         ),
         child: SafeArea(
           child: Column(

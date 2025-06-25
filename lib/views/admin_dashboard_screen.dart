@@ -435,7 +435,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             width: double.infinity,
             decoration: BoxDecoration(
               color:
-                  isDark ? Colors.black : Theme.of(context).colorScheme.primary,
+                  isDark ? const Color(0xFF181B2A)
+                  : Theme.of(context).colorScheme.primary,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
