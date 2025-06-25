@@ -223,8 +223,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 children: [
                   _buildCardTile(Icons.home, 'Home', '/home'),
                   _buildCardTile(Icons.person, 'Profile', '/profile'),
-                  _buildCardTile(
-                      Icons.chat, 'Chat', '/chat-list'), // New chat button
+                  _buildCardTile(Icons.chat, "Chat With Users", "/chat-list"),
                   _buildCardTile(Icons.settings, 'Settings', '/settings'),
                   _buildMyTasksCard(),
                   _buildDarkModeCard(isDark),
@@ -275,12 +274,13 @@ class _AppDrawerState extends State<AppDrawer> {
                 fontSize: 16.sp,
                 color: Theme.of(context).textTheme.bodyLarge?.color)),
         onTap: () {
-          Get.back();
-          Get.toNamed(route);
+          Get.back(); // Closes drawer or previous screen if needed
+          Get.toNamed(route); // Navigates to the provided route
         },
       ),
     );
   }
+
 
   Widget _buildMyTasksCard() {
     return Card(
