@@ -60,6 +60,7 @@ class UserHeader extends StatelessWidget {
                                     color:
                                         Theme.of(context).colorScheme.primary,
                                     fontSize: 20.sp,
+                                    fontFamily: 'Raleway',
                                     fontWeight: FontWeight.bold,
                                   ),
                                 )
@@ -116,7 +117,7 @@ class UserHeader extends StatelessWidget {
                       "Hello, ${authController.fullName.value}!",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 30.sp,
+                        fontSize: 22.sp,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Raleway',
                       ),
