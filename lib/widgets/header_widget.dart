@@ -61,7 +61,7 @@ class HeaderWidget extends StatelessWidget {
                   child: Obx(
                     () => notificationController.unreadCount.value > 0
                         ? Container(
-                            padding: EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
@@ -84,7 +84,7 @@ class HeaderWidget extends StatelessWidget {
                               ),
                             ),
                           )
-                        : SizedBox(),
+                        : const SizedBox(),
                   ),
                 ),
               ],
@@ -99,7 +99,7 @@ class HeaderWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Hello, ${authController.fullName.value}",
+                "Hello, ${authController.fullName.value}!",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20.sp,
