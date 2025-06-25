@@ -29,7 +29,7 @@ class SignUpScreen extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: const Color(0xFF08169D), // primaryBlue background
+        color: const Color(0xFF181B2A), // primaryBlue background
 
         child: SafeArea(
           child: Stack(

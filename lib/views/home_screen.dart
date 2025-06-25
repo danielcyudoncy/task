@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen>
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? Colors.black : Theme.of(context).colorScheme.primary,
+          color: isDark ? const Color(0xFF181B2A) : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: Column(
