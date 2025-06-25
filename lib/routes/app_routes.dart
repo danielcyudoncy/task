@@ -5,6 +5,7 @@ import 'package:task/routes/middleware.dart';
 import 'package:task/routes/profile_complete_middleware.dart';
 import 'package:task/views/admin_dashboard_screen.dart';
 import 'package:task/views/all_task_screen.dart';
+import 'package:task/views/chat_list_screen.dart';
 import 'package:task/views/forget_password_screen.dart';
 import 'package:task/views/home_screen.dart';
 import 'package:task/views/login_screen.dart';
@@ -136,6 +137,14 @@ class AppRoutes {
     GetPage(
       name: "/task-assignment",
       page: () => TaskAssignmentScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: "/chat-list",
+      page: () =>  ChatListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
