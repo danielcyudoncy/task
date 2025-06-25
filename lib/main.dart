@@ -1,4 +1,6 @@
 // main.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:task/core/bootstrap.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -16,6 +18,7 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await _verifyFirebaseServices();
 
     await bootstrapApp();
   } catch (error, stackTrace) {
@@ -62,5 +65,18 @@ class FallbackApp extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+}
+Future<void> _verifyFirebaseServices() async {
+  try {
+    // Test Firestore connection
+    await FirebaseFirestore.instance.collection('test').doc('test').get();
+
+    // Test Realtime Database connection
+    final database = FirebaseDatabase.instance;
+    await database.ref('.info/connected').once();
+  } catch (e) {
+    throw Exception('Firebase service verification failed: $e');
   }
 }
