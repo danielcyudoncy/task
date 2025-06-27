@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/save_success_screen.dart';
 import '../controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
@@ -44,7 +45,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back),
                     color: isDark ? Colors.white : Colors.white,
-                    onPressed: () => Get.back(),
+                    onPressed: () {Get.find<SettingsController>().triggerFeedback(); Get.back();},
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -240,6 +241,8 @@ class ProfileUpdateScreen extends StatelessWidget {
                                       ),
                                     ),
                                     onPressed: () async {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
                                       if (_formKey.currentState!.validate()) {
                                         await auth.updateProfileDetails();
                                         Get.offAll(

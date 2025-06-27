@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/user_controller.dart';
 import '../controllers/auth_controller.dart';
@@ -257,6 +258,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                     foregroundColor: colorScheme.onPrimary,
                   ),
                   onPressed: () async {
+                    Get.find<SettingsController>().triggerFeedback();
                     print("🔘 ASSIGN BUTTON PRESSED!");
                     print("Selected Task ID: $selectedTaskId");
                     print("Selected Reporter ID: $selectedReporterId");

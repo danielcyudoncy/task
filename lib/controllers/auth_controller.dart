@@ -610,4 +610,13 @@ class AuthController extends GetxController {
       logout();
     }
   }
+  // Keep this in your auth controller for future debugging
+  void printAuthState() {
+    debugPrint('''
+  Auth State:
+  - User: ${auth.currentUser?.uid}
+  - Role: $userRole
+  - Profile Complete: $isProfileComplete
+  ''');
+  }
 }

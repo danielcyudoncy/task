@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_colors.dart';
@@ -47,7 +48,10 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back),
                   color: AppColors.primaryColor,
-                  onPressed: () => Get.back(),
+                  onPressed: () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    Get.back();
+                  },
                 ),
               ),
               const SizedBox(height: 16),

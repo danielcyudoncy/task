@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../controllers/auth_controller.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
@@ -50,7 +51,10 @@ class ForgotPasswordScreen extends StatelessWidget {
                         color: Colors.white,
                         size: 40, // adjust the size as needed
                       ),
-                      onPressed: () => Get.back(),
+                      onPressed: () {
+                        Get.find<SettingsController>().triggerFeedback();
+                        Get.back();
+                      },
                     )
                   ],
                 ),
@@ -141,11 +145,14 @@ class ForgotPasswordScreen extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    onPressed: _submit,
-                                    child: const Text(
+                                    onPressed: () {
+                                      Get.find<SettingsController>().triggerFeedback();
+                                      _submit();
+                                    },
+                                    child:  Text(
                                       'Save Changes',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 16.sp,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),

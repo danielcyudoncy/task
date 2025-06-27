@@ -1,5 +1,7 @@
+// widgets/user_hover_card.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../../controllers/manage_users_controller.dart';
 
 class UserHoverCard extends StatelessWidget {
@@ -82,6 +84,7 @@ class UserHoverCard extends StatelessWidget {
                   child: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
+                      Get.find<SettingsController>().triggerFeedback();
                       final confirm = await Get.defaultDialog<bool>(
                         title: "Delete User",
                         middleText: "Are you sure you want to delete this user?",

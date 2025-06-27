@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_icons.dart';
 
@@ -145,6 +146,8 @@ class SignUpScreen extends StatelessWidget {
                                             : Icons.visibility,
                                       ),
                                       onPressed: () {
+                                        Get.find<SettingsController>()
+                                            .triggerFeedback();
                                         authController.isSignUpPasswordHidden
                                             .toggle();
                                       },
@@ -177,6 +180,8 @@ class SignUpScreen extends StatelessWidget {
                                             : Icons.visibility,
                                       ),
                                       onPressed: () {
+                                        Get.find<SettingsController>()
+                                            .triggerFeedback();
                                         authController.isConfirmPasswordHidden
                                             .toggle();
                                       },
@@ -277,6 +282,8 @@ class SignUpScreen extends StatelessWidget {
                                     icon: Image.asset(AppIcons.google,
                                         width: 48.w, height: 48.h),
                                     onPressed: () {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
                                       Get.snackbar("Coming Soon",
                                           "Google sign-up not yet implemented.");
                                     },
@@ -286,6 +293,8 @@ class SignUpScreen extends StatelessWidget {
                                     icon: Image.asset(AppIcons.apple,
                                         width: 48.w, height: 48.h),
                                     onPressed: () {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
                                       Get.snackbar("Coming Soon",
                                           "Apple sign-up not yet implemented.");
                                     },
@@ -299,7 +308,7 @@ class SignUpScreen extends StatelessWidget {
                                   Text("Already have an account? ",
                                       style: textTheme.bodyMedium),
                                   GestureDetector(
-                                    onTap: () => Get.toNamed('/login'),
+                                    onTap: () {Get.find<SettingsController>().triggerFeedback(); Get.toNamed('/login');},
                                     child: Text(
                                       "Sign In",
                                       style: textTheme.bodyMedium?.copyWith(
@@ -327,7 +336,7 @@ class SignUpScreen extends StatelessWidget {
                 left: 20,
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: colorScheme.primary),
-                  onPressed: () => Get.back(),
+                  onPressed: () {Get.find<SettingsController>().triggerFeedback(); Get.back();},
                 ),
               ),
             ],

@@ -1,6 +1,7 @@
 // views/all_task_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/widgets/app_bar.dart';
 import 'package:task/widgets/empty_state_widget.dart';
@@ -148,7 +149,10 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                             icon: Icon(Icons.close,
                                 color:
                                     isDark ? Colors.white : Colors.blue[900]),
-                            onPressed: () => _selectedTasks.clear(),
+                            onPressed: () {
+                              Get.find<SettingsController>().triggerFeedback();
+                              _selectedTasks.clear();
+                            },
                           ),
                         ],
                       ),
@@ -222,6 +226,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                               isLargeScreen: isLargeScreen,
                               textScale: textScale,
                               onTap: () {
+                                Get.find<SettingsController>()
+                                    .triggerFeedback();
                                 if (_selectedTasks.isNotEmpty) {
                                   if (_selectedTasks.contains(task.taskId)) {
                                     _selectedTasks.remove(task.taskId);

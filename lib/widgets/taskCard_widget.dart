@@ -1,7 +1,9 @@
 // widgets/taskCard_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/task_action_utility.dart';
 import '../../utils/constants/app_strings.dart';
 import '../../utils/constants/app_styles.dart';
@@ -75,7 +77,10 @@ class TaskCardWidget extends StatelessWidget {
                 child: IconButton(
                   icon:  Icon(Icons.edit_note_rounded,
                       color: textColor, size: 22.sp),
-                  onPressed: () => TaskActions.editTask(context, task),
+                  onPressed: () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    TaskActions.editTask(context, task);
+                  },
                   tooltip: "Edit Task",
                 ),
               ),
@@ -142,11 +147,17 @@ class TaskCardWidget extends StatelessWidget {
         content: const Text("Are you sure you want to delete this task?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Navigator.of(ctx).pop(false);
+            },
             child: const Text("Cancel"),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Navigator.of(ctx).pop(true);
+            },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
         ],

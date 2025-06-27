@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/stats_section.dart';
 import 'package:task/widgets/task_section.dart';
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen>
   final TaskController taskController = Get.find<TaskController>();
   final NotificationController notificationController =
       Get.find<NotificationController>();
+      final SettingsController settingsController = Get.find<SettingsController>();
 
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -77,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen>
                           icon: Icon(Icons.menu,
                               color: Colors.white, size: 28.sp),
                           onPressed: () {
+                            settingsController.triggerFeedback();
                             if (_scaffoldKey.currentState != null) {
                               _scaffoldKey.currentState!.openDrawer();
                             }
@@ -84,7 +87,11 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         // Clickable Avatar with Notification Badge
                         GestureDetector(
-                          onTap: () => Get.toNamed('/notifications'),
+                          onTap: () {
+                            settingsController.triggerFeedback(); // 👈 Add this
+                            Get.toNamed('/notifications');
+                          },
+
                           child: MouseRegion(
                             cursor: SystemMouseCursors.click,
                             child: Stack(

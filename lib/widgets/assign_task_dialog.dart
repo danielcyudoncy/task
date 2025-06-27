@@ -1,7 +1,9 @@
 // widgets/assign_task_dialog.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/dashboard_utils.dart';
 import '../../controllers/admin_controller.dart';
 
@@ -42,7 +44,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Container(
         padding: const EdgeInsets.all(22.0),
-        width: 350,
+        width: 350.w,
         child: assignableTasks.isEmpty
             ? Center(
                 child: Text(
@@ -116,11 +118,15 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                             value: title,
                             child: GestureDetector(
                               onTap: () {
+                                Get.find<SettingsController>()
+                                    .triggerFeedback();
                                 setState(() {
                                   selectedTaskTitle = title;
                                 });
                               },
                               onLongPress: () {
+                                Get.find<SettingsController>()
+                                    .triggerFeedback();
                                 showDialog(
                                   context: context,
                                   builder: (_) => AlertDialog(
@@ -161,8 +167,11 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                     actions: [
                                       TextButton(
                                         child: const Text("Close"),
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(),
+                                        onPressed: () {
+                                          Get.find<SettingsController>()
+                                              .triggerFeedback();
+                                          Navigator.of(context).pop();
+                                        },
                                       ),
                                     ],
                                   ),
@@ -221,6 +230,8 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                         color: Colors.grey.shade500, size: 18),
                                     tooltip: "Preview",
                                     onPressed: () {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
                                       showDialog(
                                         context: context,
                                         builder: (_) => AlertDialog(
@@ -309,6 +320,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                         icon: const Icon(Icons.check),
                         label: const Text("Assign"),
                         onPressed: () async {
+                          Get.find<SettingsController>().triggerFeedback();
                           if (selectedTaskTitle == null) {
                             Get.snackbar(
                               "Error",
