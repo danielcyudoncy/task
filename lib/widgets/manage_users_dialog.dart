@@ -1,6 +1,7 @@
 // widgets/manage_users_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../../controllers/manage_users_controller.dart';
 import '../../utils/constants/app_strings.dart';
 
@@ -61,7 +62,7 @@ class ManageUsersDialog extends StatelessWidget {
                       side: BorderSide(
                         color: isDark
                             ? Colors.grey[800]!
-                            : Colors.white.withOpacity(0.1),
+                            : Colors.white,
                         width: 1,
                       ),
                     ),
@@ -72,7 +73,8 @@ class ManageUsersDialog extends StatelessWidget {
                       leading: CircleAvatar(
                         radius: 24,
                         backgroundColor:
-                            primaryBlue.withOpacity(isDark ? 0.5 : 0.8),
+                            isDark ? primaryBlue.withAlpha(128) : primaryBlue.withAlpha(204),
+
                         child: Text(
                           userName.isNotEmpty ? userName[0].toUpperCase() : "?",
                           style: theme.textTheme.titleMedium?.copyWith(
@@ -106,7 +108,10 @@ class ManageUsersDialog extends StatelessWidget {
                                 Icons.assignment_outlined,
                                 color: theme.colorScheme.secondary,
                               ),
-                              onPressed: () => onAssignTap(user),
+                              onPressed: () {
+                                Get.find<SettingsController>().triggerFeedback();
+                                onAssignTap(user);
+                              },
                             ),
                           ),
                         ],

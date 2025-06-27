@@ -1,5 +1,7 @@
 // widgets/select_task_button.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 
 class SelectTaskButton extends StatelessWidget {
   final String? selectedTaskTitle;
@@ -7,11 +9,11 @@ class SelectTaskButton extends StatelessWidget {
   final void Function(String?) onTaskSelected;
 
   const SelectTaskButton({
-    Key? key,
+    super.key,
     required this.selectedTaskTitle,
     required this.taskTitles,
     required this.onTaskSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,10 @@ class SelectTaskButton extends StatelessWidget {
             children: taskTitles
                 .map(
                   (t) => SimpleDialogOption(
-                    onPressed: () => Navigator.pop(context, t),
+                    onPressed: () {
+                      Get.find<SettingsController>().triggerFeedback();
+                      Navigator.pop(context, t);
+                    },
                     child: Text(t),
                   ),
                 )

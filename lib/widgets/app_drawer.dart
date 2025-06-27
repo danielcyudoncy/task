@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:task/controllers/settings_controller.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
@@ -168,7 +169,12 @@ class _AppDrawerState extends State<AppDrawer> {
                           : Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
-                  onTap: () => setState(() => _showCalendar = !_showCalendar),
+                  onTap: () {
+                    Get.find<SettingsController>()
+                        .triggerFeedback(); // 👈 sound + vibration
+                    setState(() => _showCalendar = !_showCalendar);
+                  },
+
                 ),
               ),
             ),
@@ -202,8 +208,7 @@ class _AppDrawerState extends State<AppDrawer> {
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.primary.withAlpha(153),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -274,6 +279,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 fontSize: 16.sp,
                 color: Theme.of(context).textTheme.bodyLarge?.color)),
         onTap: () {
+          Get.find<SettingsController>().triggerFeedback();
           Get.back(); // Closes drawer or previous screen if needed
           Get.toNamed(route); // Navigates to the provided route
         },
@@ -331,6 +337,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 color: Theme.of(context).textTheme.bodyLarge?.color)),
         value: isDark,
         onChanged: (value) {
+          Get.find<SettingsController>().triggerFeedback();
           Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
         },
       ),
@@ -383,7 +390,11 @@ class _AppDrawerState extends State<AppDrawer> {
         backgroundColor: Theme.of(context).cardColor,
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Get.back(result: false);
+            },
+
             child: Text('Cancel',
                 style: TextStyle(color: Theme.of(context).primaryColor)),
           ),
@@ -391,7 +402,10 @@ class _AppDrawerState extends State<AppDrawer> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
             ),
-            onPressed: () => Get.back(result: true),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Get.back(result: true);
+            },
             child: const Text('Logout', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -424,7 +438,7 @@ class ConcentricCirclePainter extends CustomPainter {
     final List<double> opacities = [0.4, 0.25, 0.12]; // fading intensity
 
     for (int i = 0; i < radii.length; i++) {
-      paint.color = ringColor.withOpacity(opacities[i]);
+      paint.color = ringColor.withAlpha((opacities[i] * 255).round());
       canvas.drawCircle(centerOffset, radii[i], paint);
     }
   }

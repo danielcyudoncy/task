@@ -111,7 +111,7 @@ class HeaderWidget extends StatelessWidget {
               Text(
                 authController.currentUser?.email ?? '',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.primary.withAlpha(153),
                   fontSize: 14.sp,
                 ),
                 overflow: TextOverflow.ellipsis,

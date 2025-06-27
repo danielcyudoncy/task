@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
 import '../controllers/auth_controller.dart';
 
@@ -55,6 +56,7 @@ class ProfileScreen extends StatelessWidget {
                                 : Colors.white, // White in dark mode
                           ),
                           onPressed: () {
+                            Get.find<SettingsController>().triggerFeedback();
                             final role = authController.userRole.value;
                             if (role == "Admin" ||
                                 role == "Assignment Editor" ||
@@ -84,6 +86,7 @@ class ProfileScreen extends StatelessWidget {
                                 : Colors.white, // White in dark mode
                           ),
                           onPressed: () {
+                            Get.find<SettingsController>().triggerFeedback();
                             Get.toNamed('/settings');
                           },
                         ),
@@ -164,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
                       Text(
                         "CONTACT INFORMATION",
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
                           color: isLightMode ? Colors.black : Colors.white,
                           letterSpacing: 0.2,
@@ -184,7 +187,7 @@ class ProfileScreen extends StatelessWidget {
                           Text(
                             phone,
                             style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 15.sp,
                                 color:
                                     isLightMode ? Colors.black : Colors.white),
                           ),
@@ -204,7 +207,7 @@ class ProfileScreen extends StatelessWidget {
                           Text(
                             email,
                             style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 15.sp,
                                 color:
                                     isLightMode ? Colors.black : Colors.white),
                           ),
@@ -215,7 +218,7 @@ class ProfileScreen extends StatelessWidget {
                       Text(
                         "PROFILE",
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
                           color: isLightMode ? Colors.black : Colors.white,
                           letterSpacing: 0.2,
@@ -238,6 +241,7 @@ class ProfileScreen extends StatelessWidget {
                           color: isLightMode ? Colors.black : Colors.white,
                         ),
                         onTap: () {
+                          Get.find<SettingsController>().triggerFeedback();
                           Get.toNamed('/push-notification-settings');
                         },
                       ),
@@ -258,6 +262,7 @@ class ProfileScreen extends StatelessWidget {
                           color: isLightMode ? Colors.black : Colors.white,
                         ),
                         onTap: () {
+                          Get.find<SettingsController>().triggerFeedback();
                           Get.toNamed('/profile-update');
                         },
                       ),
@@ -285,6 +290,7 @@ class ProfileScreen extends StatelessWidget {
                           label: const Text("Log out",
                               style: TextStyle(fontSize: 18, color: Colors.white)),
                           onPressed: () {
+                            Get.find<SettingsController>().triggerFeedback();
                             authController.signOut();
                           },
                         ),
@@ -305,6 +311,7 @@ class ProfileScreen extends StatelessWidget {
                           label: const Text("Delete Account",
                               style: TextStyle(fontSize: 18, color: Colors.white)),
                           onPressed: () async {
+                            Get.find<SettingsController>().triggerFeedback();
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (context) => AlertDialog(
@@ -313,13 +320,13 @@ class ProfileScreen extends StatelessWidget {
                                     'Are you sure you want to delete your account? This action cannot be undone.'),
                                 actions: [
                                   TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(false),
+                                    onPressed: () {Get.find<SettingsController>().triggerFeedback();
+                                        Navigator.of(context).pop(false);},
                                     child: const Text('Cancel'),
                                   ),
                                   TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(true),
+                                    onPressed: () {Get.find<SettingsController>().triggerFeedback();
+                                        Navigator.of(context).pop(true);},
                                     child: const Text('Delete',
                                         style: TextStyle(color: Colors.red)),
                                   ),

@@ -16,23 +16,26 @@ class SettingsScreen extends StatelessWidget {
     final isLightMode = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: isLightMode
-          ? const Color(0xFF05168E)
-          : const Color(0xFF181B2A), // Keep your custom color in light mode
+      backgroundColor:
+          isLightMode ? const Color(0xFF05168E) : const Color(0xFF181B2A),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isLightMode
-            ? const Color(0xFF05168E)
-            : const Color(0xFF181B2A), // Match the app bar background
+        backgroundColor:
+            isLightMode ? const Color(0xFF05168E) : const Color(0xFF181B2A),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: () async {
+            await settingsController.triggerFeedback();
+            Get.back();
+          },
         ),
-        title:  Text(
+        title: Text(
           'Settings',
           style: TextStyle(
-            fontFamily: 'raleway',
-              color: Colors.white, fontSize: 30.sp, fontWeight: FontWeight.w700),
+              fontFamily: 'raleway',
+              color: Colors.white,
+              fontSize: 30.sp,
+              fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
       ),
@@ -44,12 +47,15 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     const SizedBox(height: 8),
                     Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(top: 8, bottom: 10),
-                        child: Image.asset(
-                          'assets/png/logo.png',
-                          width: 100,
-                          height: 100,
+                      child: GestureDetector(
+                        onTap: () => settingsController.triggerFeedback(),
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 8, bottom: 10),
+                          child: Image.asset(
+                            'assets/png/logo.png',
+                            width: 100,
+                            height: 100,
+                          ),
                         ),
                       ),
                     ),
@@ -58,25 +64,28 @@ class SettingsScreen extends StatelessWidget {
                       "Dark Mode",
                       "Activate Dark background for app",
                       themeController.isDarkMode.value,
-                      (value) => themeController.toggleTheme(value),
+                      (value) async {
+                        await settingsController.triggerFeedback();
+                        themeController.toggleTheme(value);
+                      },
                     ),
                     sectionTitle("Sound and Vibration"),
                     settingsSwitchTile(
                       "Sounds",
                       "Enable Sound",
                       settingsController.isSoundEnabled.value,
-                      (value) {
+                      (value) async {
+                        await settingsController.triggerFeedback();
                         settingsController.toggleSound(value);
-                        settingsController.saveSettings();
                       },
                     ),
                     settingsSwitchTile(
                       "Vibration",
                       "Enable/Disable Vibration",
                       settingsController.isVibrationEnabled.value,
-                      (value) {
+                      (value) async {
+                        await settingsController.triggerFeedback();
                         settingsController.toggleVibration(value);
-                        settingsController.saveSettings();
                       },
                     ),
                     sectionTitle("Account Preferences"),
@@ -90,9 +99,9 @@ class SettingsScreen extends StatelessWidget {
                         "Yoruba",
                         "Igbo"
                       ],
-                      (lang) {
+                      (lang) async {
+                        await settingsController.triggerFeedback();
                         settingsController.setLanguage(lang);
-                        settingsController.saveSettings();
                       },
                     ),
                     sectionTitle("Sync Settings"),
@@ -100,15 +109,15 @@ class SettingsScreen extends StatelessWidget {
                       "Synchronize data across all devices",
                       "",
                       settingsController.isSyncEnabled.value,
-                      (value) {
+                      (value) async {
+                        await settingsController.triggerFeedback();
                         settingsController.toggleSync(value);
-                        settingsController.saveSettings();
                       },
                     ),
                     const SizedBox(height: 14),
                     saveButton(settingsController),
                     const SizedBox(height: 30),
-                    nextPageButton(),
+                    nextPageButton(settingsController),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -118,13 +127,14 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  // Keep all your existing UI widgets exactly the same
   Widget sectionTitle(String title) => Container(
         alignment: Alignment.centerLeft,
         margin: const EdgeInsets.only(top: 18, bottom: 6),
         child: Text(
           title,
           style: const TextStyle(
-            color: Colors.white, // Text remains white regardless of the theme
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -151,9 +161,7 @@ class SettingsScreen extends StatelessWidget {
         subtitle: subtitle.isNotEmpty
             ? Text(
                 subtitle,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13), // Light-colored subtitle
+                style: const TextStyle(color: Colors.white, fontSize: 13),
               )
             : null,
         trailing: Switch(
@@ -179,13 +187,14 @@ class SettingsScreen extends StatelessWidget {
       elevation: 0,
       child: ListTile(
         contentPadding: const EdgeInsets.only(left: 0, right: 0),
-        title: Text(title,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w500)),
+        title: Text(
+          title,
+          style:
+              const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        ),
         trailing: DropdownButton<String>(
           value: selected,
-          dropdownColor: const Color(
-              0xFF05168E), // Keep dropdown color as your custom blue
+          dropdownColor: const Color(0xFF05168E),
           style:
               const TextStyle(color: Colors.white, fontWeight: FontWeight.w400),
           underline: Container(),
@@ -217,7 +226,8 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 15),
         ),
         onPressed: () async {
-          await controller.onSave();
+          await controller.triggerFeedback();
+          await controller.saveSettings();
           Get.snackbar(
             "Settings Saved",
             "Your preferences have been updated.",
@@ -234,7 +244,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget nextPageButton() {
+  Widget nextPageButton(SettingsController controller) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
@@ -245,8 +255,8 @@ class SettingsScreen extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),
-        onPressed: () {
-          // Use named route for smooth navigation
+        onPressed: () async {
+          await controller.triggerFeedback();
           Get.toNamed('/privacy');
         },
         child: const Text("Next: Privacy Settings",

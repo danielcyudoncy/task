@@ -1,6 +1,8 @@
 // views/privacy_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 
 class PrivacyScreen extends StatefulWidget {
   const PrivacyScreen({super.key});
@@ -41,14 +43,18 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Get.back(),
+                    onPressed: () {
+                      Get.find<SettingsController>().triggerFeedback();
+                      Get.back();
+                    },
                   ),
                   const Spacer(),
-                  const Text(
+                   Text(
                     "Settings",
                     style: TextStyle(
-                        fontSize: 33,
+                        fontSize: 30.sp,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'raleway',
                         color: Colors.white),
                   ),
                   const Spacer(flex: 2),
