@@ -5,40 +5,48 @@ import 'package:flutter/material.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override
-  int? priority = 0; // Lower priority than ProfileCompleteMiddleware
+  int? priority = 0;
 
-  @override
+ @override
   RouteSettings? redirect(String? route) {
     final auth = Get.find<AuthController>();
+    final arguments = Get.arguments as Map<String, dynamic>?;
 
-    // Always allow these routes
-   if (route == '/' ||
-        route == '/login' ||
-        route == '/signup' ||
-        route == '/profile-update' ||
-        route == '/forgot-password' ||
-        route == '/onboarding') {
+    // Bypass checks if coming from logout
+    if (arguments?['fromLogout'] == true) {
       return null;
     }
 
-    // Check auth state
+    // Public routes
+    final publicRoutes = [
+      '/',
+      '/login',
+      '/signup',
+      '/forgot-password',
+      '/onboarding'
+    ];
+    if (publicRoutes.contains(route)) {
+      return null;
+    }
+
+    // Special case for profile-update
+    if (route == '/profile-update') {
+      return auth.auth.currentUser == null
+          ? const RouteSettings(name: '/login')
+          : null;
+    }
+
+    // Main auth check
     if (auth.auth.currentUser == null) {
-      debugPrint("AuthMiddleware: Redirecting to login - No user");
       return const RouteSettings(name: '/login');
     }
 
-    // Check if user role is loaded
+    // Role loading state
     if (auth.userRole.value.isEmpty) {
-      debugPrint("AuthMiddleware: Redirecting to login - No role");
-      return const RouteSettings(name: '/login');
+      debugPrint("Waiting for user role to load...");
+      return null;
     }
 
     return null;
-  }
-
-  @override
-  GetPage? onPageCalled(GetPage? page) {
-    debugPrint("AuthMiddleware: Entering ${page?.name}");
-    return super.onPageCalled(page);
   }
 }

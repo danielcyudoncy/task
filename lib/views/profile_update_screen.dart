@@ -247,10 +247,10 @@ class ProfileUpdateScreen extends StatelessWidget {
                                             predicate: (route) => false);
                                       }
                                     },
-                                    child: const Text(
+                                    child:  Text(
                                       'Save Changes',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 16.sp,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
