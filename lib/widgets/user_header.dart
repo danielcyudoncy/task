@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/notification_controller.dart';
 
@@ -34,7 +35,10 @@ class UserHeader extends StatelessWidget {
                 },
               ),
               GestureDetector(
-                onTap: () => Get.toNamed('/notifications'),
+                onTap: () {
+                  Get.find<SettingsController>().triggerFeedback();
+                  Get.toNamed('/notifications');
+                },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: Stack(

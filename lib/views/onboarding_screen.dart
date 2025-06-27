@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_sizes.dart';
@@ -34,10 +35,7 @@ class OnboardingScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Use colorScheme.primary as app main blue if possible
-    final Color appPrimaryColor = colorScheme.primary;
-
-    // Gradient: white at top, blue at bottom for light theme, muted for dark theme
+    // Light: solid blue background, Dark: layered gradient
     final gradientColors = isDark
         ? [
             colorScheme.background,
@@ -45,8 +43,8 @@ class OnboardingScreen extends StatelessWidget {
             colorScheme.background,
           ]
         : [
-            Colors.white, // Top
-            appPrimaryColor, // Bottom (blue)
+            colorScheme.primary,
+            colorScheme.primary,
           ];
 
     final gradientStops = isDark ? const [0.0, 0.7, 1.0] : const [0.0, 1.0];
@@ -93,14 +91,14 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Welcome!',
                     style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
+                      color: Colors.white, // Ensure contrast on blue bg
                       fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: AppFontsStyles.montserrat,
                       shadows: [
                         Shadow(
                           color: isDark
-                              ? colorScheme.onSurface.withOpacity(0.36)
+                              ? colorScheme.onSurface.withAlpha(92)
                               : Colors.black26,
                           offset: const Offset(0, 6.0),
                           blurRadius: 12.0,
@@ -118,9 +116,7 @@ class OnboardingScreen extends StatelessWidget {
                 'started on your journey!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: isDark
-                      ? colorScheme.onBackground
-                      : colorScheme.onPrimaryContainer,
+                  color: Colors.white, // Ensure contrast on primary bg
                   fontSize: 18.sp,
                   fontFamily: AppFontsStyles.openSans,
                   fontWeight: FontWeight.w400,
@@ -134,7 +130,10 @@ class OnboardingScreen extends StatelessWidget {
                     width: 144.w,
                     height: 38.h,
                     child: ElevatedButton(
-                      onPressed: _handleGetStarted,
+                      onPressed: () {
+                        Get.find<SettingsController>().triggerFeedback();
+                        _handleGetStarted();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colorScheme.primary,
                         foregroundColor: Colors.white,
@@ -159,7 +158,10 @@ class OnboardingScreen extends StatelessWidget {
                     width: 144.w,
                     height: 38.h,
                     child: OutlinedButton(
-                      onPressed: _handleMyAccount,
+                      onPressed: () {
+                        Get.find<SettingsController>().triggerFeedback();
+                        _handleMyAccount();
+                      },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: colorScheme.primary,

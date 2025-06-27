@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/notification_controller.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
@@ -220,11 +221,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     children: [
                       IconButton(
                         icon: const Icon(Icons.assignment, color: Colors.blue),
-                        onPressed: () => _showAssignTaskDialog(user),
+                        onPressed: () {
+                          Get.find<SettingsController>().triggerFeedback();
+                          _showAssignTaskDialog(user);
+                        },
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmUserDeletion(user),
+                        onPressed: () {
+                          Get.find<SettingsController>().triggerFeedback();
+                          _confirmUserDeletion(user);
+                        },
                       ),
                     ],
                   ),
@@ -245,12 +252,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         content: const Text(AppStrings.deleteUserConfirmation),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Get.back(result: false);
+            },
             child: const Text("Cancel"),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Get.back(result: true),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Get.back(result: true);
+            },
             child: const Text("Delete", style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -325,7 +338,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Get.back();
+            },
             style: TextButton.styleFrom(
               foregroundColor: Colors.white,
               backgroundColor: Colors.blueAccent,
@@ -413,7 +429,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         ),
       ),
       textConfirm: "Close",
-      onConfirm: () => Get.back(),
+      onConfirm: () {
+        Get.find<SettingsController>().triggerFeedback();
+        Get.back();
+      },
     );
   }
 

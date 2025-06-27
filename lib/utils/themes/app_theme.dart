@@ -74,37 +74,36 @@ class AppTheme {
       onPrimary: Colors.white,
       secondary: secondaryColor,
       onSecondary: isDark ? Colors.black : Colors.white,
-      background: background,
-      onBackground: onBackground,
-      surface: surface,
-      onSurface: onSurface,
       error: Colors.red,
       onError: isDark ? Colors.black : Colors.white,
-      primaryContainer: primaryContainer,
-      onPrimaryContainer: onPrimaryContainer,
+      surface: surface,
+      onSurface: onSurface,
+      background: background,
+      onBackground: onBackground,
       surfaceVariant: surfaceVariant,
       onSurfaceVariant: onSurfaceVariant,
+      primaryContainer: primaryContainer,
+      onPrimaryContainer: onPrimaryContainer,
+      surfaceTint: primaryColor,
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
-      scaffoldBackgroundColor: background,
       colorScheme: colorScheme,
+      scaffoldBackgroundColor: colorScheme.background,
       textTheme: GoogleFonts.ralewayTextTheme(
         isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
-      ),
-      dividerTheme: DividerThemeData(
-        color: dividerColor,
-        thickness: 1,
-        space: 1,
+      ).apply(
+        bodyColor: colorScheme.onBackground,
+        displayColor: colorScheme.onBackground,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: colorScheme.onPrimary),
         titleTextStyle: GoogleFonts.raleway(
-          color: Colors.white,
+          color: colorScheme.onPrimary,
           fontWeight: FontWeight.bold,
           fontSize: 20.sp,
         ),
@@ -118,10 +117,15 @@ class AppTheme {
         ),
         hintStyle: TextStyle(color: hintColor),
       ),
+      dividerTheme: DividerThemeData(
+        color: dividerColor,
+        thickness: 1,
+        space: 1,
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: WidgetStatePropertyAll(primaryColor),
-          foregroundColor: const WidgetStatePropertyAll(Colors.white),
+          backgroundColor: WidgetStatePropertyAll(colorScheme.primary),
+          foregroundColor: WidgetStatePropertyAll(colorScheme.onPrimary),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
@@ -130,9 +134,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          foregroundColor:
-              WidgetStatePropertyAll(isDark ? Colors.white : primaryColor),
-          side: WidgetStatePropertyAll(BorderSide(color: primaryColor)),
+          foregroundColor: WidgetStatePropertyAll(colorScheme.primary),
+          side: WidgetStatePropertyAll(BorderSide(color: colorScheme.primary)),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
@@ -140,4 +143,5 @@ class AppTheme {
       ),
     );
   }
+
 }

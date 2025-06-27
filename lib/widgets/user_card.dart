@@ -1,5 +1,7 @@
+// widgets/user_card.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import '../../controllers/manage_users_controller.dart';
 
 class UserCard extends StatefulWidget {
@@ -48,12 +50,16 @@ class _UserCardState extends State<UserCard> {
                 IconButton(
                   icon: const Icon(Icons.assignment_turned_in, color: Colors.green),
                   tooltip: 'Assign Task',
-                  onPressed: () => setState(() => showTaskDropdown = !showTaskDropdown),
+                  onPressed: () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    setState(() => showTaskDropdown = !showTaskDropdown);
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   tooltip: 'Delete User',
                   onPressed: () async {
+                    Get.find<SettingsController>().triggerFeedback();
                     final confirm = await Get.defaultDialog<bool>(
                       title: "Delete User",
                       middleText: "Are you sure you want to delete this user?",

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
 
@@ -177,6 +178,7 @@ class LoginScreen extends StatelessWidget {
             color: isDark ? Colors.white70 : Colors.black54,
           ),
           onPressed: () {
+            Get.find<SettingsController>().triggerFeedback();
             _auth.isLoginPasswordHidden.value =
                 !_auth.isLoginPasswordHidden.value;
           },
@@ -218,7 +220,11 @@ class LoginScreen extends StatelessWidget {
                                                 BorderRadius.circular(12),
                                           ),
                                         ),
-                                        onPressed: _submit,
+                                        onPressed: () {
+                                          Get.find<SettingsController>()
+                                              .triggerFeedback();
+                                          _submit();
+                                        },
                                         child: Text(
                                           "Sign In",
                                           style: textTheme.bodyLarge?.copyWith(
@@ -260,6 +266,8 @@ class LoginScreen extends StatelessWidget {
                                       icon: Image.asset(AppIcons.google,
                                           width: 48.w, height: 48.h),
                                       onPressed: () {
+                                        Get.find<SettingsController>()
+                                            .triggerFeedback();
                                         Get.snackbar("Coming Soon",
                                             "Google sign-up not yet implemented.");
                                       },
@@ -269,6 +277,8 @@ class LoginScreen extends StatelessWidget {
                                       icon: Image.asset(AppIcons.apple,
                                           width: 48, height: 48),
                                       onPressed: () {
+                                        Get.find<SettingsController>()
+                                            .triggerFeedback();
                                         Get.snackbar("Coming Soon",
                                             "Apple sign-up not yet implemented.");
                                       },
@@ -291,7 +301,11 @@ class LoginScreen extends StatelessWidget {
                                       ),
                                     ),
                                     GestureDetector(
-                                      onTap: () => Get.toNamed('/signup'),
+                                      onTap: () {
+                                        Get.find<SettingsController>()
+                                            .triggerFeedback();
+                                        Get.toNamed('/signup');
+                                      },
                                       child: Text(
                                         "Create Account",
                                         style: textTheme.bodyMedium?.copyWith(
@@ -307,6 +321,8 @@ class LoginScreen extends StatelessWidget {
 
                                 GestureDetector(
                                   onTap: () {
+                                    Get.find<SettingsController>()
+                                        .triggerFeedback();
                                     Get.toNamed('/forgot-password');
                                     },
                                   child: Text(
@@ -343,6 +359,7 @@ class LoginScreen extends StatelessWidget {
               icon: Icon(Icons.arrow_back,
                   color: isDark ? Colors.white : colorScheme.primary),
               onPressed: () {
+                Get.find<SettingsController>().triggerFeedback();
                 Get.back();
               },
             ),

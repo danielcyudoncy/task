@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
 
 class UserNavBar extends StatelessWidget {
@@ -10,6 +11,7 @@ class UserNavBar extends StatelessWidget {
   const UserNavBar({super.key, this.currentIndex = 0});
 
   void _onTap(int index) {
+    Get.find<SettingsController>().triggerFeedback();
     if (index == 0) {
       Get.offAllNamed('/profile');
     } else if (index == 1) {

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/controllers/settings_controller.dart';
 
 class AppBarWidget extends StatelessWidget {
   final double basePadding;
@@ -35,7 +36,10 @@ class AppBarWidget extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: () => Get.offAllNamed('/profile'),
+            onTap: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Get.offAllNamed('/profile');
+            },
             child: Semantics(
               label: "Go to profile",
               button: true,

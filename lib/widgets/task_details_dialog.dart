@@ -1,6 +1,7 @@
 // widgets/task_details_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/dashboard_utils.dart';
 import '../../controllers/admin_controller.dart';
 import '../../utils/constants/app_strings.dart';
@@ -41,7 +42,10 @@ class TaskDetailsDialog extends StatelessWidget {
           : const Text("Task not found"),
       actions: [
         TextButton(
-          onPressed: () => Get.back(),
+          onPressed: () {
+            Get.find<SettingsController>().triggerFeedback();
+            Get.back();
+          },
           child: const Text(AppStrings.close),
         ),
       ],
