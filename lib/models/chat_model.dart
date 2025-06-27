@@ -2,7 +2,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-
 class ChatUser {
   final String uid;
   final String name;
@@ -25,7 +24,7 @@ class ChatUser {
   factory ChatUser.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
     final timestamp = data['lastActive'] as Timestamp?;
-    
+
     return ChatUser(
       uid: doc.id,
       name: data['fullName'] ?? data['email']?.split('@').first ?? 'Unknown',
@@ -37,18 +36,21 @@ class ChatUser {
     );
   }
 
-  String get status => isOnline ? 'Online' : 
-    lastActive != null ? 'Last seen ${_formatTime(lastActive!)}' : 'Offline';
+  String get status => isOnline
+      ? 'Online'
+      : lastActive != null
+          ? 'Last seen ${_formatTime(lastActive!)}'
+          : 'Offline';
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-    
+
     if (difference.inMinutes < 1) return 'just now';
     if (difference.inHours < 1) return '${difference.inMinutes}m ago';
     if (difference.inDays < 1) return '${difference.inHours}h ago';
     if (difference.inDays < 7) return '${difference.inDays}d ago';
-    
+
     return DateFormat('MMM d').format(time);
   }
 }
@@ -98,7 +100,8 @@ class ChatConversation {
     final data = doc.data() as Map<String, dynamic>? ?? {};
     return ChatConversation(
       id: doc.id,
-      participants: List<String>.from(data['participants'] ?? []),
+      participants:
+          (data['participants'] as List?)?.whereType<String>().toList() ?? [],
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
