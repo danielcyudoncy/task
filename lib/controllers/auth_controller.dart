@@ -58,6 +58,7 @@ class AuthController extends GetxController {
     "Admin"
   ];
   bool get isLoggedIn => currentUser != null;
+  bool _isNavigating = false;
 
   @override
   void onInit() {
@@ -168,36 +169,38 @@ class AuthController extends GetxController {
     }
   }
 
+  // Add retry logic in loadUserData()
   Future<void> loadUserData() async {
-    try {
-      if (_auth.currentUser == null) return;
+    const maxRetries = 3;
+    int attempt = 0;
 
-      final userDoc = await _firestore
-          .collection("users")
-          .doc(_auth.currentUser!.uid)
-          .get();
+    while (attempt < maxRetries) {
+      try {
+        if (_auth.currentUser == null) return;
 
-      if (userDoc.exists) {
-        final data = userDoc.data()!;
-        fullName.value = data['fullName'] ?? 'User';
-        profilePic.value = data['photoUrl'] ?? '';
-        userRole.value = data['role'] ?? '';
-        isProfileComplete.value = data['profileComplete'] ?? false;
+        final userDoc = await _firestore
+            .collection("users")
+            .doc(_auth.currentUser!.uid)
+            .get();
 
-        userData.assignAll(
-            data); // <-- This line ensures your profile screen works!
+        if (userDoc.exists) {
+          final data = userDoc.data()!;
+          fullName.value = data['fullName'] ?? '';
+          profilePic.value = data['photoUrl'] ?? '';
+          userRole.value = data['role'] ?? '';
+          isProfileComplete.value = data['profileComplete'] ?? false;
 
-        if (userRole.value.isEmpty) {
-          throw Exception("User role not found");
+          userData.assignAll(data);
+          return; // Success
         }
-      } else {
-        throw Exception("User document not found");
+      } catch (e) {
+        attempt++;
+        if (attempt == maxRetries) {
+          resetUserData();
+          rethrow;
+        }
+        await Future.delayed(const Duration(seconds: 1));
       }
-    } catch (e) {
-      debugPrint("Error loading user data: $e");
-      resetUserData();
-      userData.clear();
-      rethrow;
     }
   }
 
@@ -209,54 +212,70 @@ class AuthController extends GetxController {
     userData.clear();
   }
 
+  // In AuthController, modify completeProfile()
   Future<void> completeProfile() async {
     try {
       if (_auth.currentUser == null) return;
 
       await _firestore.collection('users').doc(_auth.currentUser!.uid).update({
         "profileComplete": true,
+        "fullName": fullName.value,
+        "phoneNumber": phoneNumberController.text.trim(),
+        "role": selectedRole.value,
       });
 
-      isProfileComplete.value = true;
-      navigateBasedOnRole();
+      // Force refresh user data
+      await loadUserData();
+
+      // Navigate based on role only after confirming update
+      if (isProfileComplete.value) {
+        navigateBasedOnRole();
+      } else {
+        Get.snackbar("Error", "Profile completion failed");
+      }
     } catch (e) {
       Get.snackbar("Error", "Failed to complete profile: ${e.toString()}");
       rethrow;
     }
   }
 
+  // In AuthController, modify navigateBasedOnRole and _handleRoleChange
+  // In AuthController
   void navigateBasedOnRole() {
-    final route = Get.currentRoute;
+    if (_isNavigating) return;
+    _isNavigating = true;
 
-    if (["Admin", "Assignment Editor", "Head of Department"]
-        .contains(userRole.value)) {
-      if (route != "/admin-dashboard") Get.offAllNamed("/admin-dashboard");
-    } else if (["Reporter", "Cameraman"].contains(userRole.value)) {
-      if (route != "/home") Get.offAllNamed("/home");
+    final route = Get.currentRoute;
+    final role = userRole.value;
+
+    print("Navigating based on role: $role from $route");
+
+    if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+      if (route != "/admin-dashboard") {
+        Get.offAllNamed("/admin-dashboard");
+      }
+    } else if (["Reporter", "Cameraman"].contains(role)) {
+      if (route != "/home") {
+        Get.offAllNamed("/home");
+      }
     } else {
       Get.offAllNamed("/login");
     }
+
+    _isNavigating = false;
   }
 
   void _handleRoleChange() {
     if (userRole.value.isEmpty) {
-      Get.offAllNamed("/login");
+      if (Get.currentRoute != "/login") {
+        Get.offAllNamed("/login");
+      }
       return;
     }
 
-    final allowedAdminRoutes = [
-      "Admin",
-      "Assignment Editor",
-      "Head of Department"
-    ];
-    final targetRoute = allowedAdminRoutes.contains(userRole.value)
-        ? "/admin-dashboard"
-        : "/home";
-
-    if (Get.currentRoute != targetRoute) {
-      Get.offAllNamed(targetRoute);
-    }
+    navigateBasedOnRole();
   }
+ 
 
   Future<void> signUp(
       String userFullName, String email, String password, String role) async {
@@ -521,13 +540,24 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> logout() async {
+ Future<void> logout() async {
     try {
       isLoading.value = true;
-      await _handlePresence(false); // Set offline before signing out
-      await _auth.signOut();
+
+      // 1. First reset local state immediately
       resetUserData();
-      Get.offAllNamed("/login");
+
+      // 2. Then handle presence and auth signout
+      await Future.wait([
+        _handlePresence(false),
+        _auth.signOut(),
+      ]);
+
+      // 3. Ensure complete cleanup before navigation
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // 4. Navigate with complete context reset
+      Get.offAllNamed("/login", arguments: {'fromLogout': true});
     } catch (e) {
       Get.snackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
@@ -576,7 +606,7 @@ class AuthController extends GetxController {
 
   void _checkInactivity() {
     final now = DateTime.now();
-    if (now.difference(lastActivity.value).inMinutes >= 30) {
+    if (now.difference(lastActivity.value).inMinutes >= 60) {
       logout();
     }
   }

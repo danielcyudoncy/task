@@ -1,35 +1,44 @@
 // routes/profile_complete_middleware.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task/controllers/auth_controller.dart';
 
 class ProfileCompleteMiddleware extends GetMiddleware {
   @override
-  int? priority = 1; // Higher priority than AuthMiddleware
+  int? priority = 1;
 
   @override
   RouteSettings? redirect(String? route) {
+    // TEMPORARY FIX: Disable all profile checks due to Firebase payment issues
+    // TODO: Restore the original checks after fixing Firebase payment integration
+
+    return null; // Allow all access for now
+
+    /* RESTORE THIS AFTER FIXING FIREBASE PAYMENT:
     final auth = Get.find<AuthController>();
 
     // Skip check for these routes
-    if (route == '/profile-update' || route == '/login' || route == '/signup') {
+    final allowedRoutes = [
+      '/profile-update',
+      '/login',
+      '/signup',
+      '/forgot-password',
+      '/onboarding'
+    ];
+
+    if (allowedRoutes.contains(route)) {
       return null;
     }
 
-    // Only check if user is authenticated
-    if (auth.auth.currentUser != null &&
-        auth.userRole.value.isNotEmpty &&
-        !auth.isProfileComplete.value) {
-      debugPrint("ProfileCompleteMiddleware: Redirecting to profile-update");
+    if (auth.auth.currentUser != null && auth.userRole.value.isEmpty) {
+      auth.loadUserData();
+      return null; // Don't redirect while loading
+    }
+
+    if (auth.auth.currentUser != null && !auth.isProfileComplete.value) {
       return const RouteSettings(name: '/profile-update');
     }
 
     return null;
-  }
-
-  @override
-  GetPage? onPageCalled(GetPage? page) {
-    debugPrint("ProfileCompleteMiddleware: Entering ${page?.name}");
-    return super.onPageCalled(page);
+    */
   }
 }
