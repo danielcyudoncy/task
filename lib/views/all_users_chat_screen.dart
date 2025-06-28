@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'chat_screen.dart';
 
 class AllUsersChatScreen extends StatelessWidget {
@@ -33,7 +32,7 @@ class AllUsersChatScreen extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .where('uid', isNotEqualTo: currentUserId) // Exclude current user
+            .where('uid', isNotEqualTo: currentUserId)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -58,6 +57,7 @@ class AllUsersChatScreen extends StatelessWidget {
               final name = userData['name'] ?? 'Unknown';
               final email = userData['email'] ?? '';
               final avatar = userData['profilePic'] ?? '';
+              final receiverId = user.id;
 
               return ListTile(
                 leading: CircleAvatar(
@@ -67,11 +67,53 @@ class AllUsersChatScreen extends StatelessWidget {
                 ),
                 title: Text(name),
                 subtitle: Text(email),
-                onTap: () {
+                onTap: () async {
+                  // Check for existing conversation
+                  final conversation = await FirebaseFirestore.instance
+                      .collection('conversations')
+                      .where('participants', arrayContains: currentUserId)
+                      .get();
+
+                  DocumentSnapshot? existingConvo;
+
+                  for (final doc in conversation.docs) {
+                    final data = doc.data();
+                    final participants = (data['participants'] as List?)
+                            ?.whereType<String>()
+                            .toList() ??
+                        [];
+                    if (participants.contains(receiverId) &&
+                        participants.length == 2) {
+                      existingConvo = doc;
+                      break;
+                    }
+                  }
+
+                  String conversationId;
+
+                  if (existingConvo != null) {
+                    conversationId = existingConvo.id;
+                  } else {
+                    final newConvo = await FirebaseFirestore.instance
+                        .collection('conversations')
+                        .add({
+                      'participants': [currentUserId, receiverId],
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'lastMessageTime': FieldValue.serverTimestamp(),
+                      'unreadCount': {
+                        currentUserId: 0,
+                        receiverId: 0,
+                      },
+                      'pinnedUsers': [],
+                    });
+                    conversationId = newConvo.id;
+                  }
+
                   Get.to(() => ChatScreen(
-                        receiverId: user.id,
+                        receiverId: receiverId,
                         receiverName: name,
                         receiverAvatar: avatar,
+                        conversationId: conversationId, chatId: '', otherUserId: '', otherUserName: null, otherUser: const {},
                       ));
                 },
               );
