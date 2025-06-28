@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/views/user_list_screen.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
@@ -43,6 +44,7 @@ class _AppDrawerState extends State<AppDrawer> {
       uniqueTasks[task.taskId] = task;
     }
 
+    if (!mounted) return;
     setState(() {
       _userTasks = uniqueTasks.values.toList();
     });
@@ -74,18 +76,14 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
               child: Stack(
                 children: [
-                  // Radial Rings Anchored to Avatar
                   Positioned.fill(
                     child: CustomPaint(
                       painter: ConcentricCirclePainter(
-                        centerOffset:
-                            Offset(70.w, 90.h), // match avatar position
+                        centerOffset: Offset(70.w, 90.h),
                         ringColor: isDark ? Colors.white54 : Colors.white,
                       ),
                     ),
                   ),
-
-                  // Avatar + Name + Email Row
                   Padding(
                     padding: EdgeInsets.all(16.w),
                     child: Row(
@@ -170,11 +168,9 @@ class _AppDrawerState extends State<AppDrawer> {
                     ),
                   ),
                   onTap: () {
-                    Get.find<SettingsController>()
-                        .triggerFeedback(); // 👈 sound + vibration
+                    Get.find<SettingsController>().triggerFeedback();
                     setState(() => _showCalendar = !_showCalendar);
                   },
-
                 ),
               ),
             ),
@@ -208,7 +204,10 @@ class _AppDrawerState extends State<AppDrawer> {
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withAlpha(153),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withAlpha(153),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -280,13 +279,14 @@ class _AppDrawerState extends State<AppDrawer> {
                 color: Theme.of(context).textTheme.bodyLarge?.color)),
         onTap: () {
           Get.find<SettingsController>().triggerFeedback();
-          Get.back(); // Closes drawer or previous screen if needed
-          Get.toNamed(route); // Navigates to the provided route
+          Get.back();
+          Future.delayed(const Duration(milliseconds: 150), () {
+            Get.to(() => const UserListScreen());
+          });
         },
       ),
     );
   }
-
 
   Widget _buildMyTasksCard() {
     return Card(
@@ -394,7 +394,6 @@ class _AppDrawerState extends State<AppDrawer> {
               Get.find<SettingsController>().triggerFeedback();
               Get.back(result: false);
             },
-
             child: Text('Cancel',
                 style: TextStyle(color: Theme.of(context).primaryColor)),
           ),
@@ -434,8 +433,8 @@ class ConcentricCirclePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    final List<double> radii = [60, 100, 140]; // adjust as needed
-    final List<double> opacities = [0.4, 0.25, 0.12]; // fading intensity
+    final List<double> radii = [60, 100, 140];
+    final List<double> opacities = [0.4, 0.25, 0.12];
 
     for (int i = 0; i < radii.length; i++) {
       paint.color = ringColor.withAlpha((opacities[i] * 255).round());

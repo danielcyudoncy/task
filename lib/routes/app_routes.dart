@@ -21,6 +21,7 @@ import 'package:task/views/task_assignment_screen.dart';
 import 'package:task/views/task_creation_screen.dart';
 import 'package:task/views/task_list_screen.dart';
 import 'package:task/views/onboarding_screen.dart';
+import 'package:task/views/user_list_screen.dart';
 
 class AppRoutes {
   static final routes = [
@@ -145,6 +146,14 @@ class AppRoutes {
     GetPage(
       name: "/chat-list",
       page: () =>  const ChatListScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+     GetPage(
+      name: "/user-list",
+      page: () => const UserListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,

@@ -1,4 +1,5 @@
 // views/chat_list_screen.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +39,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 delegate: ChatSearchDelegate(currentUserId),
               );
               if (result != null) {
-                // Future: open selected chat
+                // You may want to navigate to chat here
               }
             },
           ),
@@ -113,7 +114,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
           final docs = snapshot.data?.docs ?? [];
 
-          // Build empty state if no conversations
           if (docs.isEmpty) {
             return Center(
               child: Column(
@@ -130,16 +130,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
             );
           }
 
-          // Sort so that pinned chats come first
           docs.sort((a, b) {
             final aPinned = (a['pinnedUsers'] ?? []).contains(currentUserId);
             final bPinned = (b['pinnedUsers'] ?? []).contains(currentUserId);
             if (aPinned && !bPinned) return -1;
             if (!aPinned && bPinned) return 1;
-            return 0; // Leave order based on Firestore sort
+            return 0;
           });
 
-          // Build list
           return ListView.builder(
             padding: EdgeInsets.symmetric(vertical: 8.h),
             itemCount: docs.length,
@@ -148,19 +146,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
               final data = conversation.data() as Map<String, dynamic>;
               final participants =
                   List<String>.from(data['participants'] ?? []);
-              final receiverId =
-                  participants.firstWhere((id) => id != currentUserId);
+              final receiverId = participants
+                  .firstWhere((id) => id != currentUserId);
               final lastMessage = data['lastMessage'] as String? ?? '';
               final lastMessageTime =
                   (data['lastMessageTime'] as Timestamp?)?.toDate();
               final unreadCountMap =
                   Map<String, dynamic>.from(data['unreadCount'] ?? {});
-              final unreadCount = (unreadCountMap[currentUserId] ?? 0).toInt();
+              final unreadCount =
+                  ((unreadCountMap[currentUserId] ?? 0) as num).toInt();
+
               final pinnedList = List<String>.from(data['pinnedUsers'] ?? []);
               final pinned = pinnedList.contains(currentUserId);
 
-              totalUnread += (unreadCount as int);
-
+              totalUnread += unreadCount;
 
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
@@ -180,7 +179,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   final lastSeenTimestamp =
                       (userData['lastSeen'] as Timestamp?)?.toDate();
 
-                  // Hide if not matching search query
                   if (searchQuery.isNotEmpty &&
                       !userName
                           .toLowerCase()
@@ -218,6 +216,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         lastMessageTime,
                         unreadCount,
                         pinned,
+                        receiverId,
                       ),
                     ),
                   );
@@ -229,6 +228,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
     );
   }
+
   Widget queryClearIcon(bool isDark) {
     if (searchQuery.isNotEmpty) {
       return IconButton(
@@ -245,15 +245,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Widget buildChatTile(
-      String conversationId,
-      String userName,
-      String userAvatar,
-      bool isOnline,
-      DateTime? lastSeenTimestamp,
-      String lastMessage,
-      DateTime? lastMessageTime,
-      int unreadCount,
-      bool pinned) {
+    String conversationId,
+    String userName,
+    String userAvatar,
+    bool isOnline,
+    DateTime? lastSeenTimestamp,
+    String lastMessage,
+    DateTime? lastMessageTime,
+    int unreadCount,
+    bool pinned,
+    String receiverId,
+  ) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
       shape: RoundedRectangleBorder(
@@ -264,7 +266,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
         title: buildTitleRow(userName, pinned, unreadCount),
         subtitle: buildSubtitle(conversationId, lastMessage),
         trailing: buildTrailing(lastMessageTime, unreadCount),
-        onTap: () => openChatScreen(conversationId, userName, userAvatar),
+        onTap: () => openChatScreen(
+          receiverId,
+          userName,
+          userAvatar,
+          conversationId,
+        ),
       ),
     );
   }
@@ -312,9 +319,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           .collection('conversations')
           .doc(conversationId)
           .collection('typingStatus')
-          .doc(currentUserId == FirebaseAuth.instance.currentUser!.uid
-              ? '' // ignore
-              : FirebaseAuth.instance.currentUser!.uid)
+          .doc(currentUserId)
           .snapshots(),
       builder: (context, typingSnapshot) {
         final data = typingSnapshot.data?.data() as Map<String, dynamic>?;
@@ -333,6 +338,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       },
     );
   }
+
   Widget buildTrailing(DateTime? time, int unreadCount) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -370,12 +376,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
     });
   }
 
-  void openChatScreen(String conversationId, String name, String avatarUrl) {
+  void openChatScreen(
+      String receiverId, String name, String avatarUrl, String conversationId) {
     Get.to(
       () => ChatScreen(
-        receiverId: conversationId,
+        receiverId: receiverId,
         receiverName: name,
         receiverAvatar: avatarUrl,
+        conversationId: conversationId, chatId: '', otherUserId: '', otherUserName: null, otherUser: {},
       ),
     );
   }
@@ -395,7 +403,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 }
 
-// Search delegate remains the same
 class ChatSearchDelegate extends SearchDelegate<String> {
   final String currentUserId;
   ChatSearchDelegate(this.currentUserId);
