@@ -28,14 +28,23 @@ class ForgotPasswordScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colorScheme.primary.withOpacity(0.7),
-              colorScheme.primary,
-            ],
-          ),
+          gradient: isDark
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    colorScheme.surface,
+                    Colors.grey.shade900,
+                  ],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF08169D),
+                    Color(0xFF08169D),
+                  ],
+                ),
         ),
         child: SafeArea(
           child: Padding(
@@ -49,7 +58,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                       icon: const Icon(
                         Icons.arrow_back,
                         color: Colors.white,
-                        size: 40, // adjust the size as needed
+                        size: 24, // adjust the size as needed
                       ),
                       onPressed: () {
                         Get.find<SettingsController>().triggerFeedback();
@@ -83,8 +92,9 @@ class ForgotPasswordScreen extends StatelessWidget {
                           // Title
                           Text(
                             "Forgot Password",
-                            style: textTheme.headlineLarge?.copyWith(
+                            style: textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'raleway',
                               color: isDark ? Colors.white : Colors.black,
                             ),
                           ),

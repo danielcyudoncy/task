@@ -383,7 +383,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         receiverId: receiverId,
         receiverName: name,
         receiverAvatar: avatarUrl,
-        conversationId: conversationId, chatId: '', otherUserId: '', otherUserName: null, otherUser: {},
+        conversationId: conversationId, otherUserId: '', otherUserName: null, otherUser: const {}, chatId: '',
       ),
     );
   }

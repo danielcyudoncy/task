@@ -9,7 +9,7 @@ class ChatScreen extends StatefulWidget {
   final String receiverName;
   final String receiverAvatar;
   final String? conversationId;
-  final String chatId;
+  final String? chatId;
   final String otherUserId;
   final String? otherUserName;
   final Map<String, dynamic> otherUser;
@@ -38,7 +38,8 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    conversationId = widget.conversationId ?? getConversationId();
+    conversationId = widget.conversationId!;
+
     markMessagesAsSeen();
   }
 

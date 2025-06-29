@@ -23,6 +23,8 @@ class SignUpScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -30,7 +32,25 @@ class SignUpScreen extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: const Color(0xFF181B2A), // primaryBlue background
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    colorScheme.surface,
+                    Colors.grey.shade900,
+                  ],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF08169D),
+                    Color(0xFF08169D),
+                  ],
+                ),
+        ),
 
         child: SafeArea(
           child: Stack(
@@ -285,7 +305,14 @@ class SignUpScreen extends StatelessWidget {
                                       Get.find<SettingsController>()
                                           .triggerFeedback();
                                       Get.snackbar("Coming Soon",
-                                          "Google sign-up not yet implemented.");
+                                          "Google sign-up not yet implemented.",
+                                          backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .surface,
+                                        colorText: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      );
                                     },
                                   ),
                                   const SizedBox(width: 20),
@@ -296,7 +323,14 @@ class SignUpScreen extends StatelessWidget {
                                       Get.find<SettingsController>()
                                           .triggerFeedback();
                                       Get.snackbar("Coming Soon",
-                                          "Apple sign-up not yet implemented.");
+                                          "Apple sign-up not yet implemented.",
+                                          backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .surface,
+                                        colorText: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      );
                                     },
                                   ),
                                 ],

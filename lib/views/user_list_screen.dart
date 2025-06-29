@@ -106,22 +106,26 @@ class _UserListScreenState extends State<UserListScreen> {
                           ? const Icon(Icons.push_pin, color: Colors.orange)
                           : null,
                       onTap: () async {
-                        final conversationId = await _startOrGetConversation(
-                          currentUser.uid,
-                          userId,
-                        );
+                          final conversationId = await _startOrGetConversation(
+                            currentUser.uid,
+                            userId,
+                          );
 
-                        Get.to(() => ChatScreen(
-                              conversationId: conversationId,
-                              otherUser: userData,
-                              receiverId: userId,
-                              receiverName: userName,
-                              receiverAvatar: userAvatar ?? '',
-                              chatId: '',
-                              otherUserId: userId,
-                              otherUserName: userName,
-                            ));
-                      },
+                          // Defer navigation until after this frame
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            Get.to(() => ChatScreen(
+                                  conversationId: conversationId,
+                                  otherUser: userData,
+                                  receiverId: userId,
+                                  receiverName: userName,
+                                  receiverAvatar: userAvatar ?? '',
+                                  chatId: conversationId, // or remove if unused
+                                  otherUserId: userId,
+                                  otherUserName: userName,
+                                ));
+                          });
+                        }
+
                     );
                   },
                 );

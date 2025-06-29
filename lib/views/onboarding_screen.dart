@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_sizes.dart';
@@ -80,7 +81,7 @@ class OnboardingScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
-                      fontFamily: AppFontsStyles.montserrat,
+                      fontFamily: AppFontsStyles.raleway,
                       foreground: Paint()
                         ..style = PaintingStyle.stroke
                         ..strokeWidth = 4
@@ -91,10 +92,10 @@ class OnboardingScreen extends StatelessWidget {
                   Text(
                     'Welcome!',
                     style: TextStyle(
-                      color: Colors.white, // Ensure contrast on blue bg
+                      color: AppColors.primaryColor, // Ensure contrast on blue bg
                       fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
-                      fontFamily: AppFontsStyles.montserrat,
+                      fontFamily: AppFontsStyles.raleway,
                       shadows: [
                         Shadow(
                           color: isDark
@@ -135,7 +136,7 @@ class OnboardingScreen extends StatelessWidget {
                         _handleGetStarted();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
+                        backgroundColor: AppColors.saveColor,
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
