@@ -269,7 +269,13 @@ class LoginScreen extends StatelessWidget {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
                                         Get.snackbar("Coming Soon",
-                                            "Google sign-up not yet implemented.");
+                                            "Google sign-up not yet implemented.",
+                                            backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .surface,
+                                          colorText: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,);
                                       },
                                     ),
                                     const SizedBox(width: 20),
@@ -279,8 +285,16 @@ class LoginScreen extends StatelessWidget {
                                       onPressed: () {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        Get.snackbar("Coming Soon",
-                                            "Apple sign-up not yet implemented.");
+                                        Get.snackbar(
+                                          "Coming Soon",
+                                          "Apple sign-up not yet implemented.",
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .surface,
+                                          colorText: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        );
                                       },
                                     ),
                                   ],

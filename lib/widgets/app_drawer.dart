@@ -7,24 +7,20 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/views/user_list_screen.dart';
-
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../models/task_model.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
-
   @override
   State<AppDrawer> createState() => _AppDrawerState();
 }
 
 class _AppDrawerState extends State<AppDrawer> {
-  final AuthController authController = Get.find<AuthController>();
-  final TaskController taskController = Get.find<TaskController>();
-
-  bool _logoutHovered = false;
-  bool _showCalendar = false;
+  final authController = Get.find<AuthController>();
+  final taskController = Get.find<TaskController>();
+  bool _logoutHovered = false, _showCalendar = false;
   DateTime _focusedDay = DateTime.now();
   List<Task> _userTasks = [];
 
@@ -35,31 +31,23 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   Future<void> _loadUserTasks() async {
-    final assignedTasks = await taskController.getMyAssignedTasks();
-    final createdTasks = await taskController.getMyCreatedTasks();
-
-    final allTasks = [...assignedTasks, ...createdTasks];
-    final uniqueTasks = <String, Task>{};
-    for (var task in allTasks) {
-      uniqueTasks[task.taskId] = task;
-    }
-
+    final assigned = await taskController.getMyAssignedTasks();
+    final created = await taskController.getMyCreatedTasks();
+    final all = [...assigned, ...created];
+    final unique = {for (var t in all) t.taskId: t}.values.toList();
     if (!mounted) return;
-    setState(() {
-      _userTasks = uniqueTasks.values.toList();
-    });
+    setState(() => _userTasks = unique);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenHeight = MediaQuery.of(context).size.height;
-
+     final screenHeight = MediaQuery.of(context).size.height;
     return Drawer(
       child: SafeArea(
         child: Column(
           children: [
-            /// Header
+            // Drawer Header (avatar + user info + circles)
             Container(
               height: 200.h,
               decoration: BoxDecoration(
@@ -87,11 +75,10 @@ class _AppDrawerState extends State<AppDrawer> {
                   Padding(
                     padding: EdgeInsets.all(16.w),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         CircleAvatar(
-                          backgroundColor: Colors.white,
                           radius: 40.r,
+                          backgroundColor: Colors.white,
                           backgroundImage: authController
                                   .profilePic.value.isNotEmpty
                               ? NetworkImage(authController.profilePic.value)
@@ -110,34 +97,26 @@ class _AppDrawerState extends State<AppDrawer> {
                                 )
                               : null,
                         ),
-                        SizedBox(width: 14.w),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                authController.fullName.value,
-                                style: TextStyle(
-                                  fontSize: 28.sp,
+                        SizedBox(width: 16.w),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              authController.fullName.value,
+                              style: TextStyle(
+                                  fontSize: 24.sp,
+                                  fontFamily: 'Raleway',
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Raleway',
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              Text(
-                                authController.currentUser?.email ?? '',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Raleway',
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                                  color: Colors.white),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              authController.currentUser?.email ?? '',
+                              style: TextStyle(
+                                  fontSize: 14.sp, color: Colors.white70),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -146,27 +125,22 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
 
-            /// Calendar Toggle
+            // Calendar toggle
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Card(
                 elevation: 3,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r)),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
                 child: ListTile(
-                  leading: Icon(Icons.calendar_today,
-                      color: _showCalendar
-                          ? Theme.of(context).primaryColor
-                          : null),
-                  title: Text(
-                    _showCalendar ? 'Hide Calendar' : 'Show Calendar',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: _showCalendar
-                          ? Theme.of(context).primaryColor
-                          : Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
+                  leading: Icon(
+                    Icons.calendar_today,
+                    color:
+                        _showCalendar ? Theme.of(context).primaryColor : null,
                   ),
+                  title:
+                      Text(_showCalendar ? 'Hide Calendar' : 'Show Calendar'),
                   onTap: () {
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _showCalendar = !_showCalendar);
@@ -175,10 +149,11 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
 
+            // Calendar view
             if (_showCalendar)
               Container(
                 height: screenHeight * 0.45,
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                 child: SingleChildScrollView(
                   child: Card(
                     elevation: 4,
@@ -204,10 +179,8 @@ class _AppDrawerState extends State<AppDrawer> {
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withAlpha(153),
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.6),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -219,23 +192,36 @@ class _AppDrawerState extends State<AppDrawer> {
                   ),
                 ),
               ),
-
-            /// Menu Section
+            // Navigation tiles
             Expanded(
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 children: [
-                  _buildCardTile(Icons.home, 'Home', '/home'),
-                  _buildCardTile(Icons.person, 'Profile', '/profile'),
-                  _buildCardTile(Icons.chat, "Chat With Users", "/chat-list"),
-                  _buildCardTile(Icons.settings, 'Settings', '/settings'),
-                  _buildMyTasksCard(),
+                  _drawerTile(Icons.person_outline, 'Profile', () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Get.offAllNamed('/profile');
+                    });
+                  }),
+                  _drawerTile(Icons.chat_outlined, 'Chat Users', () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Get.to(() => const UserListScreen());
+                    });
+                  }),
+                  _drawerTile(Icons.settings_outlined, 'Settings', () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Get.toNamed('/settings');
+                    });
+                  }),
+                  _myTasksCard(),
                   _buildDarkModeCard(isDark),
                 ],
               ),
             ),
 
-            /// Logout Button
+            // Logout button
             Padding(
               padding: EdgeInsets.all(16.w),
               child: MouseRegion(
@@ -243,20 +229,20 @@ class _AppDrawerState extends State<AppDrawer> {
                 onExit: (_) => setState(() => _logoutHovered = false),
                 child: Card(
                   elevation: 2,
-                  color: isDark ? Colors.grey[800] : Colors.grey[100],
+                  color: isDark ? Colors.grey[800] : Colors.grey[200],
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
+                      borderRadius: BorderRadius.circular(12.r)),
                   child: ListTile(
                     leading: AnimatedRotation(
-                      turns: _logoutHovered ? 0.25 : 0,
+                      turns: _logoutHovered ? .25 : 0,
                       duration: const Duration(milliseconds: 300),
                       child: const Icon(Icons.logout, color: Colors.red),
                     ),
-                    title: const Text('Logout',
-                        style: TextStyle(
-                            color: Colors.red, fontWeight: FontWeight.bold)),
-                    onTap: _showLogoutConfirmation,
+                    title: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onTap: _confirmLogout,
                   ),
                 ),
               ),
@@ -267,66 +253,39 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
-  Widget _buildCardTile(IconData icon, String title, String route) {
+  Widget _drawerTile(IconData icon, String label, VoidCallback onTap) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      child: ListTile(
-        leading: Icon(icon, color: Theme.of(context).iconTheme.color),
-        title: Text(title,
-            style: TextStyle(
-                fontSize: 16.sp,
-                color: Theme.of(context).textTheme.bodyLarge?.color)),
-        onTap: () {
-          Get.find<SettingsController>().triggerFeedback();
-          Get.back();
-          Future.delayed(const Duration(milliseconds: 150), () {
-            Get.to(() => const UserListScreen());
-          });
-        },
-      ),
+      child: ListTile(leading: Icon(icon), title: Text(label), onTap: onTap),
     );
   }
 
-  Widget _buildMyTasksCard() {
+  Widget _myTasksCard() {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: ExpansionTile(
-        leading: Icon(Icons.task, color: Theme.of(context).iconTheme.color),
-        title: Row(
-          children: [
-            Text('My Tasks',
-                style: TextStyle(
-                    fontSize: 16.sp,
-                    color: Theme.of(context).textTheme.bodyLarge?.color)),
-            SizedBox(width: 8.w),
-            if (taskController.newTaskCount.value > 0)
-              Chip(
-                label: Text(
-                  taskController.newTaskCount.value.toString(),
-                  style: const TextStyle(color: Colors.white),
-                ),
-                backgroundColor: Colors.red,
-              ),
-          ],
-        ),
+        leading: const Icon(Icons.task),
+        title: const Text('My Tasks'),
         children: _userTasks.isEmpty
             ? [
                 Padding(
                   padding: EdgeInsets.all(16.w),
-                  child: Text(
-                    'No tasks assigned',
-                    style: TextStyle(color: Theme.of(context).hintColor),
-                  ),
-                ),
+                  child: const Text('No tasks assigned'),
+                )
               ]
-            : _userTasks.map((task) => _buildTaskItem(task)).toList(),
+            : _userTasks
+                .map((t) => ListTile(
+                      title: Text(t.title),
+                      subtitle: Text('Due: ${_formatDate(t.timestamp)}'),
+                    ))
+                .toList(),
       ),
     );
   }
 
-  Widget _buildDarkModeCard(bool isDark) {
+   Widget _buildDarkModeCard(bool isDark) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
@@ -337,83 +296,37 @@ class _AppDrawerState extends State<AppDrawer> {
                 color: Theme.of(context).textTheme.bodyLarge?.color)),
         value: isDark,
         onChanged: (value) {
-          Get.find<SettingsController>().triggerFeedback();
           Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
         },
       ),
     );
   }
 
-  Widget _buildTaskItem(Task task) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isCompleted = task.status == 'Completed';
-
-    return ListTile(
-      leading: Icon(
-        isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: isCompleted ? Colors.green : Theme.of(context).primaryColor,
-      ),
-      title: Text(
-        task.title,
-        style: TextStyle(
-          decoration: isCompleted ? TextDecoration.lineThrough : null,
-          color: Theme.of(context).textTheme.bodyLarge?.color,
-        ),
-      ),
-      subtitle: Text(
-        'Due: ${_formatDate(task.timestamp)}\nStatus: ${task.status}',
-        style: TextStyle(
-          color: isDark ? Colors.grey[400] : Colors.grey[600],
-        ),
-      ),
-      onTap: () {},
-    );
+  String _formatDate(dynamic d) {
+    if (d is Timestamp) return DateFormat('MMM dd, yyyy').format(d.toDate());
+    return 'No deadline';
   }
 
-  String _formatDate(dynamic date) {
-    if (date == null) return 'No deadline';
-    if (date is Timestamp) {
-      return DateFormat('MMM dd, yyyy').format(date.toDate());
-    }
-    return 'Invalid date';
-  }
-
-  Future<void> _showLogoutConfirmation() async {
+  Future<void> _confirmLogout() async {
     final confirm = await Get.dialog<bool>(
       AlertDialog(
-        title: Text('Confirm Logout',
-            style:
-                TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)),
-        content: Text('Are you sure you want to sign out?',
-            style:
-                TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color)),
-        backgroundColor: Theme.of(context).cardColor,
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure?'),
         actions: [
           TextButton(
-            onPressed: () {
-              Get.find<SettingsController>().triggerFeedback();
-              Get.back(result: false);
-            },
-            child: Text('Cancel',
-                style: TextStyle(color: Theme.of(context).primaryColor)),
-          ),
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            onPressed: () {
-              Get.find<SettingsController>().triggerFeedback();
-              Get.back(result: true);
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
-          ),
+              onPressed: () => Get.back(result: true),
+              child: const Text('Logout')),
         ],
       ),
     );
-
     if (confirm == true) {
       await authController.signOut();
-      Get.offAllNamed('/login');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed('/login');
+      });
     }
   }
 }
@@ -421,27 +334,21 @@ class _AppDrawerState extends State<AppDrawer> {
 class ConcentricCirclePainter extends CustomPainter {
   final Offset centerOffset;
   final Color ringColor;
-
-  ConcentricCirclePainter({
-    required this.centerOffset,
-    required this.ringColor,
-  });
-
+  ConcentricCirclePainter(
+      {required this.centerOffset, required this.ringColor});
   @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
+  void paint(Canvas c, Size s) {
+    final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
-
-    final List<double> radii = [60, 100, 140];
-    final List<double> opacities = [0.4, 0.25, 0.12];
-
+    final radii = [60.0, 100.0, 140.0];
+    final alphas = [0.4, 0.25, 0.12];
     for (int i = 0; i < radii.length; i++) {
-      paint.color = ringColor.withAlpha((opacities[i] * 255).round());
-      canvas.drawCircle(centerOffset, radii[i], paint);
+      paint.color = ringColor.withOpacity(alphas[i]);
+      c.drawCircle(centerOffset, radii[i], paint);
     }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }

@@ -24,18 +24,16 @@ class SettingsScreen extends StatelessWidget {
             isLightMode ? const Color(0xFF05168E) : const Color(0xFF181B2A),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () async {
-            await settingsController.triggerFeedback();
-            Get.back();
-          },
+          onPressed: () => Get.back(),
         ),
         title: Text(
           'Settings',
           style: TextStyle(
-              fontFamily: 'raleway',
-              color: Colors.white,
-              fontSize: 30.sp,
-              fontWeight: FontWeight.w700),
+            fontFamily: 'raleway',
+            color: Colors.white,
+            fontSize: 30.sp,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: true,
       ),
@@ -47,45 +45,41 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     const SizedBox(height: 8),
                     Center(
-                      child: GestureDetector(
-                        onTap: () => settingsController.triggerFeedback(),
-                        child: Container(
-                          margin: const EdgeInsets.only(top: 8, bottom: 10),
-                          child: Image.asset(
-                            'assets/png/logo.png',
-                            width: 100,
-                            height: 100,
-                          ),
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 8, bottom: 10),
+                        child: Image.asset(
+                          'assets/png/logo.png',
+                          width: 100,
+                          height: 100,
                         ),
                       ),
                     ),
                     sectionTitle("App Preferences"),
-                    settingsSwitchTile(
-                      "Dark Mode",
-                      "Activate Dark background for app",
-                      themeController.isDarkMode.value,
-                      (value) async {
-                        await settingsController.triggerFeedback();
-                        themeController.toggleTheme(value);
-                      },
-                    ),
+                    Obx(() => settingsSwitchTile(
+                          "Dark Mode",
+                          "Activate dark background for app",
+                          themeController.isDarkMode.value,
+                          (value) {
+                            themeController.toggleTheme(value);
+                          },
+                        )),
                     sectionTitle("Sound and Vibration"),
                     settingsSwitchTile(
                       "Sounds",
                       "Enable Sound",
                       settingsController.isSoundEnabled.value,
-                      (value) async {
-                        await settingsController.triggerFeedback();
+                      (value) {
                         settingsController.toggleSound(value);
+                        settingsController.saveSettings();
                       },
                     ),
                     settingsSwitchTile(
                       "Vibration",
                       "Enable/Disable Vibration",
                       settingsController.isVibrationEnabled.value,
-                      (value) async {
-                        await settingsController.triggerFeedback();
+                      (value) {
                         settingsController.toggleVibration(value);
+                        settingsController.saveSettings();
                       },
                     ),
                     sectionTitle("Account Preferences"),
@@ -99,9 +93,9 @@ class SettingsScreen extends StatelessWidget {
                         "Yoruba",
                         "Igbo"
                       ],
-                      (lang) async {
-                        await settingsController.triggerFeedback();
+                      (lang) {
                         settingsController.setLanguage(lang);
+                        settingsController.saveSettings();
                       },
                     ),
                     sectionTitle("Sync Settings"),
@@ -109,15 +103,15 @@ class SettingsScreen extends StatelessWidget {
                       "Synchronize data across all devices",
                       "",
                       settingsController.isSyncEnabled.value,
-                      (value) async {
-                        await settingsController.triggerFeedback();
+                      (value) {
                         settingsController.toggleSync(value);
+                        settingsController.saveSettings();
                       },
                     ),
                     const SizedBox(height: 14),
                     saveButton(settingsController),
                     const SizedBox(height: 30),
-                    nextPageButton(settingsController),
+                    nextPageButton(),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -127,7 +121,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // Keep all your existing UI widgets exactly the same
   Widget sectionTitle(String title) => Container(
         alignment: Alignment.centerLeft,
         margin: const EdgeInsets.only(top: 18, bottom: 6),
@@ -187,11 +180,9 @@ class SettingsScreen extends StatelessWidget {
       elevation: 0,
       child: ListTile(
         contentPadding: const EdgeInsets.only(left: 0, right: 0),
-        title: Text(
-          title,
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-        ),
+        title: Text(title,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w500)),
         trailing: DropdownButton<String>(
           value: selected,
           dropdownColor: const Color(0xFF05168E),
@@ -228,6 +219,7 @@ class SettingsScreen extends StatelessWidget {
         onPressed: () async {
           await controller.triggerFeedback();
           await controller.saveSettings();
+
           Get.snackbar(
             "Settings Saved",
             "Your preferences have been updated.",
@@ -244,7 +236,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget nextPageButton(SettingsController controller) {
+  Widget nextPageButton() {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
@@ -255,8 +247,7 @@ class SettingsScreen extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),
-        onPressed: () async {
-          await controller.triggerFeedback();
+        onPressed: () {
           Get.toNamed('/privacy');
         },
         child: const Text("Next: Privacy Settings",

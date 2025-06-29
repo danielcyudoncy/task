@@ -113,7 +113,7 @@ class AllUsersChatScreen extends StatelessWidget {
                         receiverId: receiverId,
                         receiverName: name,
                         receiverAvatar: avatar,
-                        conversationId: conversationId, chatId: '', otherUserId: '', otherUserName: null, otherUser: const {},
+                        conversationId: conversationId, otherUserId: '', otherUserName: null, otherUser: const {}, chatId: '',
                       ));
                 },
               );

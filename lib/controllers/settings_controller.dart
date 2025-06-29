@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SettingsController extends GetxController {
   final AudioPlayer audioPlayer;
@@ -25,7 +27,9 @@ class SettingsController extends GetxController {
   bool get shouldVibrate => isVibrationEnabled.value;
   bool get shouldPlaySound => isSoundEnabled.value;
 
-  /// Plays any app sound by filename (must be under `assets/sounds/`)
+  final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
+
   Future<void> _playSound(String fileName) async {
     if (!shouldPlaySound) return;
     try {
@@ -35,7 +39,6 @@ class SettingsController extends GetxController {
     }
   }
 
-  /// Triggers sound and vibration feedback together
   Future<void> triggerFeedback() async {
     if (shouldVibrate && await Vibration.hasVibrator()) {
       await Vibration.vibrate(duration: 50);
@@ -46,7 +49,7 @@ class SettingsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadSettings();
+    loadSettings(); // this also triggers Firestore sync if needed
   }
 
   @override
@@ -57,6 +60,8 @@ class SettingsController extends GetxController {
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Load from local storage first
     isDarkMode.value = prefs.getBool('isDarkMode') ?? false;
     isSoundEnabled.value = prefs.getBool('isSoundEnabled') ?? true;
     isVibrationEnabled.value = prefs.getBool('isVibrationEnabled') ?? true;
@@ -67,10 +72,44 @@ class SettingsController extends GetxController {
         prefs.getBool('isAssignmentAlertEnabled') ?? false;
     isLocationEnabled.value = prefs.getBool('isLocationEnabled') ?? false;
     isTargetedAdsEnabled.value = prefs.getBool('isTargetedAdsEnabled') ?? false;
+
+    // If sync is enabled and user is logged in, fetch from Firestore
+    if (isSyncEnabled.value && _auth.currentUser != null) {
+      await _loadSettingsFromFirestore();
+    }
   }
 
-  Future<void> saveSettings() async {
+  Future<void> _loadSettingsFromFirestore() async {
+    try {
+      final uid = _auth.currentUser!.uid;
+      final doc = await _firestore.collection('user_settings').doc(uid).get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        isDarkMode.value = data['isDarkMode'] ?? isDarkMode.value;
+        isSoundEnabled.value = data['isSoundEnabled'] ?? isSoundEnabled.value;
+        isVibrationEnabled.value =
+            data['isVibrationEnabled'] ?? isVibrationEnabled.value;
+        selectedLanguage.value =
+            data['selectedLanguage'] ?? selectedLanguage.value;
+        isAssignmentAlertEnabled.value =
+            data['isAssignmentAlertEnabled'] ?? isAssignmentAlertEnabled.value;
+        isLocationEnabled.value =
+            data['isLocationEnabled'] ?? isLocationEnabled.value;
+        isTargetedAdsEnabled.value =
+            data['isTargetedAdsEnabled'] ?? isTargetedAdsEnabled.value;
+
+        // Save pulled settings to local preferences too
+        await saveSettings(localOnly: true);
+      }
+    } catch (e) {
+      debugPrint('⚠️ Firestore sync error: $e');
+    }
+  }
+
+  Future<void> saveSettings({bool localOnly = false}) async {
     final prefs = await SharedPreferences.getInstance();
+
     await Future.wait([
       prefs.setBool('isDarkMode', isDarkMode.value),
       prefs.setBool('isSoundEnabled', isSoundEnabled.value),
@@ -81,9 +120,30 @@ class SettingsController extends GetxController {
       prefs.setBool('isLocationEnabled', isLocationEnabled.value),
       prefs.setBool('isTargetedAdsEnabled', isTargetedAdsEnabled.value),
     ]);
+
+    
+
+    if (!localOnly && isSyncEnabled.value && _auth.currentUser != null) {
+      try {
+        final uid = _auth.currentUser!.uid;
+        await _firestore.collection('user_settings').doc(uid).set({
+          'isDarkMode': isDarkMode.value,
+          'isSoundEnabled': isSoundEnabled.value,
+          'isVibrationEnabled': isVibrationEnabled.value,
+          'selectedLanguage': selectedLanguage.value,
+          'isAssignmentAlertEnabled': isAssignmentAlertEnabled.value,
+          'isLocationEnabled': isLocationEnabled.value,
+          'isTargetedAdsEnabled': isTargetedAdsEnabled.value,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('⚠️ Firestore save error: $e');
+      }
+    }
+
     await _playSound('success.wav');
   }
 
+  // Toggle methods
   void toggleDarkMode(bool value) {
     isDarkMode.value = value;
     triggerFeedback();
