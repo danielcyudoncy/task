@@ -1,4 +1,6 @@
+// widgets/empty_state_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final IconData icon;
@@ -19,13 +21,13 @@ class EmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 100, color: Colors.white24, semanticLabel: 'Empty State Icon'),
+            Icon(icon, size: 100, color: Colors.white, semanticLabel: 'Empty State Icon'),
             const SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
+              style:  TextStyle(
                 color: Colors.white,
-                fontSize: 22,
+                fontSize: 22.sp,
                 fontWeight: FontWeight.bold,
               ),
             ),

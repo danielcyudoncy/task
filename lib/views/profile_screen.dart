@@ -51,25 +51,32 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icon(
                             Icons.home_outlined,
                             color: isLightMode
-                                ? Colors
-                                    .white // Retain original color in light mode
-                                : Colors.white, // White in dark mode
+                                ? Colors.white
+                                : Colors.white, // White in both modes
                           ),
                           onPressed: () {
+                            // Trigger sound/vibration feedback
                             Get.find<SettingsController>().triggerFeedback();
+
+                            // Capture user role
                             final role = authController.userRole.value;
-                            if (role == "Admin" ||
-                                role == "Assignment Editor" ||
-                                role == "Head of Department") {
-                              Get.offAllNamed('/admin-dashboard');
-                            } else if (role == "Reporter" ||
-                                role == "Cameraman") {
-                              Get.offAllNamed('/home');
-                            } else {
-                              Get.offAllNamed('/login');
-                            }
+
+                            // Use post-frame callback to safely trigger navigation
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (role == "Admin" ||
+                                  role == "Assignment Editor" ||
+                                  role == "Head of Department") {
+                                Get.offAllNamed('/admin-dashboard');
+                              } else if (role == "Reporter" ||
+                                  role == "Cameraman") {
+                                Get.offAllNamed('/home');
+                              } else {
+                                Get.offAllNamed('/login');
+                              }
+                            });
                           },
                         ),
+
                       ),
                       // Settings Icon
                       Container(
