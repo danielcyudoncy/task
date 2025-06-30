@@ -43,7 +43,7 @@ class _UserListScreenState extends State<UserListScreen> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
-                  .where('id', isNotEqualTo: currentUser.uid)
+                  .where('uid', isNotEqualTo: currentUser.uid) // ✅ fixed
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
@@ -56,7 +56,8 @@ class _UserListScreenState extends State<UserListScreen> {
                   final user = doc.data() as Map<String, dynamic>?;
                   if (user == null) return false;
 
-                  final name = (user['name'] ?? '').toString().toLowerCase();
+                  final name =
+                      (user['fullName'] ?? '').toString().toLowerCase(); // ✅ fixed
                   return name.contains(searchQuery);
                 }).toList();
 
@@ -85,14 +86,14 @@ class _UserListScreenState extends State<UserListScreen> {
 
                     if (userData == null) return const SizedBox.shrink();
 
-                    final userId = userData['id'] ?? '';
-                    final userName = userData['name'] ?? 'Unknown';
-                    final userAvatar = userData['avatar'];
+                    final userId = userData['uid'] ?? ''; // ✅ fixed
+                    final userName = userData['fullName'] ?? 'Unknown'; // ✅ fixed
+                    final userAvatar = userData['photoUrl']; // ✅ fixed
 
                     final isPinned = userData['isPinned'] == true;
 
                     return ListTile(
-                      leading: userAvatar != null
+                      leading: userAvatar != null && userAvatar.isNotEmpty
                           ? CircleAvatar(
                               backgroundImage: NetworkImage(userAvatar),
                             )
@@ -106,26 +107,24 @@ class _UserListScreenState extends State<UserListScreen> {
                           ? const Icon(Icons.push_pin, color: Colors.orange)
                           : null,
                       onTap: () async {
-                          final conversationId = await _startOrGetConversation(
-                            currentUser.uid,
-                            userId,
-                          );
+                        final conversationId = await _startOrGetConversation(
+                          currentUser.uid,
+                          userId,
+                        );
 
-                          // Defer navigation until after this frame
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            Get.to(() => ChatScreen(
-                                  conversationId: conversationId,
-                                  otherUser: userData,
-                                  receiverId: userId,
-                                  receiverName: userName,
-                                  receiverAvatar: userAvatar ?? '',
-                                  chatId: conversationId, // or remove if unused
-                                  otherUserId: userId,
-                                  otherUserName: userName,
-                                ));
-                          });
-                        }
-
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Get.to(() => ChatScreen(
+                                conversationId: conversationId,
+                                otherUser: userData,
+                                receiverId: userId,
+                                receiverName: userName,
+                                receiverAvatar: userAvatar ?? '',
+                                chatId: conversationId,
+                                otherUserId: userId,
+                                otherUserName: userName,
+                              ));
+                        });
+                      },
                     );
                   },
                 );

@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
-import 'package:task/views/user_list_screen.dart';
+import 'package:task/views/all_users_chat_screen.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../models/task_model.dart';
@@ -203,10 +203,10 @@ class _AppDrawerState extends State<AppDrawer> {
                       Get.offAllNamed('/profile');
                     });
                   }),
-                  _drawerTile(Icons.chat_outlined, 'Chat Users', () {
+                 _drawerTile(Icons.chat_outlined, 'Chat Users', () {
                     Get.find<SettingsController>().triggerFeedback();
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      Get.to(() => const UserListScreen());
+                      Get.to(() => const AllUsersChatScreen());
                     });
                   }),
                   _drawerTile(Icons.settings_outlined, 'Settings', () {
