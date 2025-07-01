@@ -197,6 +197,7 @@ class _AppDrawerState extends State<AppDrawer> {
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 children: [
+                  
                   _drawerTile(Icons.person_outline, 'Profile', () {
                     Get.find<SettingsController>().triggerFeedback();
                     WidgetsBinding.instance.addPostFrameCallback((_) {
