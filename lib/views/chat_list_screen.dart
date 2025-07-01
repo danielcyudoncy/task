@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:task/utils/constants/app_colors.dart';
 import '../controllers/auth_controller.dart';
 import 'chat_screen.dart';
 
@@ -123,7 +124,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   SizedBox(height: 16.h),
                   Text(
                     'No conversations yet',
-                    style: TextStyle(fontSize: 16.sp, color: Colors.grey),
+                    style: TextStyle(fontSize: 16.sp, color: AppColors.primaryColor),
                   ),
                 ],
               ),
@@ -332,7 +333,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           style: TextStyle(
             fontSize: 14.sp,
             fontStyle: isTyping ? FontStyle.italic : FontStyle.normal,
-            color: isTyping ? Colors.blue : Colors.grey[600],
+            color: isTyping ? Colors.blue : Colors.black,
           ),
         );
       },
