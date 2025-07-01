@@ -54,7 +54,7 @@ class AllUsersChatScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final user = users[index];
               final userData = user.data() as Map<String, dynamic>;
-              final name = userData['name'] ?? 'Unknown';
+              final name = userData['fullName'] ?? 'Unknown';
               final email = userData['email'] ?? '';
               final avatar = userData['profilePic'] ?? '';
               final receiverId = user.id;
