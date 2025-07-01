@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -144,7 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: isMe ? Colors.blue[100] : Colors.grey[200],
+                          color: isMe ? Colors.orange[100] : Colors.blue[200],
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -152,7 +153,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           children: [
                             Text(
                               data['text'] ?? '',
-                              style: const TextStyle(fontSize: 16),
+                              style:  TextStyle(fontSize: 16.sp, color: Colors.black),
                             ),
                             Row(
                               mainAxisSize: MainAxisSize.min,
@@ -162,8 +163,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                   DateFormat('hh:mm a').format(
                                     (data['timestamp'] as Timestamp).toDate(),
                                   ),
-                                  style: const TextStyle(
-                                      fontSize: 10, color: Colors.grey),
+                                  style:  TextStyle(
+                                      fontSize: 10.sp, color: const Color.fromARGB(255, 136, 30, 30)),
                                 ),
                                 if (isMe)
                                   Icon(
@@ -173,7 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     size: 16,
                                     color: seenBy.contains(widget.receiverId)
                                         ? Colors.blue
-                                        : Colors.grey,
+                                        : Colors.green,
                                   )
                               ],
                             ),
