@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/utils/constants/app_icons.dart';
-import 'package:task/utils/constants/app_sizes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,7 +14,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-    @override
+  @override
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () async {
@@ -32,32 +31,64 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF08169D), // Using the specified blue color
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              AppIcons.logo, // Using the logo from your AppIcons class
-              width: 200.w, // Adjust size as needed
-              height: 200.h,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Your Home For News',
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'Raleway',
-                fontSize: AppSizes.fontVeryLarge, // Use the size from your AppSizes class
-                letterSpacing: 0.5,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    colorScheme.surface,
+                    Colors.grey.shade900,
+                  ],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF08169D),
+                    Color(0xFF08169D),
+                  ],
+                ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo with rounded corners
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  AppIcons.logo,
+                  width: 200.w,
+                  height: 200.h,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ), // Add a loading indicator
-          ],
+              const SizedBox(height: 6),
+              Text(
+                'Your Home For News',
+                style: textTheme.headlineSmall?.copyWith(
+                  color: isDark ? Colors.white : Colors.white,
+                  fontFamily: 'Raleway',
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ],
+          ),
         ),
       ),
     );
