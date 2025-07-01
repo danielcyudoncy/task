@@ -173,7 +173,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
                   final userData =
                       userSnapshot.data!.data() as Map<String, dynamic>;
-                  final userName = userData['name'] as String? ?? 'Unknown';
+                  final userName = userData['fullName'] as String? ?? 'Unknown';
                   final userAvatar = userData['profilePic'] as String? ?? '';
                   final isOnline = userData['isOnline'] as bool? ?? false;
                   final lastSeenTimestamp =

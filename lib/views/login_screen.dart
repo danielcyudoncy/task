@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
 
@@ -323,7 +324,7 @@ class LoginScreen extends StatelessWidget {
                                       child: Text(
                                         "Create Account",
                                         style: textTheme.bodyMedium?.copyWith(
-                                          color: colorScheme.primary,
+                                          color: AppColors.saveColor,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
