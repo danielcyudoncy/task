@@ -1,14 +1,13 @@
 // views/chat_screen.dart
-// ignore_for_file: deprecated_member_use
-
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:task/views/wallpaper_screen.dart';
 
 // Helper function
 bool isSameDay(Timestamp? a, Timestamp? b) {
@@ -51,77 +50,86 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _inputFocusNode = FocusNode();
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
   String? conversationId;
+  String? _chatBackground;
 
-  // Timer for typing indicator
-  Timer? _typingTimer;
-
-  // Edit/Reply State
   Map<String, dynamic>? _replyingToMessage;
   String? _editingMessageId;
+
+  late final DatabaseReference _typingStatusRef;
+  bool _isOtherUserTyping = false;
+  Timer? _typingTimer;
+  StreamSubscription? _typingSubscription;
 
   @override
   void initState() {
     super.initState();
     initializeDateFormatting();
     conversationId = widget.conversationId!;
-    markMessagesAsSeen();
+    _loadUserPreferences();
+
+    _typingStatusRef =
+        FirebaseDatabase.instance.ref('typing_status/$conversationId');
+
+    _typingSubscription =
+        _typingStatusRef.child(widget.receiverId).onValue.listen((event) {
+      final isTyping = event.snapshot.value as bool? ?? false;
+      if (mounted) {
+        setState(() {
+          _isOtherUserTyping = isTyping;
+        });
+      }
+    });
+
     _messageController.addListener(_onTyping);
+
+    markMessagesAsSeen();
   }
 
   @override
   void dispose() {
-    _updateTypingStatus(false);
-    _typingTimer?.cancel();
     _messageController.removeListener(_onTyping);
+    _typingTimer?.cancel();
+    _typingSubscription?.cancel();
+    _typingStatusRef.child(currentUserId).set(false);
+
     _messageController.dispose();
     _scrollController.dispose();
+    _inputFocusNode.dispose();
     super.dispose();
   }
 
   void _onTyping() {
-    if (_typingTimer?.isActive ?? false) _typingTimer!.cancel();
-    _updateTypingStatus(true);
+    if (_typingTimer?.isActive ?? false) _typingTimer?.cancel();
+    _typingStatusRef.child(currentUserId).set(true);
     _typingTimer = Timer(const Duration(milliseconds: 1500), () {
-      _updateTypingStatus(false);
+      _typingStatusRef.child(currentUserId).set(false);
     });
   }
 
-  Future<void> _updateTypingStatus(bool isTyping) async {
-    if (conversationId == null) return;
-    try {
-      // Use set with merge:true to create the field if it doesn't exist.
-      await FirebaseFirestore.instance
-          .collection('conversations')
-          .doc(conversationId)
-          .set({
-        'typingStatus': {currentUserId: isTyping}
-      }, SetOptions(merge: true));
-    } catch (e) {
-      // It's okay if this fails occasionally, e.g., on first message.
-    }
-  }
-
-  void _startReplying(String messageId, String messageText, String senderName) {
+  void _startReply(Map<String, dynamic> messageData, String messageId) {
     setState(() {
       _editingMessageId = null;
       _replyingToMessage = {
         'messageId': messageId,
-        'messageText': messageText,
-        'senderName': senderName,
+        'messageText': messageData['text'],
+        'senderName': messageData['senderId'] == currentUserId
+            ? "You"
+            : widget.receiverName,
       };
-      FocusScope.of(context).requestFocus();
     });
+    _inputFocusNode.requestFocus();
   }
 
-  void _startEditing(String messageId, String currentText) {
+  void _startEdit(String messageId, String currentText) {
     setState(() {
       _replyingToMessage = null;
       _editingMessageId = messageId;
       _messageController.text = currentText;
-      FocusScope.of(context).requestFocus();
     });
+    _inputFocusNode.requestFocus();
   }
 
   void _cancelReplyOrEdit() {
@@ -129,18 +137,29 @@ class _ChatScreenState extends State<ChatScreen> {
       _replyingToMessage = null;
       _editingMessageId = null;
       _messageController.clear();
-      FocusScope.of(context).unfocus();
     });
+    _inputFocusNode.unfocus();
   }
+
+  Future<void> _loadUserPreferences() async {
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUserId)
+        .get();
+    if (mounted && userDoc.exists) {
+      setState(() {
+        _chatBackground = userDoc.data()?['chatBackground'];
+      });
+    }
+  }
+
+  // === REPLACE your existing sendMessage function with this CORRECTED version ===
 
   Future<void> sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    // Stop the typing indicator immediately
-    _typingTimer?.cancel();
-    _updateTypingStatus(false);
-
+    // --- EDIT LOGIC (This part is correct and remains the same) ---
     if (_editingMessageId != null) {
       final messageRef = FirebaseFirestore.instance
           .collection('conversations')
@@ -148,7 +167,9 @@ class _ChatScreenState extends State<ChatScreen> {
           .collection('messages')
           .doc(_editingMessageId!);
       await messageRef.update({'text': text, 'isEdited': true});
-    } else {
+    }
+    // --- NEW MESSAGE / REPLY LOGIC ---
+    else {
       final timestamp = Timestamp.now();
       final messageRef = FirebaseFirestore.instance
           .collection('conversations')
@@ -161,6 +182,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       WriteBatch batch = FirebaseFirestore.instance.batch();
 
+      // This part that creates the new message is correct
       batch.set(messageRef, {
         'senderId': currentUserId,
         'receiverId': widget.receiverId,
@@ -172,19 +194,19 @@ class _ChatScreenState extends State<ChatScreen> {
         'replyTo': _replyingToMessage,
       });
 
-      batch.set(
-          conversationRef,
-          {
-            'participants': [currentUserId, widget.receiverId],
-            'lastMessage':
-                _replyingToMessage != null ? 'Replying: $text' : text,
-            'lastMessageTime': timestamp,
-          },
-          SetOptions(merge: true));
+      // --- THIS IS THE CORRECTED PART ---
+      // We now use .update() for safety and the CORRECT field names: 'members' and 'timestamp'.
+      batch.update(conversationRef, {
+        'members': [
+          currentUserId,
+          widget.receiverId
+        ], // CORRECTED from 'participants'
+        'lastMessage': text,
+        'timestamp': timestamp, // CORRECTED from 'lastMessageTime'
+      });
 
       await batch.commit();
     }
-
     _cancelReplyOrEdit();
   }
 
@@ -195,7 +217,6 @@ class _ChatScreenState extends State<ChatScreen> {
         .collection('messages')
         .where('senderId', isEqualTo: widget.receiverId)
         .where('seenBy', whereNotIn: [currentUserId]).get();
-
     WriteBatch batch = FirebaseFirestore.instance.batch();
     for (final doc in snapshot.docs) {
       batch.update(doc.reference, {
@@ -211,28 +232,23 @@ class _ChatScreenState extends State<ChatScreen> {
         .doc(conversationId)
         .collection('messages')
         .doc(messageId);
-
     FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapshot = await transaction.get(messageRef);
       if (!snapshot.exists) return;
-
       final messageData = snapshot.data()!;
       final reactions =
           Map<String, dynamic>.from(messageData['reactions'] ?? {});
       List<dynamic> userList = List.from(reactions[emoji] ?? []);
-
       if (userList.contains(currentUserId)) {
         userList.remove(currentUserId);
       } else {
         userList.add(currentUserId);
       }
-
       if (userList.isEmpty) {
         reactions.remove(emoji);
       } else {
         reactions[emoji] = userList;
       }
-
       transaction.update(messageRef, {'reactions': reactions});
     });
   }
@@ -246,303 +262,217 @@ class _ChatScreenState extends State<ChatScreen> {
         .delete();
   }
 
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(_scrollController.position.minScrollExtent,
+          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    final appBarTitle = StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('conversations')
-          .doc(conversationId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        bool isReceiverTyping = false;
-        if (snapshot.hasData && snapshot.data?.data() != null) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          if (data['typingStatus'] != null) {
-            isReceiverTyping = data['typingStatus'][widget.receiverId] ?? false;
-          }
-        }
-        return Column(
+    return Scaffold(
+      backgroundColor:
+          isDarkMode ? colorScheme.surface : colorScheme.primary,
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              // Navigate to the wallpaper screen.
+              // We use .then() to reload preferences when the user comes back.
+              Navigator.of(context)
+                  .push(MaterialPageRoute(
+                      builder: (context) => const WallpaperScreen()))
+                  .then((_) => _loadUserPreferences());
+            },
+          )
+        ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: isDarkMode
+                  ? colorScheme.onSurface
+                  : colorScheme.onPrimary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               widget.receiverName,
-              style: textTheme.titleLarge?.copyWith(
+              style: textTheme.titleMedium?.copyWith(
                 color: isDarkMode
-                    ? colorScheme.onBackground
+                    ? colorScheme.onSurface
                     : colorScheme.onPrimary,
-                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            if (isReceiverTyping)
+            if (_isOtherUserTyping)
               Text(
                 'typing...',
-                style: textTheme.bodySmall?.copyWith(
+                style: textTheme.labelSmall?.copyWith(
                   color: (isDarkMode
-                          ? colorScheme.onBackground
+                          ? colorScheme.onSurface
                           : colorScheme.onPrimary)
                       .withOpacity(0.7),
+                  fontStyle: FontStyle.italic,
                 ),
               ),
-          ],
-        );
-      },
-    );
-
-    return Scaffold(
-      backgroundColor:
-          isDarkMode ? colorScheme.background : colorScheme.primary,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundImage: widget.receiverAvatar.isNotEmpty
-                  ? NetworkImage(widget.receiverAvatar)
-                  : null,
-              backgroundColor: colorScheme.secondary.withOpacity(0.8),
-              child: widget.receiverAvatar.isEmpty
-                  ? Text(
-                      widget.receiverName.isNotEmpty
-                          ? widget.receiverName[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : null,
-            ),
-            SizedBox(width: 10.w),
-            appBarTitle,
           ],
         ),
+        titleSpacing:
+            0, // Reduces space before the title when a leading widget is present
       ),
-      body: Column(
+      // --- Find this line in your build method ---
+      body:
+
+// --- And replace the whole Stack with this correct one ---
+          Stack(
         children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('conversations')
-                  .doc(conversationId)
-                  .collection('messages')
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("Say Hello!"));
-                }
+          // Widget 1: The Background, which will fill the available space.
+          if (_chatBackground != null)
+            _ChatBackground(backgroundValue: _chatBackground!),
 
-                final messages = snapshot.data!.docs;
-
-                int lastSeenByOtherUserIndex = -1;
-                for (int i = 0; i < messages.length; i++) {
-                  final messageData =
-                      messages[i].data() as Map<String, dynamic>;
-                  final seenBy = List<String>.from(messageData['seenBy'] ?? []);
-                  if (messageData['senderId'] == currentUserId &&
-                      seenBy.contains(widget.receiverId)) {
-                    lastSeenByOtherUserIndex = i;
-                    break;
-                  }
-                }
-
-                return ListView.builder(
-                  reverse: true,
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 8.0),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final messageDoc = messages[index];
-                    final messageData =
-                        messageDoc.data() as Map<String, dynamic>;
-
-                    bool showDayDivider = false;
-                    if (index < messages.length - 1) {
-                      final prevMessageData =
-                          messages[index + 1].data() as Map<String, dynamic>;
-                      if (!isSameDay(messageData['timestamp'],
-                          prevMessageData['timestamp'])) {
-                        showDayDivider = true;
-                      }
-                    } else {
-                      showDayDivider = true;
+          // Widget 2: The Chat UI, which sits on top of the background.
+          Column(
+            children: [
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('conversations')
+                      .doc(conversationId)
+                      .collection('messages')
+                      .orderBy('timestamp', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                          child: CircularProgressIndicator(
+                              color: colorScheme.secondary));
                     }
-
-                    final bool isMe = messageData['senderId'] == currentUserId;
-                    final bool showSeenStatus =
-                        isMe && index == lastSeenByOtherUserIndex;
-
-                    return Column(
-                      crossAxisAlignment: isMe
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
-                      children: [
-                        if (showDayDivider)
-                          _DateDivider(timestamp: messageData['timestamp']),
-                        Dismissible(
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(
+                          child: Text('Say hello!',
+                              style: TextStyle(
+                                  color: isDarkMode
+                                      ? colorScheme.onBackground
+                                      : colorScheme.onPrimary)));
+                    }
+                    WidgetsBinding.instance
+                        .addPostFrameCallback((_) => _scrollToBottom());
+                    return ListView.builder(
+                      reverse: true,
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 8.0),
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final messageDoc = snapshot.data!.docs[index];
+                        final messageData =
+                            messageDoc.data() as Map<String, dynamic>;
+                        bool showDayDivider = false;
+                        if (index < snapshot.data!.docs.length - 1) {
+                          final prevMessageDoc = snapshot.data!.docs[index + 1];
+                          final prevMessageData =
+                              prevMessageDoc.data() as Map<String, dynamic>;
+                          if (!isSameDay(messageData['timestamp'],
+                              prevMessageData['timestamp'])) {
+                            showDayDivider = true;
+                          }
+                        } else {
+                          showDayDivider = true;
+                        }
+                        final bool isMe =
+                            messageData['senderId'] == currentUserId;
+                        return Dismissible(
                           key: Key(messageDoc.id),
                           direction: DismissDirection.startToEnd,
-                          onDismissed: (direction) {
-                            // We determine the correct name based on who sent the message
-                            final String senderName =
-                                isMe ? "You" : widget.receiverName;
-                            // We now correctly pass this 'senderName' variable to the function
-                            _startReplying(
-                                messageDoc.id, messageData['text'], senderName);
-                          },
+                          onDismissed: (direction) =>
+                              _startReply(messageData, messageDoc.id),
                           background: Container(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondary
-                                .withOpacity(0.7),
+                            color: colorScheme.secondary.withOpacity(0.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
                             alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.only(left: 20.0),
-                            child: const Icon(Icons.reply_rounded,
-                                color: Colors.white),
+                            child: const Icon(Icons.reply, color: Colors.white),
                           ),
-                          child: _MessageBubble(
-                            messageId: messageDoc.id,
-                            messageData: messageData,
-                            isMe: isMe,
-                            onDelete: () => deleteMessage(messageDoc.id),
-                            onToggleReaction: (emoji) =>
-                                toggleReaction(messageDoc.id, emoji),
-                            onStartEditing: () => _startEditing(
-                                messageDoc.id, messageData['text']),
-                          ),
-                        ),
-                        if (showSeenStatus)
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(right: 8.0, top: 2.0),
-                            child: Text(
-                              'Seen',
-                              style: textTheme.labelSmall?.copyWith(
-                                color: (isDarkMode
-                                        ? colorScheme.onBackground
-                                        : colorScheme.onPrimary)
-                                    .withOpacity(0.7),
+                          child: Column(
+                            children: [
+                              if (showDayDivider)
+                                _DateDivider(
+                                    timestamp: messageData['timestamp']),
+                              _MessageBubble(
+                                messageId: messageDoc.id,
+                                messageData: messageData,
+                                isMe: isMe,
+                                onDelete: () => deleteMessage(messageDoc.id),
+                                onToggleReaction: (emoji) =>
+                                    toggleReaction(messageDoc.id, emoji),
+                                onStartEdit: () => _startEdit(
+                                    messageDoc.id, messageData['text']),
                               ),
-                            ),
+                            ],
                           ),
-                      ],
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-          ),
-          if (_replyingToMessage != null)
-            _ReplyPreview(
-              messageData: _replyingToMessage!,
-              onCancel: _cancelReplyOrEdit,
-            ),
-          if (_editingMessageId != null)
-            _EditPreview(onCancel: _cancelReplyOrEdit),
-          _MessageInputField(
-            controller: _messageController,
-            onSend: sendMessage,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// === ALL WIDGET DEFINITIONS BELOW ===
-
-class _ReplyPreview extends StatelessWidget {
-  final Map<String, dynamic> messageData;
-  final VoidCallback onCancel;
-
-  const _ReplyPreview({required this.messageData, required this.onCancel});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 40,
-            color: Theme.of(context).colorScheme.secondary,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Replying to ${messageData['senderName']}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
                 ),
-                Text(
-                  messageData['messageText'],
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.7)),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: onCancel,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EditPreview extends StatelessWidget {
-  final VoidCallback onCancel;
-
-  const _EditPreview({required this.onCancel});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
-      child: Row(
-        children: [
-          Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Editing Message',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
               ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: onCancel,
+              if (_replyingToMessage != null)
+                _ReplyPreview(
+                    messageData: _replyingToMessage!,
+                    onCancel: _cancelReplyOrEdit),
+              if (_editingMessageId != null)
+                _EditPreview(onCancel: _cancelReplyOrEdit),
+              _MessageInputField(
+                controller: _messageController,
+                focusNode: _inputFocusNode,
+                onSend: sendMessage,
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ChatBackground extends StatelessWidget {
+  final String backgroundValue;
+  const _ChatBackground({required this.backgroundValue});
+
+  Color _colorFromHex(String hexColor) {
+    final hexCode = hexColor.replaceAll('#', '');
+    return Color(int.parse('FF$hexCode', radix: 16));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    BoxDecoration decoration;
+    if (backgroundValue.startsWith('asset:')) {
+      final path = backgroundValue.substring(6); // Remove 'asset:'
+      decoration = BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(path),
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (backgroundValue.startsWith('#')) {
+      decoration = BoxDecoration(color: _colorFromHex(backgroundValue));
+    } else {
+      // Default case or for network images (if you implement gallery upload)
+      decoration = BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor);
+    }
+
+    return Container(
+      decoration: decoration,
     );
   }
 }
@@ -553,7 +483,7 @@ class _MessageBubble extends StatelessWidget {
   final bool isMe;
   final VoidCallback onDelete;
   final Function(String) onToggleReaction;
-  final VoidCallback onStartEditing;
+  final VoidCallback onStartEdit;
 
   const _MessageBubble({
     required this.messageId,
@@ -561,18 +491,16 @@ class _MessageBubble extends StatelessWidget {
     required this.isMe,
     required this.onDelete,
     required this.onToggleReaction,
-    required this.onStartEditing,
+    required this.onStartEdit,
   });
 
   void _showActionMenu(BuildContext context) {
     HapticFeedback.vibrate();
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -590,14 +518,24 @@ class _MessageBubble extends StatelessWidget {
                     },
                     borderRadius: BorderRadius.circular(24),
                     child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(emoji, style: const TextStyle(fontSize: 28)),
-                    ),
+                        padding: const EdgeInsets.all(8.0),
+                        child:
+                            Text(emoji, style: const TextStyle(fontSize: 28))),
                   );
                 }).toList(),
               ),
             ),
             const Divider(height: 1),
+            if (isMe)
+              ListTile(
+                leading: Icon(Icons.edit_rounded,
+                    color: Theme.of(context).colorScheme.onSurface),
+                title: const Text('Edit Message'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onStartEdit();
+                },
+              ),
             ListTile(
               leading: Icon(Icons.copy_rounded,
                   color: Theme.of(context).colorScheme.onSurface),
@@ -606,20 +544,9 @@ class _MessageBubble extends StatelessWidget {
                 Clipboard.setData(ClipboardData(text: messageData['text']));
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Copied to clipboard')),
-                );
+                    const SnackBar(content: Text('Copied to clipboard')));
               },
             ),
-            if (isMe)
-              ListTile(
-                leading: Icon(Icons.edit_note_rounded,
-                    color: Theme.of(context).colorScheme.onSurface),
-                title: const Text('Edit'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onStartEditing();
-                },
-              ),
             if (isMe)
               ListTile(
                 leading: Icon(Icons.delete_outline_rounded,
@@ -642,155 +569,87 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     final Color bubbleColor;
     final Color textColor;
-
     if (isMe) {
       bubbleColor = colorScheme.secondary;
       textColor = colorScheme.onSecondary;
     } else {
-      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
       if (isDarkMode) {
         bubbleColor = colorScheme.surface;
         textColor = colorScheme.onSurface;
       } else {
-        bubbleColor = colorScheme.surfaceVariant;
+        bubbleColor = colorScheme.surfaceContainerHighest;
         textColor = colorScheme.onSurfaceVariant;
       }
     }
 
     final reactions = Map<String, dynamic>.from(messageData['reactions'] ?? {});
     final hasReactions = reactions.isNotEmpty;
-    final replyInfo = messageData['replyTo'] as Map<String, dynamic>?;
-    final isEdited = messageData['isEdited'] ?? false;
+    final bool isEdited = messageData['isEdited'] ?? false;
+    final replyData = messageData['replyTo'] as Map<String, dynamic>?;
 
-    final bubbleContent = Wrap(
-      alignment: WrapAlignment.end,
-      crossAxisAlignment: WrapCrossAlignment.end,
-      children: [
-        Text(
-          messageData['text'],
-          style: textTheme.bodyMedium?.copyWith(color: textColor),
-        ),
-        const SizedBox(width: 8.0),
-        Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isEdited)
-                Text(
-                  'Edited · ',
-                  style: textTheme.labelSmall
-                      ?.copyWith(color: textColor.withOpacity(0.7)),
-                ),
-              Text(
-                DateFormat('h:mm a').format(messageData['timestamp']!.toDate()),
-                style: textTheme.labelSmall
-                    ?.copyWith(color: textColor.withOpacity(0.7)),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onLongPress: () => _showActionMenu(context),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.75),
-              margin: EdgeInsets.only(
-                top: 4.0,
-                bottom: hasReactions ? 12.0 : 4.0,
-              ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
-              decoration: BoxDecoration(
-                color: bubbleColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isMe ? 18 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 18),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (replyInfo != null)
-                    _RepliedMessageDisplay(
-                        replyInfo: replyInfo, textColor: textColor),
-                  bubbleContent,
-                ],
-              ),
-            ),
-            if (hasReactions)
-              Positioned(
-                bottom: 0,
-                right: isMe ? 0 : null,
-                left: isMe ? null : 0,
-                child: _ReactionsDisplay(reactions: reactions),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RepliedMessageDisplay extends StatelessWidget {
-  final Map<String, dynamic> replyInfo;
-  final Color textColor;
-
-  const _RepliedMessageDisplay(
-      {required this.replyInfo, required this.textColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6.0),
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.1),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-        border: Border(
-          left: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 4.0,
-          ),
-        ),
-      ),
+    return GestureDetector(
+      onLongPress: () => _showActionMenu(context),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Text(
-            replyInfo['senderName'] ?? 'Someone',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              fontSize: 12,
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                color: bubbleColor,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (replyData != null)
+                      _RepliedMessageDisplay(replyData: replyData, isMe: isMe),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(messageData['text'],
+                              style: textTheme.bodyMedium
+                                  ?.copyWith(color: textColor)),
+                          const SizedBox(height: 4.0),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isEdited)
+                                Text(
+                                  'edited',
+                                  style: textTheme.labelSmall?.copyWith(
+                                      color: textColor.withOpacity(0.7),
+                                      fontStyle: FontStyle.italic),
+                                ),
+                              const SizedBox(width: 4),
+                              if (messageData['timestamp'] != null)
+                                Text(
+                                  DateFormat('h:mm a').format(
+                                      messageData['timestamp']!.toDate()),
+                                  style: textTheme.labelSmall?.copyWith(
+                                      color: textColor.withOpacity(0.7)),
+                                ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          Text(
-            replyInfo['messageText'] ?? '',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 12,
+          if (hasReactions)
+            Transform.translate(
+              offset: Offset(isMe ? 0 : 10, -14),
+              child: _ReactionsDisplay(reactions: reactions),
             ),
-          ),
         ],
       ),
     );
@@ -806,18 +665,16 @@ class _ReactionsDisplay extends StatelessWidget {
     final sortedReactions = reactions.entries.toList()
       ..sort((a, b) =>
           (b.value as List).length.compareTo((a.value as List).length));
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2))
         ],
       ),
       child: Row(
@@ -825,12 +682,9 @@ class _ReactionsDisplay extends StatelessWidget {
         children: sortedReactions.map((entry) {
           final count = (entry.value as List).length;
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: Text(
-              '${entry.key}${count > 1 ? ' $count' : ''}',
-              style: const TextStyle(fontSize: 12),
-            ),
-          );
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: Text('${entry.key}${count > 1 ? ' $count' : ''}',
+                  style: const TextStyle(fontSize: 12)));
         }).toList(),
       ),
     );
@@ -840,8 +694,12 @@ class _ReactionsDisplay extends StatelessWidget {
 class _MessageInputField extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
+  final FocusNode focusNode;
 
-  const _MessageInputField({required this.controller, required this.onSend});
+  const _MessageInputField(
+      {required this.controller,
+      required this.onSend,
+      required this.focusNode});
 
   @override
   Widget build(BuildContext context) {
@@ -852,7 +710,7 @@ class _MessageInputField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       color: isDarkMode
           ? colorScheme.surface
-          : colorScheme.surfaceVariant.withOpacity(0.1),
+          : colorScheme.surfaceContainerHighest.withOpacity(0.1),
       child: SafeArea(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -860,6 +718,7 @@ class _MessageInputField extends StatelessWidget {
             Expanded(
               child: TextField(
                 controller: controller,
+                focusNode: focusNode,
                 style: TextStyle(color: colorScheme.onSurface),
                 keyboardType: TextInputType.multiline,
                 minLines: 1,
@@ -868,7 +727,7 @@ class _MessageInputField extends StatelessWidget {
                   hintText: 'Type a message...',
                   fillColor: isDarkMode
                       ? colorScheme.surface
-                      : colorScheme.surfaceVariant,
+                      : colorScheme.surfaceContainerHighest,
                 ),
               ),
             ),
@@ -892,7 +751,6 @@ class _DateDivider extends StatelessWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = DateTime(now.year, now.month, now.day - 1);
-
     if (date.year == today.year &&
         date.month == today.month &&
         date.day == today.day) {
@@ -910,23 +768,141 @@ class _DateDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     if (timestamp == null) return const SizedBox.shrink();
     final dateText = _getFormattedDate(timestamp!.toDate());
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        dateText,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12)),
+      child: Text(dateText,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: Theme.of(context)
                   .colorScheme
                   .onSurfaceVariant
-                  .withOpacity(0.8),
+                  .withOpacity(0.8))),
+    );
+  }
+}
+
+class _ReplyPreview extends StatelessWidget {
+  final Map<String, dynamic> messageData;
+  final VoidCallback onCancel;
+
+  const _ReplyPreview({required this.messageData, required this.onCancel});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration:
+          BoxDecoration(color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Container(width: 4, color: colorScheme.secondary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(messageData['senderName'],
+                      style: TextStyle(
+                          color: colorScheme.secondary,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text(messageData['messageText'],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: colorScheme.onSurface.withOpacity(0.8))),
+                ],
+              ),
             ),
+            IconButton(
+                icon: Icon(Icons.close,
+                    color: colorScheme.onSurface.withOpacity(0.6)),
+                onPressed: onCancel),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditPreview extends StatelessWidget {
+  final VoidCallback onCancel;
+  const _EditPreview({required this.onCancel});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration:
+          BoxDecoration(color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
+      child: Row(
+        children: [
+          Icon(Icons.edit, color: colorScheme.secondary),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text("Editing Message",
+                  style: TextStyle(
+                      color: colorScheme.secondary,
+                      fontWeight: FontWeight.bold))),
+          IconButton(
+              icon: Icon(Icons.close,
+                  color: colorScheme.onSurface.withOpacity(0.6)),
+              onPressed: onCancel),
+        ],
+      ),
+    );
+  }
+}
+
+class _RepliedMessageDisplay extends StatelessWidget {
+  final Map<String, dynamic> replyData;
+  final bool isMe;
+
+  const _RepliedMessageDisplay({required this.replyData, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final replyTextColor = isDarkMode ? Colors.white70 : Colors.black87;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.1),
+        border: Border(
+          left: BorderSide(
+            color: colorScheme.secondary,
+            width: 4,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            replyData['senderName'],
+            style: TextStyle(
+                color: colorScheme.secondary,
+                fontWeight: FontWeight.bold,
+                fontSize: 12),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            replyData['messageText'],
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style:
+                TextStyle(color: replyTextColor.withOpacity(0.8), fontSize: 13),
+          ),
+        ],
       ),
     );
   }
