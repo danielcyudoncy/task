@@ -472,27 +472,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 14),
-                       Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            AppStrings.dailyAssignments,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'raleway',
-                              fontSize: 18.sp,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 5),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
+                          // --- REPLACE the old DashboardCardsWidget with this one ---
                           child: DashboardCardsWidget(
                             usersCount:
                                 adminController.statistics['users'] ?? 0,
-                            tasksCount:
-                                adminController.statistics['tasks'] ?? 0,
+                            onlineUsersCount:
+                                adminController.statistics['online'] ?? 0,
+                            conversationsCount:
+                                adminController.statistics['conversations'] ??
+                                    0,
+                            tasksCount: adminController.statistics['pending'] ??
+                                0, // Showing pending tasks here
                             onManageUsersTap: _showManageUsersDialog,
                             onTotalTasksTap: _showAllPendingTasksDialog,
                           ),
