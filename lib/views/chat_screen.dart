@@ -5,9 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:task/controllers/auth_controller.dart';
 import 'package:task/views/wallpaper_screen.dart';
+import 'package:task/widgets/user_nav_bar.dart'; // Import the UserNavBar
 
 // Helper function
 bool isSameDay(Timestamp? a, Timestamp? b) {
@@ -29,6 +32,7 @@ class ChatScreen extends StatefulWidget {
   final String otherUserId;
   final String? otherUserName;
   final Map<String, dynamic> otherUser;
+  final String? chatBackground;
 
   const ChatScreen({
     super.key,
@@ -40,6 +44,7 @@ class ChatScreen extends StatefulWidget {
     required this.otherUserId,
     required this.otherUserName,
     required this.otherUser,
+    required this.chatBackground,
   });
 
   @override
@@ -53,7 +58,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final FocusNode _inputFocusNode = FocusNode();
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
   String? conversationId;
-  String? _chatBackground;
 
   Map<String, dynamic>? _replyingToMessage;
   String? _editingMessageId;
@@ -68,7 +72,6 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     initializeDateFormatting();
     conversationId = widget.conversationId!;
-    _loadUserPreferences();
 
     _typingStatusRef =
         FirebaseDatabase.instance.ref('typing_status/$conversationId');
@@ -109,6 +112,23 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+
+  void _navigateToHome() {
+   
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      
+      final AuthController authController = Get.find<AuthController>();
+      final role = authController.userRole.value;
+
+      // 2. Navigate based on the role.
+      if (role == 'Admin') {
+        Get.offAllNamed('/admin-dashboard');
+      } else {
+        Get.offAllNamed('/home');
+      }
+    });
+  }
+
   void _startReply(Map<String, dynamic> messageData, String messageId) {
     setState(() {
       _editingMessageId = null;
@@ -141,25 +161,10 @@ class _ChatScreenState extends State<ChatScreen> {
     _inputFocusNode.unfocus();
   }
 
-  Future<void> _loadUserPreferences() async {
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUserId)
-        .get();
-    if (mounted && userDoc.exists) {
-      setState(() {
-        _chatBackground = userDoc.data()?['chatBackground'];
-      });
-    }
-  }
-
-  // === REPLACE your existing sendMessage function with this CORRECTED version ===
-
   Future<void> sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    // --- EDIT LOGIC (This part is correct and remains the same) ---
     if (_editingMessageId != null) {
       final messageRef = FirebaseFirestore.instance
           .collection('conversations')
@@ -167,9 +172,7 @@ class _ChatScreenState extends State<ChatScreen> {
           .collection('messages')
           .doc(_editingMessageId!);
       await messageRef.update({'text': text, 'isEdited': true});
-    }
-    // --- NEW MESSAGE / REPLY LOGIC ---
-    else {
+    } else {
       final timestamp = Timestamp.now();
       final messageRef = FirebaseFirestore.instance
           .collection('conversations')
@@ -182,7 +185,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
       WriteBatch batch = FirebaseFirestore.instance.batch();
 
-      // This part that creates the new message is correct
       batch.set(messageRef, {
         'senderId': currentUserId,
         'receiverId': widget.receiverId,
@@ -194,15 +196,10 @@ class _ChatScreenState extends State<ChatScreen> {
         'replyTo': _replyingToMessage,
       });
 
-      // --- THIS IS THE CORRECTED PART ---
-      // We now use .update() for safety and the CORRECT field names: 'members' and 'timestamp'.
       batch.update(conversationRef, {
-        'members': [
-          currentUserId,
-          widget.receiverId
-        ], // CORRECTED from 'participants'
+        'members': [currentUserId, widget.receiverId],
         'lastMessage': text,
-        'timestamp': timestamp, // CORRECTED from 'lastMessageTime'
+        'timestamp': timestamp,
       });
 
       await batch.commit();
@@ -276,19 +273,18 @@ class _ChatScreenState extends State<ChatScreen> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDarkMode ? colorScheme.surface : colorScheme.primary,
+      backgroundColor: isDarkMode ? colorScheme.surface : colorScheme.primary,
       appBar: AppBar(
         actions: [
           IconButton(
+            icon: const Icon(Icons.home_rounded),
+            onPressed: _navigateToHome,
+          ),
+          IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
-              // Navigate to the wallpaper screen.
-              // We use .then() to reload preferences when the user comes back.
-              Navigator.of(context)
-                  .push(MaterialPageRoute(
-                      builder: (context) => const WallpaperScreen()))
-                  .then((_) => _loadUserPreferences());
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const WallpaperScreen()));
             },
           )
         ],
@@ -296,9 +292,8 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
-              color: isDarkMode
-                  ? colorScheme.onSurface
-                  : colorScheme.onPrimary),
+              color:
+                  isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Column(
@@ -308,9 +303,8 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               widget.receiverName,
               style: textTheme.titleMedium?.copyWith(
-                color: isDarkMode
-                    ? colorScheme.onSurface
-                    : colorScheme.onPrimary,
+                color:
+                    isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -327,20 +321,11 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
           ],
         ),
-        titleSpacing:
-            0, // Reduces space before the title when a leading widget is present
+        titleSpacing: 0,
       ),
-      // --- Find this line in your build method ---
-      body:
-
-// --- And replace the whole Stack with this correct one ---
-          Stack(
+      body: Stack(
         children: [
-          // Widget 1: The Background, which will fill the available space.
-          if (_chatBackground != null)
-            _ChatBackground(backgroundValue: _chatBackground!),
-
-          // Widget 2: The Chat UI, which sits on top of the background.
+          _ChatBackground(backgroundValue: widget.chatBackground ?? ''),
           Column(
             children: [
               Expanded(
@@ -440,6 +425,11 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+      // --- ADDED THIS WIDGET ---
+      bottomNavigationBar: const UserNavBar(
+        // Pass an index that doesn't exist to prevent any icon from being highlighted
+        currentIndex: null,
+      ),
     );
   }
 }
@@ -457,7 +447,7 @@ class _ChatBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     BoxDecoration decoration;
     if (backgroundValue.startsWith('asset:')) {
-      final path = backgroundValue.substring(6); // Remove 'asset:'
+      final path = backgroundValue.substring(6);
       decoration = BoxDecoration(
         image: DecorationImage(
           image: AssetImage(path),
@@ -467,13 +457,13 @@ class _ChatBackground extends StatelessWidget {
     } else if (backgroundValue.startsWith('#')) {
       decoration = BoxDecoration(color: _colorFromHex(backgroundValue));
     } else {
-      // Default case or for network images (if you implement gallery upload)
-      decoration = BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor);
+      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+      final colorScheme = Theme.of(context).colorScheme;
+      decoration = BoxDecoration(
+        color: isDarkMode ? colorScheme.surface : colorScheme.primary,
+      );
     }
-
-    return Container(
-      decoration: decoration,
-    );
+    return Container(decoration: decoration);
   }
 }
 
@@ -772,7 +762,10 @@ class _DateDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withOpacity(0.5),
           borderRadius: BorderRadius.circular(12)),
       child: Text(dateText,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -796,8 +789,8 @@ class _ReplyPreview extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration:
-          BoxDecoration(color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
+      decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       child: IntrinsicHeight(
         child: Row(
           children: [
@@ -840,8 +833,8 @@ class _EditPreview extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration:
-          BoxDecoration(color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
+      decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
       child: Row(
         children: [
           Icon(Icons.edit, color: colorScheme.secondary),
@@ -874,9 +867,10 @@ class _RepliedMessageDisplay extends StatelessWidget {
     final replyTextColor = isDarkMode ? Colors.white70 : Colors.black87;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      margin: const EdgeInsets.only(bottom: 2, left: 1, right: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.1),
+        color: Colors.black.withOpacity(0.15),
         border: Border(
           left: BorderSide(
             color: colorScheme.secondary,

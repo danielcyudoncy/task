@@ -1,14 +1,13 @@
 // myApp.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:task/routes/app_routes.dart';
-import 'package:task/routes/global_bindings.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/utils/themes/app_theme.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
-
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -18,52 +17,30 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  final ThemeController themeController = Get.isRegistered<ThemeController>()
-      ? Get.find<ThemeController>()
-      : Get.put(ThemeController(), permanent: true);
+  // Finding the controller is fine, as it's already put by bootstrap.
+  final ThemeController themeController = Get.find<ThemeController>();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializePresence();
+    // REMOVED: _initializePresence() call is no longer needed here.
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _cleanupPresence();
+    // REMOVED: _cleanupPresence() can also be removed for simplicity,
+    // as AppLifecycleState handles going offline.
     super.dispose();
   }
 
-  Future<void> _initializePresence() async {
-    try {
-      if (Get.isRegistered<AuthController>() &&
-          Get.isRegistered<PresenceService>()) {
-        final auth = Get.find<AuthController>();
-        final presence = Get.find<PresenceService>();
-
-        if (auth.isLoggedIn) {
-          await presence.setOnline();
-        }
-      }
-    } catch (e) {
-      Get.log('Presence initialization error: $e', isError: true);
-    }
-  }
-
-  Future<void> _cleanupPresence() async {
-    try {
-      if (Get.isRegistered<PresenceService>()) {
-        await Get.find<PresenceService>().setOffline();
-      }
-    } catch (e) {
-      Get.log('Presence cleanup error: $e', isError: true);
-    }
-  }
+  // REMOVED: The _initializePresence and _cleanupPresence methods are no longer needed.
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // This part is for handling when the app goes to the background/foreground,
+    // so it should stay.
     if (!Get.isRegistered<AuthController>() ||
         !Get.isRegistered<PresenceService>()) {
       return;
@@ -80,7 +57,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
-      case AppLifecycleState.hidden: // New state in Flutter 3.13+
+      case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
         presence.setOffline();
         break;
@@ -101,17 +78,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             themeMode: themeController.isDarkMode.value
                 ? ThemeMode.dark
                 : ThemeMode.light,
-            initialBinding: GlobalBindings(),
+            // REMOVED: initialBinding and onInit are no longer needed.
             initialRoute: "/",
             getPages: AppRoutes.routes,
-            onInit: () async {
-              if (Get.isRegistered<AuthController>()) {
-                final auth = Get.find<AuthController>();
-                if (auth.isLoggedIn && Get.isRegistered<PresenceService>()) {
-                  await Get.find<PresenceService>().setOnline();
-                }
-              }
-            },
           )),
     );
   }
