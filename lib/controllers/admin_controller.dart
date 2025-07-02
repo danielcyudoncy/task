@@ -23,6 +23,8 @@ class AdminController extends GetxController {
   var completedTasks = 0.obs;
   var pendingTasks = 0.obs;
   var overdueTasks = 0.obs;
+  var onlineUsers = 0.obs;
+  var totalConversations = 0.obs;
 
   var userNames = <String>[].obs;
   var taskTitles = <String>[].obs;
@@ -166,32 +168,48 @@ class AdminController extends GetxController {
     }
   }
 
+  // In AdminController, REPLACE your fetchStatistics function with this one
+
   Future<void> fetchStatistics() async {
     try {
       isStatsLoading(true);
       final now = DateTime.now();
 
-      final userSnapshot = await _firestore
-          .collection('users')
-          .get()
-          .timeout(const Duration(seconds: 10));
-      final taskSnapshot = await _firestore
-          .collection('tasks')
-          .get()
-          .timeout(const Duration(seconds: 10));
+      // --- MODIFIED: Use Future.wait to run all queries concurrently ---
+      final results = await Future.wait([
+        _firestore.collection('users').get(),
+        _firestore.collection('tasks').get(),
+        // NEW: Query for online users count
+        _firestore
+            .collection('users')
+            .where('isOnline', isEqualTo: true)
+            .count()
+            .get(),
+        // NEW: Query for total conversations count
+        _firestore.collection('conversations').count().get(),
+      ]).timeout(
+          const Duration(seconds: 15)); // Increased timeout for more queries
 
+      // Unpack the results
+      final userSnapshot = results[0] as QuerySnapshot<Map<String, dynamic>>;
+      final taskSnapshot = results[1] as QuerySnapshot<Map<String, dynamic>>;
+      final onlineUsersSnapshot = results[2] as AggregateQuerySnapshot;
+      final conversationsSnapshot = results[3] as AggregateQuerySnapshot;
+
+      // --- The rest of your existing logic remains, just using the new variables ---
       final userDocs = userSnapshot.docs;
-      final taskDocs = taskSnapshot.docs
-          .map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return data;
-          })
-          .whereType<Map<String, dynamic>>()
-          .toList();
+      final taskDocs = taskSnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList(); // No need for whereType or cast, this is safer
       taskSnapshotDocs.assignAll(taskDocs);
 
+      // Assign all the stats
       totalUsers.value = userDocs.length;
+      onlineUsers.value = onlineUsersSnapshot.count ?? 0;
+      totalConversations.value = conversationsSnapshot.count ?? 0;
+
       totalTasks.value = taskDocs.length;
       completedTasks.value = taskDocs
           .where((doc) =>
@@ -199,7 +217,7 @@ class AdminController extends GetxController {
           .length;
       pendingTasks.value = taskDocs
           .where((doc) =>
-              (doc['status'] ?? '').toString().toLowerCase() == 'pending')
+              (doc['status'] ?? '').toString().toLowerCase() != 'completed')
           .length;
       overdueTasks.value = taskDocs.where((doc) {
         final due = doc['dueDate'];
@@ -208,6 +226,7 @@ class AdminController extends GetxController {
             (doc['status'] ?? '').toString().toLowerCase() != 'completed';
       }).length;
 
+      // ... your existing logic for userNames, taskTitles, etc. is fine ...
       userNames.value = userDocs
           .map((doc) => doc['fullName'] ?? "Unknown User")
           .cast<String>()
@@ -217,33 +236,10 @@ class AdminController extends GetxController {
           .cast<String>()
           .toList();
 
-      completedTaskTitles.value = taskDocs
-          .where((doc) =>
-              (doc['status'] ?? '').toString().toLowerCase() == 'completed')
-          .map((doc) => doc['title'] ?? '')
-          .cast<String>()
-          .toList();
-
-      pendingTaskTitles.value = taskDocs
-          .where((doc) =>
-              (doc['status'] ?? '').toString().toLowerCase() != 'completed')
-          .map((doc) => doc['title'] ?? '')
-          .cast<String>()
-          .toList();
-
-      overdueTaskTitles.value = taskDocs
-          .where((doc) {
-            final due = doc['dueDate'];
-            return due is Timestamp &&
-                due.toDate().isBefore(now) &&
-                (doc['status'] ?? '').toString().toLowerCase() != 'completed';
-          })
-          .map((doc) => doc['title'] ?? '')
-          .cast<String>()
-          .toList();
-
-      // Update statistics map
+      // --- MODIFIED: Update the statistics map with the new data ---
       statistics['users'] = totalUsers.value;
+      statistics['online'] = onlineUsers.value; // NEW
+      statistics['conversations'] = totalConversations.value; // NEW
       statistics['tasks'] = totalTasks.value;
       statistics['completed'] = completedTasks.value;
       statistics['pending'] = pendingTasks.value;

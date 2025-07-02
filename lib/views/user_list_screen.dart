@@ -121,7 +121,7 @@ class _UserListScreenState extends State<UserListScreen> {
                                 receiverAvatar: userAvatar ?? '',
                                 chatId: conversationId,
                                 otherUserId: userId,
-                                otherUserName: userName,
+                                otherUserName: userName, chatBackground: '',
                               ));
                         });
                       },

@@ -3,11 +3,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// --- Custom Theme Extension for extra colors ---
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  const AppColors({
+    required this.success,
+    required this.warning,
+    required this.accent1,
+  });
+
+  final Color? success;
+  final Color? warning;
+  final Color? accent1;
+
+  @override
+  AppColors copyWith({Color? success, Color? warning, Color? accent1}) {
+    return AppColors(
+      success: success ?? this.success,
+      warning: warning ?? this.warning,
+      accent1: accent1 ?? this.accent1,
+    );
+  }
+
+  @override
+  AppColors lerp(ThemeExtension<AppColors>? other, double t) {
+    if (other is! AppColors) {
+      return this;
+    }
+    return AppColors(
+      success: Color.lerp(success, other.success, t),
+      warning: Color.lerp(warning, other.warning, t),
+      accent1: Color.lerp(accent1, other.accent1, t),
+    );
+  }
+}
+
 class AppTheme {
+  // --- Standard Theme Colors ---
   static const Color _primaryBlue = Color(0xFF08169D);
   static const Color _secondaryBlue = Color(0xFF00B0FF);
   static const Color _lightSurfaceVariant = Color(0xFFF3F6FD);
   static const Color _darkSurfaceVariant = Color(0xFF23243A);
+
+  // --- NEW: Define the custom dashboard colors here ---
+  static const Color _success = Color(0xFF2E7D32); // A nice green
+  static const Color _warning = Color(0xFFEF6C00); // A nice orange
+  static const Color _accent1 = Color(0xFF6A1B9A); // A nice purple
 
   static ThemeData lightTheme = _baseTheme(
     brightness: Brightness.light,
@@ -141,7 +182,15 @@ class AppTheme {
           ),
         ),
       ),
+
+      // Register your custom AppColors extension with the theme.
+      extensions: const <ThemeExtension<dynamic>>[
+        AppColors(
+          success: _success,
+          warning: _warning,
+          accent1: _accent1,
+        ),
+      ],
     );
   }
-
 }

@@ -9,10 +9,12 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'chat_screen.dart';
-// We no longer need to import the AppDrawer
 
 class AllUsersChatScreen extends StatefulWidget {
-  const AllUsersChatScreen({super.key});
+  // --- NEW: This screen now accepts the wallpaper preference ---
+  final String? chatBackground;
+
+  const AllUsersChatScreen({super.key, this.chatBackground});
 
   @override
   State<AllUsersChatScreen> createState() => _AllUsersChatScreenState();
@@ -21,18 +23,91 @@ class AllUsersChatScreen extends StatefulWidget {
 class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
   String searchQuery = '';
   bool isRefreshing = false;
-  // We no longer need the ScaffoldKey
-  // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   Future<void> _refreshUsers() async {
     setState(() {
       isRefreshing = true;
     });
+    // Simulate network delay for a better refresh indicator experience
     await Future.delayed(const Duration(milliseconds: 800));
     if (mounted) {
       setState(() {
         isRefreshing = false;
       });
+    }
+  }
+
+  // --- MODIFIED: This function no longer fetches the wallpaper. It uses the one passed to the widget. ---
+  Future<void> _handleUserTap(QueryDocumentSnapshot user) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // --- THE KEY CHANGE ---
+      // We get the chat background from the widget property passed by the AppDrawer.
+      final chatBackground = widget.chatBackground;
+
+      final otherUser = user.data() as Map<String, dynamic>;
+      final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+      // This logic to find/create a conversation remains the same.
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('conversations')
+          .where('members', arrayContains: currentUserId)
+          .get();
+
+      if (!mounted) return;
+
+      String conversationId = '';
+      final existingConversation = querySnapshot.docs.where((doc) {
+        final members = List<String>.from(doc['members']);
+        return members.contains(otherUser['uid']);
+      }).toList();
+
+      if (existingConversation.isNotEmpty) {
+        conversationId = existingConversation.first.id;
+      } else {
+        final newConversation =
+            await FirebaseFirestore.instance.collection('conversations').add({
+          'members': [currentUserId, otherUser['uid']],
+          'lastMessage': '',
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        if (!mounted) return;
+        conversationId = newConversation.id;
+      }
+
+      Navigator.of(context, rootNavigator: true)
+          .pop(); // Dismiss loading dialog
+
+      if (!mounted) return;
+
+      // Navigate to the final ChatScreen, passing the pre-loaded background along.
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatScreen(
+            receiverId: otherUser['uid'],
+            receiverName: otherUser['fullName'] ?? 'User',
+            receiverAvatar: otherUser['photoUrl'] ?? '',
+            conversationId: conversationId,
+            chatId: conversationId,
+            otherUserId: otherUser['uid'],
+            otherUserName: otherUser['fullName'] ?? 'User',
+            otherUser: otherUser,
+            chatBackground:
+                chatBackground, // Pass the preference down the chain
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to start chat: $e')));
     }
   }
 
@@ -52,21 +127,14 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     }
 
     return Scaffold(
-      // key and drawer properties are removed
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 1,
-        // Remove automaticallyImplyLeading: false to allow a back button if needed,
-        // but we will provide a custom leading icon anyway.
-
-        // --- NEW: ADD THE HOME BUTTON ---
         leading: IconButton(
-          icon: Icon(Icons.home_outlined,
-              color: theme.appBarTheme.iconTheme?.color),
+          icon: Icon(Icons.home_outlined, color: theme.colorScheme.onSurface),
           onPressed: () {
-            // Navigate to the main home screen, removing all other screens.
-            // Get.until((route) => Get.currentRoute == '/home');
+            Get.offAllNamed('/home');
           },
         ),
         title: Text('Chat With Users', style: theme.appBarTheme.titleTextStyle),
@@ -131,9 +199,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                       final userData = user.data() as Map<String, dynamic>;
                       final name = userData['fullName'] ?? 'Unknown';
                       final email = userData['email'] ?? '';
-                      final avatar = userData['profilePic'] ?? '';
+                      final avatar = userData['photoUrl'] ?? '';
                       final isOnline = userData['isOnline'] == true;
-                      final receiverId = user.id;
 
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
@@ -197,49 +264,7 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                               style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant),
                             ),
-                            onTap: () async {
-                              // OPTIMIZED QUERY LOGIC
-                              final sortedParticipants = [
-                                currentUserId,
-                                receiverId
-                              ]..sort();
-
-                              final querySnapshot = await FirebaseFirestore
-                                  .instance
-                                  .collection('conversations')
-                                  .where('participants',
-                                      isEqualTo: sortedParticipants)
-                                  .limit(1)
-                                  .get();
-
-                              String conversationId;
-
-                              if (querySnapshot.docs.isNotEmpty) {
-                                conversationId = querySnapshot.docs.first.id;
-                              } else {
-                                final newConvo = await FirebaseFirestore
-                                    .instance
-                                    .collection('conversations')
-                                    .add({
-                                  'participants': sortedParticipants,
-                                  'createdAt': FieldValue.serverTimestamp(),
-                                  'lastMessageTime':
-                                      FieldValue.serverTimestamp(),
-                                });
-                                conversationId = newConvo.id;
-                              }
-
-                              Get.to(() => ChatScreen(
-                                    receiverId: receiverId,
-                                    receiverName: name,
-                                    receiverAvatar: avatar,
-                                    conversationId: conversationId,
-                                    otherUserId: receiverId,
-                                    otherUserName: name,
-                                    otherUser: userData,
-                                    chatId: conversationId,
-                                  ));
-                            },
+                            onTap: () => _handleUserTap(user),
                           ),
                         ),
                       );

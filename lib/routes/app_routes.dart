@@ -179,7 +179,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/chat",
-      page: () => const ChatScreen(receiverId: '',receiverName: '', receiverAvatar: '', chatId: '', otherUserId: '', otherUserName: '', otherUser: {},),
+      page: () => const ChatScreen(receiverId: '',receiverName: '', receiverAvatar: '', chatId: '', otherUserId: '', otherUserName: '', otherUser: {}, chatBackground: '',),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,
