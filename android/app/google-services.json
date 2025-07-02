@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "838120475834",
+    "firebase_url": "https://task-e5a96-default-rtdb.firebaseio.com",
     "project_id": "task-e5a96",
     "storage_bucket": "task-e5a96.firebasestorage.app"
   },
