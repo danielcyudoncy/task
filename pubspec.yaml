@@ -114,6 +114,16 @@ flutter:
     - assets/png/backgroundColor.png
     - assets/sounds/click.wav
     - assets/sounds/success.wav
+    - assets/images/wallpapers/wallpaper_1.jpg
+    - assets/images/wallpapers/wallpaper_2.jpg
+    - assets/images/wallpapers/wallpaper_3.jpg
+    - assets/images/wallpapers/wallpaper_4.jpg
+    - assets/images/wallpapers/wallpaper_5.jpg
+    - assets/images/wallpapers/wallpaper_6.jpg
+    - assets/images/wallpapers/wallpaper_7.jpg
+    - assets/images/wallpapers/wallpaper_8.jpg
+    - assets/images/wallpapers/wallpaper_9.jpg
+    - assets/images/wallpapers/wallpaper_10.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
