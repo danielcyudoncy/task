@@ -5,10 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:task/controllers/auth_controller.dart';
 import 'package:task/views/wallpaper_screen.dart';
 import 'package:task/widgets/user_nav_bar.dart'; // Import the UserNavBar
 
@@ -113,21 +111,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
 
-  void _navigateToHome() {
-   
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      
-      final AuthController authController = Get.find<AuthController>();
-      final role = authController.userRole.value;
-
-      // 2. Navigate based on the role.
-      if (role == 'Admin') {
-        Get.offAllNamed('/admin-dashboard');
-      } else {
-        Get.offAllNamed('/home');
-      }
-    });
-  }
 
   void _startReply(Map<String, dynamic> messageData, String messageId) {
     setState(() {
@@ -276,10 +259,7 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: isDarkMode ? colorScheme.surface : colorScheme.primary,
       appBar: AppBar(
         actions: [
-          IconButton(
-            icon: const Icon(Icons.home_rounded),
-            onPressed: _navigateToHome,
-          ),
+          
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
