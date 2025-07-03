@@ -39,7 +39,7 @@ class DashboardCardsWidget extends StatelessWidget {
               value: usersCount.toString(),
               icon: Icons.people_alt_outlined,
               onTap: onManageUsersTap,
-              color: theme.colorScheme.primary, // Using _primaryBlue
+              color: theme.colorScheme.secondary, // Using _primaryBlue
             ),
             const SizedBox(width: 16),
             _StatCard(
