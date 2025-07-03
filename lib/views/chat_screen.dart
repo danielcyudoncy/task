@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/controllers/settings_controller.dart';
 import 'package:task/views/wallpaper_screen.dart';
 import 'package:task/widgets/user_nav_bar.dart'; // Import the UserNavBar
 
@@ -116,6 +117,26 @@ class _ChatScreenState extends State<ChatScreen> {
       _typingStatusRef.child(currentUserId).set(false);
     });
   }
+
+  // void _navigateToHome() {
+  //   // This schedules the navigation to happen *after* the current build cycle,
+  //   // which prevents the "visitChildElements() called during build" error.
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     // Find the permanent AuthController instance.
+  //     final AuthController authController = Get.find<AuthController>();
+  //     final role = authController.userRole.value;
+
+  //     const adminRoles = ["Admin", "Assignment Editor", "Head of Department"];
+
+  //     // Navigate based on the role using the safest method.
+  //     if (adminRoles.contains(role)) {
+  //       Get.offAllNamed('/admin-dashboard');
+  //     } else {
+  //       // Defaults to user home for "Reporter", "Cameraman", or any other role.
+  //       Get.offAllNamed('/home');
+  //     }
+  //   });
+  // }
 
 
 
@@ -256,22 +277,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-    void _navigateToHome() {
-    // This schedules the navigation to happen *after* the current build is complete,
-    // which prevents the "visitChildElements() called during build" error.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Find the permanent AuthController instance.
-      final AuthController authController = Get.find<AuthController>();
-      final role = authController.userRole.value;
-
-      // Navigate based on the role using the safest method.
-      if (role == 'Admin') {
-        Get.offAllNamed('/admin-dashboard');
-      } else {
-        Get.offAllNamed('/home');
-      }
-    });
-  }
+   
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +292,28 @@ class _ChatScreenState extends State<ChatScreen> {
           
           IconButton(
             icon: const Icon(Icons.home_rounded),
-            onPressed: _navigateToHome,
+            onPressed: () {
+              // Trigger sound/vibration feedback
+              Get.find<SettingsController>().triggerFeedback();
+
+              // Capture user role
+              final role = Get.find<AuthController>().userRole.value;
+
+              // Use post-frame callback to safely trigger navigation
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (role == "Admin" ||
+                    role == "Assignment Editor" ||
+                    role == "Head of Department") {
+                  Get.offAllNamed('/admin-dashboard');
+                } else if (role == "Reporter" || role == "Cameraman") {
+                  Get.offAllNamed('/home');
+                } else {
+                  Get.offAllNamed('/login');
+                }
+              });
+            },
+
+
           ),
           IconButton(
             icon: const Icon(Icons.more_vert),
