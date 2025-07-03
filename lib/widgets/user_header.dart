@@ -117,24 +117,28 @@ class UserHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Obx(() => Text(
-                      "Hello, ${authController.fullName.value}!",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Raleway',
+                Obx(() => Center(
+                  child: Text(
+                        "Hello, ${authController.fullName.value}!",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Raleway',
+                        ),
                       ),
-                    )),
+                )),
                 SizedBox(height: 4.h),
-                Obx(() => Text(
-                      authController.currentUser?.email ?? '',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
+                Obx(() => Center(
+                  child: Text(
+                        authController.currentUser?.email ?? '',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    )),
+                )),
               ],
             ),
           ),
