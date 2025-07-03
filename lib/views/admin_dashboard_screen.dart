@@ -475,7 +475,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         const SizedBox(height: 5),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          // --- REPLACE the old DashboardCardsWidget with this one ---
+                          // --- DashboardCardsWidget ---
                           child: DashboardCardsWidget(
                             usersCount:
                                 adminController.statistics['users'] ?? 0,

@@ -1,5 +1,4 @@
 // core/bootstrap.dart
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,7 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// --- Ensure all your controllers are imported ---
+// --- Ensure all your controllers and services are imported ---
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/chat_controller.dart';
@@ -24,97 +23,68 @@ import 'package:task/firebase_options.dart';
 import 'package:task/myApp.dart';
 import 'package:task/service/mock_user_deletion_service.dart';
 import 'package:task/service/presence_service.dart';
-import 'package:task/service/supabase_storage_service.dart'; // NEW: Make sure this is imported
+import 'package:task/service/supabase_storage_service.dart';
 
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Step 1: Load environment variables
+    // Step 1: Initialize external libraries
     await dotenv.load(fileName: "assets/.env");
-    debugPrint('DEBUG: Dotenv loaded');
-
-    // Step 2: Initialize Firebase (before Supabase, as AuthController might touch Firebase Auth too)
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('DEBUG: Firebase initialized');
     await _verifyFirebaseServices();
-    debugPrint('DEBUG: Firebase services verified');
 
-    // Step 3: Initialize Supabase (CRITICAL for Supabase-dependent controllers)
+    final supabaseUrl = dotenv.env['SUPABASE_URL'];
+    final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
+    if (supabaseUrl == null || supabaseAnonKey == null) {
+      throw Exception('Missing SUPABASE_URL or SUPABASE_ANON_KEY in .env file');
+    }
     await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL']!,
-      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
       debug: kDebugMode,
     );
-    debugPrint(
-        'DEBUG: Supabase init completed'); // This debug log is from Supabase itself
 
-    // Step 4: --- CRITICAL FIX: Ensure Supabase is fully ready for dependent services ---
-    // Wait for Supabase to confirm it's ready. This is usually implicitly handled by await Supabase.initialize(),
-    // but sometimes there's a tiny window. Let's make it explicit or ensure dependent services are put later.
-    // Given the crash is specifically on Supabase.instance, it means AuthController's constructor runs before Supabase is fully set up.
-
-    // The issue is AuthController's constructor directly calls SupabaseStorageService,
-    // whose constructor directly calls Supabase.instance.
-    // We need to either make SupabaseStorageService lazy, or AuthController lazy,
-    // or put SupabaseStorageService before AuthController.
-
-    // --- OPTION A: Make SupabaseStorageService a permanent Get.put ---
-    // This allows AuthController to just Get.find it.
-    Get.put(SupabaseStorageService(),
-        permanent: true); // NEW: Put this service here
-    debugPrint('DEBUG: SupabaseStorageService put');
-
-    // Step 5: Initialize controllers that DO NOT depend on user authentication (Theme, Settings).
+    // Step 2: Initialize services and controllers with no dependencies
     final audioPlayer = await _initializeAudioPlayer();
-    debugPrint('DEBUG: Audio player initialized');
     Get.put(ThemeController(), permanent: true);
-    debugPrint('DEBUG: ThemeController put');
     Get.put(SettingsController(audioPlayer), permanent: true);
-    debugPrint('DEBUG: SettingsController put');
 
-    // Step 6: Initialize AuthController AND WAIT for it to be ready.
-    // AuthController now Get.finds SupabaseStorageService, which is already put.
+    // --- THIS IS THE CORRECTED INITIALIZATION ORDER ---
+
+    // Step 3: Put all services that other controllers depend on FIRST.
+    Get.put(SupabaseStorageService(), permanent: true);
+    Get.put(MockUserDeletionService(),
+        permanent: true); // Assuming this is needed by others
+
+    // Step 4: Put the AuthController and WAIT for it to be ready.
     Get.put(AuthController(), permanent: true);
-    debugPrint('DEBUG: AuthController put');
-    Get.find<AuthController>().onReady;
-    debugPrint('DEBUG: AuthController ready');
+    await Get.find<AuthController>().onReady;
 
-    // Step 7: Initialize all controllers that MAY depend on the user's auth state.
-    // This is now safe because AuthController is ready.
+    // Step 5: Put all remaining controllers. They can now safely find their dependencies.
     Get.put(AdminController(), permanent: true);
-    debugPrint('DEBUG: AdminController put');
-    Get.put(UserController(MockUserDeletionService()), permanent: true);
-    debugPrint('DEBUG: UserController put');
+    Get.put(UserController(Get.find<MockUserDeletionService>()),
+        permanent: true);
     Get.put(PresenceService(), permanent: true);
-    debugPrint('DEBUG: PresenceService put');
     Get.put(ChatController(), permanent: true);
-    debugPrint('DEBUG: ChatController put');
     Get.put(TaskController(), permanent: true);
-    debugPrint('DEBUG: TaskController put');
-    Get.put(ManageUsersController(MockUserDeletionService()), permanent: true);
-    debugPrint('DEBUG: ManageUsersController put');
+    Get.put(ManageUsersController(Get.find<MockUserDeletionService>()),
+        permanent: true);
     Get.put(NotificationController(), permanent: true);
-    debugPrint('DEBUG: NotificationController put');
 
-    // Step 8: Perform actions that require initialized controllers.
+    // Step 6: Perform post-initialization actions
     final authController = Get.find<AuthController>();
     if (authController.isLoggedIn) {
       await Get.find<PresenceService>().setOnline();
-      debugPrint('DEBUG: Presence set online');
       await Get.find<UserController>().updateUserPresence(true);
-      debugPrint('DEBUG: User presence updated');
     }
 
-    // Step 9: Validate mock usage.
     _validateMockUsage();
-    debugPrint('DEBUG: Mock usage validated');
 
-    // Step 10: Launch the app.
+    // Step 7: Launch the app
     runApp(const MyApp());
-    debugPrint('DEBUG: MyApp running');
   } catch (e, stackTrace) {
     debugPrint('DEBUG: CRASH CAUGHT!');
     debugPrint('Error Type: ${e.runtimeType}');
@@ -125,8 +95,6 @@ Future<void> bootstrapApp() async {
   }
 }
 
-
-
 void _validateMockUsage() {
   if (kReleaseMode) {
     debugPrint("""
@@ -135,8 +103,6 @@ Replace with CloudFunctionUserDeletionService once Firebase payments are ready.
 """);
   }
 }
-
-// In core/bootstrap.dart -> _initializeAudioPlayer()
 
 Future<AudioPlayer> _initializeAudioPlayer() async {
   final player = AudioPlayer();
@@ -148,20 +114,12 @@ Future<AudioPlayer> _initializeAudioPlayer() async {
           stayAwake: false,
           audioMode: AndroidAudioMode.normal,
         ),
+        // --- CORRECTED: Safest configuration for playback ---
         iOS: AudioContextIOS(
-          // --- FIX THIS SECTION ---
-          // Choose one of these:
-          // Option A: If you need both playback AND recording (e.g., voice messages)
-          category: AVAudioSessionCategory.playAndRecord,
+          category: AVAudioSessionCategory.playback,
           options: const {
-            
             AVAudioSessionOptions.mixWithOthers,
           },
-          // Option B: If you only need playback, remove defaultToSpeaker option
-          // category: AVAudioSessionCategory.playback,
-          // options: const {
-          //   AVAudioSessionOptions.mixWithOthers,
-          // },
         ),
       ),
     );
@@ -174,7 +132,13 @@ Future<AudioPlayer> _initializeAudioPlayer() async {
 Future<void> _verifyFirebaseServices() async {
   try {
     await FirebaseFirestore.instance.collection('test').limit(1).get();
-    await FirebaseDatabase.instance.ref('.info/connected').once();
+
+    final rtdb = FirebaseDatabase.instanceFor(
+      app: Firebase.app(),
+      databaseURL: 'https://task-e5a96-default-rtdb.firebaseio.com',
+    );
+    // --- CORRECTED: Only one call is needed ---
+    await rtdb.ref('.info/connected').once();
   } catch (e) {
     debugPrint("⚠️ Firebase check failed: $e");
     throw Exception(
