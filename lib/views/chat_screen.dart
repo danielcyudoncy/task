@@ -2,11 +2,14 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:task/controllers/auth_controller.dart';
 import 'package:task/views/wallpaper_screen.dart';
 import 'package:task/widgets/user_nav_bar.dart'; // Import the UserNavBar
 
@@ -70,9 +73,13 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     initializeDateFormatting();
     conversationId = widget.conversationId!;
+    final rtdb = FirebaseDatabase.instanceFor(
+      app: Firebase.app(),
+      databaseURL:
+          'https://task-e5a96-default-rtdb.firebaseio.com', 
+    );
 
-    _typingStatusRef =
-        FirebaseDatabase.instance.ref('typing_status/$conversationId');
+   _typingStatusRef = rtdb.ref('typing_status/$conversationId');
 
     _typingSubscription =
         _typingStatusRef.child(widget.receiverId).onValue.listen((event) {
@@ -249,6 +256,23 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+    void _navigateToHome() {
+    // This schedules the navigation to happen *after* the current build is complete,
+    // which prevents the "visitChildElements() called during build" error.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Find the permanent AuthController instance.
+      final AuthController authController = Get.find<AuthController>();
+      final role = authController.userRole.value;
+
+      // Navigate based on the role using the safest method.
+      if (role == 'Admin') {
+        Get.offAllNamed('/admin-dashboard');
+      } else {
+        Get.offAllNamed('/home');
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -260,6 +284,10 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         actions: [
           
+          IconButton(
+            icon: const Icon(Icons.home_rounded),
+            onPressed: _navigateToHome,
+          ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
