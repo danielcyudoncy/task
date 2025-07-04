@@ -179,23 +179,27 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Hello, ${authController.fullName.value}",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Raleway',
+                          Center(
+                            child: Text(
+                              "Hello, ${authController.fullName.value}",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Raleway',
+                              ),
                             ),
                           ),
                           SizedBox(height: 4.h),
-                          Text(
-                            authController.currentUser?.email ?? '',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14.sp,
+                          Center(
+                            child: Text(
+                              authController.currentUser?.email ?? '',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14.sp,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),

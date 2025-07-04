@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../controllers/auth_controller.dart';
+import '../controllers/settings_controller.dart';
+import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
 
 class AllUsersChatScreen extends StatefulWidget {
-  // --- NEW: This screen now accepts the wallpaper preference ---
   final String? chatBackground;
 
   const AllUsersChatScreen({super.key, this.chatBackground});
@@ -24,11 +26,12 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
   String searchQuery = '';
   bool isRefreshing = false;
 
+  final authController = Get.find<AuthController>();
+
   Future<void> _refreshUsers() async {
     setState(() {
       isRefreshing = true;
     });
-    // Simulate network delay for a better refresh indicator experience
     await Future.delayed(const Duration(milliseconds: 800));
     if (mounted) {
       setState(() {
@@ -37,7 +40,6 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     }
   }
 
-  // --- MODIFIED: This function no longer fetches the wallpaper. It uses the one passed to the widget. ---
   Future<void> _handleUserTap(QueryDocumentSnapshot user) async {
     showDialog(
       context: context,
@@ -46,14 +48,10 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     );
 
     try {
-      // --- THE KEY CHANGE ---
-      // We get the chat background from the widget property passed by the AppDrawer.
       final chatBackground = widget.chatBackground;
-
       final otherUser = user.data() as Map<String, dynamic>;
       final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-      // This logic to find/create a conversation remains the same.
       final querySnapshot = await FirebaseFirestore.instance
           .collection('conversations')
           .where('members', arrayContains: currentUserId)
@@ -80,12 +78,10 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
         conversationId = newConversation.id;
       }
 
-      Navigator.of(context, rootNavigator: true)
-          .pop(); // Dismiss loading dialog
+      Navigator.of(context, rootNavigator: true).pop();
 
       if (!mounted) return;
 
-      // Navigate to the final ChatScreen, passing the pre-loaded background along.
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -98,8 +94,7 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
             otherUserId: otherUser['uid'],
             otherUserName: otherUser['fullName'] ?? 'User',
             otherUser: otherUser,
-            chatBackground:
-                chatBackground, // Pass the preference down the chain
+            chatBackground: chatBackground,
           ),
         ),
       );
@@ -128,13 +123,16 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
+      drawer: const AppDrawer(), // ✅ Drawer added
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 1,
         leading: IconButton(
           icon: Icon(Icons.home_outlined, color: theme.colorScheme.onSurface),
           onPressed: () {
-            Get.offAllNamed('/home');
+            Get.find<SettingsController>().triggerFeedback();
+            authController
+                .navigateBasedOnRole(); // ✅ Use centralized navigation
           },
         ),
         title: Text('Chat With Users', style: theme.appBarTheme.titleTextStyle),
