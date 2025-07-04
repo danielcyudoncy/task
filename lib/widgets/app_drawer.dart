@@ -1,7 +1,6 @@
 // widgets/app_drawer.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // NEW: Required for getting user ID
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -14,7 +13,8 @@ import '../controllers/task_controller.dart';
 import '../models/task_model.dart';
 
 class AppDrawer extends StatefulWidget {
-  const AppDrawer({super.key});
+  const AppDrawer({super.key, String? chatBackground});
+
   @override
   State<AppDrawer> createState() => _AppDrawerState();
 }
@@ -45,6 +45,7 @@ class _AppDrawerState extends State<AppDrawer> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenHeight = MediaQuery.of(context).size.height;
+
     return Drawer(
       child: SafeArea(
         child: Column(
@@ -194,29 +195,44 @@ class _AppDrawerState extends State<AppDrawer> {
                   ),
                 ),
               ),
+
             // Navigation tiles
             Expanded(
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 children: [
+                  // ✅ Updated Home Tile with safe nav
+                  _drawerTile(Icons.home_outlined, 'Home', () async {
+                    Get.find<SettingsController>().triggerFeedback();
+                    Navigator.of(context).pop();
+                    await Future.delayed(const Duration(milliseconds: 250));
+                    final role = Get.find<AuthController>().userRole.value;
+                    if (["Admin", "Assignment Editor", "Head of Department"]
+                        .contains(role)) {
+                      Get.offAllNamed('/admin-dashboard');
+                    } else if (["Reporter", "Cameraman"].contains(role)) {
+                      Get.offAllNamed('/home');
+                    } else {
+                      Get.offAllNamed('/login');
+                    }
+                  }),
+
                   _drawerTile(Icons.person_outline, 'Profile', () {
                     Get.find<SettingsController>().triggerFeedback();
-                    Get.back(); // Close drawer
+                    Get.back();
                     Get.toNamed('/profile');
                   }),
 
-                  // --- THIS IS THE MODIFIED CHAT TILE ---
                   _drawerTile(Icons.chat_outlined, 'Chat Users', () async {
                     Get.find<SettingsController>().triggerFeedback();
-                    // Close the drawer first so the user sees the loading indicator
                     Navigator.of(context).pop();
 
-                    // Show a loading indicator
-                    Get.dialog(const Center(child: CircularProgressIndicator()),
-                        barrierDismissible: false);
+                    Get.dialog(
+                      const Center(child: CircularProgressIndicator()),
+                      barrierDismissible: false,
+                    );
 
                     try {
-                      // 1. Fetch the current user's wallpaper preference
                       final currentUserDoc = await FirebaseFirestore.instance
                           .collection('users')
                           .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -224,22 +240,21 @@ class _AppDrawerState extends State<AppDrawer> {
                       final chatBackground =
                           currentUserDoc.data()?['chatBackground'] as String?;
 
-                      // 2. Dismiss the loading indicator
                       Get.back();
-
-                      // 3. Navigate to the AllUsersChatScreen, PASSING the pre-loaded data
                       Get.to(() =>
                           AllUsersChatScreen(chatBackground: chatBackground));
                     } catch (e) {
-                      Get.back(); // Dismiss loading indicator on error too
+                      Get.back();
                       Get.snackbar("Error", "Could not open chat: $e");
                     }
                   }),
+
                   _drawerTile(Icons.settings_outlined, 'Settings', () {
                     Get.find<SettingsController>().triggerFeedback();
-                    Get.back(); // Close drawer
+                    Get.back();
                     Get.toNamed('/settings');
                   }),
+
                   _myTasksCard(),
                   _buildDarkModeCard(isDark),
                 ],
@@ -359,8 +374,10 @@ class _AppDrawerState extends State<AppDrawer> {
 class ConcentricCirclePainter extends CustomPainter {
   final Offset centerOffset;
   final Color ringColor;
+
   ConcentricCirclePainter(
       {required this.centerOffset, required this.ringColor});
+
   @override
   void paint(Canvas c, Size s) {
     final paint = Paint()
