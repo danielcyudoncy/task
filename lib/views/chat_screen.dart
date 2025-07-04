@@ -6,13 +6,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:task/controllers/auth_controller.dart';
-import 'package:task/controllers/settings_controller.dart';
 import 'package:task/views/wallpaper_screen.dart';
-import 'package:task/widgets/user_nav_bar.dart'; // Import the UserNavBar
+import 'package:task/widgets/app_drawer.dart';
+// Import the UserNavBar
 
 // Helper function
 bool isSameDay(Timestamp? a, Timestamp? b) {
@@ -58,6 +56,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _inputFocusNode = FocusNode();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
   String? conversationId;
 
@@ -279,50 +278,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
    
 
-  @override
+@override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const AppDrawer(),
       backgroundColor: isDarkMode ? colorScheme.surface : colorScheme.primary,
       appBar: AppBar(
-        actions: [
-          
-          IconButton(
-            icon: const Icon(Icons.home_rounded),
-            onPressed: () {
-              // Trigger sound/vibration feedback
-              Get.find<SettingsController>().triggerFeedback();
-
-              // Capture user role
-              final role = Get.find<AuthController>().userRole.value;
-
-              // Use post-frame callback to safely trigger navigation
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (role == "Admin" ||
-                    role == "Assignment Editor" ||
-                    role == "Head of Department") {
-                  Get.offAllNamed('/admin-dashboard');
-                } else if (role == "Reporter" || role == "Cameraman") {
-                  Get.offAllNamed('/home');
-                } else {
-                  Get.offAllNamed('/login');
-                }
-              });
-            },
-
-
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const WallpaperScreen()));
-            },
-          )
-        ],
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -331,6 +297,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const WallpaperScreen()));
+            },
+          ),
+        ],
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -358,6 +333,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         titleSpacing: 0,
       ),
+
       body: Stack(
         children: [
           _ChatBackground(backgroundValue: widget.chatBackground ?? ''),
@@ -460,14 +436,11 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      // --- ADDED THIS WIDGET ---
-      bottomNavigationBar: const UserNavBar(
-        // Pass an index that doesn't exist to prevent any icon from being highlighted
-        currentIndex: null,
-      ),
     );
   }
+
 }
+
 
 class _ChatBackground extends StatelessWidget {
   final String backgroundValue;
