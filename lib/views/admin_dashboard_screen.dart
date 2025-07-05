@@ -1,5 +1,6 @@
 // views/admin_dashboard_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,7 @@ import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/admin_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/manage_users_controller.dart';
+
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -244,6 +246,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
+  void _navigateToChatUsers() async {
+    Get.find<SettingsController>().triggerFeedback();
+    
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    try {
+      final currentUserDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .get();
+      final chatBackground =
+          currentUserDoc.data()?['chatBackground'] as String?;
+
+      Get.back();
+      Get.toNamed('/all-users-chat');
+    } catch (e) {
+      Get.back();
+      Get.snackbar("Error", "Could not open chat: $e");
+    }
+  }
+
   void _confirmUserDeletion(Map<String, dynamic> user) async {
     final result = await Get.dialog<bool>(
       AlertDialog(
@@ -317,7 +343,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           builder: (context, setState) {
             final userInfo = userCache[creatorId];
             if (userInfo == null && creatorId != 'Unknown') {
-              getUserNameAndRole(creatorId, () => setState(() {}));
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                getUserNameAndRole(creatorId, () => setState(() {}));
+              });
             }
             final creatorName = userInfo?["name"] ?? creatorId;
             final creatorRole = userInfo?["role"] ?? "Unknown";
@@ -394,7 +422,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               final creatorId = doc?['createdBy'] ?? 'Unknown';
               final userInfo = userCache[creatorId];
               if (userInfo == null && creatorId != 'Unknown') {
-                getUserNameAndRole(creatorId, () => setState(() {}));
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  getUserNameAndRole(creatorId, () => setState(() {}));
+                });
               }
               final creatorName = userInfo?["name"] ?? creatorId;
               final creatorRole = userInfo?["role"] ?? "Unknown";
@@ -441,6 +471,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Obx(() {
+      // Add safety check for build phase
+      if (!mounted) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      
       if (adminController.isLoading.value ||
           adminController.isStatsLoading.value) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -481,13 +516,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 adminController.statistics['users'] ?? 0,
                             onlineUsersCount:
                                 adminController.statistics['online'] ?? 0,
-                            conversationsCount:
-                                adminController.statistics['conversations'] ??
-                                    0,
+                            newsCount: adminController.statistics['news'] ?? 0,
                             tasksCount: adminController.statistics['pending'] ??
                                 0, // Showing pending tasks here
                             onManageUsersTap: _showManageUsersDialog,
                             onTotalTasksTap: _showAllPendingTasksDialog,
+                            onNewsFeedTap: () => Get.toNamed('/news'),
+                            onOnlineUsersTap: _navigateToChatUsers,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -630,6 +665,8 @@ class _TasksTab extends StatefulWidget {
 }
 
 class _TasksTabState extends State<_TasksTab> {
+  final Set<String> _loadingUsers = <String>{};
+
   @override
   Widget build(BuildContext context) {
     final Color cardColor =
@@ -660,8 +697,15 @@ class _TasksTabState extends State<_TasksTab> {
         final creatorId =
             doc.isNotEmpty ? (doc['createdBy'] ?? 'Unknown') : 'Unknown';
         final userInfo = widget.userCache[creatorId];
-        if (userInfo == null && creatorId != 'Unknown') {
-          widget.getUserNameAndRole(creatorId, () => setState(() {}));
+        if (userInfo == null && creatorId != 'Unknown' && !_loadingUsers.contains(creatorId)) {
+          _loadingUsers.add(creatorId);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.getUserNameAndRole(creatorId, () {
+              if (mounted) {
+                setState(() {});
+              }
+            });
+          });
         }
         final creatorName = userInfo?["name"] ?? creatorId;
         final creatorRole = userInfo?["role"] ?? "Unknown";

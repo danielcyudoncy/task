@@ -4,12 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
+import 'package:task/widgets/app_drawer.dart';
 import '../controllers/auth_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
 
   final AuthController authController = Get.find<AuthController>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +19,8 @@ class ProfileScreen extends StatelessWidget {
     final isLightMode = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const AppDrawer(),
       // Background color based on the theme
       backgroundColor: isLightMode ? const Color(0xFF08169D) : const Color(0xFF181B2A),
       body: SafeArea(
@@ -33,14 +37,14 @@ class ProfileScreen extends StatelessWidget {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Top Row: Home Icon (left) and Settings Icon (right)
+                // Top Row: Menu Icon (left) and Settings Icon (right)
                 Padding(
                   padding:
                       const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Home Icon
+                      // Menu Icon (replaced home icon)
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.transparent,
@@ -49,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         child: IconButton(
                           icon: Icon(
-                            Icons.home_outlined,
+                            Icons.menu,
                             color: isLightMode
                                 ? Colors.white
                                 : Colors.white, // White in both modes
@@ -57,23 +61,11 @@ class ProfileScreen extends StatelessWidget {
                           onPressed: () {
                             // Trigger sound/vibration feedback
                             Get.find<SettingsController>().triggerFeedback();
-
-                            // Capture user role
-                            final role = authController.userRole.value;
-
-                            // Use post-frame callback to safely trigger navigation
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (role == "Admin" ||
-                                  role == "Assignment Editor" ||
-                                  role == "Head of Department") {
-                                Get.offAllNamed('/admin-dashboard');
-                              } else if (role == "Reporter" ||
-                                  role == "Cameraman") {
-                                Get.offAllNamed('/home');
-                              } else {
-                                Get.offAllNamed('/login');
-                              }
-                            });
+                            
+                            // Open the drawer
+                            if (_scaffoldKey.currentState != null) {
+                              _scaffoldKey.currentState!.openDrawer();
+                            }
                           },
                         ),
 

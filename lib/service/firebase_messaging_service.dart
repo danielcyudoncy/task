@@ -62,7 +62,7 @@ class FirebaseMessagingService {
     );
 
     if (kDebugMode) {
-      print("Notification Permission: ${settings.authorizationStatus}");
+      debugPrint("Notification Permission: ${settings.authorizationStatus}");
     }
   }
 }
@@ -70,6 +70,6 @@ class FirebaseMessagingService {
 // ✅ Background Message Handler (Needs to be a top-level function)
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (kDebugMode) {
-    print("Handling background message: ${message.messageId}");
+    debugPrint("Handling background message: ${message.messageId}");
   }
 }

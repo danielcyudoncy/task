@@ -23,7 +23,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    debugPrint("📱 MYAPP: initState called");
     WidgetsBinding.instance.addObserver(this);
+    debugPrint("📱 MYAPP: WidgetsBinding observer added");
     // REMOVED: _initializePresence() call is no longer needed here.
   }
 
@@ -66,11 +68,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("📱 MYAPP: build called");
     return ScreenUtilInit(
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (context, child) => Obx(() => GetMaterialApp(
+      builder: (context, child) {
+        debugPrint("📱 MYAPP: ScreenUtilInit builder called");
+        return Obx(() {
+          debugPrint("📱 MYAPP: Obx callback called");
+          return GetMaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Assignment Logging App',
             theme: AppTheme.lightTheme,
@@ -81,7 +88,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             // REMOVED: initialBinding and onInit are no longer needed.
             initialRoute: "/",
             getPages: AppRoutes.routes,
-          )),
+          );
+        });
+      },
     );
   }
 }

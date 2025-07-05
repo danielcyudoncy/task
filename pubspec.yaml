@@ -35,8 +35,8 @@ dependencies:
   convex_bottom_bar: ^3.2.0
   firebase_admin: ^0.2.0
   firebase_analytics: ^11.5.0
-  firebase_auth: ^5.6.0
-  firebase_core: ^3.14.0
+  firebase_auth: ^5.5.0
+  firebase_core: ^3.13.0
   firebase_database: ^11.3.7
   firebase_messaging: ^15.2.7
   firebase_storage: ^12.4.7
@@ -124,6 +124,12 @@ flutter:
     - assets/images/wallpapers/wallpaper_8.jpg
     - assets/images/wallpapers/wallpaper_9.jpg
     - assets/images/wallpapers/wallpaper_10.jpg
+    - assets/images/tv-logos/BBC News-01.png
+    - assets/images/tv-logos/cnn.png
+    - assets/images/tv-logos/aljazeera.png
+    - assets/images/tv-logos/reuters.png
+    - assets/images/tv-logos/newsroom_africa.png
+    - assets/images/tv-logos/tvcnews.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

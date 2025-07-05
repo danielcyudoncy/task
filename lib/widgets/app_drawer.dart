@@ -1,13 +1,12 @@
 // widgets/app_drawer.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
-import 'package:task/views/all_users_chat_screen.dart';
+
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../models/task_model.dart';
@@ -25,6 +24,7 @@ class _AppDrawerState extends State<AppDrawer> {
   bool _logoutHovered = false, _showCalendar = false;
   DateTime _focusedDay = DateTime.now();
   List<Task> _userTasks = [];
+  bool _isNavigating = false;
 
   @override
   void initState() {
@@ -203,17 +203,30 @@ class _AppDrawerState extends State<AppDrawer> {
                 children: [
                   // ✅ Updated Home Tile with safe nav
                   _drawerTile(Icons.home_outlined, 'Home', () async {
+                    if (_isNavigating) return; // Prevent multiple navigation calls
+                    
                     Get.find<SettingsController>().triggerFeedback();
+                    setState(() => _isNavigating = true);
+                    
                     Navigator.of(context).pop();
-                    await Future.delayed(const Duration(milliseconds: 250));
-                    final role = Get.find<AuthController>().userRole.value;
-                    if (["Admin", "Assignment Editor", "Head of Department"]
-                        .contains(role)) {
-                      Get.offAllNamed('/admin-dashboard');
-                    } else if (["Reporter", "Cameraman"].contains(role)) {
-                      Get.offAllNamed('/home');
-                    } else {
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    
+                    // Use safer navigation approach to avoid route conflicts
+                    try {
+                      // Check current route to avoid unnecessary navigation
+                      final currentRoute = Get.currentRoute;
+                      if (currentRoute != '/admin-dashboard') {
+                        // Use replace instead of offAllNamed to avoid route removal conflicts
+                        await Get.offNamed('/admin-dashboard');
+                      }
+                    } catch (e) {
+                      debugPrint("Navigation error: $e");
+                      // Fallback navigation
                       Get.offAllNamed('/login');
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isNavigating = false);
+                      }
                     }
                   }),
 
@@ -224,28 +237,23 @@ class _AppDrawerState extends State<AppDrawer> {
                   }),
 
                   _drawerTile(Icons.chat_outlined, 'Chat Users', () async {
+                    if (_isNavigating) return; // Prevent multiple navigation calls
+                    
                     Get.find<SettingsController>().triggerFeedback();
+                    setState(() => _isNavigating = true);
+                    
                     Navigator.of(context).pop();
-
-                    Get.dialog(
-                      const Center(child: CircularProgressIndicator()),
-                      barrierDismissible: false,
-                    );
-
+                    await Future.delayed(const Duration(milliseconds: 200));
+                    
                     try {
-                      final currentUserDoc = await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .get();
-                      final chatBackground =
-                          currentUserDoc.data()?['chatBackground'] as String?;
-
-                      Get.back();
-                      Get.to(() =>
-                          AllUsersChatScreen(chatBackground: chatBackground));
+                      await Get.toNamed('/all-users-chat');
                     } catch (e) {
-                      Get.back();
-                      Get.snackbar("Error", "Could not open chat: $e");
+                      debugPrint("Chat navigation error: $e");
+                      Get.snackbar("Error", "Could not open chat");
+                    } finally {
+                      if (mounted) {
+                        setState(() => _isNavigating = false);
+                      }
                     }
                   }),
 
