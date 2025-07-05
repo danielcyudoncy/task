@@ -6,7 +6,6 @@ import 'package:task/routes/profile_complete_middleware.dart';
 import 'package:task/views/admin_dashboard_screen.dart';
 import 'package:task/views/all_task_screen.dart';
 import 'package:task/views/chat_list_screen.dart';
-import 'package:task/views/chat_screen.dart';
 import 'package:task/views/forget_password_screen.dart';
 import 'package:task/views/home_screen.dart';
 import 'package:task/views/login_screen.dart';
