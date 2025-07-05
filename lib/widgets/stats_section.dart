@@ -34,10 +34,10 @@ class StatsSection extends StatelessWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Obx(() => _statCard(
-                  iconWidget: _buildAssignedTaskIcon(),
-                  icon: Icons.assignment,
-                  label: AppStrings.taskAssigned,
-                  value: taskController.taskAssigned.value.toString(),
+                  iconWidget: _buildNewsFeedIcon(),
+                  icon: Icons.rss_feed,
+                  label: "News Feed",
+                  value: "12", // You can replace this with actual news count
                   color: isDark
                       ? const Color(0xFF9FA8DA)
                       : AppColors.secondaryColor,
@@ -48,41 +48,38 @@ class StatsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildAssignedTaskIcon() {
+  Widget _buildNewsFeedIcon() {
     return Stack(
       children: [
         Icon(
-          Icons.assignment,
+          Icons.rss_feed,
           color: isDark ? Colors.white : AppColors.secondaryColor,
           size: 32,
         ),
-        if (taskController.newTaskCount.value > 0)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
+        Positioned(
+          right: 0,
+          top: 0,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: const BoxDecoration(
+              color: Colors.orange,
+              shape: BoxShape.circle,
+            ),
+            constraints: BoxConstraints(
+              minWidth: 16.w,
+              minHeight: 16.h,
+            ),
+            child: Text(
+              "3",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.bold,
               ),
-              constraints: BoxConstraints(
-                minWidth: 16.w,
-                minHeight: 16.h,
-              ),
-              child: Text(
-                taskController.newTaskCount.value > 9
-                    ? '9+'
-                    : '${taskController.newTaskCount.value}',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              textAlign: TextAlign.center,
             ),
           ),
+        ),
       ],
     );
   }

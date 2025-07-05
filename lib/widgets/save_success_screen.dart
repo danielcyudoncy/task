@@ -21,7 +21,9 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
     super.initState();
     // After 2 seconds, navigate based on role
     Timer(const Duration(seconds: 2), () {
-      Get.find<AuthController>().navigateBasedOnRole();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.find<AuthController>().navigateBasedOnRole();
+      });
     });
   }
 

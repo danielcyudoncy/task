@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/widgets/app_bar.dart';
+import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/error_state_widget.dart';
 import 'package:task/widgets/task_card.dart';
@@ -24,6 +25,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
   final RxString _searchQuery = ''.obs;
   final RxString _selectedFilter = 'All'.obs;
   final RxList<String> _selectedTasks = <String>[].obs;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   
 
   @override
@@ -74,6 +76,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const AppDrawer(),
       body: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF181B2A) : colorScheme.primary,
@@ -81,7 +85,10 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              AppBarWidget(basePadding: basePadding),
+              AppBarWidget(
+                basePadding: basePadding,
+                scaffoldKey: _scaffoldKey,
+              ),
               // Search and Filter Row
               Padding(
                 padding:

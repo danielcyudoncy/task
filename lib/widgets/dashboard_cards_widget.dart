@@ -8,19 +8,23 @@ class DashboardCardsWidget extends StatelessWidget {
   final int usersCount;
   final int tasksCount;
   final int onlineUsersCount;
-  final int conversationsCount;
+  final int newsCount;
 
   final VoidCallback onManageUsersTap;
   final VoidCallback onTotalTasksTap;
+  final VoidCallback onNewsFeedTap;
+  final VoidCallback onOnlineUsersTap;
 
   const DashboardCardsWidget({
     super.key,
     required this.usersCount,
     required this.tasksCount,
     required this.onlineUsersCount,
-    required this.conversationsCount,
+    required this.newsCount,
     required this.onManageUsersTap,
     required this.onTotalTasksTap,
+    required this.onNewsFeedTap,
+    required this.onOnlineUsersTap,
   });
 
   @override
@@ -60,15 +64,15 @@ class DashboardCardsWidget extends StatelessWidget {
               title: 'Online Now',
               value: onlineUsersCount.toString(),
               icon: Icons.wifi_tethering,
-              onTap: onManageUsersTap,
+              onTap: onOnlineUsersTap,
               color: appColors.success!, // Using your new green color
             ),
             const SizedBox(width: 16),
             _StatCard(
-              title: 'Total Chats',
-              value: conversationsCount.toString(),
-              icon: Icons.chat_bubble_outline_rounded,
-              onTap: () {},
+              title: 'News Feed',
+              value: newsCount.toString(),
+              icon: Icons.newspaper_outlined,
+              onTap: onNewsFeedTap,
               color: appColors.accent1!, // Using your new purple color
             ),
           ],

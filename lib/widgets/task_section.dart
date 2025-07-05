@@ -6,7 +6,7 @@ import '../../controllers/auth_controller.dart';
 import '../../controllers/task_controller.dart';
 import '../../utils/constants/app_strings.dart';
 import '../../utils/constants/app_styles.dart';
-import 'task_list_tab.dart';
+import './task_list_tab.dart';
 
 class TasksSection extends StatelessWidget {
   final TabController tabController;

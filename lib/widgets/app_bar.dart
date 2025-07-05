@@ -6,11 +6,16 @@ import 'package:task/controllers/settings_controller.dart';
 
 class AppBarWidget extends StatelessWidget {
   final double basePadding;
-  const AppBarWidget({required this.basePadding, super.key});
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+  
+  const AppBarWidget({
+    required this.basePadding, 
+    this.scaffoldKey,
+    super.key
+  });
 
   @override
   Widget build(BuildContext context) {
-    final AuthController authController = Get.find<AuthController>();
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: basePadding, vertical: 10),
@@ -18,9 +23,14 @@ class AppBarWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: () => authController.goToHome(),
+            onTap: () {
+              Get.find<SettingsController>().triggerFeedback();
+              if (scaffoldKey?.currentState != null) {
+                scaffoldKey!.currentState!.openDrawer();
+              }
+            },
             child: Semantics(
-              label: "Go to Home",
+              label: "Open Menu",
               button: true,
               child: Container(
                 padding: const EdgeInsets.all(6),
@@ -29,7 +39,7 @@ class AppBarWidget extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.home,
+                  Icons.menu,
                   color: Colors.white,
                 ),
               ),

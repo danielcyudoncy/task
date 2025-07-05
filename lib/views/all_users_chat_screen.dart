@@ -10,7 +10,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/settings_controller.dart';
-import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
 
 class AllUsersChatScreen extends StatefulWidget {
@@ -23,59 +22,60 @@ class AllUsersChatScreen extends StatefulWidget {
 }
 
 class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
+  final AuthController authController = Get.find<AuthController>();
   String searchQuery = '';
   bool isRefreshing = false;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final authController = Get.find<AuthController>();
-
-  Future<void> _refreshUsers() async {
-    setState(() {
-      isRefreshing = true;
-    });
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (mounted) {
-      setState(() {
-        isRefreshing = false;
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    _refreshUsers();
   }
 
-  Future<void> _handleUserTap(QueryDocumentSnapshot user) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+  @override
+  void dispose() {
+    // Clean up any active operations
+    super.dispose();
+  }
+
+  Future<void> _refreshUsers() async {
+    setState(() => isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() => isRefreshing = false);
+  }
+
+  void _handleUserTap(DocumentSnapshot user) async {
+    final otherUser = user.data() as Map<String, dynamic>;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUserId == null) return;
+
+    final conversationId = [currentUserId, otherUser['uid']]..sort();
+    final chatId = conversationId.join('_');
 
     try {
-      final chatBackground = widget.chatBackground;
-      final otherUser = user.data() as Map<String, dynamic>;
-      final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
 
-      final querySnapshot = await FirebaseFirestore.instance
+      final conversationDoc = await FirebaseFirestore.instance
           .collection('conversations')
-          .where('members', arrayContains: currentUserId)
+          .doc(chatId)
           .get();
 
-      if (!mounted) return;
-
-      String conversationId = '';
-      final existingConversation = querySnapshot.docs.where((doc) {
-        final members = List<String>.from(doc['members']);
-        return members.contains(otherUser['uid']);
-      }).toList();
-
-      if (existingConversation.isNotEmpty) {
-        conversationId = existingConversation.first.id;
-      } else {
-        final newConversation =
-            await FirebaseFirestore.instance.collection('conversations').add({
-          'members': [currentUserId, otherUser['uid']],
+      if (!conversationDoc.exists) {
+        await FirebaseFirestore.instance
+            .collection('conversations')
+            .doc(chatId)
+            .set({
+          'participants': [currentUserId, otherUser['uid']],
           'lastMessage': '',
-          'timestamp': FieldValue.serverTimestamp(),
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
         });
-        if (!mounted) return;
-        conversationId = newConversation.id;
       }
 
       Navigator.of(context, rootNavigator: true).pop();
@@ -89,12 +89,12 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
             receiverId: otherUser['uid'],
             receiverName: otherUser['fullName'] ?? 'User',
             receiverAvatar: otherUser['photoUrl'] ?? '',
-            conversationId: conversationId,
-            chatId: conversationId,
+            conversationId: chatId,
+            chatId: chatId,
             otherUserId: otherUser['uid'],
             otherUserName: otherUser['fullName'] ?? 'User',
             otherUser: otherUser,
-            chatBackground: chatBackground,
+            chatBackground: widget.chatBackground,
           ),
         ),
       );
@@ -108,6 +108,11 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Add safety check for build phase
+    if (!mounted) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final theme = Theme.of(context);
 
@@ -122,20 +127,28 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     }
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: backgroundColor,
-      drawer: const AppDrawer(), // ✅ Drawer added
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 1,
         leading: IconButton(
-          icon: Icon(Icons.home_outlined, color: theme.colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () {
             Get.find<SettingsController>().triggerFeedback();
-            authController
-                .navigateBasedOnRole(); // ✅ Use centralized navigation
+            Get.back();
           },
         ),
         title: Text('Chat With Users', style: theme.appBarTheme.titleTextStyle),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.home, color: theme.colorScheme.onSurface),
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Get.offNamed('/admin-dashboard');
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -161,6 +174,10 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                     .where('uid', isNotEqualTo: currentUserId)
                     .snapshots(),
                 builder: (context, snapshot) {
+                  // Add safety check for build phase
+                  if (!mounted) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       !isRefreshing) {
                     return const Center(child: CircularProgressIndicator());
@@ -193,6 +210,10 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                     itemCount: users.length,
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
+                      // Add safety check for build phase
+                      if (!mounted) {
+                        return const SizedBox.shrink();
+                      }
                       final user = users[index];
                       final userData = user.data() as Map<String, dynamic>;
                       final name = userData['fullName'] ?? 'Unknown';

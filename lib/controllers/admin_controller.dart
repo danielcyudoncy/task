@@ -25,6 +25,7 @@ class AdminController extends GetxController {
   var overdueTasks = 0.obs;
   var onlineUsers = 0.obs;
   var totalConversations = 0.obs;
+  var newsCount = 0.obs;
 
   var userNames = <String>[].obs;
   var taskTitles = <String>[].obs;
@@ -187,6 +188,8 @@ class AdminController extends GetxController {
             .get(),
         // NEW: Query for total conversations count
         _firestore.collection('conversations').count().get(),
+        // NEW: Query for news count (using a news collection)
+        _firestore.collection('news').count().get(),
       ]).timeout(
           const Duration(seconds: 15)); // Increased timeout for more queries
 
@@ -195,6 +198,7 @@ class AdminController extends GetxController {
       final taskSnapshot = results[1] as QuerySnapshot<Map<String, dynamic>>;
       final onlineUsersSnapshot = results[2] as AggregateQuerySnapshot;
       final conversationsSnapshot = results[3] as AggregateQuerySnapshot;
+      final newsSnapshot = results[4] as AggregateQuerySnapshot;
 
       // --- The rest of your existing logic remains, just using the new variables ---
       final userDocs = userSnapshot.docs;
@@ -209,6 +213,7 @@ class AdminController extends GetxController {
       totalUsers.value = userDocs.length;
       onlineUsers.value = onlineUsersSnapshot.count ?? 0;
       totalConversations.value = conversationsSnapshot.count ?? 0;
+      newsCount.value = newsSnapshot.count ?? 0;
 
       totalTasks.value = taskDocs.length;
       completedTasks.value = taskDocs
@@ -240,6 +245,7 @@ class AdminController extends GetxController {
       statistics['users'] = totalUsers.value;
       statistics['online'] = onlineUsers.value; // NEW
       statistics['conversations'] = totalConversations.value; // NEW
+      statistics['news'] = newsCount.value; // NEW
       statistics['tasks'] = totalTasks.value;
       statistics['completed'] = completedTasks.value;
       statistics['pending'] = pendingTasks.value;
@@ -383,6 +389,7 @@ class AdminController extends GetxController {
     completedTasks.value = 0;
     pendingTasks.value = 0;
     overdueTasks.value = 0;
+    newsCount.value = 0;
 
     userNames.clear();
     taskTitles.clear();

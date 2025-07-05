@@ -216,12 +216,18 @@ class TaskController extends GetxController {
 
   // Calculate new task count
   void calculateNewTaskCount() {
-  String userId = authController.auth.currentUser?.uid ?? "";
-  newTaskCount.value = tasks.where((task) {
-    return (task.assignedReporterId == userId || task.assignedCameramanId == userId) &&
-        task.status != "Completed";
-  }).length;
-}
+    String? userId = authController.auth.currentUser?.uid;
+    if (userId == null || userId.isEmpty) {
+      debugPrint("calculateNewTaskCount: User not authenticated");
+      newTaskCount.value = 0;
+      return;
+    }
+    
+    newTaskCount.value = tasks.where((task) {
+      return (task.assignedReporterId == userId || task.assignedCameramanId == userId) &&
+          task.status != "Completed";
+    }).length;
+  }
 
   // Fetch user's full name using UID with caching
   Future<String> _getUserName(String? uid) async {
@@ -253,36 +259,36 @@ class TaskController extends GetxController {
     String? cameramanName,
   }) async {
     try {
-      print("=== ASSIGNMENT DEBUG ===");
-      print("Task ID: $taskId");
-      print("Reporter ID: $reporterId");
-      print("Reporter Name: $reporterName");
+          debugPrint("=== ASSIGNMENT DEBUG ===");
+    debugPrint("Task ID: $taskId");
+    debugPrint("Reporter ID: $reporterId");
+    debugPrint("Reporter Name: $reporterName");
 
       final updateData = <String, dynamic>{};
 
       if (reporterId != null && reporterName != null) {
         updateData['assignedReporterId'] = reporterId;
         updateData['assignedReporterName'] = reporterName;
-        print("✅ Setting reporter: $reporterId");
+        debugPrint("✅ Setting reporter: $reporterId");
       } else {
         updateData['assignedReporterId'] = null;
         updateData['assignedReporterName'] = null;
-        print("❌ Clearing reporter fields");
+        debugPrint("❌ Clearing reporter fields");
       }
 
       if (cameramanId != null && cameramanName != null) {
         updateData['assignedCameramanId'] = cameramanId;
         updateData['assignedCameramanName'] = cameramanName;
-        print("✅ Setting cameraman: $cameramanId");
+        debugPrint("✅ Setting cameraman: $cameramanId");
       } else {
         updateData['assignedCameramanId'] = null;
         updateData['assignedCameramanName'] = null;
-        print("❌ Clearing cameraman fields");
+        debugPrint("❌ Clearing cameraman fields");
       }
 
       updateData['assignedAt'] = FieldValue.serverTimestamp();
 
-      print("📝 Update data: $updateData");
+      debugPrint("📝 Update data: $updateData");
 
       // Update the task document
       await FirebaseFirestore.instance
@@ -290,7 +296,7 @@ class TaskController extends GetxController {
           .doc(taskId)
           .update(updateData);
 
-      print("✅ Task document updated successfully!");
+              debugPrint("✅ Task document updated successfully!");
 
       // Get task details for notification
       final taskDoc = await FirebaseFirestore.instance
@@ -298,7 +304,7 @@ class TaskController extends GetxController {
           .doc(taskId)
           .get();
 
-      print("📖 Task doc retrieved: ${taskDoc.exists}");
+              debugPrint("📖 Task doc retrieved: ${taskDoc.exists}");
 
       if (taskDoc.exists) {
         final String taskTitle =
@@ -321,7 +327,7 @@ class TaskController extends GetxController {
 
         // Send notifications without awaiting to prevent blocking
         if (reporterId != null) {
-          print("📧 Sending notification to reporter: $reporterId");
+          debugPrint("📧 Sending notification to reporter: $reporterId");
           FirebaseFirestore.instance
               .collection('users')
               .doc(reporterId)
@@ -334,12 +340,12 @@ class TaskController extends GetxController {
                 'isRead': false,
                 'timestamp': FieldValue.serverTimestamp(),
               })
-              .then((_) => print("✅ Reporter notification sent"))
-              .catchError((e) => print("❌ Reporter notification error: $e"));
+                          .then((_) => debugPrint("✅ Reporter notification sent"))
+            .catchError((e) => debugPrint("❌ Reporter notification error: $e"));
         }
 
         if (cameramanId != null) {
-          print("📧 Sending notification to cameraman: $cameramanId");
+          debugPrint("📧 Sending notification to cameraman: $cameramanId");
           FirebaseFirestore.instance
               .collection('users')
               .doc(cameramanId)
@@ -352,21 +358,21 @@ class TaskController extends GetxController {
                 'isRead': false,
                 'timestamp': FieldValue.serverTimestamp(),
               })
-              .then((_) => print("✅ Cameraman notification sent"))
-              .catchError((e) => print("❌ Cameraman notification error: $e"));
+                          .then((_) => debugPrint("✅ Cameraman notification sent"))
+            .catchError((e) => debugPrint("❌ Cameraman notification error: $e"));
         }
       }
 
       // Use a delayed call to avoid setState after dispose
       Future.delayed(Duration(milliseconds: 100), () {
         calculateNewTaskCount();
-        print("🔄 Task count recalculated");
+        debugPrint("🔄 Task count recalculated");
       });
 
-      print("=== ASSIGNMENT COMPLETE ===");
+              debugPrint("=== ASSIGNMENT COMPLETE ===");
     } catch (e) {
-      print("❌ Assignment error: $e");
-      print("Stack trace: ${StackTrace.current}");
+              debugPrint("❌ Assignment error: $e");
+        debugPrint("Stack trace: ${StackTrace.current}");
       // Don't show snackbar here since dialog might be closed
     }
   }
@@ -376,29 +382,52 @@ class TaskController extends GetxController {
   // Fetch task counts using the new fields
   Future<void> fetchTaskCounts() async {
     try {
+      // Check if user is authenticated
+      if (authController.auth.currentUser == null) {
+        debugPrint("fetchTaskCounts: User not authenticated yet, retrying in 1 second...");
+        // Retry after a short delay
+        await Future.delayed(const Duration(seconds: 1));
+        if (authController.auth.currentUser == null) {
+          debugPrint("fetchTaskCounts: User still not authenticated, skipping");
+          return;
+        }
+      }
+      
       String userId = authController.auth.currentUser!.uid;
       String userRole = authController.userRole.value;
+      
+      // Check if userRole is available
+      if (userRole.isEmpty) {
+        debugPrint("fetchTaskCounts: User role not loaded yet, retrying in 1 second...");
+        await Future.delayed(const Duration(seconds: 1));
+        userRole = authController.userRole.value;
+        if (userRole.isEmpty) {
+          debugPrint("fetchTaskCounts: User role still not available, skipping");
+          return;
+        }
+      }
+      
       final querySnapshot = await _firebaseService.getAllTasks().first;
       final docs = querySnapshot.docs;
 
-      print("=== ENHANCED DEBUG ===");
-      print("Current User ID: $userId");
-      print("User Role: $userRole");
-      print("Total tasks in database: ${docs.length}");
+          debugPrint("=== ENHANCED DEBUG ===");
+    debugPrint("Current User ID: $userId");
+    debugPrint("User Role: $userRole");
+    debugPrint("Total tasks in database: ${docs.length}");
 
       // Check ALL tasks and their assignment fields
       for (int i = 0; i < docs.length; i++) {
         final doc = docs[i];
         final data = doc.data() as Map<String, dynamic>;
 
-        print("\n--- Task ${i + 1}: ${doc.id} ---");
-        print("Title: ${data['title']}");
-        print("createdBy: ${data['createdBy']}");
-        print("assignedTo: ${data['assignedTo']}");
-        print("assignedReporterId: ${data['assignedReporterId']}");
-        print("assignedCameramanId: ${data['assignedCameramanId']}");
-        print("assignedReporterName: ${data['assignedReporterName']}");
-        print("assignedCameramanName: ${data['assignedCameramanName']}");
+        debugPrint("\n--- Task ${i + 1}: ${doc.id} ---");
+        debugPrint("Title: ${data['title']}");
+        debugPrint("createdBy: ${data['createdBy']}");
+        debugPrint("assignedTo: ${data['assignedTo']}");
+        debugPrint("assignedReporterId: ${data['assignedReporterId']}");
+        debugPrint("assignedCameramanId: ${data['assignedCameramanId']}");
+        debugPrint("assignedReporterName: ${data['assignedReporterName']}");
+        debugPrint("assignedCameramanName: ${data['assignedCameramanName']}");
 
         // Check each condition
         bool createdByUser = data["createdBy"] == userId;
@@ -406,16 +435,16 @@ class TaskController extends GetxController {
         bool assignedAsReporter = data["assignedReporterId"] == userId;
         bool assignedAsCameraman = data["assignedCameramanId"] == userId;
 
-        print("Created by current user: $createdByUser");
-        print("Assigned to current user (general): $assignedToUser");
-        print("Assigned as reporter: $assignedAsReporter");
-        print("Assigned as cameraman: $assignedAsCameraman");
+        debugPrint("Created by current user: $createdByUser");
+        debugPrint("Assigned to current user (general): $assignedToUser");
+        debugPrint("Assigned as reporter: $assignedAsReporter");
+        debugPrint("Assigned as cameraman: $assignedAsCameraman");
 
         if (createdByUser ||
             assignedToUser ||
             assignedAsReporter ||
             assignedAsCameraman) {
-          print("*** THIS TASK SHOULD BE COUNTED ***");
+          debugPrint("*** THIS TASK SHOULD BE COUNTED ***");
         }
       }
 
@@ -426,7 +455,7 @@ class TaskController extends GetxController {
       }).toList();
 
       totalTaskCreated.value = createdTasks.length;
-      print("\nTasks created by user: ${createdTasks.length}");
+              debugPrint("\nTasks created by user: ${createdTasks.length}");
 
       // Count tasks assigned to user
       var assignedTasks = docs.where((doc) {
@@ -437,9 +466,9 @@ class TaskController extends GetxController {
       }).toList();
 
       taskAssigned.value = assignedTasks.length;
-      print("Tasks assigned to user: ${assignedTasks.length}");
+      debugPrint("Tasks assigned to user: ${assignedTasks.length}");
 
-      print("=== END ENHANCED DEBUG ===\n");
+      debugPrint("=== END ENHANCED DEBUG ===\n");
 
       calculateNewTaskCount();
     } catch (e) {

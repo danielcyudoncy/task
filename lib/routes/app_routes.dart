@@ -23,6 +23,8 @@ import 'package:task/views/task_creation_screen.dart';
 import 'package:task/views/task_list_screen.dart';
 import 'package:task/views/onboarding_screen.dart';
 import 'package:task/views/user_list_screen.dart';
+import 'package:task/views/news_screen.dart';
+import 'package:task/views/all_users_chat_screen.dart';
 
 class AppRoutes {
   static final routes = [
@@ -77,8 +79,8 @@ class AppRoutes {
       page: () => const AdminDashboardScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
-      transition: Transition.rightToLeftWithFade,
-      transitionDuration: const Duration(milliseconds: 200),
+      transition: Transition.fade,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
     GetPage(
       name: "/profile",
@@ -178,8 +180,16 @@ class AppRoutes {
       transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
-      name: "/chat",
-      page: () => const ChatScreen(receiverId: '',receiverName: '', receiverAvatar: '', chatId: '', otherUserId: '', otherUserName: '', otherUser: {}, chatBackground: '',),
+      name: "/all-users-chat",
+      page: () => const AllUsersChatScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      binding: GlobalBindings(),
+      transition: Transition.fade,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+    GetPage(
+      name: "/news",
+      page: () => const NewsScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       binding: GlobalBindings(),
       transition: Transition.rightToLeft,

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/utils/constants/app_icons.dart';
+import 'package:task/controllers/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,13 +18,42 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint("🎨 SPLASH: initState called");
     Timer(const Duration(seconds: 3), () async {
-      final prefs = await SharedPreferences.getInstance();
-      final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+      try {
+        debugPrint("Splash screen: Starting navigation logic");
+        final prefs = await SharedPreferences.getInstance();
+        final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+        debugPrint("Splash screen: hasSeenOnboarding = $hasSeenOnboarding");
 
-      if (!hasSeenOnboarding) {
-        Get.offAllNamed('/onboarding');
-      } else {
+        if (!hasSeenOnboarding) {
+          debugPrint("Splash screen: Navigating to onboarding");
+          Get.offAllNamed('/onboarding');
+        } else {
+          // Check if user is already logged in
+          final authController = Get.find<AuthController>();
+          debugPrint("Splash screen: AuthController found, checking login status");
+          
+          // Wait a bit for Firebase auth to initialize
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          debugPrint("Splash screen: currentUser = ${authController.currentUser?.uid}");
+          debugPrint("Splash screen: isLoggedIn = ${authController.isLoggedIn}");
+          debugPrint("Splash screen: Firebase auth currentUser = ${authController.auth.currentUser?.uid}");
+          
+          if (authController.isLoggedIn) {
+            // User is logged in, navigate based on role
+            debugPrint("Splash screen: User is already logged in, navigating based on role");
+            authController.navigateBasedOnRole();
+          } else {
+            // User is not logged in, go to login screen
+            debugPrint("Splash screen: User is not logged in, going to login screen");
+            Get.offAllNamed('/login');
+          }
+        }
+      } catch (e) {
+        debugPrint("Splash screen navigation error: $e");
+        // Fallback to login screen
         Get.offAllNamed('/login');
       }
     });
@@ -31,6 +61,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("🎨 SPLASH: build called");
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
