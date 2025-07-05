@@ -11,6 +11,7 @@ class ProfileCompleteMiddleware extends GetMiddleware {
     // TEMPORARY FIX: Disable all profile checks due to Firebase payment issues
     // TODO: Restore the original checks after fixing Firebase payment integration
 
+    debugPrint("ProfileCompleteMiddleware: Checking route: $route (disabled)");
     return null; // Allow all access for now
 
     /* RESTORE THIS AFTER FIXING FIREBASE PAYMENT:

@@ -7,25 +7,48 @@ import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _auth = Get.find();
 
-  LoginScreen({super.key});
+  @override
+  void initState() {
+    super.initState();
+    debugPrint("LoginScreen: initState called");
+    // Reset loading state to ensure we're not stuck in loading
+    _auth.resetLoadingState();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   void _submit() {
+    debugPrint("LoginScreen: _submit called");
     if (_formKey.currentState!.validate()) {
+      debugPrint("LoginScreen: Form validation passed, calling signIn");
       _auth.signIn(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+    } else {
+      debugPrint("LoginScreen: Form validation failed");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("LoginScreen: build called, isLoading: ${_auth.isLoading.value}");
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;

@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
-import 'package:task/widgets/task_action_utility.dart';
+import './task_action_utility.dart';
 import '../../utils/constants/app_strings.dart';
 import '../../utils/constants/app_styles.dart';
 

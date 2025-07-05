@@ -59,10 +59,15 @@ class AuthController extends GetxController {
   ];
   bool get isLoggedIn => currentUser != null;
   bool _isNavigating = false;
+  bool _isInBuildPhase = false;
 
   @override
   void onInit() {
     super.onInit();
+    debugPrint("AuthController: onInit called");
+    // Ensure loading state is false on initialization
+    isLoading(false);
+    
     _auth.authStateChanges().listen((User? userValue) {
       user.value = userValue;
       if (userValue == null) {
@@ -79,7 +84,8 @@ class AuthController extends GetxController {
   void onReady() {
     firebaseUser.bindStream(_auth.authStateChanges());
     user.bindStream(_auth.authStateChanges());
-    ever(userRole, (_) => _handleRoleChange());
+    // Temporarily disable automatic role-based navigation to prevent build phase issues
+    // debounce(userRole, (_) => _handleRoleChange(), time: const Duration(milliseconds: 100));
     debounce(lastActivity, (_) => _checkInactivity(),
         time: const Duration(minutes: 30));
   }
@@ -137,7 +143,9 @@ class AuthController extends GetxController {
         if (!isProfileComplete.value) {
           Get.offAllNamed("/profile-update");
         } else {
-          navigateBasedOnRole();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            navigateBasedOnRole();
+          });
         }
       } else {
         Get.offAllNamed("/login");
@@ -171,19 +179,26 @@ class AuthController extends GetxController {
 
   // Add retry logic in loadUserData()
   Future<void> loadUserData() async {
+    debugPrint("AuthController: Starting loadUserData");
     const maxRetries = 3;
     int attempt = 0;
 
     while (attempt < maxRetries) {
       try {
-        if (_auth.currentUser == null) return;
+        debugPrint("AuthController: loadUserData attempt ${attempt + 1}");
+        if (_auth.currentUser == null) {
+          debugPrint("AuthController: No current user, returning");
+          return;
+        }
 
+        debugPrint("AuthController: Fetching user document for ${_auth.currentUser!.uid}");
         final userDoc = await _firestore
             .collection("users")
             .doc(_auth.currentUser!.uid)
             .get();
 
         if (userDoc.exists) {
+          debugPrint("AuthController: User document exists, loading data");
           final data = userDoc.data()!;
           fullName.value = data['fullName'] ?? '';
           profilePic.value = data['photoUrl'] ?? '';
@@ -191,14 +206,22 @@ class AuthController extends GetxController {
           isProfileComplete.value = data['profileComplete'] ?? false;
 
           userData.assignAll(data);
+          debugPrint("AuthController: User data loaded successfully");
           return; // Success
+        } else {
+          debugPrint("AuthController: User document does not exist for ${_auth.currentUser!.uid}");
+          resetUserData();
+          throw Exception("User document not found");
         }
       } catch (e) {
+        debugPrint("AuthController: loadUserData error on attempt ${attempt + 1}: $e");
         attempt++;
         if (attempt == maxRetries) {
+          debugPrint("AuthController: loadUserData failed after $maxRetries attempts, resetting user data");
           resetUserData();
           rethrow;
         }
+        debugPrint("AuthController: Retrying loadUserData in 1 second");
         await Future.delayed(const Duration(seconds: 1));
       }
     }
@@ -229,7 +252,9 @@ class AuthController extends GetxController {
 
       // Navigate based on role only after confirming update
       if (isProfileComplete.value) {
-        navigateBasedOnRole();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigateBasedOnRole();
+        });
       } else {
         Get.snackbar("Error", "Profile completion failed");
       }
@@ -242,38 +267,44 @@ class AuthController extends GetxController {
   // In AuthController, modify navigateBasedOnRole and _handleRoleChange
   // In AuthController
   void navigateBasedOnRole() {
-    if (_isNavigating) return;
+    if (_isNavigating || _isInBuildPhase) {
+      debugPrint("Skipping navigation - already navigating or in build phase");
+      return;
+    }
+    
     _isNavigating = true;
 
-    final route = Get.currentRoute;
     final role = userRole.value;
+    debugPrint("Navigating based on role: $role");
 
-    print("Navigating based on role: $role from $route");
-
-    if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
-      if (route != "/admin-dashboard") {
+    try {
+      if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
         Get.offAllNamed("/admin-dashboard");
-      }
-    } else if (["Reporter", "Cameraman"].contains(role)) {
-      if (route != "/home") {
+      } else if (["Reporter", "Cameraman"].contains(role)) {
         Get.offAllNamed("/home");
+      } else {
+        Get.offAllNamed("/login");
       }
-    } else {
-      Get.offAllNamed("/login");
+    } catch (e) {
+      debugPrint("Navigation error: $e");
+    } finally {
+      _isNavigating = false;
     }
-
-    _isNavigating = false;
   }
 
   void _handleRoleChange() {
-    if (userRole.value.isEmpty) {
-      if (Get.currentRoute != "/login") {
-        Get.offAllNamed("/login");
-      }
-      return;
-    }
+    // Temporarily disabled to prevent build phase issues
+    // This will be re-enabled once we have a safer navigation mechanism
+    debugPrint("Role change detected but navigation disabled for safety");
+  }
 
-    navigateBasedOnRole();
+  void setBuildPhase(bool inBuildPhase) {
+    _isInBuildPhase = inBuildPhase;
+  }
+
+  void resetLoadingState() {
+    debugPrint("AuthController: Resetting loading state");
+    isLoading(false);
   }
  
 
@@ -501,6 +532,7 @@ class AuthController extends GetxController {
 
     Future<void> signIn(String email, String password) async {
     try {
+      debugPrint("AuthController: Starting sign in process");
       isLoading(true);
       final UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
@@ -509,19 +541,31 @@ class AuthController extends GetxController {
 
       if (credential.user == null) throw Exception("No user returned");
 
+      debugPrint("AuthController: User signed in successfully, loading user data");
       await loadUserData();
       lastActivity.value = DateTime.now();
       await _handlePresence(true); // Set presence after successful login
 
+      debugPrint("AuthController: User data loaded, profile complete: ${isProfileComplete.value}");
       if (!isProfileComplete.value) {
+        debugPrint("AuthController: Navigating to profile update");
         Get.offAllNamed("/profile-update");
       } else {
-        navigateBasedOnRole();
+        debugPrint("AuthController: Navigating based on role");
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigateBasedOnRole();
+        });
       }
     } on FirebaseAuthException catch (e) {
+      debugPrint("AuthController: Firebase auth error: ${e.message}");
       Get.snackbar("Error", _handleAuthError(e));
       rethrow;
+    } catch (e) {
+      debugPrint("AuthController: General error during sign in: $e");
+      Get.snackbar("Error", "Sign in failed: $e");
+      rethrow;
     } finally {
+      debugPrint("AuthController: Setting isLoading to false");
       isLoading(false);
     }
   }

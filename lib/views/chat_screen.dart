@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:task/views/wallpaper_screen.dart';
-import 'package:task/widgets/app_drawer.dart';
+import 'package:get/get.dart';
 // Import the UserNavBar
 
 // Helper function
@@ -67,6 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isOtherUserTyping = false;
   Timer? _typingTimer;
   StreamSubscription? _typingSubscription;
+  bool _shouldScrollToBottom = true;
 
   @override
   void initState() {
@@ -92,13 +93,22 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _messageController.addListener(_onTyping);
+    _scrollController.addListener(_onScroll);
 
     markMessagesAsSeen();
+    
+    // Schedule scroll to bottom after the first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _scrollToBottom();
+      }
+    });
   }
 
   @override
   void dispose() {
     _messageController.removeListener(_onTyping);
+    _scrollController.removeListener(_onScroll);
     _typingTimer?.cancel();
     _typingSubscription?.cancel();
     _typingStatusRef.child(currentUserId).set(false);
@@ -115,6 +125,16 @@ class _ChatScreenState extends State<ChatScreen> {
     _typingTimer = Timer(const Duration(milliseconds: 1500), () {
       _typingStatusRef.child(currentUserId).set(false);
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final position = _scrollController.position;
+      // If user scrolls up, disable auto-scroll
+      if (position.pixels > position.minScrollExtent + 100) {
+        _shouldScrollToBottom = false;
+      }
+    }
   }
 
   // void _navigateToHome() {
@@ -215,6 +235,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await batch.commit();
     }
     _cancelReplyOrEdit();
+    _shouldScrollToBottom = true;
   }
 
   Future<void> markMessagesAsSeen() async {
@@ -273,6 +294,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(_scrollController.position.minScrollExtent,
           duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      _shouldScrollToBottom = false;
     }
   }
 
@@ -286,7 +308,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const AppDrawer(),
       backgroundColor: isDarkMode ? colorScheme.surface : colorScheme.primary,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -298,6 +319,12 @@ class _ChatScreenState extends State<ChatScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.home, color: isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary),
+            onPressed: () {
+              Get.offNamed('/admin-dashboard');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {
@@ -348,6 +375,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       .orderBy('timestamp', descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
+                    // Scroll to bottom when new messages arrive
+                    if (snapshot.hasData && snapshot.data!.docs.isNotEmpty && _shouldScrollToBottom) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          _scrollToBottom();
+                        }
+                      });
+                    }
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(
                           child: CircularProgressIndicator(
@@ -361,8 +396,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ? colorScheme.onBackground
                                       : colorScheme.onPrimary)));
                     }
-                    WidgetsBinding.instance
-                        .addPostFrameCallback((_) => _scrollToBottom());
                     return ListView.builder(
                       reverse: true,
                       controller: _scrollController,
