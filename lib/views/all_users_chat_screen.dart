@@ -140,15 +140,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
           },
         ),
         title: Text('Chat With Users', style: theme.appBarTheme.titleTextStyle),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.home, color: theme.colorScheme.onSurface),
-            onPressed: () {
-              Get.find<SettingsController>().triggerFeedback();
-              Get.offNamed('/admin-dashboard');
-            },
-          ),
-        ],
+        // Removed home button to prevent navigation conflicts
+        // Users can use the back button to return to previous screen
       ),
       body: Column(
         children: [

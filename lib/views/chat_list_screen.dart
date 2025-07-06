@@ -175,7 +175,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   final userData =
                       userSnapshot.data!.data() as Map<String, dynamic>;
                   final userName = userData['fullName'] as String? ?? 'Unknown';
-                  final userAvatar = userData['profilePic'] as String? ?? '';
+                  final userAvatar = userData['photoUrl'] as String? ?? '';
                   final isOnline = userData['isOnline'] as bool? ?? false;
                   final lastSeenTimestamp =
                       (userData['lastSeen'] as Timestamp?)?.toDate();
@@ -443,8 +443,8 @@ class ChatSearchDelegate extends SearchDelegate<String> {
           itemBuilder: (context, index) {
             final doc = suggestions[index];
             final data = doc.data() as Map<String, dynamic>;
-            final name = data['name'] as String? ?? 'Unknown';
-            final avatar = data['profilePic'] as String? ?? '';
+            final name = data['fullName'] as String? ?? 'Unknown';
+            final avatar = data['photoUrl'] as String? ?? '';
             final uid = doc.id;
             return ListTile(
               leading: CircleAvatar(

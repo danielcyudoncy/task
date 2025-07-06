@@ -7,7 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+// import 'package:supabase_flutter/supabase_flutter.dart';  // Removed - using Firebase Storage
 
 // --- Ensure all your controllers and services are imported ---
 import 'package:task/controllers/admin_controller.dart';
@@ -24,7 +24,11 @@ import 'package:task/myApp.dart';
 import 'package:task/service/mock_user_deletion_service.dart';
 import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
-import 'package:task/service/supabase_storage_service.dart';
+import 'package:task/service/firebase_storage_service.dart';
+
+// Global flag to track bootstrap state
+bool _isBootstrapComplete = false;
+bool get isBootstrapComplete => _isBootstrapComplete;
 
 Future<void> bootstrapApp() async {
   debugPrint("🚀 BOOTSTRAP: Starting app initialization");
@@ -45,18 +49,7 @@ Future<void> bootstrapApp() async {
     await _verifyFirebaseServices();
     debugPrint("🚀 BOOTSTRAP: Firebase services verified");
 
-    debugPrint("🚀 BOOTSTRAP: Initializing Supabase");
-    final supabaseUrl = dotenv.env['SUPABASE_URL'];
-    final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
-    if (supabaseUrl == null || supabaseAnonKey == null) {
-      throw Exception('Missing SUPABASE_URL or SUPABASE_ANON_KEY in .env file');
-    }
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-      debug: kDebugMode,
-    );
-    debugPrint("🚀 BOOTSTRAP: Supabase initialized");
+    debugPrint("🚀 BOOTSTRAP: Skipping Supabase initialization - using Firebase Storage");
 
     // Step 2: Initialize services and controllers with no dependencies
     debugPrint("🚀 BOOTSTRAP: Initializing audio player");
@@ -71,8 +64,8 @@ Future<void> bootstrapApp() async {
     // --- THIS IS THE CORRECTED INITIALIZATION ORDER ---
 
     // Step 3: Put all services that other controllers depend on FIRST.
-    debugPrint("🚀 BOOTSTRAP: Putting SupabaseStorageService");
-    Get.put(SupabaseStorageService(), permanent: true);
+    debugPrint("🚀 BOOTSTRAP: Putting FirebaseStorageService");
+    Get.put(FirebaseStorageService(), permanent: true);
     debugPrint("🚀 BOOTSTRAP: Putting MockUserDeletionService");
     Get.put(MockUserDeletionService(),
         permanent: true); // Assuming this is needed by others
@@ -105,23 +98,23 @@ Future<void> bootstrapApp() async {
     Get.put(NotificationController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: All controllers put successfully');
 
-    // Step 6: Perform post-initialization actions
+    // Step 6: Perform post-initialization actions (simplified to prevent issues)
     debugPrint('🚀 BOOTSTRAP: Performing post-initialization actions...');
-    final authController = Get.find<AuthController>();
-    debugPrint('🚀 BOOTSTRAP: AuthController found, checking login status');
-    if (authController.isLoggedIn) {
-      debugPrint('🚀 BOOTSTRAP: User is logged in, setting presence');
-      await Get.find<PresenceService>().setOnline();
-      await Get.find<UserController>().updateUserPresence(true);
-    } else {
-      debugPrint('🚀 BOOTSTRAP: User is not logged in');
-    }
+    debugPrint('🚀 BOOTSTRAP: Skipping complex post-initialization to prevent issues');
 
     debugPrint('🚀 BOOTSTRAP: Validating mock usage');
     _validateMockUsage();
 
     // Step 7: Launch the app
     debugPrint('🚀 BOOTSTRAP: Launching app...');
+    
+    // Add a delay to ensure all initialization is complete
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // Mark bootstrap as complete
+    _isBootstrapComplete = true;
+    debugPrint('🚀 BOOTSTRAP: Bootstrap marked as complete');
+    
     runApp(const MyApp());
     debugPrint('🚀 BOOTSTRAP: App launched successfully');
   } catch (e, stackTrace) {

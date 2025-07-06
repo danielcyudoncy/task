@@ -6,8 +6,11 @@ import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
+import '../utils/snackbar_utils.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -17,6 +20,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _auth = Get.find();
+
+  // Safe snackbar method
+  void _safeSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
 
   @override
   void initState() {
@@ -184,79 +192,140 @@ class _LoginScreenState extends State<LoginScreen> {
                                 const SizedBox(height: 16),
 
                                 // Password Field
-                                Obx(() => TextFormField(
-      controller: _passwordController,
-      obscureText: _auth.isLoginPasswordHidden.value,
-      style: textTheme.bodyMedium,
-      decoration: InputDecoration(
-        labelText: "Password",
-        labelStyle: textTheme.bodyMedium,
-        hintStyle: textTheme.bodyMedium,
-        prefixIcon: Icon(Icons.lock,
-            color: isDark ? Colors.white70 : Colors.black54),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _auth.isLoginPasswordHidden.value
-                ? Icons.visibility_off
-                : Icons.visibility,
-            color: isDark ? Colors.white70 : Colors.black54,
-          ),
-          onPressed: () {
-            Get.find<SettingsController>().triggerFeedback();
-            _auth.isLoginPasswordHidden.value =
-                !_auth.isLoginPasswordHidden.value;
-          },
-        ),
-        filled: true,
-        fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return "Please enter your password";
-        }
-        if (value.length < 6) {
-          return "Password must be at least 6 characters";
-        }
-        return null;
-      },
-    )),
-
+                                Obx(() {
+                                  // Add safety check to ensure controller is registered
+                                  if (!Get.isRegistered<AuthController>()) {
+                                    return TextFormField(
+                                      controller: _passwordController,
+                                      obscureText: true,
+                                      style: textTheme.bodyMedium,
+                                      decoration: InputDecoration(
+                                        labelText: "Password",
+                                        labelStyle: textTheme.bodyMedium,
+                                        hintStyle: textTheme.bodyMedium,
+                                        prefixIcon: Icon(Icons.lock,
+                                            color: isDark ? Colors.white70 : Colors.black54),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            Icons.visibility_off,
+                                            color: isDark ? Colors.white70 : Colors.black54,
+                                          ),
+                                          onPressed: () {},
+                                        ),
+                                        filled: true,
+                                        fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return "Please enter your password";
+                                        }
+                                        if (value.length < 6) {
+                                          return "Password must be at least 6 characters";
+                                        }
+                                        return null;
+                                      },
+                                    );
+                                  }
+                                  
+                                  return TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: _auth.isLoginPasswordHidden.value,
+                                    style: textTheme.bodyMedium,
+                                    decoration: InputDecoration(
+                                      labelText: "Password",
+                                      labelStyle: textTheme.bodyMedium,
+                                      hintStyle: textTheme.bodyMedium,
+                                      prefixIcon: Icon(Icons.lock,
+                                          color: isDark ? Colors.white70 : Colors.black54),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _auth.isLoginPasswordHidden.value
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: isDark ? Colors.white70 : Colors.black54,
+                                        ),
+                                        onPressed: () {
+                                          Get.find<SettingsController>().triggerFeedback();
+                                          _auth.isLoginPasswordHidden.value =
+                                              !_auth.isLoginPasswordHidden.value;
+                                        },
+                                      ),
+                                      filled: true,
+                                      fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return "Please enter your password";
+                                      }
+                                      if (value.length < 6) {
+                                        return "Password must be at least 6 characters";
+                                      }
+                                      return null;
+                                    },
+                                  );
+                                }),
 
                                 const SizedBox(height: 20),
 
                                 // Sign In Button
-                                Obx(() => _auth.isLoading.value
-                                    ? const Center(
-                                        child: CircularProgressIndicator())
-                                    : ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          foregroundColor:
-                                              colorScheme.onPrimary,
-                                          backgroundColor: colorScheme.primary,
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                Obx(() {
+                                  // Add safety check to ensure controller is registered
+                                  if (!Get.isRegistered<AuthController>()) {
+                                    return ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        foregroundColor: colorScheme.onPrimary,
+                                        backgroundColor: colorScheme.primary,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        Get.find<SettingsController>().triggerFeedback();
+                                        _submit();
+                                      },
+                                      child: Text(
+                                        "Sign In",
+                                        style: textTheme.bodyLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Raleway',
+                                            color: colorScheme.onPrimary),
+                                      ),
+                                    );
+                                  }
+                                  
+                                  return _auth.isLoading.value
+                                      ? const Center(child: CircularProgressIndicator())
+                                      : ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            foregroundColor: colorScheme.onPrimary,
+                                            backgroundColor: colorScheme.primary,
+                                            padding: const EdgeInsets.symmetric(vertical: 16),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
                                           ),
-                                        ),
-                                        onPressed: () {
-                                          Get.find<SettingsController>()
-                                              .triggerFeedback();
-                                          _submit();
-                                        },
-                                        child: Text(
-                                          "Sign In",
-                                          style: textTheme.bodyLarge?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Raleway',
-                                              color: colorScheme.onPrimary),
-                                        ),
-                                      )),
+                                          onPressed: () {
+                                            Get.find<SettingsController>().triggerFeedback();
+                                            _submit();
+                                          },
+                                          child: Text(
+                                            "Sign In",
+                                            style: textTheme.bodyLarge?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'Raleway',
+                                                color: colorScheme.onPrimary),
+                                          ),
+                                        );
+                                }),
 
                                 const SizedBox(height: 20),
 
@@ -292,14 +361,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       onPressed: () {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        Get.snackbar("Coming Soon",
-                                            "Google sign-up not yet implemented.",
-                                            backgroundColor: Theme.of(context)
-                                              .colorScheme
-                                              .surface,
-                                          colorText: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface,);
+                                        _safeSnackbar("Coming Soon",
+                                            "Google sign-up not yet implemented.");
                                       },
                                     ),
                                     const SizedBox(width: 20),
@@ -309,15 +372,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       onPressed: () {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        Get.snackbar(
+                                        _safeSnackbar(
                                           "Coming Soon",
                                           "Apple sign-up not yet implemented.",
-                                          backgroundColor: Theme.of(context)
-                                              .colorScheme
-                                              .surface,
-                                          colorText: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface,
                                         );
                                       },
                                     ),

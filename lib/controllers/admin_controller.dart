@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/models/task_model.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -45,6 +46,11 @@ class AdminController extends GetxController {
 
   // Add a statistics RxMap for dashboard compatibility
   final RxMap<String, dynamic> statistics = <String, dynamic>{}.obs;
+
+  // Safe snackbar method
+  void _safeSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
 
   @override
   void onInit() {
@@ -111,7 +117,7 @@ class AdminController extends GetxController {
       statistics['completed'] = completedTasks.value;
       statistics['pending'] = pendingTasks.value;
     } catch (e) {
-      Get.snackbar("Error", "Failed to load dashboard data: $e");
+      _safeSnackbar("Error", "Failed to load dashboard data: $e");
     }
     isLoading.value = false;
   }
@@ -128,7 +134,7 @@ class AdminController extends GetxController {
         Get.offAllNamed('/admin-dashboard');
       }
     } catch (e) {
-      Get.snackbar("Admin Error", "Failed to initialize admin data");
+      _safeSnackbar("Admin Error", "Failed to initialize admin data");
       await logout();
     } finally {
       isLoading(false);
@@ -250,10 +256,10 @@ class AdminController extends GetxController {
       statistics['completed'] = completedTasks.value;
       statistics['pending'] = pendingTasks.value;
       statistics['overdue'] = overdueTasks.value;
-    } on TimeoutException {
-      Get.snackbar('Error', 'Fetching statistics timed out');
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
+          } on TimeoutException {
+        _safeSnackbar('Error', 'Fetching statistics timed out');
+      } catch (e) {
+        _safeSnackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
     } finally {
       isStatsLoading(false);
     }
@@ -326,7 +332,7 @@ class AdminController extends GetxController {
       adminPrivileges.value = privileges;
       adminCreationDate.value = DateFormat('MMMM d, y').format(DateTime.now());
     } catch (e) {
-      Get.snackbar("Error", "Failed to create admin profile: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to create admin profile: ${e.toString()}");
       rethrow;
     } finally {
       isProfileLoading(false);
@@ -357,7 +363,7 @@ class AdminController extends GetxController {
         adminCreationDate.value = DateFormat('MMMM d, y').format(date);
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch admin profile: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to fetch admin profile: ${e.toString()}");
       rethrow;
     } finally {
       isProfileLoading(false);
@@ -371,7 +377,7 @@ class AdminController extends GetxController {
       clearAdminData();
       Get.offAllNamed('/login');
     } catch (e) {
-      Get.snackbar("Error", "Logout failed: ${e.toString()}");
+      _safeSnackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -421,10 +427,10 @@ class AdminController extends GetxController {
         }
       });
 
-      Get.snackbar("Success", "User and their tasks deleted successfully");
+      _safeSnackbar("Success", "User and their tasks deleted successfully");
       fetchStatistics();
     } catch (e) {
-      Get.snackbar("Error", "Delete failed: ${e.toString()}");
+      _safeSnackbar("Error", "Delete failed: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -441,7 +447,7 @@ class AdminController extends GetxController {
       completedTasks.value =
           tasks.where((task) => task.status == 'Completed').length;
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch tasks: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to fetch tasks: ${e.toString()}");
     }
   }
 
@@ -479,7 +485,7 @@ class AdminController extends GetxController {
         'read': false,
       });
     } catch (e) {
-      Get.snackbar("Error", "Failed to assign task or notify user: $e");
+      _safeSnackbar("Error", "Failed to assign task or notify user: $e");
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:task/models/chat_model.dart';
 import 'package:task/service/user_deletion_service.dart';
 import '../controllers/auth_controller.dart';
+import '../utils/snackbar_utils.dart';
 
 
 class UserController extends GetxController {
@@ -25,6 +26,11 @@ class UserController extends GetxController {
       .toList();
 
   UserController(this.userDeletionService);
+
+  // Safe snackbar method
+  void _safeSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
 
   @override
   void onInit() {
@@ -110,9 +116,9 @@ class UserController extends GetxController {
     try {
       await userDeletionService.deleteUserByAdmin(uid);
       allUsers.removeWhere((user) => user["id"] == uid);
-      Get.snackbar("Success", "User deleted!");
+      _safeSnackbar("Success", "User deleted!");
     } catch (e) {
-      Get.snackbar("Error", "Failed to delete user: $e");
+      _safeSnackbar("Error", "Failed to delete user: $e");
     } finally {
       isDeleting.value = false;
     }

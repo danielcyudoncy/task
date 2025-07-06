@@ -8,6 +8,7 @@ import 'dart:convert'; // <-- make sure to import this!
 import '../models/task_model.dart';
 import '../controllers/auth_controller.dart';
 import '../service/firebase_service.dart';
+import '../utils/snackbar_utils.dart';
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
@@ -24,6 +25,11 @@ class TaskController extends GetxController {
 
   final Map<String, String> userNameCache = {};
   final Map<String, String> taskTitleCache = {};
+
+  // Safe snackbar method
+  void _safeSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
 
   // Pagination, filter, and search
   DocumentSnapshot? lastDocument;
@@ -364,7 +370,7 @@ class TaskController extends GetxController {
       }
 
       // Use a delayed call to avoid setState after dispose
-      Future.delayed(Duration(milliseconds: 100), () {
+      Future.delayed(const Duration(milliseconds: 100), () {
         calculateNewTaskCount();
         debugPrint("🔄 Task count recalculated");
       });
@@ -472,7 +478,7 @@ class TaskController extends GetxController {
 
       calculateNewTaskCount();
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch task counts: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to fetch task counts: ${e.toString()}");
       debugPrint("Error in fetchTaskCounts: $e");
     }
   }
@@ -536,7 +542,7 @@ class TaskController extends GetxController {
         saveCache();
       });
     } catch (e) {
-      Get.snackbar("Error", "Failed to fetch tasks: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to fetch tasks: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -556,6 +562,8 @@ class TaskController extends GetxController {
         "title": title,
         "description": description,
         "createdBy": userId,
+        "creatorName": authController.fullName.value,
+        "creatorAvatar": authController.profilePic.value,
         "assignedReporterId": null,
         "assignedReporterName": null,
         "assignedCameramanId": null,
@@ -566,10 +574,10 @@ class TaskController extends GetxController {
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
       });
-      Get.snackbar("Success", "Task created successfully");
+      _safeSnackbar("Success", "Task created successfully");
       calculateNewTaskCount(); // Calculate new task count after creating task
     } catch (e) {
-      Get.snackbar("Error", "Failed to create task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to create task: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -594,10 +602,10 @@ class TaskController extends GetxController {
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
       }
-      Get.snackbar("Success", "Task updated successfully");
+      _safeSnackbar("Success", "Task updated successfully");
       calculateNewTaskCount(); // Calculate new task count after updating task
     } catch (e) {
-      Get.snackbar("Error", "Failed to update task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to update task: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -609,10 +617,10 @@ class TaskController extends GetxController {
       await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
       tasks.removeWhere((task) => task.taskId == taskId);
       tasks.refresh();
-      Get.snackbar("Success", "Task deleted successfully");
+      _safeSnackbar("Success", "Task deleted successfully");
       calculateNewTaskCount(); // Calculate new task count after deleting task
     } catch (e) {
-      Get.snackbar("Error", "Failed to delete task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to delete task: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -633,10 +641,10 @@ class TaskController extends GetxController {
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
       }
-      Get.snackbar("Success", "Task status updated");
+      _safeSnackbar("Success", "Task status updated");
       calculateNewTaskCount(); // Calculate new task count after updating task status
     } catch (e) {
-      Get.snackbar("Error", "Failed to update task status: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to update task status: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -647,9 +655,9 @@ class TaskController extends GetxController {
       isLoading(true);
       await _firebaseService.assignTask(
           taskId, reporterId, "assignedReporterId");
-      Get.snackbar("Success", "Task assigned to Reporter successfully");
+      _safeSnackbar("Success", "Task assigned to Reporter successfully");
     } catch (e) {
-      Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to assign task: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -660,9 +668,9 @@ class TaskController extends GetxController {
       isLoading(true);
       await _firebaseService.assignTask(
           taskId, cameramanId, "assignedCameramanId");
-      Get.snackbar("Success", "Task assigned to Cameraman successfully");
+      _safeSnackbar("Success", "Task assigned to Cameraman successfully");
     } catch (e) {
-      Get.snackbar("Error", "Failed to assign task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to assign task: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -854,7 +862,7 @@ class TaskController extends GetxController {
         tasks.refresh();
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to add comment: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to add comment: ${e.toString()}");
     }
   }
 }

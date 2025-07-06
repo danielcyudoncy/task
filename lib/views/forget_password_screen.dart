@@ -143,32 +143,62 @@ class ForgotPasswordScreen extends StatelessWidget {
                           const SizedBox(height: 30),
 
                           // Save Changes Button
-                          Obx(() => _auth.isLoading.value
-                              ? const Center(child: CircularProgressIndicator())
-                              : SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: colorScheme.primary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Get.find<SettingsController>().triggerFeedback();
-                                      _submit();
-                                    },
-                                    child:  Text(
-                                      'Save Changes',
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                          Obx(() {
+                            // Add safety check to ensure controller is registered
+                            if (!Get.isRegistered<AuthController>()) {
+                              return SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: colorScheme.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                )),
+                                  onPressed: () {
+                                    Get.find<SettingsController>().triggerFeedback();
+                                    _submit();
+                                  },
+                                  child: Text(
+                                    'Save Changes',
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            
+                            return _auth.isLoading.value
+                                ? const Center(child: CircularProgressIndicator())
+                                : SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: colorScheme.primary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        Get.find<SettingsController>().triggerFeedback();
+                                        _submit();
+                                      },
+                                      child: Text(
+                                        'Save Changes',
+                                        style: TextStyle(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                          }),
                         ],
                       ),
                     ),

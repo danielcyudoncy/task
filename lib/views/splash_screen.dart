@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/core/bootstrap.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,6 +23,21 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 3), () async {
       try {
         debugPrint("Splash screen: Starting navigation logic");
+        
+        // Wait for bootstrap to complete
+        while (!isBootstrapComplete) {
+          debugPrint("Splash screen: Waiting for bootstrap to complete...");
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+        
+        // Add a small delay to ensure all controllers are ready
+        await Future.delayed(const Duration(milliseconds: 1000));
+        
+        // Mark app as ready for snackbars before navigation
+        if (Get.isRegistered<AuthController>()) {
+          Get.find<AuthController>().markAppAsReady();
+        }
+        
         final prefs = await SharedPreferences.getInstance();
         final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
         debugPrint("Splash screen: hasSeenOnboarding = $hasSeenOnboarding");
@@ -31,6 +47,12 @@ class _SplashScreenState extends State<SplashScreen> {
           Get.offAllNamed('/onboarding');
         } else {
           // Check if user is already logged in
+          if (!Get.isRegistered<AuthController>()) {
+            debugPrint("Splash screen: AuthController not registered, going to login");
+            Get.offAllNamed('/login');
+            return;
+          }
+          
           final authController = Get.find<AuthController>();
           debugPrint("Splash screen: AuthController found, checking login status");
           

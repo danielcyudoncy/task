@@ -24,24 +24,49 @@ class StatsSection extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Obx(() => _statCard(
+            child: Obx(() {
+              if (!Get.isRegistered<TaskController>()) {
+                return _statCard(
                   icon: Icons.create,
                   label: AppStrings.taskCreated,
-                  value: taskController.totalTaskCreated.value.toString(),
+                  value: "0",
                   color: isDark ? Colors.white : AppColors.secondaryColor,
-                )),
+                );
+              }
+              
+              return _statCard(
+                icon: Icons.create,
+                label: AppStrings.taskCreated,
+                value: taskController.totalTaskCreated.value.toString(),
+                color: isDark ? Colors.white : AppColors.secondaryColor,
+              );
+            }),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Obx(() => _statCard(
+            child: Obx(() {
+              if (!Get.isRegistered<TaskController>()) {
+                return _statCard(
                   iconWidget: _buildNewsFeedIcon(),
                   icon: Icons.rss_feed,
                   label: "News Feed",
-                  value: "12", // You can replace this with actual news count
+                  value: "0",
                   color: isDark
                       ? const Color(0xFF9FA8DA)
                       : AppColors.secondaryColor,
-                )),
+                );
+              }
+              
+              return _statCard(
+                iconWidget: _buildNewsFeedIcon(),
+                icon: Icons.rss_feed,
+                label: "News Feed",
+                value: "12", // You can replace this with actual news count
+                color: isDark
+                    ? const Color(0xFF9FA8DA)
+                    : AppColors.secondaryColor,
+              );
+            }),
           ),
         ],
       ),

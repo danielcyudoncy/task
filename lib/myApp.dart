@@ -8,6 +8,7 @@ import 'package:task/service/presence_service.dart';
 import 'package:task/utils/themes/app_theme.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -26,7 +27,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     debugPrint("📱 MYAPP: initState called");
     WidgetsBinding.instance.addObserver(this);
     debugPrint("📱 MYAPP: WidgetsBinding observer added");
-    // REMOVED: _initializePresence() call is no longer needed here.
+    
+    // Mark the app as ready for snackbars immediately
+    SnackbarUtils.markAppAsReady();
+    if (Get.isRegistered<AuthController>()) {
+      Get.find<AuthController>().markAppAsReady();
+    }
+    debugPrint("📱 MYAPP: App marked as ready for snackbars");
+    
+    // Also mark as ready after first frame for extra safety
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SnackbarUtils.markAppAsReady();
+      if (Get.isRegistered<AuthController>()) {
+        Get.find<AuthController>().markAppAsReady();
+      }
+      debugPrint("📱 MYAPP: App marked as ready for snackbars (post-frame)");
+    });
   }
 
   @override
@@ -76,15 +92,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       builder: (context, child) {
         debugPrint("📱 MYAPP: ScreenUtilInit builder called");
         return Obx(() {
-          debugPrint("📱 MYAPP: Obx callback called");
+          final currentThemeMode = themeController.isDarkMode.value
+              ? ThemeMode.dark
+              : ThemeMode.light;
+          debugPrint("📱 MYAPP: Current theme mode: ${currentThemeMode.name}");
+          
           return GetMaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Assignment Logging App',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: themeController.isDarkMode.value
-                ? ThemeMode.dark
-                : ThemeMode.light,
+            themeMode: currentThemeMode,
             // REMOVED: initialBinding and onInit are no longer needed.
             initialRoute: "/",
             getPages: AppRoutes.routes,

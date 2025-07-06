@@ -1,6 +1,7 @@
 // routes/profile_complete_middleware.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/auth_controller.dart';
 
 class ProfileCompleteMiddleware extends GetMiddleware {
   @override
@@ -8,14 +9,10 @@ class ProfileCompleteMiddleware extends GetMiddleware {
 
   @override
   RouteSettings? redirect(String? route) {
-    // TEMPORARY FIX: Disable all profile checks due to Firebase payment issues
-    // TODO: Restore the original checks after fixing Firebase payment integration
-
-    debugPrint("ProfileCompleteMiddleware: Checking route: $route (disabled)");
-    return null; // Allow all access for now
-
-    /* RESTORE THIS AFTER FIXING FIREBASE PAYMENT:
     final auth = Get.find<AuthController>();
+
+    debugPrint("ProfileCompleteMiddleware: Checking route: $route");
+    debugPrint("ProfileCompleteMiddleware: isProfileComplete=${auth.isProfileComplete.value}, userRole=${auth.userRole.value}, currentRoute=${Get.currentRoute}");
 
     // Skip check for these routes
     final allowedRoutes = [
@@ -23,23 +20,34 @@ class ProfileCompleteMiddleware extends GetMiddleware {
       '/login',
       '/signup',
       '/forgot-password',
-      '/onboarding'
+      '/onboarding',
+      '/'
     ];
 
     if (allowedRoutes.contains(route)) {
+      debugPrint("ProfileCompleteMiddleware: Allowing access to allowed route: $route");
       return null;
     }
 
-    if (auth.auth.currentUser != null && auth.userRole.value.isEmpty) {
-      auth.loadUserData();
-      return null; // Don't redirect while loading
+    // If user is not logged in, allow access (AuthMiddleware will handle this)
+    if (auth.auth.currentUser == null) {
+      debugPrint("ProfileCompleteMiddleware: No user logged in, allowing access");
+      return null;
     }
 
-    if (auth.auth.currentUser != null && !auth.isProfileComplete.value) {
+    // If user role is not loaded yet, allow access temporarily
+    if (auth.userRole.value.isEmpty) {
+      debugPrint("ProfileCompleteMiddleware: User role not loaded, allowing access");
+      return null;
+    }
+
+    // If profile is not complete, redirect to profile update
+    if (!auth.isProfileComplete.value) {
+      debugPrint("ProfileCompleteMiddleware: Profile not complete, redirecting to profile-update");
       return const RouteSettings(name: '/profile-update');
     }
 
+    debugPrint("ProfileCompleteMiddleware: Profile complete, allowing access");
     return null;
-    */
   }
 }
