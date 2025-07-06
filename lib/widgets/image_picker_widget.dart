@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_colors.dart';
+import '../utils/snackbar_utils.dart';
 
 class ImagePickerWidget extends StatelessWidget {
   final AuthController controller;
@@ -77,12 +78,12 @@ class ImagePickerWidget extends StatelessWidget {
         if (await imageFile.exists()) {
           await controller.uploadProfilePicture(imageFile);
         } else {
-          Get.snackbar("Error", "Selected image doesn't exist");
+          SnackbarUtils.showSnackbar("Error", "Selected image doesn't exist");
         }
       }
     } catch (e) {
       debugPrint("Image selection error: $e");
-      Get.snackbar("Error", "Failed to select image: ${e.toString()}");
+      SnackbarUtils.showSnackbar("Error", "Failed to select image: ${e.toString()}");
     }
   }
 

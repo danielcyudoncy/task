@@ -29,6 +29,11 @@ class TaskAssignmentScreen extends StatelessWidget {
       ),
       backgroundColor: scaffoldBg,
       body: Obx(() {
+        // Add safety check to ensure controllers are registered
+        if (!Get.isRegistered<TaskController>() || !Get.isRegistered<AuthController>()) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
         if (taskController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -143,6 +148,12 @@ class TaskAssignmentScreen extends StatelessWidget {
             // Select Task (if not already picked)
             if (taskId == null)
               Obx(() {
+                // Add safety check to ensure controller is registered
+                if (!Get.isRegistered<TaskController>()) {
+                  return Text("Loading tasks...",
+                      style: TextStyle(color: colorScheme.onSurface));
+                }
+                
                 final unassignedTasks = taskController.tasks
                     .where((task) =>
                         (task.assignedReporterId == null ||
@@ -181,6 +192,12 @@ class TaskAssignmentScreen extends StatelessWidget {
 
             // Assign to Reporter Dropdown
             Obx(() {
+              // Add safety check to ensure controller is registered
+              if (!Get.isRegistered<UserController>()) {
+                return Text("Loading reporters...",
+                    style: TextStyle(color: colorScheme.onSurface));
+              }
+              
               if (userController.reporters.isEmpty) {
                 return Text("No reporters available",
                     style: TextStyle(color: colorScheme.onSurface));
@@ -216,6 +233,12 @@ class TaskAssignmentScreen extends StatelessWidget {
 
             // Assign to Cameraman Dropdown
             Obx(() {
+              // Add safety check to ensure controller is registered
+              if (!Get.isRegistered<UserController>()) {
+                return Text("Loading cameramen...",
+                    style: TextStyle(color: colorScheme.onSurface));
+              }
+              
               if (userController.cameramen.isEmpty) {
                 return Text("No cameramen available",
                     style: TextStyle(color: colorScheme.onSurface));
@@ -251,6 +274,20 @@ class TaskAssignmentScreen extends StatelessWidget {
 
             // Assign button
             Obx(() {
+              // Add safety check to ensure controllers are registered
+              if (!Get.isRegistered<TaskController>() || !Get.isRegistered<SettingsController>()) {
+                return Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                    ),
+                    onPressed: () {},
+                    child: const Text("Assign Task"),
+                  ),
+                );
+              }
+              
               return Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(

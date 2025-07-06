@@ -333,29 +333,54 @@ class _ChatScreenState extends State<ChatScreen> {
             },
           ),
         ],
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+        title: Row(
           children: [
-            Text(
-              widget.receiverName,
-              style: textTheme.titleMedium?.copyWith(
-                color:
-                    isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.white,
+              backgroundImage: widget.receiverAvatar.isNotEmpty
+                  ? NetworkImage(widget.receiverAvatar)
+                  : null,
+              child: widget.receiverAvatar.isEmpty
+                  ? Text(
+                      widget.receiverName.isNotEmpty
+                          ? widget.receiverName[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    widget.receiverName,
+                    style: textTheme.titleMedium?.copyWith(
+                      color:
+                          isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (_isOtherUserTyping)
+                    Text(
+                      'typing...',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: (isDarkMode
+                                ? colorScheme.onSurface
+                                : colorScheme.onPrimary)
+                            .withOpacity(0.7),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                ],
               ),
             ),
-            if (_isOtherUserTyping)
-              Text(
-                'typing...',
-                style: textTheme.labelSmall?.copyWith(
-                  color: (isDarkMode
-                          ? colorScheme.onSurface
-                          : colorScheme.onPrimary)
-                      .withOpacity(0.7),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
           ],
         ),
         titleSpacing: 0,

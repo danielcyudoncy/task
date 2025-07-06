@@ -63,7 +63,7 @@ dependencies:
   responsive_framework: ^1.5.1
   shared_preferences: ^2.5.3
   shimmer: ^3.0.0
-  supabase_flutter: ^2.9.1
+  # supabase_flutter: ^2.9.1  # Removed - using Firebase Storage instead
   syncfusion_flutter_charts: ^29.2.10
   table_calendar: ^3.2.0
   url_launcher: ^6.3.1

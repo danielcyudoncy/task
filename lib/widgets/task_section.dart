@@ -99,6 +99,15 @@ class TasksSection extends StatelessWidget {
 
   Widget _buildTabBarView() {
     return Obx(() {
+      if (!Get.isRegistered<AuthController>() || !Get.isRegistered<TaskController>()) {
+        return const TabBarView(
+          children: [
+            Center(child: CircularProgressIndicator()),
+            Center(child: CircularProgressIndicator()),
+          ],
+        );
+      }
+      
       final userId = authController.auth.currentUser?.uid ?? "";
       final tasks = taskController.tasks;
       final taskMap = {for (var task in tasks) task.taskId: task};

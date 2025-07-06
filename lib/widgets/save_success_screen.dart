@@ -22,7 +22,11 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
     // After 2 seconds, navigate based on role
     Timer(const Duration(seconds: 2), () {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Get.find<AuthController>().navigateBasedOnRole();
+        final authController = Get.find<AuthController>();
+        // Add a small delay to ensure profile completion is processed
+        Future.delayed(const Duration(milliseconds: 100), () {
+          authController.navigateBasedOnRole();
+        });
       });
     });
   }

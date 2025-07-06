@@ -9,7 +9,8 @@ import 'package:get/get.dart';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
 import 'package:task/service/presence_service.dart';
-import 'package:task/service/supabase_storage_service.dart';
+import 'package:task/service/firebase_storage_service.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
@@ -18,7 +19,7 @@ class AuthController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final FirebaseService _firebaseService = FirebaseService();
-  final SupabaseStorageService storageService = SupabaseStorageService();
+  final FirebaseStorageService storageService = FirebaseStorageService();
 
   Rx<User?> firebaseUser = Rx<User?>(null);
   RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
@@ -28,10 +29,10 @@ class AuthController extends GetxController {
   RxBool isSignUpPasswordHidden = true.obs;
   RxBool isConfirmPasswordHidden = true.obs;
  
+  // Add a flag to track if the app is ready for snackbars
+  bool _isAppReady = false;
 
-
-
-  User? get currentUser => user.value;
+  User? get currentUser => user.value ?? _auth.currentUser;
 
   FirebaseAuth get auth => _auth;
   FirebaseService get firebaseService => _firebaseService;
@@ -61,12 +62,38 @@ class AuthController extends GetxController {
   bool _isNavigating = false;
   bool _isInBuildPhase = false;
 
+  // Safe snackbar method that checks if app is ready
+  void _safeSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
+
+  // Replace all direct Get.snackbar calls with this method
+  void showSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
+
+  // Method to mark app as ready (called from MyApp after initialization)
+  void markAppAsReady() {
+    _isAppReady = true;
+    debugPrint("AuthController: App marked as ready for snackbars");
+  }
+
   @override
   void onInit() {
     super.onInit();
     debugPrint("AuthController: onInit called");
     // Ensure loading state is false on initialization
     isLoading(false);
+    
+    // Initialize observables with safe default values
+    fullName.value = "";
+    profilePic.value = "";
+    selectedRole.value = "";
+    userRole.value = "";
+    isProfileComplete.value = false;
+    
+    // Initialize user observable with current Firebase user
+    user.value = _auth.currentUser;
     
     _auth.authStateChanges().listen((User? userValue) {
       user.value = userValue;
@@ -82,12 +109,15 @@ class AuthController extends GetxController {
 
   @override
   void onReady() {
-    firebaseUser.bindStream(_auth.authStateChanges());
-    user.bindStream(_auth.authStateChanges());
-    // Temporarily disable automatic role-based navigation to prevent build phase issues
-    // debounce(userRole, (_) => _handleRoleChange(), time: const Duration(milliseconds: 100));
-    debounce(lastActivity, (_) => _checkInactivity(),
-        time: const Duration(minutes: 30));
+    // Delay Firebase auth state binding to prevent premature operations
+    Future.delayed(const Duration(milliseconds: 500), () {
+      firebaseUser.bindStream(_auth.authStateChanges());
+      user.bindStream(_auth.authStateChanges());
+      // Temporarily disable automatic role-based navigation to prevent build phase issues
+      // debounce(userRole, (_) => _handleRoleChange(), time: const Duration(milliseconds: 100));
+      debounce(lastActivity, (_) => _checkInactivity(),
+          time: const Duration(minutes: 30));
+    });
   }
 
   @override
@@ -123,11 +153,17 @@ class AuthController extends GetxController {
   Future<void> _handlePresence(bool isOnline) async {
     if (Get.isRegistered<PresenceService>()) {
       final presence = Get.find<PresenceService>();
-      if (isOnline) {
-        await presence.setOnline();
+      if (presence.isInitialized) {
+        if (isOnline) {
+          await presence.setOnline();
+        } else {
+          await presence.setOffline();
+        }
       } else {
-        await presence.setOffline();
+        debugPrint("AuthController: PresenceService not initialized, skipping presence update");
       }
+    } else {
+      debugPrint("AuthController: PresenceService not registered");
     }
   }
 
@@ -207,6 +243,7 @@ class AuthController extends GetxController {
 
           userData.assignAll(data);
           debugPrint("AuthController: User data loaded successfully");
+          debugPrint("AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
           return; // Success
         } else {
           debugPrint("AuthController: User document does not exist for ${_auth.currentUser!.uid}");
@@ -235,31 +272,38 @@ class AuthController extends GetxController {
     userData.clear();
   }
 
-  // In AuthController, modify completeProfile()
+  // Complete profile and navigate to appropriate screen
   Future<void> completeProfile() async {
     try {
-      if (_auth.currentUser == null) return;
+      debugPrint("AuthController: Starting profile completion");
+      if (_auth.currentUser == null) {
+        _safeSnackbar("Error", "User not logged in");
+        return;
+      }
 
+      // Update user profile in Firestore
       await _firestore.collection('users').doc(_auth.currentUser!.uid).update({
         "profileComplete": true,
-        "fullName": fullName.value,
+        "fullName": fullNameController.text.trim(),
         "phoneNumber": phoneNumberController.text.trim(),
         "role": selectedRole.value,
+        "updatedAt": FieldValue.serverTimestamp(),
       });
 
-      // Force refresh user data
-      await loadUserData();
+      // Update local observables
+      fullName.value = fullNameController.text.trim();
+      userRole.value = selectedRole.value;
+      isProfileComplete.value = true;
 
-      // Navigate based on role only after confirming update
-      if (isProfileComplete.value) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          navigateBasedOnRole();
-        });
-      } else {
-        Get.snackbar("Error", "Profile completion failed");
-      }
+      debugPrint("AuthController: Profile completed successfully");
+      debugPrint("AuthController: User role: ${userRole.value}");
+      debugPrint("AuthController: Profile complete: ${isProfileComplete.value}");
+
+      // Don't navigate automatically - let the UI handle navigation
+      // navigateBasedOnRole();
     } catch (e) {
-      Get.snackbar("Error", "Failed to complete profile: ${e.toString()}");
+      debugPrint("AuthController: Profile completion error: $e");
+      _safeSnackbar("Error", "Failed to complete profile: ${e.toString()}");
       rethrow;
     }
   }
@@ -267,28 +311,47 @@ class AuthController extends GetxController {
   // In AuthController, modify navigateBasedOnRole and _handleRoleChange
   // In AuthController
   void navigateBasedOnRole() {
+    debugPrint("🚀 navigateBasedOnRole called");
+    debugPrint("🚀 _isNavigating: $_isNavigating, _isInBuildPhase: $_isInBuildPhase");
+    debugPrint("🚀 navigateBasedOnRole: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
+    
     if (_isNavigating || _isInBuildPhase) {
-      debugPrint("Skipping navigation - already navigating or in build phase");
+      debugPrint("🚀 Skipping navigation - already navigating or in build phase");
+      return;
+    }
+    
+    // Add additional safety check for app readiness
+    if (!Get.isRegistered<AuthController>()) {
+      debugPrint("🚀 Skipping navigation - AuthController not registered");
       return;
     }
     
     _isNavigating = true;
+    debugPrint("🚀 Set _isNavigating to true");
 
     final role = userRole.value;
-    debugPrint("Navigating based on role: $role");
+    debugPrint("🚀 Navigating based on role: $role");
 
     try {
+      debugPrint("🚀 About to navigate to route based on role: $role");
       if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+        debugPrint("🚀 Navigating to admin-dashboard");
         Get.offAllNamed("/admin-dashboard");
       } else if (["Reporter", "Cameraman"].contains(role)) {
+        debugPrint("🚀 Navigating to home");
         Get.offAllNamed("/home");
       } else {
+        debugPrint("🚀 Navigating to login (fallback) - role was: '$role'");
         Get.offAllNamed("/login");
       }
+      debugPrint("🚀 Navigation call completed");
     } catch (e) {
-      debugPrint("Navigation error: $e");
+      debugPrint("🚀 Navigation error: $e");
+      // Fallback to login
+      Get.offAllNamed("/login");
     } finally {
       _isNavigating = false;
+      debugPrint("🚀 Set _isNavigating to false");
     }
   }
 
@@ -337,7 +400,7 @@ class AuthController extends GetxController {
         Get.offNamed("/profile-update", arguments: {'role': role});
       }
     } on FirebaseAuthException catch (e) {
-      Get.snackbar("Error", _handleAuthError(e));
+      _safeSnackbar("Error", _handleAuthError(e));
       rethrow;
     } finally {
       isLoading(false);
@@ -382,7 +445,7 @@ class AuthController extends GetxController {
         Get.offNamed("/profile-update", arguments: {'role': "Admin"});
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to create admin account: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to create admin account: ${e.toString()}");
       rethrow;
     } finally {
       isLoading(false);
@@ -409,77 +472,58 @@ class AuthController extends GetxController {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      Get.snackbar('Success', 'Admin user created');
+      _safeSnackbar('Success', 'Admin user created');
     } on FirebaseAuthException catch (e) {
-      Get.snackbar('Error', e.message ?? 'Admin creation failed');
+      _safeSnackbar('Error', e.message ?? 'Admin creation failed');
     }
   }
 
-  /// Profile picture upload (USES SUPABASE STORAGE, not Firebase Storage)
+  /// Profile picture upload using Firebase Storage
   Future<void> uploadProfilePicture(File imageFile) async {
     final User? user = _auth.currentUser;
     if (user == null) {
-      Get.snackbar("Error", "User not logged in.");
+      _safeSnackbar("Error", "User not logged in.");
       return;
     }
 
-    const String bucket = 'photos'; // use your actual Supabase bucket name
-
     try {
       isLoading.value = true;
+      debugPrint("AuthController: Starting profile picture upload");
 
       if (!await imageFile.exists()) {
         throw Exception("Image file doesn't exist");
       }
 
-      // Delete old image from Supabase, if any
+      // Delete old profile picture if it exists
       String oldPhotoUrl = profilePic.value;
-      String newFilePath =
-          "profile_pictures/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg";
-
-      // Only attempt to delete if photoUrl is a Supabase URL and is not empty
-      if (oldPhotoUrl.isNotEmpty && oldPhotoUrl.contains("supabase")) {
-        try {
-          Uri uri = Uri.parse(oldPhotoUrl);
-          // Supabase URL: .../storage/v1/object/public/photos/profile_pictures/xxxx.jpg
-          // pathSegments: [storage, v1, object, public, photos, profile_pictures, ...]
-          int bucketIndex = uri.pathSegments.indexOf(bucket);
-          if (bucketIndex > -1 && uri.pathSegments.length > bucketIndex + 1) {
-            String path = uri.pathSegments.sublist(bucketIndex + 1).join('/');
-            if (path.isNotEmpty) {
-              await storageService.deleteFile(bucket: bucket, path: path);
-            }
-          }
-        } catch (e) {
-          debugPrint("Failed to delete old Supabase image: $e");
-        }
+      if (oldPhotoUrl.isNotEmpty) {
+        debugPrint("AuthController: Deleting old profile picture");
+        await storageService.deleteProfilePicture(oldPhotoUrl);
       }
 
-      // Upload to Supabase Storage
-      final result = await storageService.uploadFile(
-        bucket: bucket,
-        path: newFilePath,
-        file: imageFile,
+      // Upload new profile picture to Firebase Storage
+      debugPrint("AuthController: Uploading new profile picture");
+      final downloadUrl = await storageService.uploadProfilePicture(
+        imageFile: imageFile,
+        userId: user.uid,
       );
 
-      if (result != null) {
-        final url = storageService.getPublicUrl(
-          bucket: bucket,
-          path: newFilePath,
-        );
-
-        // Save the Supabase URL in Firebase Firestore user profile
+      if (downloadUrl != null) {
+        // Save the Firebase Storage URL in Firestore user profile
         await _firestore.collection('users').doc(user.uid).update({
-          'photoUrl': url,
+          'photoUrl': downloadUrl,
         });
 
-        profilePic.value = url;
-        Get.snackbar("Success", "Profile picture updated successfully.");
+        profilePic.value = downloadUrl;
+        debugPrint("AuthController: Profile picture updated successfully");
+        _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
-        Get.snackbar("Upload Failed", "Could not upload the image.");
+        debugPrint("AuthController: Profile picture upload failed");
+        _safeSnackbar("Upload Failed", "Could not upload the image.");
       }
     } catch (e) {
-      Get.snackbar("Upload Failed", "Error: ${e.toString()}");
+      debugPrint("AuthController: Profile picture upload error: $e");
+      _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
@@ -488,7 +532,7 @@ class AuthController extends GetxController {
   Future<void> updateProfileDetails() async {
     final user = _auth.currentUser;
     if (user == null) {
-      Get.snackbar('Error', 'No user signed in');
+      _safeSnackbar('Error', 'No user signed in');
       return;
     }
 
@@ -506,9 +550,9 @@ class AuthController extends GetxController {
       userRole.value = selectedRole.value;
       isProfileComplete.value = true;
 
-      Get.snackbar('Success', 'Profile updated successfully');
+      _safeSnackbar('Success', 'Profile updated successfully');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update profile: ${e.toString()}');
+      _safeSnackbar('Error', 'Failed to update profile: ${e.toString()}');
     } finally {
       isLoading(false);
     }
@@ -543,26 +587,36 @@ class AuthController extends GetxController {
 
       debugPrint("AuthController: User signed in successfully, loading user data");
       await loadUserData();
+      debugPrint("AuthController: loadUserData completed, setting lastActivity");
       lastActivity.value = DateTime.now();
-      await _handlePresence(true); // Set presence after successful login
+      debugPrint("AuthController: Setting presence to online");
+      try {
+        await _handlePresence(true); // Set presence after successful login
+        debugPrint("AuthController: Presence set successfully");
+      } catch (e) {
+        debugPrint("AuthController: Presence setting failed, continuing: $e");
+      }
 
       debugPrint("AuthController: User data loaded, profile complete: ${isProfileComplete.value}");
+      debugPrint("AuthController: User role: ${userRole.value}");
+      debugPrint("AuthController: User full name: ${fullName.value}");
+      debugPrint("AuthController: Current route before navigation: ${Get.currentRoute}");
+      
       if (!isProfileComplete.value) {
         debugPrint("AuthController: Navigating to profile update");
         Get.offAllNamed("/profile-update");
       } else {
-        debugPrint("AuthController: Navigating based on role");
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          navigateBasedOnRole();
-        });
+        debugPrint("AuthController: Profile is complete, navigating based on role - calling navigateBasedOnRole directly");
+        navigateBasedOnRole();
       }
+      debugPrint("AuthController: Navigation logic completed");
     } on FirebaseAuthException catch (e) {
       debugPrint("AuthController: Firebase auth error: ${e.message}");
-      Get.snackbar("Error", _handleAuthError(e));
+      _safeSnackbar("Error", _handleAuthError(e));
       rethrow;
     } catch (e) {
       debugPrint("AuthController: General error during sign in: $e");
-      Get.snackbar("Error", "Sign in failed: $e");
+      _safeSnackbar("Error", "Sign in failed: $e");
       rethrow;
     } finally {
       debugPrint("AuthController: Setting isLoading to false");
@@ -576,9 +630,9 @@ class AuthController extends GetxController {
       await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
         'assignedTo': userId,
       });
-      Get.snackbar("Success", "Task assigned successfully.");
+      _safeSnackbar("Success", "Task assigned successfully.");
     } catch (e) {
-      Get.snackbar("Error", "Failed to assign task.");
+      _safeSnackbar("Error", "Failed to assign task.");
     } finally {
       isLoading.value = false;
     }
@@ -603,7 +657,7 @@ class AuthController extends GetxController {
       // 4. Navigate with complete context reset
       Get.offAllNamed("/login", arguments: {'fromLogout': true});
     } catch (e) {
-      Get.snackbar("Error", "Logout failed: ${e.toString()}");
+      _safeSnackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
@@ -619,7 +673,7 @@ class AuthController extends GetxController {
       await FirebaseAuth.instance.currentUser?.delete();
       Get.offAllNamed('/onboarding');
     } catch (e) {
-      Get.snackbar('Error', 'Could not delete account: $e');
+      _safeSnackbar('Error', 'Could not delete account: $e');
     }
   }
 
@@ -639,9 +693,9 @@ class AuthController extends GetxController {
   Future<void> forgotPassword(String email) async {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      Get.snackbar("Success", "Password reset link sent to your email");
+      _safeSnackbar("Success", "Password reset link sent to your email");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      _safeSnackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }

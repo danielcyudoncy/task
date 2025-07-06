@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 class NotificationController extends GetxController {
   final RxList<Map<String, dynamic>> notifications =
@@ -10,6 +11,11 @@ class NotificationController extends GetxController {
   final RxInt unreadCount = 0.obs;
   final RxInt totalNotifications = 0.obs;
   final RxBool isLoading = false.obs;
+
+  // Safe snackbar method
+  void _safeSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
 
   @override
   void onInit() {
@@ -31,7 +37,7 @@ class NotificationController extends GetxController {
             .orderBy("timestamp", descending: true)
             .snapshots()
             .handleError((error) {
-          Get.snackbar("Error", "Failed to load notifications");
+          _safeSnackbar("Error", "Failed to load notifications");
           debugPrint("Notification Error: $error");
         }).map((snapshot) {
           final docs = snapshot.docs;
@@ -66,7 +72,7 @@ class NotificationController extends GetxController {
       );
     } catch (e) {
       debugPrint('Fetch Notifications Error: $e');
-      Get.snackbar('Error', 'Failed to setup notifications stream');
+      _safeSnackbar('Error', 'Failed to setup notifications stream');
     } finally {
       isLoading.value = false;
     }
@@ -105,7 +111,7 @@ class NotificationController extends GetxController {
       }
     } catch (e) {
       debugPrint('Mark as Read Error: $e');
-      Get.snackbar('Error', 'Failed to mark notification as read');
+      _safeSnackbar('Error', 'Failed to mark notification as read');
     }
   }
 
@@ -139,7 +145,7 @@ class NotificationController extends GetxController {
       unreadCount.value = 0;
     } catch (e) {
       debugPrint('Mark All as Read Error: $e');
-      Get.snackbar('Error', 'Failed to mark all notifications as read');
+      _safeSnackbar('Error', 'Failed to mark all notifications as read');
     }
   }
 
@@ -164,12 +170,10 @@ class NotificationController extends GetxController {
       totalNotifications.value = notifications.length;
       updateUnreadCount(notifications);
 
-      Get.snackbar('Success', 'Notification deleted',
-          snackPosition: SnackPosition.BOTTOM);
+      _safeSnackbar('Success', 'Notification deleted');
     } catch (e) {
       debugPrint('Delete Notification Error: $e');
-      Get.snackbar('Error', 'Failed to delete notification',
-          snackPosition: SnackPosition.BOTTOM);
+      _safeSnackbar('Error', 'Failed to delete notification');
     }
   }
 }
