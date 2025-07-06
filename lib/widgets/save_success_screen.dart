@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
-import '../controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_colors.dart';
 
@@ -19,14 +18,11 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
   @override
   void initState() {
     super.initState();
-    // After 2 seconds, navigate based on role
+    // After 2 seconds, navigate back to the previous screen
     Timer(const Duration(seconds: 2), () {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final authController = Get.find<AuthController>();
-        // Add a small delay to ensure profile completion is processed
-        Future.delayed(const Duration(milliseconds: 100), () {
-          authController.navigateBasedOnRole();
-        });
+        // Navigate back to the previous screen instead of calling navigateBasedOnRole
+        Get.back();
       });
     });
   }

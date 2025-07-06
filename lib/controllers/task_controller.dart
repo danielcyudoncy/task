@@ -42,11 +42,16 @@ class TaskController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    await initializeCache();
-    await preFetchUserNames();
-    await loadInitialTasks();
-    fetchTaskCounts();
-    calculateNewTaskCount(); // Calculate new task count on init
+    // Delay initialization to ensure proper setup
+    Future.delayed(const Duration(milliseconds: 300), () async {
+      if (Get.isRegistered<TaskController>()) {
+        await initializeCache();
+        await preFetchUserNames();
+        await loadInitialTasks();
+        fetchTaskCounts();
+        calculateNewTaskCount(); // Calculate new task count on init
+      }
+    });
   }
 
   @override
@@ -101,6 +106,7 @@ class TaskController extends GetxController {
   // --- PAGINATED, FILTERED, SEARCHABLE TASK LOADING ---
   Future<void> loadInitialTasks(
       {String? search, String? filter, String? sort}) async {
+    debugPrint("TaskController: loadInitialTasks called");
     tasks.clear();
     lastDocument = null;
     hasMore = true;
@@ -110,6 +116,7 @@ class TaskController extends GetxController {
     sortBy = sort ?? sortBy;
     await loadMoreTasks(reset: true);
     calculateNewTaskCount(); // Calculate new task count after loading tasks
+    debugPrint("TaskController: loadInitialTasks completed, tasks count: ${tasks.length}");
   }
 
  Future<void> loadMoreTasks({bool reset = false}) async {
@@ -487,63 +494,81 @@ class TaskController extends GetxController {
 
   // --- LEGACY STREAMING (for other screens if needed) ---
   void fetchTasks() {
+    if (isLoading.value) return; // Prevent multiple simultaneous calls
+    
     isLoading(true);
     try {
-      Stream<QuerySnapshot> taskStream;
       String userRole = authController.userRole.value;
-      taskStream = _firebaseService.getAllTasks();
+      String? userId = authController.auth.currentUser?.uid;
+      
+      if (userId == null) {
+        debugPrint("TaskController: No user ID available for fetchTasks");
+        isLoading(false);
+        return;
+      }
+      
+      Stream<QuerySnapshot> taskStream = _firebaseService.getAllTasks();
       taskStream.listen((snapshot) async {
-        List<Task> updatedTasks = [];
-        String userId = authController.auth.currentUser!.uid;
-        for (var doc in snapshot.docs) {
-          var taskData = doc.data() as Map<String, dynamic>;
-          String createdByName = await _getUserName(taskData["createdBy"]);
-          String assignedReporterName = taskData["assignedReporterName"] ??
-              (taskData["assignedReporterId"] != null
-                  ? await _getUserName(taskData["assignedReporterId"])
-                  : "Not Assigned");
-          String assignedCameramanName = taskData["assignedCameramanName"] ??
-              (taskData["assignedCameramanId"] != null
-                  ? await _getUserName(taskData["assignedCameramanId"])
-                  : "Not Assigned");
-          String taskTitle = taskData["title"];
-          taskTitleCache[doc.id] = taskTitle;
-          updatedTasks.add(Task(
-            taskId: doc.id,
-            title: taskTitle,
-            description: taskData["description"],
-            createdBy: createdByName,
-            assignedReporter: assignedReporterName,
-            assignedCameraman: assignedCameramanName,
-            status: taskData["status"] ?? "Pending",
-            comments: List<String>.from(taskData["comments"] ?? []),
-            timestamp: taskData["timestamp"] ?? Timestamp.now(),
-            createdById: taskData["createdBy"] ?? "",
-            assignedReporterId: taskData["assignedReporterId"],
-            assignedCameramanId: taskData["assignedCameramanId"],
-          ));
+        try {
+          List<Task> updatedTasks = [];
+          
+          for (var doc in snapshot.docs) {
+            var taskData = doc.data() as Map<String, dynamic>;
+            String createdByName = await _getUserName(taskData["createdBy"]);
+            String assignedReporterName = taskData["assignedReporterName"] ??
+                (taskData["assignedReporterId"] != null
+                    ? await _getUserName(taskData["assignedReporterId"])
+                    : "Not Assigned");
+            String assignedCameramanName = taskData["assignedCameramanName"] ??
+                (taskData["assignedCameramanId"] != null
+                    ? await _getUserName(taskData["assignedCameramanId"])
+                    : "Not Assigned");
+            String taskTitle = taskData["title"];
+            taskTitleCache[doc.id] = taskTitle;
+            updatedTasks.add(Task(
+              taskId: doc.id,
+              title: taskTitle,
+              description: taskData["description"],
+              createdBy: createdByName,
+              assignedReporter: assignedReporterName,
+              assignedCameraman: assignedCameramanName,
+              status: taskData["status"] ?? "Pending",
+              comments: List<String>.from(taskData["comments"] ?? []),
+              timestamp: taskData["timestamp"] ?? Timestamp.now(),
+              createdById: taskData["createdBy"] ?? "",
+              assignedReporterId: taskData["assignedReporterId"],
+              assignedCameramanId: taskData["assignedCameramanId"],
+            ));
+          }
+          
+          // Role-based filtering
+          if (userRole == "Reporter") {
+            updatedTasks = updatedTasks
+                .where((task) =>
+                    (task.assignedReporterId == userId) ||
+                    (task.createdById == userId))
+                .toList();
+          } else if (userRole == "Cameraman") {
+            updatedTasks = updatedTasks
+                .where((task) =>
+                    (task.assignedCameramanId == userId) ||
+                    (task.createdById == userId))
+                .toList();
+          }
+          
+          tasks.value = updatedTasks;
+          calculateNewTaskCount(); // Calculate new task count after fetching tasks
+          saveCache();
+        } catch (e) {
+          debugPrint("TaskController: Error processing task stream: $e");
         }
-        // Role-based filtering
-        if (userRole == "Reporter") {
-          updatedTasks = updatedTasks
-              .where((task) =>
-                  (task.assignedReporterId == userId) ||
-                  (task.createdById == userId))
-              .toList();
-        } else if (userRole == "Cameraman") {
-          updatedTasks = updatedTasks
-              .where((task) =>
-                  (task.assignedCameramanId == userId) ||
-                  (task.createdById == userId))
-              .toList();
-        }
-        tasks.value = updatedTasks;
-        calculateNewTaskCount(); // Calculate new task count after fetching tasks
-        saveCache();
+      }, onError: (error) {
+        debugPrint("TaskController: Stream error: $error");
+        isLoading(false);
       });
     } catch (e) {
+      debugPrint("TaskController: Error in fetchTasks: $e");
       _safeSnackbar("Error", "Failed to fetch tasks: ${e.toString()}");
-    } finally {
       isLoading(false);
     }
   }

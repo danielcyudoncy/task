@@ -19,55 +19,71 @@ class NotificationController extends GetxController {
 
   @override
   void onInit() {
-    fetchNotifications();
     super.onInit();
+    // Delay notification fetching to ensure proper initialization
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (Get.isRegistered<NotificationController>()) {
+        fetchNotifications();
+      }
+    });
   }
 
   Future<void> fetchNotifications() async {
     try {
       isLoading.value = true;
       final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) return;
+      if (uid == null) {
+        debugPrint('NotificationController: No user ID available');
+        return;
+      }
+
+      // Use a safer approach with error handling
+      final stream = FirebaseFirestore.instance
+          .collection("users")
+          .doc(uid)
+          .collection("notifications")
+          .orderBy("timestamp", descending: true)
+          .snapshots()
+          .handleError((error) {
+        debugPrint("Notification Stream Error: $error");
+        return const Stream.empty();
+      });
 
       notifications.bindStream(
-        FirebaseFirestore.instance
-            .collection("users")
-            .doc(uid)
-            .collection("notifications")
-            .orderBy("timestamp", descending: true)
-            .snapshots()
-            .handleError((error) {
-          _safeSnackbar("Error", "Failed to load notifications");
-          debugPrint("Notification Error: $error");
-        }).map((snapshot) {
-          final docs = snapshot.docs;
-          totalNotifications.value = docs.length;
+        stream.map((snapshot) {
+          try {
+            final docs = snapshot.docs;
+            totalNotifications.value = docs.length;
 
-          final parsedNotifications = docs.map((doc) {
-            try {
-              final data = doc.data() as Map<String, dynamic>? ?? {};
-              return {
-                'id': doc.id,
-                'title': data['title']?.toString() ?? 'No Title',
-                'message': data['message']?.toString() ?? 'No Message',
-                'timestamp': data['timestamp'] as Timestamp?,
-                'isRead': data['isRead'] as bool? ?? false,
-                'type': data['type']?.toString(),
-              };
-            } catch (e) {
-              debugPrint('Error parsing notification ${doc.id}: $e');
-              return {
-                'id': doc.id,
-                'title': 'Invalid Notification',
-                'message': 'Could not load this notification',
-                'timestamp': Timestamp.now(),
-                'isRead': true,
-              };
-            }
-          }).toList();
+            final parsedNotifications = docs.map((doc) {
+              try {
+                final data = doc.data() as Map<String, dynamic>? ?? {};
+                return {
+                  'id': doc.id,
+                  'title': data['title']?.toString() ?? 'No Title',
+                  'message': data['message']?.toString() ?? 'No Message',
+                  'timestamp': data['timestamp'] as Timestamp?,
+                  'isRead': data['isRead'] as bool? ?? false,
+                  'type': data['type']?.toString(),
+                };
+              } catch (e) {
+                debugPrint('Error parsing notification ${doc.id}: $e');
+                return {
+                  'id': doc.id,
+                  'title': 'Invalid Notification',
+                  'message': 'Could not load this notification',
+                  'timestamp': Timestamp.now(),
+                  'isRead': true,
+                };
+              }
+            }).toList();
 
-          updateUnreadCount(parsedNotifications);
-          return parsedNotifications;
+            updateUnreadCount(parsedNotifications);
+            return parsedNotifications;
+          } catch (e) {
+            debugPrint('Error processing notification stream: $e');
+            return <Map<String, dynamic>>[];
+          }
         }),
       );
     } catch (e) {

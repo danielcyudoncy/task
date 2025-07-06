@@ -98,52 +98,57 @@ class TasksSection extends StatelessWidget {
   }
 
   Widget _buildTabBarView() {
-    return Obx(() {
-      if (!Get.isRegistered<AuthController>() || !Get.isRegistered<TaskController>()) {
-        return const TabBarView(
-          children: [
-            Center(child: CircularProgressIndicator()),
-            Center(child: CircularProgressIndicator()),
-          ],
-        );
-      }
-      
-      final userId = authController.auth.currentUser?.uid ?? "";
-      final tasks = taskController.tasks;
-      final taskMap = {for (var task in tasks) task.taskId: task};
+    return TabBarView(
+      controller: tabController,
+      children: [
+        Obx(() {
+          if (!Get.isRegistered<AuthController>() || !Get.isRegistered<TaskController>()) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          final userId = authController.auth.currentUser?.uid ?? "";
+          final tasks = taskController.tasks;
+          final taskMap = {for (var task in tasks) task.taskId: task};
 
-      final notCompletedTasks = taskMap.values.where((t) {
-        return (t.status != "Completed") &&
-            (t.createdById == userId ||
-                t.assignedTo == userId ||
-                t.assignedReporterId == userId ||
-                t.assignedCameramanId == userId);
-      }).toList();
+          final notCompletedTasks = taskMap.values.where((t) {
+            return (t.status != "Completed") &&
+                (t.createdById == userId ||
+                    t.assignedTo == userId ||
+                    t.assignedReporterId == userId ||
+                    t.assignedCameramanId == userId);
+          }).toList();
 
-      final completedTasks = taskMap.values
-          .where((t) =>
-              t.status == "Completed" &&
-              (t.createdById == userId ||
-                  t.assignedTo == userId ||
-                  t.assignedReporterId == userId ||
-                  t.assignedCameramanId == userId))
-          .toList();
-
-      return TabBarView(
-        controller: tabController,
-        children: [
-          TaskListTab(
+          return TaskListTab(
             isCompleted: false,
             isDark: isDark,
             tasks: notCompletedTasks,
-          ),
-          TaskListTab(
+          );
+        }),
+        Obx(() {
+          if (!Get.isRegistered<AuthController>() || !Get.isRegistered<TaskController>()) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          final userId = authController.auth.currentUser?.uid ?? "";
+          final tasks = taskController.tasks;
+          final taskMap = {for (var task in tasks) task.taskId: task};
+
+          final completedTasks = taskMap.values
+              .where((t) =>
+                  t.status == "Completed" &&
+                  (t.createdById == userId ||
+                      t.assignedTo == userId ||
+                      t.assignedReporterId == userId ||
+                      t.assignedCameramanId == userId))
+              .toList();
+
+          return TaskListTab(
             isCompleted: true,
             isDark: isDark,
             tasks: completedTasks,
-          ),
-        ],
-      );
-    });
+          );
+        }),
+      ],
+    );
   }
 }

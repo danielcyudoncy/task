@@ -32,27 +32,44 @@ class HeaderWidget extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 // Avatar
-                Obx(() => CircleAvatar(
+                Obx(() {
+                  if (!Get.isRegistered<AuthController>() ||
+                      authController.profilePic == null ||
+                      authController.fullName == null) {
+                    return CircleAvatar(
                       radius: 20.sp,
                       backgroundColor: Colors.white,
-                      backgroundImage:
-                          authController.profilePic.value.isNotEmpty
-                              ? NetworkImage(authController.profilePic.value)
-                              : null,
-                      child: authController.profilePic.value.isEmpty
-                          ? Text(
-                              authController.fullName.value.isNotEmpty
-                                  ? authController.fullName.value[0]
-                                      .toUpperCase()
-                                  : '?',
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
-                    )),
+                      child: Text(
+                        '?',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }
+                  return CircleAvatar(
+                    radius: 20.sp,
+                    backgroundColor: Colors.white,
+                    backgroundImage:
+                        authController.profilePic.value.isNotEmpty
+                            ? NetworkImage(authController.profilePic.value)
+                            : null,
+                    child: authController.profilePic.value.isEmpty
+                        ? Text(
+                            authController.fullName.value.isNotEmpty
+                                ? authController.fullName.value[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  );
+                }),
 
                 // Notification Badge
                 Positioned(

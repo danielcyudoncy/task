@@ -6,10 +6,11 @@ import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/stats_section.dart';
 import 'package:task/widgets/task_section.dart';
+import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/notification_controller.dart';
-import '../widgets/user_nav_bar.dart';
+
 import '../utils/constants/app_strings.dart';
 import '../utils/constants/app_styles.dart';
 
@@ -35,13 +36,31 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _initializeData();
+    
+    // Add a small delay to ensure the screen is fully initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+    });
   }
 
   void _initializeData() {
-    taskController.fetchTasks();
-    taskController.fetchTaskCounts();
-    notificationController.fetchNotifications();
+    debugPrint("HomeScreen: Initializing data");
+    // Use a small delay to ensure the screen is fully built before fetching data
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        debugPrint("HomeScreen: Fetching data");
+        try {
+          taskController.fetchTasks();
+          taskController.fetchTaskCounts();
+          notificationController.fetchNotifications();
+          debugPrint("HomeScreen: Data fetching initiated");
+        } catch (e) {
+          debugPrint("HomeScreen: Error initializing data: $e");
+        }
+      } else {
+        debugPrint("HomeScreen: Widget not mounted, skipping data fetch");
+      }
+    });
   }
 
   @override
@@ -52,17 +71,19 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("HomeScreen: Building widget");
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       key: _scaffoldKey,
       drawer: const AppDrawer(),
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF181B2A) : Theme.of(context).colorScheme.primary,
-        ),
-        child: SafeArea(
+      body: SizedBox.expand(
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF181B2A) : Theme.of(context).colorScheme.primary,
+          ),
+          child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -116,20 +137,19 @@ class _HomeScreenState extends State<HomeScreen>
                                       ),
                                     );
                                   }
-                                  
+                                  final profilePic = authController.profilePic.value;
+                                  final fullName = authController.fullName.value;
+                                  debugPrint('HomeScreen: Using profilePic for user: \\${authController.currentUser?.uid} pic: \\${profilePic}');
                                   return CircleAvatar(
                                     radius: 20.sp,
                                     backgroundColor: Colors.white,
-                                    backgroundImage: authController.profilePic.value.isNotEmpty
-                                        ? NetworkImage(authController.profilePic.value)
+                                    backgroundImage: profilePic.isNotEmpty
+                                        ? NetworkImage(profilePic)
                                         : null,
-                                    child: authController.profilePic.value.isEmpty
+                                    child: profilePic.isEmpty
                                         ? Text(
-                                            authController.fullName.value
-                                                    .isNotEmpty
-                                                ? authController
-                                                    .fullName.value[0]
-                                                    .toUpperCase()
+                                            fullName.isNotEmpty
+                                                ? fullName[0].toUpperCase()
                                                 : '?',
                                             style: TextStyle(
                                               color: Theme.of(context)
@@ -153,9 +173,9 @@ class _HomeScreenState extends State<HomeScreen>
                                         return const SizedBox();
                                       }
                                       
-                                      return notificationController
-                                                  .unreadCount.value >
-                                              0
+                                      final unreadCount = notificationController.unreadCount.value;
+                                      
+                                      return unreadCount > 0
                                           ? Container(
                                               padding: const EdgeInsets.all(4),
                                               decoration: BoxDecoration(
@@ -171,11 +191,9 @@ class _HomeScreenState extends State<HomeScreen>
                                               ),
                                               child: Center(
                                                 child: Text(
-                                                  notificationController
-                                                              .unreadCount.value >
-                                                          9
+                                                  unreadCount > 9
                                                       ? '9+'
-                                                      : '${notificationController.unreadCount.value}',
+                                                      : '$unreadCount',
                                                   style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 10.sp,
@@ -200,9 +218,9 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Center(
+                          Obx(() => Center(
                             child: Text(
-                              "Hello, ${Get.isRegistered<AuthController>() ? authController.fullName.value : 'User'}",
+                              "Hello, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'User'}",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 20.sp,
@@ -210,9 +228,9 @@ class _HomeScreenState extends State<HomeScreen>
                                 fontFamily: 'Raleway',
                               ),
                             ),
-                          ),
+                          )),
                           SizedBox(height: 4.h),
-                          Center(
+                          Obx(() => Center(
                             child: Text(
                               authController.currentUser?.email ?? '',
                               style: TextStyle(
@@ -221,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
+                          )),
                         ],
                       ),
                     ),
@@ -251,11 +269,15 @@ class _HomeScreenState extends State<HomeScreen>
                   isDark: isDark,
                 ),
               ),
+              // Add UserNavBar at the bottom
+              UserNavBar(
+                currentIndex: 0, // Home screen is index 0
+              ),
             ],
           ),
         ),
+        ),
       ),
-      bottomNavigationBar: const UserNavBar(currentIndex: 0),
     );
   }
 }

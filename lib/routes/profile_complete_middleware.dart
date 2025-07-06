@@ -41,6 +41,12 @@ class ProfileCompleteMiddleware extends GetMiddleware {
       return null;
     }
 
+    // If profile complete status is not loaded yet, allow access temporarily
+    if (auth.isProfileComplete.value == false && auth.userRole.value.isEmpty) {
+      debugPrint("ProfileCompleteMiddleware: Profile complete status not loaded, allowing access");
+      return null;
+    }
+
     // If profile is not complete, redirect to profile update
     if (!auth.isProfileComplete.value) {
       debugPrint("ProfileCompleteMiddleware: Profile not complete, redirecting to profile-update");
