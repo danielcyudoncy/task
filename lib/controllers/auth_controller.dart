@@ -299,8 +299,8 @@ class AuthController extends GetxController {
       debugPrint("AuthController: User role: ${userRole.value}");
       debugPrint("AuthController: Profile complete: ${isProfileComplete.value}");
 
-      // Don't navigate automatically - let the UI handle navigation
-      // navigateBasedOnRole();
+      // Navigate based on role after profile completion
+      navigateBasedOnRole();
     } catch (e) {
       debugPrint("AuthController: Profile completion error: $e");
       _safeSnackbar("Error", "Failed to complete profile: ${e.toString()}");
@@ -308,51 +308,34 @@ class AuthController extends GetxController {
     }
   }
 
-  // In AuthController, modify navigateBasedOnRole and _handleRoleChange
-  // In AuthController
+  // Simplified navigateBasedOnRole method
   void navigateBasedOnRole() {
     debugPrint("🚀 navigateBasedOnRole called");
-    debugPrint("🚀 _isNavigating: $_isNavigating, _isInBuildPhase: $_isInBuildPhase");
     debugPrint("🚀 navigateBasedOnRole: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
     
-    if (_isNavigating || _isInBuildPhase) {
-      debugPrint("🚀 Skipping navigation - already navigating or in build phase");
-      return;
-    }
-    
-    // Add additional safety check for app readiness
-    if (!Get.isRegistered<AuthController>()) {
-      debugPrint("🚀 Skipping navigation - AuthController not registered");
-      return;
-    }
-    
-    _isNavigating = true;
-    debugPrint("🚀 Set _isNavigating to true");
+    // Use post-frame callback to ensure safe navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final role = userRole.value;
+      debugPrint("🚀 Navigating based on role: $role");
 
-    final role = userRole.value;
-    debugPrint("🚀 Navigating based on role: $role");
-
-    try {
-      debugPrint("🚀 About to navigate to route based on role: $role");
-      if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
-        debugPrint("🚀 Navigating to admin-dashboard");
-        Get.offAllNamed("/admin-dashboard");
-      } else if (["Reporter", "Cameraman"].contains(role)) {
-        debugPrint("🚀 Navigating to home");
-        Get.offAllNamed("/home");
-      } else {
-        debugPrint("🚀 Navigating to login (fallback) - role was: '$role'");
+      try {
+        if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+          debugPrint("🚀 Navigating to admin-dashboard");
+          Get.offAllNamed("/admin-dashboard");
+        } else if (["Reporter", "Cameraman"].contains(role)) {
+          debugPrint("🚀 Navigating to home");
+          Get.offAllNamed("/home");
+        } else {
+          debugPrint("🚀 Navigating to login (fallback) - role was: '$role'");
+          Get.offAllNamed("/login");
+        }
+        debugPrint("🚀 Navigation call completed");
+      } catch (e) {
+        debugPrint("🚀 Navigation error: $e");
+        // Fallback to login
         Get.offAllNamed("/login");
       }
-      debugPrint("🚀 Navigation call completed");
-    } catch (e) {
-      debugPrint("🚀 Navigation error: $e");
-      // Fallback to login
-      Get.offAllNamed("/login");
-    } finally {
-      _isNavigating = false;
-      debugPrint("🚀 Set _isNavigating to false");
-    }
+    });
   }
 
   void _handleRoleChange() {
@@ -602,13 +585,26 @@ class AuthController extends GetxController {
       debugPrint("AuthController: User full name: ${fullName.value}");
       debugPrint("AuthController: Current route before navigation: ${Get.currentRoute}");
       
-      if (!isProfileComplete.value) {
-        debugPrint("AuthController: Navigating to profile update");
-        Get.offAllNamed("/profile-update");
-      } else {
-        debugPrint("AuthController: Profile is complete, navigating based on role - calling navigateBasedOnRole directly");
-        navigateBasedOnRole();
-      }
+      // Use a post-frame callback to ensure navigation happens after the current build phase
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!isProfileComplete.value) {
+          debugPrint("AuthController: Navigating to profile update");
+          Get.offAllNamed("/profile-update");
+        } else {
+          debugPrint("AuthController: Profile is complete, navigating based on role");
+          final role = userRole.value;
+          if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+            debugPrint("AuthController: Navigating to admin-dashboard");
+            Get.offAllNamed("/admin-dashboard");
+          } else if (["Reporter", "Cameraman"].contains(role)) {
+            debugPrint("AuthController: Navigating to home");
+            Get.offAllNamed("/home");
+          } else {
+            debugPrint("AuthController: Navigating to login (fallback)");
+            Get.offAllNamed("/login");
+          }
+        }
+      });
       debugPrint("AuthController: Navigation logic completed");
     } on FirebaseAuthException catch (e) {
       debugPrint("AuthController: Firebase auth error: ${e.message}");

@@ -246,10 +246,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                                           .triggerFeedback();
                                       if (_formKey.currentState!.validate()) {
                                         await auth.completeProfile();
-                                        // Navigate to success screen first, then to appropriate dashboard
-                                        Get.offAll(
-                                            () => const SaveSuccessScreen(),
-                                            predicate: (route) => false);
+                                        // Profile completion will handle navigation automatically
                                       }
                                     },
                                     child:  Text(

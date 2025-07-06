@@ -35,6 +35,12 @@ class AuthMiddleware extends GetMiddleware {
       return const RouteSettings(name: '/login');
     }
 
+    // If user is logged in but role is not loaded yet, allow access temporarily
+    if (auth.userRole.value.isEmpty && auth.auth.currentUser != null) {
+      debugPrint("AuthMiddleware: User logged in but role not loaded, allowing access temporarily");
+      return null;
+    }
+
     // Check user role and redirect accordingly
     final role = auth.userRole.value;
     debugPrint("AuthMiddleware: User role: $role");

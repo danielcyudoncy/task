@@ -1,19 +1,19 @@
-// widgets/user_nav_bar.dart
+// widgets/chat_nav_bar.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:task/utils/constants/app_colors.dart';
 
-class UserNavBar extends StatelessWidget {
+class ChatNavBar extends StatelessWidget {
   final int currentIndex;
 
-  const UserNavBar({super.key, this.currentIndex = 0});
+  const ChatNavBar({super.key, this.currentIndex = 0});
 
   void _onTap(int index) {
     if (index == 0) {
-      Get.toNamed('/profile');
+      Get.offAllNamed('/all-users-chat');
     } else if (index == 1) {
-      Get.toNamed('/all-tasks');
+      Get.offAllNamed('/profile');
     }
   }
 
@@ -30,9 +30,9 @@ class UserNavBar extends StatelessWidget {
       initialActiveIndex: currentIndex,
       onTap: _onTap,
       items: const [
+        TabItem(icon: Icons.chat, title: 'Chats'),
         TabItem(icon: Icons.person, title: 'Profile'),
-        TabItem(icon: Icons.list, title: 'All Tasks'),
       ],
     );
   }
-}
+} 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
+import 'package:task/models/task_model.dart';
 import 'package:task/widgets/app_bar.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/empty_state_widget.dart';
@@ -20,25 +21,39 @@ class AllTaskScreen extends StatefulWidget {
 }
 
 class _AllTaskScreenState extends State<AllTaskScreen> {
-  final TaskController taskController = Get.find<TaskController>();
+  final TaskController taskController = Get.put(TaskController());
   final TextEditingController _searchController = TextEditingController();
   final RxString _searchQuery = ''.obs;
   final RxString _selectedFilter = 'All'.obs;
   final RxList<String> _selectedTasks = <String>[].obs;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final RxList<Task> _filteredTasks = <Task>[].obs;
   
 
   @override
   void initState() {
     super.initState();
+    debugPrint("AllTaskScreen: initState called");
+    debugPrint("AllTaskScreen: TaskController registered: ${Get.isRegistered<TaskController>()}");
     taskController.loadInitialTasks();
     _searchController.addListener(() {
       _searchQuery.value = _searchController.text;
       _filterTasks();
     });
+    
+    // Listen to task changes and update filtered tasks
+    ever(taskController.tasks, (_) {
+      debugPrint("AllTaskScreen: tasks changed, calling _filterTasks");
+      _filterTasks();
+    });
   }
 
   void _filterTasks() {
+    debugPrint("AllTaskScreen: _filterTasks called");
+    debugPrint("AllTaskScreen: taskController.tasks.length = ${taskController.tasks.length}");
+    debugPrint("AllTaskScreen: searchQuery = '${_searchQuery.value}'");
+    debugPrint("AllTaskScreen: selectedFilter = '${_selectedFilter.value}'");
+    
     final filteredTasks = taskController.tasks.where((task) {
       final matchesSearch =
           task.title.toLowerCase().contains(_searchQuery.value.toLowerCase()) ||
@@ -55,7 +70,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
       return matchesSearch && matchesFilter;
     }).toList();
 
-    taskController.tasks.assignAll(filteredTasks);
+    debugPrint("AllTaskScreen: filteredTasks.length = ${filteredTasks.length}");
+    _filteredTasks.assignAll(filteredTasks);
   }
 
   @override
@@ -174,7 +190,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   }
                   
                   if (taskController.isLoading.value &&
-                      taskController.tasks.isEmpty) {
+                      _filteredTasks.isEmpty) {
                     return TaskSkeletonList(
                         isLargeScreen: isLargeScreen, textScale: textScale);
                   }
@@ -184,7 +200,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                       onRetry: () => taskController.loadInitialTasks(),
                     );
                   }
-                  if (taskController.tasks.isEmpty) {
+                  if (_filteredTasks.isEmpty) {
                     return const EmptyStateWidget(
                       icon: Icons.list_alt_outlined,
                       title: "No tasks found",
@@ -200,7 +216,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                     child: ListView.separated(
                       padding: EdgeInsets.symmetric(
                           horizontal: isLargeScreen ? 32 : 8, vertical: 20),
-                      itemCount: taskController.tasks.length +
+                      itemCount: _filteredTasks.length +
                           (taskController.hasMore ? 1 : 0),
                       separatorBuilder: (_, __) => Divider(
                         color: dividerColor,
@@ -209,7 +225,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                         endIndent: 16,
                       ),
                       itemBuilder: (context, index) {
-                        if (index >= taskController.tasks.length) {
+                        if (index >= _filteredTasks.length) {
                           return const Center(
                             child: Padding(
                               padding: EdgeInsets.all(12.0),
@@ -217,7 +233,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                             ),
                           );
                         }
-                        final task = taskController.tasks[index];
+                        final task = _filteredTasks[index];
                         return GestureDetector(
                           onLongPress: () {
                             if (_selectedTasks.contains(task.taskId)) {
