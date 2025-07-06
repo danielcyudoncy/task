@@ -1,4 +1,5 @@
 // views/settings_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -38,85 +39,124 @@ class SettingsScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Obx(() => SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(top: 8, bottom: 10),
-                        child: Image.asset(
-                          'assets/png/logo.png',
-                          width: 100,
-                          height: 100,
-                        ),
+        child: Obx(() {
+          // Add safety check to ensure controllers are registered
+          if (!Get.isRegistered<ThemeController>() || !Get.isRegistered<SettingsController>()) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 10),
+                      child: Image.asset(
+                        'assets/png/logo.png',
+                        width: 100,
+                        height: 100,
                       ),
                     ),
-                    sectionTitle("App Preferences"),
-                    Obx(() => settingsSwitchTile(
-                          "Dark Mode",
-                          "Activate dark background for app",
-                          themeController.isDarkMode.value,
-                          (value) {
-                            themeController.toggleTheme(value);
-                          },
-                        )),
-                    sectionTitle("Sound and Vibration"),
-                    settingsSwitchTile(
-                      "Sounds",
-                      "Enable Sound",
-                      settingsController.isSoundEnabled.value,
+                  ),
+                  sectionTitle("App Preferences"),
+                  Obx(() {
+                    // Add safety check to ensure controller is registered
+                    if (!Get.isRegistered<ThemeController>()) {
+                      return settingsSwitchTile(
+                        "Dark Mode",
+                        "Activate dark background for app",
+                        false,
+                        (value) {},
+                      );
+                    }
+                    
+                    return settingsSwitchTile(
+                      "Dark Mode",
+                      "Activate dark background for app",
+                      themeController.isDarkMode.value,
                       (value) {
-                        settingsController.toggleSound(value);
-                        settingsController.saveSettings();
+                        themeController.toggleTheme(value);
                       },
+                    );
+                  }),
+                  sectionTitle("Sound and Vibration"),
+                  settingsSwitchTile(
+                    "Sounds",
+                    "Enable Sound",
+                    settingsController.isSoundEnabled.value,
+                    (value) {
+                      settingsController.toggleSound(value);
+                      settingsController.saveSettings();
+                    },
+                  ),
+                  settingsSwitchTile(
+                    "Vibration",
+                    "Enable/Disable Vibration",
+                    settingsController.isVibrationEnabled.value,
+                    (value) {
+                      settingsController.toggleVibration(value);
+                      settingsController.saveSettings();
+                    },
+                  ),
+                  sectionTitle("Account Preferences"),
+                  settingsDropdownTile(
+                    "Language",
+                    settingsController.selectedLanguage.value,
+                    [
+                      "English (Default)",
+                      "French",
+                      "Hausa",
+                      "Yoruba",
+                      "Igbo"
+                    ],
+                    (lang) {
+                      settingsController.setLanguage(lang);
+                      settingsController.saveSettings();
+                    },
+                  ),
+                  sectionTitle("Sync Settings"),
+                  settingsSwitchTile(
+                    "Synchronize data across all devices",
+                    "",
+                    settingsController.isSyncEnabled.value,
+                    (value) {
+                      settingsController.toggleSync(value);
+                      settingsController.saveSettings();
+                    },
+                  ),
+                  // Debug section for theme issues
+                  if (kDebugMode) ...[
+                    sectionTitle("Debug Options"),
+                    ListTile(
+                      title: const Text(
+                        "Reset Theme to Light",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: const Text(
+                        "Force reset theme to light mode",
+                        style: TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        onPressed: () {
+                          themeController.resetToDefaultTheme();
+                        },
+                      ),
                     ),
-                    settingsSwitchTile(
-                      "Vibration",
-                      "Enable/Disable Vibration",
-                      settingsController.isVibrationEnabled.value,
-                      (value) {
-                        settingsController.toggleVibration(value);
-                        settingsController.saveSettings();
-                      },
-                    ),
-                    sectionTitle("Account Preferences"),
-                    settingsDropdownTile(
-                      "Language",
-                      settingsController.selectedLanguage.value,
-                      [
-                        "English (Default)",
-                        "French",
-                        "Hausa",
-                        "Yoruba",
-                        "Igbo"
-                      ],
-                      (lang) {
-                        settingsController.setLanguage(lang);
-                        settingsController.saveSettings();
-                      },
-                    ),
-                    sectionTitle("Sync Settings"),
-                    settingsSwitchTile(
-                      "Synchronize data across all devices",
-                      "",
-                      settingsController.isSyncEnabled.value,
-                      (value) {
-                        settingsController.toggleSync(value);
-                        settingsController.saveSettings();
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    saveButton(settingsController),
-                    const SizedBox(height: 30),
-                    nextPageButton(),
-                    const SizedBox(height: 20),
                   ],
-                ),
+                  const SizedBox(height: 14),
+                  saveButton(settingsController),
+                  const SizedBox(height: 30),
+                  nextPageButton(),
+                  const SizedBox(height: 20),
+                ],
               ),
-            )),
+            ),
+          );
+        }),
       ),
     );
   }

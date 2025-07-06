@@ -3,11 +3,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/service/user_deletion_service.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 class ManageUsersController extends GetxController {
   final UserDeletionService userDeletionService;
 
   ManageUsersController(this.userDeletionService);
+
+  // Safe snackbar method
+  void _safeSnackbar(String title, String message) {
+    SnackbarUtils.showSnackbar(title, message);
+  }
 
   // Observables
   var isLoading = false.obs;
@@ -84,7 +90,7 @@ class ManageUsersController extends GetxController {
         hasMoreUsers.value = false;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch users: $e');
+      _safeSnackbar('Error', 'Failed to fetch users: $e');
     } finally {
       isLoading.value = false;
     }
@@ -107,7 +113,7 @@ class ManageUsersController extends GetxController {
         tasksList.clear();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch tasks: $e');
+      _safeSnackbar('Error', 'Failed to fetch tasks: $e');
     }
   }
 
@@ -120,9 +126,9 @@ class ManageUsersController extends GetxController {
           .collection('assignedTasks')
           .doc(taskId)
           .set({'taskId': taskId});
-      Get.snackbar('Success', 'Task assigned successfully');
+      _safeSnackbar('Success', 'Task assigned successfully');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to assign task: ${e.toString()}');
+      _safeSnackbar('Error', 'Failed to assign task: ${e.toString()}');
     }
   }
 
@@ -130,7 +136,7 @@ class ManageUsersController extends GetxController {
   Future<bool> deleteUser(String userId) async {
     // Prevent multiple simultaneous deletions
     if (isDeletingUser.value) {
-      Get.snackbar('Warning', 'Another deletion is in progress');
+      _safeSnackbar('Warning', 'Another deletion is in progress');
       return false;
     }
 
@@ -138,7 +144,7 @@ class ManageUsersController extends GetxController {
     final userToDelete =
         usersList.firstWhereOrNull((user) => user['uid'] == userId);
     if (userToDelete == null) {
-      Get.snackbar('Error', 'User not found');
+      _safeSnackbar('Error', 'User not found');
       return false;
     }
 
@@ -184,11 +190,9 @@ class ManageUsersController extends GetxController {
       await userDeletionService.deleteUserByAdmin(userId);
 
       print('User deletion completed successfully');
-      Get.snackbar(
+      _safeSnackbar(
         'Success',
         'User ${userToDelete['fullName']} deleted successfully',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
       );
       return true;
     } catch (e) {
@@ -208,12 +212,9 @@ class ManageUsersController extends GetxController {
         errorMessage = 'Network error: Please check your connection';
       }
 
-      Get.snackbar(
+      _safeSnackbar(
         'Error',
         errorMessage,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 5),
       );
       return false;
     } finally {
@@ -228,7 +229,7 @@ class ManageUsersController extends GetxController {
           .collection('users')
           .doc(userId)
           .update({'role': 'admin'});
-      Get.snackbar('Success', 'User promoted to admin');
+      _safeSnackbar('Success', 'User promoted to admin');
       int idx =
           usersList.indexWhere((u) => u['id'] == userId || u['uid'] == userId);
       if (idx != -1) {
@@ -236,7 +237,7 @@ class ManageUsersController extends GetxController {
         filteredUsersList.assignAll(usersList);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Promotion failed: ${e.toString()}');
+      _safeSnackbar('Error', 'Promotion failed: ${e.toString()}');
     }
   }
 

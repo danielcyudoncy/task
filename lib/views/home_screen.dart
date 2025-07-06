@@ -99,33 +99,47 @@ class _HomeScreenState extends State<HomeScreen>
                               children: [
                                 // Avatar
                                 Obx(() {
-                                  final user = authController.currentUser;
-                                  final photoUrl = user?.photoURL;
+                                  // Add safety check to ensure observables are initialized
+                                  if (!Get.isRegistered<AuthController>()) {
+                                    return CircleAvatar(
+                                      radius: 20.sp,
+                                      backgroundColor: Colors.white,
+                                      child: Text(
+                                        '?',
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          fontSize: 20.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  
                                   return CircleAvatar(
                                     radius: 20.sp,
                                     backgroundColor: Colors.white,
-                                    backgroundImage: (photoUrl != null &&
-                                            photoUrl.isNotEmpty)
-                                        ? NetworkImage(photoUrl)
+                                    backgroundImage: authController.profilePic.value.isNotEmpty
+                                        ? NetworkImage(authController.profilePic.value)
                                         : null,
-                                    child:
-                                        (photoUrl == null || photoUrl.isEmpty)
-                                            ? Text(
-                                                authController.fullName.value
-                                                        .isNotEmpty
-                                                    ? authController
-                                                        .fullName.value[0]
-                                                        .toUpperCase()
-                                                    : '?',
-                                                style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .primary,
-                                                  fontSize: 20.sp,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              )
-                                            : null,
+                                    child: authController.profilePic.value.isEmpty
+                                        ? Text(
+                                            authController.fullName.value
+                                                    .isNotEmpty
+                                                ? authController
+                                                    .fullName.value[0]
+                                                    .toUpperCase()
+                                                : '?',
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              fontSize: 20.sp,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                        : null,
                                   );
                                 }),
                                 // Notification Badge
@@ -133,38 +147,45 @@ class _HomeScreenState extends State<HomeScreen>
                                   right: -4,
                                   top: -4,
                                   child: Obx(
-                                    () => notificationController
-                                                .unreadCount.value >
-                                            0
-                                        ? Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: Colors.red,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 2),
-                                            ),
-                                            constraints: BoxConstraints(
-                                              minWidth: 20.w,
-                                              minHeight: 20.h,
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                notificationController
-                                                            .unreadCount.value >
-                                                        9
-                                                    ? '9+'
-                                                    : '${notificationController.unreadCount.value}',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10.sp,
-                                                  fontWeight: FontWeight.bold,
+                                    () {
+                                      // Add safety check to ensure controller is registered
+                                      if (!Get.isRegistered<NotificationController>()) {
+                                        return const SizedBox();
+                                      }
+                                      
+                                      return notificationController
+                                                  .unreadCount.value >
+                                              0
+                                          ? Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 2),
+                                              ),
+                                              constraints: BoxConstraints(
+                                                minWidth: 20.w,
+                                                minHeight: 20.h,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  notificationController
+                                                              .unreadCount.value >
+                                                          9
+                                                      ? '9+'
+                                                      : '${notificationController.unreadCount.value}',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10.sp,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          )
-                                        : const SizedBox(),
+                                            )
+                                          : const SizedBox();
+                                    },
                                   ),
                                 ),
                               ],
@@ -181,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen>
                         children: [
                           Center(
                             child: Text(
-                              "Hello, ${authController.fullName.value}",
+                              "Hello, ${Get.isRegistered<AuthController>() ? authController.fullName.value : 'User'}",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 20.sp,

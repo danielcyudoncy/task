@@ -253,31 +253,56 @@ class SignUpScreen extends StatelessWidget {
                               const SizedBox(height: 20),
 
                               // Sign Up Button
-                              Obx(() => authController.isLoading.value
-                                  ? const CircularProgressIndicator()
-                                  : SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: colorScheme.primary,
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                        onPressed: _signUp,
-                                        child: Text(
-                                          "Save & Continue",
-                                          style: textTheme.bodyLarge?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: colorScheme.onPrimary,
-                                            fontFamily: 'raleway',
-                                          ),
+                              Obx(() {
+                                // Add safety check to ensure controller is registered
+                                if (!Get.isRegistered<AuthController>()) {
+                                  return SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: colorScheme.primary,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
                                       ),
-                                    )),
+                                      onPressed: _signUp,
+                                      child: Text(
+                                        "Save & Continue",
+                                        style: textTheme.bodyLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.onPrimary,
+                                          fontFamily: 'raleway',
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                
+                                return authController.isLoading.value
+                                    ? const CircularProgressIndicator()
+                                    : SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: colorScheme.primary,
+                                            padding: const EdgeInsets.symmetric(vertical: 16),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          onPressed: _signUp,
+                                          child: Text(
+                                            "Save & Continue",
+                                            style: textTheme.bodyLarge?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: colorScheme.onPrimary,
+                                              fontFamily: 'raleway',
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                              }),
 
                               const SizedBox(height: 20),
 

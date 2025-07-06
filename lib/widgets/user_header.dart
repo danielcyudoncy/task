@@ -45,16 +45,14 @@ class UserHeader extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       Obx(() {
-                        final user = authController.currentUser;
-                        final photoUrl = user?.photoURL;
                         return CircleAvatar(
                           radius: 20.sp,
                           backgroundColor: Colors.white,
                           backgroundImage:
-                              (photoUrl != null && photoUrl.isNotEmpty)
-                                  ? NetworkImage(photoUrl)
+                              authController.profilePic.value.isNotEmpty
+                                  ? NetworkImage(authController.profilePic.value)
                                   : null,
-                          child: (photoUrl == null || photoUrl.isEmpty)
+                          child: authController.profilePic.value.isEmpty
                               ? Text(
                                   authController.fullName.value.isNotEmpty
                                       ? authController.fullName.value[0]

@@ -73,6 +73,13 @@ class UserScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     Obx(() {
+                      if (!Get.isRegistered<UserController>()) {
+                        return const Text(
+                          "No users available",
+                          style: TextStyle(color: Colors.white),
+                        );
+                      }
+                      
                       if (userController.allUsers.isEmpty) {
                         return const Text(
                           "No users available",
@@ -109,25 +116,41 @@ class UserScreen extends StatelessWidget {
                       );
                     }),
                     const SizedBox(height: 20),
-                    Obx(() => auth.isLoading.value
-                        ? const CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: () {
-                              if (selectedTask.value.isNotEmpty &&
-                                  selectedUser.value.isNotEmpty) {
-                                auth.assignTask(
-                                    selectedTask.value, selectedUser.value);
-                              } else {
-                                Get.snackbar(
-                                    'Error', 'Please select a task and a user');
-                              }
-                            },
-                            child: const Text('Assign Task'),
-                          )),
+                    Obx(() {
+                      if (!Get.isRegistered<AuthController>()) {
+                        return ElevatedButton(
+                          onPressed: () {},
+                          child: const Text('Assign Task'),
+                        );
+                      }
+                      
+                      return auth.isLoading.value
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                              onPressed: () {
+                                if (selectedTask.value.isNotEmpty &&
+                                    selectedUser.value.isNotEmpty) {
+                                  auth.assignTask(
+                                      selectedTask.value, selectedUser.value);
+                                } else {
+                                  Get.snackbar(
+                                      'Error', 'Please select a task and a user');
+                                }
+                              },
+                              child: const Text('Assign Task'),
+                            );
+                    }),
                   ],
                 ),
               const SizedBox(height: 20),
               Obx(() {
+                if (!Get.isRegistered<ManageUsersController>()) {
+                  return const Text(
+                    'No users to display',
+                    style: TextStyle(color: Colors.white),
+                  );
+                }
+                
                 if (manageUsersController.usersList.isEmpty) {
                   return const Text(
                     'No users to display',
@@ -171,23 +194,35 @@ class UserScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 20),
-                    Obx(() => ElevatedButton(
-                          onPressed: () {
-                            if (selectedManagedUser.value.isNotEmpty) {
-                              manageUsersController
-                                  .deleteUser(selectedManagedUser.value);
-                              Get.snackbar(
-                                  'Success', 'User deleted successfully');
-                            } else {
-                              Get.snackbar(
-                                  'Error', 'Please select a user to manage');
-                            }
-                          },
+                    Obx(() {
+                      if (!Get.isRegistered<ManageUsersController>()) {
+                        return ElevatedButton(
+                          onPressed: () {},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                           ),
                           child: const Text('Delete User'),
-                        )),
+                        );
+                      }
+                      
+                      return ElevatedButton(
+                        onPressed: () {
+                          if (selectedManagedUser.value.isNotEmpty) {
+                            manageUsersController
+                                .deleteUser(selectedManagedUser.value);
+                            Get.snackbar(
+                                'Success', 'User deleted successfully');
+                          } else {
+                            Get.snackbar(
+                                'Error', 'Please select a user to manage');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete User'),
+                      );
+                    }),
                   ],
                 );
               }),

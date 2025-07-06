@@ -168,6 +168,11 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
               // Main Content
               Expanded(
                 child: Obx(() {
+                  // Add safety check to ensure controller is registered
+                  if (!Get.isRegistered<TaskController>()) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
                   if (taskController.isLoading.value &&
                       taskController.tasks.isEmpty) {
                     return TaskSkeletonList(

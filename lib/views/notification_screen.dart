@@ -33,17 +33,29 @@ class NotificationScreen extends StatelessWidget {
         foregroundColor: theme.appBarTheme.iconTheme?.color,
         elevation: 0,
         actions: [
-          Obx(() => notificationController.unreadCount.value > 0
-              ? IconButton(
-                  icon: const Icon(Icons.mark_email_read),
-                  tooltip: "Mark all as read",
-                  onPressed: notificationController.markAllAsRead,
-                )
-              : const SizedBox()),
+          Obx(() {
+            // Add safety check to ensure controller is registered
+            if (!Get.isRegistered<NotificationController>()) {
+              return const SizedBox();
+            }
+            
+            return notificationController.unreadCount.value > 0
+                ? IconButton(
+                    icon: const Icon(Icons.mark_email_read),
+                    tooltip: "Mark all as read",
+                    onPressed: notificationController.markAllAsRead,
+                  )
+                : const SizedBox();
+          }),
         ],
       ),
       backgroundColor: backgroundColor,
       body: Obx(() {
+        // Add safety check to ensure controller is registered
+        if (!Get.isRegistered<NotificationController>()) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
         if (notificationController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -77,13 +89,26 @@ class NotificationScreen extends StatelessWidget {
                       color: titleColor,
                     ),
                   ),
-                  Obx(() => Text(
-                        "${notificationController.unreadCount.value} Unread",
+                  Obx(() {
+                    // Add safety check to ensure controller is registered
+                    if (!Get.isRegistered<NotificationController>()) {
+                      return Text(
+                        "0 Unread",
                         style: TextStyle(
                           color: theme.colorScheme.secondary,
                           fontWeight: FontWeight.bold,
                         ),
-                      )),
+                      );
+                    }
+                    
+                    return Text(
+                      "${notificationController.unreadCount.value} Unread",
+                      style: TextStyle(
+                        color: theme.colorScheme.secondary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),

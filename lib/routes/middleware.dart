@@ -16,6 +16,8 @@ class AuthMiddleware extends GetMiddleware {
     debugPrint("AuthMiddleware: Checking route: $route");
     debugPrint("AuthMiddleware: auth.currentUser: ${auth.currentUser?.uid}");
     debugPrint("AuthMiddleware: auth.auth.currentUser: ${auth.auth.currentUser?.uid}");
+    debugPrint("AuthMiddleware: auth.userRole.value: ${auth.userRole.value}");
+    debugPrint("AuthMiddleware: auth.isProfileComplete.value: ${auth.isProfileComplete.value}");
 
     // skip redirect if logout
     if (args?['fromLogout'] == true) return null;
