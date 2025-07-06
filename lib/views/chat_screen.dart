@@ -5,11 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:task/views/wallpaper_screen.dart';
 import 'package:get/get.dart';
+import '../widgets/chat_nav_bar.dart';
 // Import the UserNavBar
 
 // Helper function
@@ -494,6 +494,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const ChatNavBar(currentIndex: 0),
     );
   }
 
@@ -550,248 +551,59 @@ class _MessageBubble extends StatelessWidget {
     required this.onStartEdit,
   });
 
-  void _showActionMenu(BuildContext context) {
-    HapticFeedback.vibrate();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: ['👍', '❤️', '😂', '😮', '😢', '🙏'].map((emoji) {
-                  return InkWell(
-                    onTap: () {
-                      onToggleReaction(emoji);
-                      Navigator.of(context).pop();
-                    },
-                    borderRadius: BorderRadius.circular(24),
-                    child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child:
-                            Text(emoji, style: const TextStyle(fontSize: 28))),
-                  );
-                }).toList(),
-              ),
+  @override
+  Widget build(BuildContext context) {
+    final text = messageData['text'] ?? '';
+    final time = (messageData['timestamp'] as Timestamp?)?.toDate();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+        decoration: BoxDecoration(
+          color: isMe
+              ? colorScheme.primary
+              : (isDark ? colorScheme.surfaceVariant : Colors.white),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+            bottomLeft: Radius.circular(isMe ? 18 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 18),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: Offset(0, 2),
             ),
-            const Divider(height: 1),
-            if (isMe)
-              ListTile(
-                leading: Icon(Icons.edit_rounded,
-                    color: Theme.of(context).colorScheme.onSurface),
-                title: const Text('Edit Message'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onStartEdit();
-                },
-              ),
-            ListTile(
-              leading: Icon(Icons.copy_rounded,
-                  color: Theme.of(context).colorScheme.onSurface),
-              title: const Text('Copy Text'),
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: messageData['text']));
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Copied to clipboard')));
-              },
-            ),
-            if (isMe)
-              ListTile(
-                leading: Icon(Icons.delete_outline_rounded,
-                    color: Theme.of(context).colorScheme.error),
-                title: Text('Delete',
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.error)),
-                onTap: () {
-                  onDelete();
-                  Navigator.of(context).pop();
-                },
-              ),
           ],
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    final Color bubbleColor;
-    final Color textColor;
-    if (isMe) {
-      bubbleColor = colorScheme.secondary;
-      textColor = colorScheme.onSecondary;
-    } else {
-      if (isDarkMode) {
-        bubbleColor = colorScheme.surface;
-        textColor = colorScheme.onSurface;
-      } else {
-        bubbleColor = colorScheme.surfaceContainerHighest;
-        textColor = colorScheme.onSurfaceVariant;
-      }
-    }
-
-    final reactions = Map<String, dynamic>.from(messageData['reactions'] ?? {});
-    final hasReactions = reactions.isNotEmpty;
-    final bool isEdited = messageData['isEdited'] ?? false;
-    final replyData = messageData['replyTo'] as Map<String, dynamic>?;
-
-    return GestureDetector(
-      onLongPress: () => _showActionMenu(context),
-      child: Column(
-        crossAxisAlignment:
-            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Container(
-                color: bubbleColor,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (replyData != null)
-                      _RepliedMessageDisplay(replyData: replyData, isMe: isMe),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(messageData['text'],
-                              style: textTheme.bodyMedium
-                                  ?.copyWith(color: textColor)),
-                          const SizedBox(height: 4.0),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isEdited)
-                                Text(
-                                  'edited',
-                                  style: textTheme.labelSmall?.copyWith(
-                                      color: textColor.withOpacity(0.7),
-                                      fontStyle: FontStyle.italic),
-                                ),
-                              const SizedBox(width: 4),
-                              if (messageData['timestamp'] != null)
-                                Text(
-                                  DateFormat('h:mm a').format(
-                                      messageData['timestamp']!.toDate()),
-                                  style: textTheme.labelSmall?.copyWith(
-                                      color: textColor.withOpacity(0.7)),
-                                ),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          if (hasReactions)
-            Transform.translate(
-              offset: Offset(isMe ? 0 : 10, -14),
-              child: _ReactionsDisplay(reactions: reactions),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReactionsDisplay extends StatelessWidget {
-  final Map<String, dynamic> reactions;
-  const _ReactionsDisplay({required this.reactions});
-
-  @override
-  Widget build(BuildContext context) {
-    final sortedReactions = reactions.entries.toList()
-      ..sort((a, b) =>
-          (b.value as List).length.compareTo((a.value as List).length));
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: sortedReactions.map((entry) {
-          final count = (entry.value as List).length;
-          return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2.0),
-              child: Text('${entry.key}${count > 1 ? ' $count' : ''}',
-                  style: const TextStyle(fontSize: 12)));
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class _MessageInputField extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onSend;
-  final FocusNode focusNode;
-
-  const _MessageInputField(
-      {required this.controller,
-      required this.onSend,
-      required this.focusNode});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      color: isDarkMode
-          ? colorScheme.surface
-          : colorScheme.surfaceContainerHighest.withOpacity(0.1),
-      child: SafeArea(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Column(
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                style: TextStyle(color: colorScheme.onSurface),
-                keyboardType: TextInputType.multiline,
-                minLines: 1,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  fillColor: isDarkMode
-                      ? colorScheme.surface
-                      : colorScheme.surfaceContainerHighest,
-                ),
+            Text(
+              text,
+              style: TextStyle(
+                color: isMe ? Colors.white : colorScheme.onSurface,
+                fontSize: 16,
               ),
             ),
-            const SizedBox(width: 8.0),
-            IconButton(
-              icon: Icon(Icons.send_rounded, color: colorScheme.secondary),
-              onPressed: onSend,
-            ),
+            if (time != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  DateFormat('h:mm a').format(time),
+                  style: TextStyle(
+                    color: isMe ? Colors.white70 : Colors.grey,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -801,45 +613,85 @@ class _MessageInputField extends StatelessWidget {
 
 class _DateDivider extends StatelessWidget {
   final Timestamp? timestamp;
-  const _DateDivider({this.timestamp});
-
-  String _getFormattedDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
-    if (date.year == today.year &&
-        date.month == today.month &&
-        date.day == today.day) {
-      return 'Today';
-    } else if (date.year == yesterday.year &&
-        date.month == yesterday.month &&
-        date.day == yesterday.day) {
-      return 'Yesterday';
-    } else {
-      return DateFormat('EEEE, MMMM d').format(date);
-    }
-  }
+  const _DateDivider({required this.timestamp});
 
   @override
   Widget build(BuildContext context) {
-    if (timestamp == null) return const SizedBox.shrink();
-    final dateText = _getFormattedDate(timestamp!.toDate());
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-          color: Theme.of(context)
-              .colorScheme
-              .surfaceContainerHighest
-              .withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12)),
-      child: Text(dateText,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withOpacity(0.8))),
+    if (timestamp == null) return SizedBox.shrink();
+    final date = timestamp!.toDate();
+    final now = DateTime.now();
+    String label;
+    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+      label = 'Today';
+    } else {
+      label = DateFormat('d MMM yyyy').format(date);
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessageInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final VoidCallback onSend;
+
+  const _MessageInputField({
+    required this.controller,
+    required this.focusNode,
+    required this.onSend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      child: Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(28),
+        color: isDark ? colorScheme.surfaceVariant : Colors.white,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                minLines: 1,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Type here your message',
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.send_rounded, color: colorScheme.primary),
+              onPressed: onSend,
+              splashRadius: 24,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -914,54 +766,6 @@ class _EditPreview extends StatelessWidget {
               icon: Icon(Icons.close,
                   color: colorScheme.onSurface.withOpacity(0.6)),
               onPressed: onCancel),
-        ],
-      ),
-    );
-  }
-}
-
-class _RepliedMessageDisplay extends StatelessWidget {
-  final Map<String, dynamic> replyData;
-  final bool isMe;
-
-  const _RepliedMessageDisplay({required this.replyData, required this.isMe});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final replyTextColor = isDarkMode ? Colors.white70 : Colors.black87;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2, left: 1, right: 1),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.15),
-        border: Border(
-          left: BorderSide(
-            color: colorScheme.secondary,
-            width: 4,
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            replyData['senderName'],
-            style: TextStyle(
-                color: colorScheme.secondary,
-                fontWeight: FontWeight.bold,
-                fontSize: 12),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            replyData['messageText'],
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style:
-                TextStyle(color: replyTextColor.withOpacity(0.8), fontSize: 13),
-          ),
         ],
       ),
     );

@@ -19,13 +19,16 @@ class StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("StatsSection: Building widget");
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
           Expanded(
             child: Obx(() {
+              debugPrint("StatsSection: Building Obx widget");
               if (!Get.isRegistered<TaskController>()) {
+                debugPrint("StatsSection: TaskController not registered");
                 return _statCard(
                   icon: Icons.create,
                   label: AppStrings.taskCreated,
@@ -34,30 +37,33 @@ class StatsSection extends StatelessWidget {
                 );
               }
               
-              return _statCard(
-                icon: Icons.create,
-                label: AppStrings.taskCreated,
-                value: taskController.totalTaskCreated.value.toString(),
-                color: isDark ? Colors.white : AppColors.secondaryColor,
-              );
+              try {
+                final totalTasks = taskController.totalTaskCreated.value;
+                debugPrint("StatsSection: Total tasks: $totalTasks");
+                return _statCard(
+                  icon: Icons.create,
+                  label: AppStrings.taskCreated,
+                  value: totalTasks.toString(),
+                  color: isDark ? Colors.white : AppColors.secondaryColor,
+                );
+              } catch (e) {
+                debugPrint("StatsSection: Error getting total tasks: $e");
+                return _statCard(
+                  icon: Icons.create,
+                  label: AppStrings.taskCreated,
+                  value: "0",
+                  color: isDark ? Colors.white : AppColors.secondaryColor,
+                );
+              }
             }),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Obx(() {
-              if (!Get.isRegistered<TaskController>()) {
-                return _statCard(
-                  iconWidget: _buildNewsFeedIcon(),
-                  icon: Icons.rss_feed,
-                  label: "News Feed",
-                  value: "0",
-                  color: isDark
-                      ? const Color(0xFF9FA8DA)
-                      : AppColors.secondaryColor,
-                );
-              }
-              
-              return _statCard(
+            child: GestureDetector(
+              onTap: () {
+                Get.toNamed('/news');
+              },
+              child: _statCard(
                 iconWidget: _buildNewsFeedIcon(),
                 icon: Icons.rss_feed,
                 label: "News Feed",
@@ -65,8 +71,8 @@ class StatsSection extends StatelessWidget {
                 color: isDark
                     ? const Color(0xFF9FA8DA)
                     : AppColors.secondaryColor,
-              );
-            }),
+              ),
+            ),
           ),
         ],
       ),
