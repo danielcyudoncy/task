@@ -185,8 +185,7 @@ class _NewsScreenState extends State<NewsScreen> {
                           },
                         ),
                       ),
-
-                      // Scrollable Content
+                      // Scrollable Content below search bar
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: () async {
@@ -194,8 +193,8 @@ class _NewsScreenState extends State<NewsScreen> {
                               await _newsService!.fetchNews();
                             }
                           },
-                          child: SingleChildScrollView(
-                          child: Column(
+                          child: ListView(
+                            padding: EdgeInsets.zero,
                             children: [
                               // News Sources Carousel using existing widget
                               Container(
@@ -203,9 +202,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                 margin: const EdgeInsets.symmetric(horizontal: 16),
                                 child: NewsSourcesCarousel(colorScheme: theme.colorScheme),
                               ),
-
                               const SizedBox(height: 16),
-
                               // News Category Filter
                               if (_newsService != null)
                                 NewsCategoryFilter(
@@ -217,9 +214,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                     });
                                   },
                                 ),
-
                               const SizedBox(height: 16),
-
                               // Manual Refresh Button for Testing
                               Container(
                                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -247,96 +242,87 @@ class _NewsScreenState extends State<NewsScreen> {
                                   child: const Text('Refresh News'),
                                 ),
                               ),
-
                               const SizedBox(height: 8),
-
                               // News Articles
                               Obx(() {
-                          if (_newsService == null) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          
-                          if (_newsService?.isLoading.value == true) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          // Get articles filtered by category
-                          var filteredArticles = _newsService!.getNewsByCategory(_selectedCategory);
-                          
-                          // Apply search filter if search text is not empty
-                          if (_searchController.text.isNotEmpty) {
-                            filteredArticles = filteredArticles.where((article) {
-                              final query = _searchController.text.toLowerCase();
-                              final title = article['title']?.toString().toLowerCase() ?? '';
-                              final summary = article['summary']?.toString().toLowerCase() ?? '';
-                              final content = article['content']?.toString().toLowerCase() ?? '';
-                              final source = article['source']?.toString().toLowerCase() ?? '';
-                              final author = article['author']?.toString().toLowerCase() ?? '';
-                              final category = article['category']?.toString().toLowerCase() ?? '';
-                              
-                              return title.contains(query) ||
-                                     summary.contains(query) ||
-                                     content.contains(query) ||
-                                     source.contains(query) ||
-                                     author.contains(query) ||
-                                     category.contains(query);
-                            }).toList();
-                          }
-                          
-                          if (filteredArticles.isEmpty) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.newspaper,
-                                    size: 64,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _selectedCategory == 'All' || _selectedCategory == 'All News'
-                                      ? 'No news articles found'
-                                      : 'No news articles found in $_selectedCategory category',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      if (_newsService != null) {
-                                        _newsService!.fetchNews();
-                                      }
-                                    },
-                                    child: const Text('Refresh'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return filteredArticles.isNotEmpty
-                            ? Column(
-                                children: filteredArticles.map((article) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    child: _buildNewsCard(article, primaryColor),
+                                if (_newsService == null) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
                                   );
-                                }).toList(),
-                              )
-                            : const Center(
-                                child: Text('No news articles available'),
-                              );
-                        }),
+                                }
+                                if (_newsService?.isLoading.value == true) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
+                                // Get articles filtered by category
+                                var filteredArticles = _newsService!.getNewsByCategory(_selectedCategory);
+                                // Apply search filter if search text is not empty
+                                if (_searchController.text.isNotEmpty) {
+                                  filteredArticles = filteredArticles.where((article) {
+                                    final query = _searchController.text.toLowerCase();
+                                    final title = article['title']?.toString().toLowerCase() ?? '';
+                                    final summary = article['summary']?.toString().toLowerCase() ?? '';
+                                    final content = article['content']?.toString().toLowerCase() ?? '';
+                                    final source = article['source']?.toString().toLowerCase() ?? '';
+                                    final author = article['author']?.toString().toLowerCase() ?? '';
+                                    final category = article['category']?.toString().toLowerCase() ?? '';
+                                    return title.contains(query) ||
+                                           summary.contains(query) ||
+                                           content.contains(query) ||
+                                           source.contains(query) ||
+                                           author.contains(query) ||
+                                           category.contains(query);
+                                  }).toList();
+                                }
+                                if (filteredArticles.isEmpty) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.newspaper,
+                                          size: 64,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          _selectedCategory == 'All' || _selectedCategory == 'All News'
+                                              ? 'No news articles found'
+                                              : 'No news articles found in $_selectedCategory category',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            if (_newsService != null) {
+                                              _newsService!.fetchNews();
+                                            }
+                                          },
+                                          child: const Text('Refresh'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return filteredArticles.isNotEmpty
+                                    ? Column(
+                                        children: filteredArticles.map((article) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                                            child: _buildNewsCard(article, primaryColor),
+                                          );
+                                        }).toList(),
+                                      )
+                                    : const Center(
+                                        child: Text('No news articles available'),
+                                      );
+                              }),
                             ],
                           ),
-                        ),
                         ),
                       ),
                     ],

@@ -40,10 +40,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    adminController.fetchStatistics();
-    adminController.fetchDashboardData();
-    manageUsersController.fetchUsers();
-    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      adminController.fetchDashboardData();
+      adminController.fetchStatistics();
+      manageUsersController.fetchUsers();
+    });
   }
 
   @override
@@ -67,13 +68,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         final name = data['fullName'] ?? userId;
         final role = data['role'] ?? "Unknown";
         userCache[userId] = {"name": name, "role": role};
-        refresh();
+        WidgetsBinding.instance.addPostFrameCallback((_) => refresh());
         return {"name": name, "role": role};
       }
     // ignore: empty_catches
     } catch (e) {}
     userCache[userId] = {"name": userId, "role": "Unknown"};
-    refresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) => refresh());
     return {"name": userId, "role": "Unknown"};
   }
 
