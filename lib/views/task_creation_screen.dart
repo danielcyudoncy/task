@@ -27,7 +27,6 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   TimeOfDay? _selectedTime;
 
   final List<String> _priorities = ['Low', 'Medium', 'High', 'Normal'];
-  final RxBool _navigated = false.obs; // For robust navigation
 
   @override
   void dispose() {
@@ -87,59 +86,38 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   Future<void> _createTask() async {
     AppDevices.hideKeyboard(context);
     if (_formKey.currentState?.validate() ?? false) {
-      String title = _titleController.text.trim();
-      String description = _descriptionController.text.trim();
-      String priority = _selectedPriority ?? 'Normal';
-      DateTime? date = _selectedDate;
-      TimeOfDay? time = _selectedTime;
-      DateTime? dueDate;
-
-      if (date != null && time != null) {
-        dueDate = DateTime(
-          date.year,
-          date.month,
-          date.day,
-          time.hour,
-          time.minute,
+      try {
+        await taskController.createTask(
+          _titleController.text.trim(),
+          _descriptionController.text.trim(),
+          priority: _selectedPriority ?? 'Normal',
+          dueDate: _selectedDate != null && _selectedTime != null
+              ? DateTime(
+                  _selectedDate!.year,
+                  _selectedDate!.month,
+                  _selectedDate!.day,
+                  _selectedTime!.hour,
+                  _selectedTime!.minute,
+                )
+              : null,
         );
+
+        // Clear form on success
+        _titleController.clear();
+        _descriptionController.clear();
+        _dateController.clear();
+        _timeController.clear();
+        setState(() {
+          _selectedPriority = null;
+          _selectedDate = null;
+          _selectedTime = null;
+        });
+
+        // Navigate back
+        Get.back();
+      } catch (e) {
+        // Error is already shown by the controller
       }
-
-      // Listen for isLoading changes only once per save action
-      final everDispose = ever(taskController.isLoading, (bool loading) {
-        // Only navigate if finished loading, not already navigated, and this widget is still mounted
-        if (!loading && !_navigated.value && mounted) {
-          _navigated.value = true;
-          // Show a success snackbar if you want
-          if (taskController.tasks.isNotEmpty) {
-            Get.snackbar('Success', 'Task created successfully');
-          }
-          // Now go back robustly
-          Get.until((route) => route.isFirst);
-        }
-      });
-
-      await taskController.createTask(
-        title,
-        description,
-        priority: priority,
-        dueDate: dueDate,
-      );
-
-      // Reset the navigation guard for the next task creation
-      Future.delayed(const Duration(milliseconds: 600), () {
-        everDispose();
-        _navigated.value = false;
-      });
-
-      _titleController.clear();
-      _descriptionController.clear();
-      _dateController.clear();
-      _timeController.clear();
-      setState(() {
-        _selectedPriority = null;
-        _selectedDate = null;
-        _selectedTime = null;
-      });
     }
   }
 
@@ -152,12 +130,13 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Padding(
-          padding: const EdgeInsets.all(68.0),
+          padding: const EdgeInsets.all(28.0),
           child: Text(
             "Create Task",
             style: AppStyles.sectionTitleStyle.copyWith(
               fontSize: isTablet ? AppSizes.titleLarge : AppSizes.titleNormal,
               color: isDarkTheme ? Colors.white : Colors.white,
+              fontFamily: 'raleway',
             ),
           ),
         ),
