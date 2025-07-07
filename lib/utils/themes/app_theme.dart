@@ -39,8 +39,8 @@ class AppColors extends ThemeExtension<AppColors> {
 }
 
 class AppTheme {
-  // --- Standard Theme Colors ---
-  static const Color _primaryBlue = Color(0xFF08169D);
+  // --- Standard Theme Colors ---=
+  static const Color _primaryBlue = Color(0xFF1E2A5C);
   static const Color _secondaryBlue = Color(0xFF00B0FF);
   static const Color _lightSurfaceVariant = Color(0xFFF3F6FD);
   static const Color _darkSurfaceVariant = Color(0xFF23243A);

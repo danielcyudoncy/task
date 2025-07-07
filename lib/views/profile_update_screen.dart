@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
-import 'package:task/widgets/save_success_screen.dart';
 import '../controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import '../widgets/image_picker_widget.dart';
-import '../utils/snackbar_utils.dart';
 
 class ProfileUpdateScreen extends StatelessWidget {
   ProfileUpdateScreen({super.key});
