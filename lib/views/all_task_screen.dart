@@ -34,8 +34,10 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
   void initState() {
     super.initState();
     debugPrint("AllTaskScreen: initState called");
-    debugPrint("AllTaskScreen: TaskController registered: ${Get.isRegistered<TaskController>()}");
-    taskController.loadInitialTasks();
+    debugPrint("AllTaskScreen: TaskController registered: "+Get.isRegistered<TaskController>().toString());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      taskController.loadInitialTasks();
+    });
     _searchController.addListener(() {
       _searchQuery.value = _searchController.text;
       _filterTasks();

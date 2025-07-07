@@ -24,6 +24,7 @@ import 'package:task/views/onboarding_screen.dart';
 import 'package:task/views/user_list_screen.dart';
 import 'package:task/views/news_screen.dart';
 import 'package:task/views/all_users_chat_screen.dart';
+import 'package:task/widgets/save_success_screen.dart';
 
 class AppRoutes {
   static final routes = [
@@ -194,7 +195,12 @@ class AppRoutes {
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
-    
-    
+    GetPage(
+      name: "/save-success",
+      page: () => const SaveSuccessScreen(),
+      binding: GlobalBindings(),
+      transition: Transition.fade,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
   ];
 }

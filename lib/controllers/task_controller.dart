@@ -580,9 +580,16 @@ class TaskController extends GetxController {
     String priority = 'Normal',
     DateTime? dueDate,
   }) async {
+    print('createTask: started');
     try {
       isLoading(true);
+      print('createTask: isLoading set to true');
+      if (authController.auth.currentUser == null) {
+        print('createTask: ERROR - user is not authenticated');
+        throw Exception('User not authenticated');
+      }
       String userId = authController.auth.currentUser!.uid;
+      print('createTask: userId = ' + userId);
       await _firebaseService.createTask({
         "title": title,
         "description": description,
@@ -599,11 +606,14 @@ class TaskController extends GetxController {
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
       });
+      print('createTask: Firebase call complete');
       _safeSnackbar("Success", "Task created successfully");
-      calculateNewTaskCount(); // Calculate new task count after creating task
+      calculateNewTaskCount();
     } catch (e) {
-      _safeSnackbar("Error", "Failed to create task: ${e.toString()}");
+      print('createTask: error: ' + e.toString());
+      _safeSnackbar("Error", "Failed to create task: "+e.toString());
     } finally {
+      print('createTask: finally block');
       isLoading(false);
     }
   }

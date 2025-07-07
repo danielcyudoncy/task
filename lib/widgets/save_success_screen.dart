@@ -1,9 +1,9 @@
 // widgets/save_success_screen.dart
 // views/save_success_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_colors.dart';
 
@@ -18,13 +18,7 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
   @override
   void initState() {
     super.initState();
-    // After 2 seconds, navigate back to the previous screen
-    Timer(const Duration(seconds: 2), () {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Navigate back to the previous screen instead of calling navigateBasedOnRole
-        Get.back();
-      });
-    });
+    // Removed timer-based auto-navigation. Navigation is now only via the home button.
   }
 
   @override
@@ -97,6 +91,34 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                       ],
                     ),
                   ),
+                ),
+              ),
+              // Add Go to Home button
+              Padding(
+                padding: const EdgeInsets.only(bottom: 32.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final auth = Get.find<AuthController>();
+                      final role = auth.userRole.value;
+                      if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+                        Get.offAllNamed("/admin-dashboard");
+                      } else if (["Reporter", "Cameraman"].contains(role)) {
+                        Get.offAllNamed("/home");
+                      } else {
+                        Get.offAllNamed("/login");
+                      }
+                    });
+                  },
+                  child: const Text("Go to Home"),
                 ),
               ),
             ],

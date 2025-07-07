@@ -10,6 +10,8 @@ import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/notification_controller.dart';
+import 'package:task/widgets/user_dashboard_cards_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/constants/app_strings.dart';
 import '../utils/constants/app_styles.dart';
@@ -74,6 +76,9 @@ class _HomeScreenState extends State<HomeScreen>
     debugPrint("HomeScreen: Building widget");
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // TODO: Replace these with real controller logic
+    final int _assignedTasksToday = 0; // TODO: Compute assigned tasks for today
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: const AppDrawer(),
@@ -87,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // New Header Implementation
+              // Header (menu, avatar, greeting, email)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 child: Column(
@@ -246,30 +251,64 @@ class _HomeScreenState extends State<HomeScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
-              StatsSection(
-                taskController: taskController,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.only(left: 16, bottom: 8),
-                child: Text(
-                  AppStrings.task,
-                  style: AppStyles.sectionTitleStyle.copyWith(
-                    color: Colors.white,
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('users')
+                              .where('isOnline', isEqualTo: true)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            int onlineUsersCount = 0;
+                            if (snapshot.hasData) {
+                              onlineUsersCount = snapshot.data!.docs.length;
+                            }
+                            return UserDashboardCardsWidget(
+                              assignedTasksToday: _assignedTasksToday,
+                              onlineUsersCount: onlineUsersCount,
+                              onAssignedTasksTap: () {
+                                // TODO: Navigate to assigned tasks or show details
+                              },
+                              onOnlineUsersTap: () {
+                                Get.toNamed('/all-users-chat');
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      StatsSection(
+                        taskController: taskController,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 18),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, bottom: 8),
+                        child: Text(
+                          AppStrings.task,
+                          style: AppStyles.sectionTitleStyle.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      // TasksSection is already expanded in its own widget
+                      TasksSection(
+                        tabController: _tabController,
+                        authController: authController,
+                        taskController: taskController,
+                        isDark: isDark,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              Expanded(
-                child: TasksSection(
-                  tabController: _tabController,
-                  authController: authController,
-                  taskController: taskController,
-                  isDark: isDark,
-                ),
-              ),
-              // Add UserNavBar at the bottom
+              // UserNavBar at the bottom, outside scrollable area
               UserNavBar(
                 currentIndex: 0, // Home screen is index 0
               ),
