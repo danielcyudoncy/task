@@ -1,16 +1,17 @@
 // widgets/news/news_sources_carousel.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:task/utils/constants/app_colors.dart';
-import 'dart:async';
 
 class NewsSourcesCarousel extends StatefulWidget {
   final ColorScheme colorScheme;
-  
+
   const NewsSourcesCarousel({super.key, required this.colorScheme});
-  
+
   @override
   State<NewsSourcesCarousel> createState() => _NewsSourcesCarouselState();
 }
@@ -19,57 +20,6 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
   Timer? _timer;
-
-  final List<Map<String, dynamic>> _newsSources = [
-    {
-      'name': 'BBC News',
-      'url': 'https://www.bbc.com/news',
-      'logo': 'BBC',
-      'color': const Color(0xFFBB1919),
-      'description': 'British Broadcasting Corporation',
-      'imagePath': 'assets/images/tv-logos/BBC News-01.png',
-    },
-    {
-      'name': 'CNN',
-      'url': 'https://www.cnn.com',
-      'logo': 'CNN',
-      'color': const Color(0xFFCC0000),
-      'description': 'Cable News Network',
-      'imagePath': 'assets/images/tv-logos/cnn.png',
-    },
-    {
-      'name': 'Al Jazeera',
-      'url': 'https://www.aljazeera.com',
-      'logo': 'AJ',
-      'color': const Color(0xFF005F56),
-      'description': 'Al Jazeera English',
-      'imagePath': 'assets/images/tv-logos/aljazeera.png',
-    },
-    {
-      'name': 'Reuters',
-      'url': 'https://www.reuters.com',
-      'logo': 'R',
-      'color': const Color(0xFFD32F2F),
-      'description': 'Reuters News Agency',
-      'imagePath': 'assets/images/tv-logos/reuters.png',
-    },
-    {
-      'name': 'Newsroom Africa',
-      'url': 'https://www.newsroomafrica.com',
-      'logo': 'NA',
-      'color': const Color(0xFF1976D2),
-      'description': 'African News Network',
-      'imagePath': 'assets/images/tv-logos/newsroom_africa.png',
-    },
-    {
-      'name': 'TVC News',
-      'url': 'https://www.tvcnews.tv',
-      'logo': 'TVC',
-      'color': const Color(0xFFE65100),
-      'description': 'Television Continental',
-      'imagePath': 'assets/images/tv-logos/tvcnews.jpg',
-    },
-  ];
 
   @override
   void initState() {
@@ -87,7 +37,7 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
   void _startAutoScroll() {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_pageController.hasClients) {
-        if (_currentIndex < _newsSources.length - 1) {
+        if (_currentIndex < 5) {
           _currentIndex++;
         } else {
           _currentIndex = 0;
@@ -121,7 +71,6 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Header
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(
@@ -144,14 +93,14 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(6.r),
                 ),
                 child: Text(
                   'Tap to Visit',
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: AppColors.primaryColor,
+                    color: AppColors.white,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -160,36 +109,95 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
           ),
         ),
         SizedBox(height: 12.h),
-        // Carousel
         Expanded(
-          child: PageView.builder(
+          child: PageView(
             controller: _pageController,
             onPageChanged: (index) {
               setState(() {
                 _currentIndex = index;
               });
             },
-            itemCount: _newsSources.length,
-            itemBuilder: (context, index) {
-              final source = _newsSources[index];
-              return Container(
-                margin: EdgeInsets.symmetric(horizontal: 4.w),
-                width: MediaQuery.of(context).size.width - 32.w,
-                child: NewsSourceCard(
-                  source: source,
-                  isActive: index == _currentIndex,
-                  onTap: () => _onSourceTap(source['url']),
-                ),
-              );
-            },
+            children: [
+              NewsSourceCard(
+                source: const {
+                  'name': 'BBC News',
+                  'url': 'https://www.bbc.com/news',
+                  'logo': 'BBC',
+                  'color': Color(0xFFBB1919),
+                  'description': 'British Broadcasting Corporation',
+                  'imagePath': 'assets/images/tv-logos/BBC News-01.png',
+                },
+                isActive: _currentIndex == 0,
+                onTap: () => _onSourceTap('https://www.bbc.com/news'),
+              ),
+              NewsSourceCard(
+                source: const {
+                  'name': 'CNN',
+                  'url': 'https://www.cnn.com',
+                  'logo': 'CNN',
+                  'color': Color(0xFFCC0000),
+                  'description': 'Cable News Network',
+                  'imagePath': 'assets/images/tv-logos/cnn.png',
+                },
+                isActive: _currentIndex == 1,
+                onTap: () => _onSourceTap('https://www.cnn.com'),
+              ),
+              NewsSourceCard(
+                source: const {
+                  'name': 'Al Jazeera',
+                  'url': 'https://www.aljazeera.com',
+                  'logo': 'AJ',
+                  'color': Color(0xFFD4AF37),
+                  'description': 'Al Jazeera English',
+                  'imagePath': 'assets/images/tv-logos/aljazeera.png',
+                },
+                isActive: _currentIndex == 2,
+                onTap: () => _onSourceTap('https://www.aljazeera.com'),
+              ),
+              NewsSourceCard(
+                source: const {
+                  'name': 'Reuters',
+                  'url': 'https://www.reuters.com',
+                  'logo': 'R',
+                  'color': Color(0xFFD32F2F),
+                  'description': 'Reuters News Agency',
+                  'imagePath': 'assets/images/tv-logos/reuters.png',
+                },
+                isActive: _currentIndex == 3,
+                onTap: () => _onSourceTap('https://www.reuters.com'),
+              ),
+              NewsSourceCard(
+                source: const {
+                  'name': 'africanews',
+                  'url': 'https://www.africanews.com/',
+                  'logo': 'NA',
+                  'color': Color(0xFFFFD100),
+                  'description': 'Your Voice',
+                  'imagePath': 'assets/images/tv-logos/newsroom_africa.png',
+                },
+                isActive: _currentIndex == 4,
+                onTap: () => _onSourceTap('https://www.africanews.com/'),
+              ),
+              NewsSourceCard(
+                source: const {
+                  'name': 'TVC News',
+                  'url': 'https://www.tvcnews.tv',
+                  'logo': 'TVC',
+                  'color': Color(0xFFE65100),
+                  'description': 'Television Continental',
+                  'imagePath': 'assets/images/tv-logos/tvcnews.jpg',
+                },
+                isActive: _currentIndex == 5,
+                onTap: () => _onSourceTap('https://www.tvcnews.tv'),
+              ),
+            ],
           ),
         ),
-        // Page indicators
         SizedBox(height: 8.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            _newsSources.length,
+            6,
             (index) => Container(
               width: 8.w,
               height: 8.h,
@@ -218,6 +226,8 @@ class NewsSourceCard extends StatelessWidget {
     required this.source,
     required this.isActive,
     required this.onTap,
+    
+    
   });
 
   @override
@@ -227,20 +237,21 @@ class NewsSourceCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
+        margin: EdgeInsets.symmetric(horizontal: 4.w),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               source['color'],
-              source['color'].withOpacity(0.8),
+              source['color'].withAlpha((0.8 * 255).round()),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: source['color'].withOpacity(0.3),
+                    color: source['color'].withAlpha((0.3 * 255).round()),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -251,7 +262,6 @@ class NewsSourceCard extends StatelessWidget {
           padding: EdgeInsets.all(12.w),
           child: Row(
             children: [
-              // Logo
               Container(
                 width: 50.w,
                 height: 50.w,
@@ -280,7 +290,6 @@ class NewsSourceCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 12.w),
-              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,7 +310,7 @@ class NewsSourceCard extends StatelessWidget {
                       source['description'],
                       style: TextStyle(
                         fontSize: 11.sp,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withAlpha((0.8 * 255).round()),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -311,7 +320,7 @@ class NewsSourceCard extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.touch_app,
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withAlpha((0.8 * 255).round()),
                           size: 12.sp,
                         ),
                         SizedBox(width: 4.w),
@@ -319,7 +328,7 @@ class NewsSourceCard extends StatelessWidget {
                           'Tap to visit',
                           style: TextStyle(
                             fontSize: 10.sp,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withAlpha((0.8 * 255).round()),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -328,10 +337,9 @@ class NewsSourceCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Arrow icon
               Icon(
                 Icons.open_in_new,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withAlpha((0.8 * 255).round()),
                 size: 18.sp,
               ),
             ],
@@ -340,4 +348,4 @@ class NewsSourceCard extends StatelessWidget {
       ),
     );
   }
-} 
+}
