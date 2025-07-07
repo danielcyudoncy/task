@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/notification_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
@@ -492,6 +493,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               color:
                   isDark ? const Color(0xFF181B2A)
                   : Theme.of(context).colorScheme.primary,
+                  
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,14 +537,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               fontWeight: FontWeight.w700,
                               fontFamily: 'raleway',
                               fontSize: 16.sp,
-                              color: Colors.white,
+                              color: AppColors.white,
                             ),
                           ),
                         ),
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.grey[900] : Colors.white,
+                            color: isDark ? Colors.grey[900] : AppColors.white,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(26),
                               topRight: Radius.circular(26),
@@ -563,7 +565,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         height: 34.h,
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? Colors.white
+                                              ? AppColors.white
                                               : const Color(0xFF3739B7),
                                           shape: BoxShape.circle,
                                         ),
@@ -572,7 +574,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                           size: 22.sp,
                                           color: isDark
                                               ? const Color(0xFF3739B7)
-                                              : Colors.white,
+                                              : AppColors.white,
                                         ),
                                       ),
                                     ),
@@ -582,7 +584,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               TabBar(
                                 controller: _tabController,
                                 indicatorColor: isDark
-                                    ? Colors.white
+                                    ? AppColors.white
                                     : const Color(0xFF3739B7),
                                 labelColor: isDark
                                     ? Colors.white

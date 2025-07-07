@@ -73,7 +73,7 @@ class DashboardCardsWidget extends StatelessWidget {
               value: newsCount.toString(),
               icon: Icons.newspaper_outlined,
               onTap: onNewsFeedTap,
-              color: appColors.accent1!, // Using your new purple color
+              color: appColors.warning!, // Using your new purple color
             ),
           ],
         ),

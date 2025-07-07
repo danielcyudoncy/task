@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/utils/constants/app_colors.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
@@ -61,7 +62,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       ? [Colors.grey[900]!, Colors.grey[800]!]
                       : [
                           Theme.of(context).primaryColor,
-                          Colors.lightBlueAccent
+                          AppColors.primaryColor,
                         ],
                 ),
               ),
@@ -390,7 +391,7 @@ class ConcentricCirclePainter extends CustomPainter {
   void paint(Canvas c, Size s) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 2.5;
     final radii = [60.0, 100.0, 140.0];
     final alphas = [0.4, 0.25, 0.12];
     for (int i = 0; i < radii.length; i++) {

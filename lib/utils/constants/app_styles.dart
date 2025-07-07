@@ -12,7 +12,7 @@ class AppStyles {
     colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
   );
 
-  static const cardTitleStyle = TextStyle(fontSize: 18, color: Colors.white);
+  static const cardTitleStyle = TextStyle(fontSize: 18, color: Color(0xFFDBDBDB));
   static const cardValueStyle = TextStyle(
     color: Colors.white,
     fontSize: 18,
