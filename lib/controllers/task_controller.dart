@@ -574,27 +574,41 @@ class TaskController extends GetxController {
   }
 
   // --- TASK CRUD ---
-  Future<void> createTask(
+ Future<void> createTask(
     String title,
     String description, {
     String priority = 'Normal',
     DateTime? dueDate,
   }) async {
-    print('createTask: started');
+    debugPrint('createTask: started');
     try {
-      isLoading(true);
-      print('createTask: isLoading set to true');
+      // Check authentication
       if (authController.auth.currentUser == null) {
-        print('createTask: ERROR - user is not authenticated');
+        debugPrint('createTask: ERROR - user is not authenticated');
         throw Exception('User not authenticated');
       }
+
+      // Get current user info
       String userId = authController.auth.currentUser!.uid;
-      print('createTask: userId = ' + userId);
-      await _firebaseService.createTask({
+      String userRole = authController.userRole.value;
+      debugPrint('createTask: userId = $userId, role = $userRole');
+
+      // Check if user has permission to create tasks
+      if (!authController.isAdmin.value &&
+          !authController.canCreateTasks.value) {
+        debugPrint('createTask: ERROR - user does not have create permission');
+        throw Exception('You do not have permission to create tasks');
+      }
+
+      isLoading(true);
+      debugPrint('createTask: creating task in Firebase');
+
+      // Create task data
+      final taskData = {
         "title": title,
         "description": description,
         "createdBy": userId,
-        "creatorName": authController.fullName.value,
+        "createdByName": authController.fullName.value,
         "creatorAvatar": authController.profilePic.value,
         "assignedReporterId": null,
         "assignedReporterName": null,
@@ -605,15 +619,27 @@ class TaskController extends GetxController {
         "dueDate": dueDate?.toIso8601String(),
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
-      });
-      print('createTask: Firebase call complete');
-      _safeSnackbar("Success", "Task created successfully");
+      };
+
+      // Add task to Firestore
+      await _firebaseService.createTask(taskData);
+      debugPrint('createTask: Firebase call complete');
+
+      // Update local state
+      tasks.refresh();
       calculateNewTaskCount();
+
+      // Show success message
+      _safeSnackbar("Success", "Task created successfully");
+
+      // Return success
+      return;
     } catch (e) {
-      print('createTask: error: ' + e.toString());
-      _safeSnackbar("Error", "Failed to create task: "+e.toString());
+      debugPrint('createTask: error: $e');
+      _safeSnackbar("Error", "Failed to create task: ${e.toString()}");
+      rethrow; // Re-throw to let the UI know creation failed
     } finally {
-      print('createTask: finally block');
+      debugPrint('createTask: finally block - resetting loading state');
       isLoading(false);
     }
   }

@@ -45,6 +45,9 @@ class AuthController extends GetxController {
   var userRole = ''.obs;
   var isProfileComplete = false.obs;
   final lastActivity = DateTime.now().obs;
+  final isAdmin = false.obs;
+  final canCreateTasks = false.obs;
+  
 
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
@@ -77,6 +80,12 @@ class AuthController extends GetxController {
   void markAppAsReady() {
     _isAppReady = true;
     debugPrint("AuthController: App marked as ready for snackbars");
+  }
+
+  void setUserRole(String role) {
+    userRole.value = role;
+    isAdmin.value = role == 'Admin';
+    canCreateTasks.value = ['Admin', 'Manager', 'Editor'].contains(role);
   }
 
   @override

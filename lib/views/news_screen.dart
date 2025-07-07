@@ -1,5 +1,6 @@
 // views/news_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../service/news_service.dart';
@@ -119,11 +120,12 @@ class _NewsScreenState extends State<NewsScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                primaryColor,
-                primaryColor.withOpacity(0.8),
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.primary..withValues(alpha: 204),
               ],
             ),
           ),
+
           child: Column(
             children: [
               // Custom App Bar
@@ -136,10 +138,10 @@ class _NewsScreenState extends State<NewsScreen> {
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                     Text(
                       'News',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -165,7 +167,7 @@ class _NewsScreenState extends State<NewsScreen> {
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: TextField(
                           controller: _searchController,
@@ -198,7 +200,7 @@ class _NewsScreenState extends State<NewsScreen> {
                             children: [
                               // News Sources Carousel using existing widget
                               Container(
-                                height: 140,
+                                height: 140.h,
                                 margin: const EdgeInsets.symmetric(horizontal: 16),
                                 child: NewsSourcesCarousel(colorScheme: theme.colorScheme),
                               ),
