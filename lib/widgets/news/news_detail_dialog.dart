@@ -56,7 +56,8 @@ class NewsDetailDialog extends StatelessWidget {
               ),
             ),
             // Content
-            Expanded(
+            Flexible(
+              fit: FlexFit.loose,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(16.w),
                 child: Column(

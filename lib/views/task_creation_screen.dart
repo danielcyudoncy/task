@@ -167,7 +167,6 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
         width: double.infinity,
         height: double.infinity,
         color: Theme.of(context).primaryColor,
-        
         padding:
             EdgeInsets.all(isTablet ? AppSizes.medium * 2 : AppSizes.medium),
         child: Center(
@@ -388,46 +387,25 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                       // Submit Button
                       SizedBox(
                         width: double.infinity,
-                        child: Obx(() {
-                          // Add safety check to ensure controller is registered
-                          if (!Get.isRegistered<TaskController>()) {
-                            return ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: AppSizes.small,
-                                ),
-                                backgroundColor: Theme.of(context).colorScheme.primary,
-                              ),
-                              onPressed: _createTask,
-                              child: Text(
-                                "Save",
-                                style: AppStyles.cardTitleStyle.copyWith(
-                                  color: Colors.white,
-                                  fontSize: AppSizes.fontNormal,
-                                ),
-                              ),
-                            );
-                          }
-                          
-                          return taskController.isLoading.value
-                              ? const Center(child: CircularProgressIndicator())
-                              : ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: AppSizes.small,
-                                    ),
-                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                        child: Obx(() => taskController.isLoading.value
+                            ? const Center(child: CircularProgressIndicator())
+                            : ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: AppSizes.small,
                                   ),
-                                  onPressed: _createTask,
-                                  child: Text(
-                                    "Save",
-                                    style: AppStyles.cardTitleStyle.copyWith(
-                                      color: Colors.white,
-                                      fontSize: AppSizes.fontNormal,
-                                    ),
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                ),
+                                onPressed: _createTask,
+                                child: Text(
+                                  "Save",
+                                  style: AppStyles.cardTitleStyle.copyWith(
+                                    color: Colors.white,
+                                    fontSize: AppSizes.fontNormal,
                                   ),
-                                );
-                        }),
+                                ),
+                              )),
                       ),
                     ],
                   ),

@@ -11,6 +11,7 @@ import 'package:task/service/firebase_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
+import 'package:task/widgets/save_success_screen.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
@@ -299,8 +300,8 @@ class AuthController extends GetxController {
       debugPrint("AuthController: User role: ${userRole.value}");
       debugPrint("AuthController: Profile complete: ${isProfileComplete.value}");
 
-      // Navigate based on role after profile completion
-      navigateBasedOnRole();
+      // Show SaveSuccessScreen after profile completion
+      Get.toNamed('/save-success');
     } catch (e) {
       debugPrint("AuthController: Profile completion error: $e");
       _safeSnackbar("Error", "Failed to complete profile: ${e.toString()}");

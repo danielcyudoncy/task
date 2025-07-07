@@ -290,7 +290,7 @@ class ProfileScreen extends StatelessWidget {
                               style: TextStyle(fontSize: 18, color: Colors.white)),
                           onPressed: () {
                             Get.find<SettingsController>().triggerFeedback();
-                            authController.signOut();
+                            authController.logout();
                           },
                         ),
                       ),
