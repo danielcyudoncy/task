@@ -33,9 +33,7 @@ class HeaderWidget extends StatelessWidget {
               children: [
                 // Avatar
                 Obx(() {
-                  if (!Get.isRegistered<AuthController>() ||
-                      authController.profilePic == null ||
-                      authController.fullName == null) {
+                  if (!Get.isRegistered<AuthController>()) {
                     return CircleAvatar(
                       radius: 20.sp,
                       backgroundColor: Colors.white,
