@@ -147,26 +147,37 @@ class _HomeScreenState extends State<HomeScreen>
                                     final profilePic = authController.profilePic.value;
                                     final fullName = authController.fullName.value;
                                     debugPrint('HomeScreen: Using profilePic for user: \\${authController.currentUser?.uid} pic: \\$profilePic');
-                                    return CircleAvatar(
-                                      radius: 20.sp,
-                                      backgroundColor: Colors.white,
-                                      backgroundImage: profilePic.isNotEmpty
-                                          ? NetworkImage(profilePic)
-                                          : null,
-                                      child: profilePic.isEmpty
-                                          ? Text(
-                                              fullName.isNotEmpty
-                                                  ? fullName[0].toUpperCase()
-                                                  : '?',
-                                              style: TextStyle(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .primary,
-                                                fontSize: 20.sp,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            )
-                                          : null,
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Theme.of(context).colorScheme.onPrimary
+                                              : Theme.of(context).colorScheme.primary,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 20.sp,
+                                        backgroundColor: Colors.white,
+                                        backgroundImage: profilePic.isNotEmpty
+                                            ? NetworkImage(profilePic)
+                                            : null,
+                                        child: profilePic.isEmpty
+                                            ? Text(
+                                                fullName.isNotEmpty
+                                                    ? fullName[0].toUpperCase()
+                                                    : '?',
+                                                style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                                  fontSize: 20.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
                                     );
                                   }),
                                   // Notification Badge

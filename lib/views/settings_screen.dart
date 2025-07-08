@@ -206,8 +206,8 @@ class SettingsScreen extends StatelessWidget {
         trailing: Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Theme.of(context).colorScheme.onPrimary,
-          activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          activeColor: Colors.white,
+          activeTrackColor: Theme.of(context).colorScheme.secondary,
           inactiveThumbColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
           inactiveTrackColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.24),
         ),

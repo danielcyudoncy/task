@@ -359,7 +359,7 @@ class SignUpScreen extends StatelessWidget {
                                     child: Text(
                                       "Sign In",
                                       style: textTheme.bodyMedium?.copyWith(
-                                        color: colorScheme.primary,
+                                        color: colorScheme.secondary,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'raleway',
                                       ),

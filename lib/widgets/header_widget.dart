@@ -34,38 +34,60 @@ class HeaderWidget extends StatelessWidget {
                 // Avatar
                 Obx(() {
                   if (!Get.isRegistered<AuthController>()) {
-                    return CircleAvatar(
-                      radius: 20.sp,
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        '?',
-                        style: TextStyle(
-                          color: Theme.of(context).primaryColor,
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.bold,
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : Theme.of(context).primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 20.sp,
+                        backgroundColor: Colors.white,
+                        child: Text(
+                          '?',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     );
                   }
-                  return CircleAvatar(
-                    radius: 20.sp,
-                    backgroundColor: Colors.white,
-                    backgroundImage:
-                        authController.profilePic.value.isNotEmpty
-                            ? NetworkImage(authController.profilePic.value)
-                            : null,
-                    child: authController.profilePic.value.isEmpty
-                        ? Text(
-                            authController.fullName.value.isNotEmpty
-                                ? authController.fullName.value[0].toUpperCase()
-                                : '?',
-                            style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
+                  return Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 20.sp,
+                      backgroundColor: Colors.white,
+                      backgroundImage:
+                          authController.profilePic.value.isNotEmpty
+                              ? NetworkImage(authController.profilePic.value)
+                              : null,
+                      child: authController.profilePic.value.isEmpty
+                          ? Text(
+                              authController.fullName.value.isNotEmpty
+                                  ? authController.fullName.value[0].toUpperCase()
+                                  : '?',
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
                   );
                 }),
 

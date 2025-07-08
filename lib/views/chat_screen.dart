@@ -335,23 +335,32 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white,
-              backgroundImage: widget.receiverAvatar.isNotEmpty
-                  ? NetworkImage(widget.receiverAvatar)
-                  : null,
-              child: widget.receiverAvatar.isEmpty
-                  ? Text(
-                      widget.receiverName.isNotEmpty
-                          ? widget.receiverName[0].toUpperCase()
-                          : '?',
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : null,
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDarkMode ? colorScheme.onPrimary : colorScheme.primary,
+                  width: 2,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.white,
+                backgroundImage: widget.receiverAvatar.isNotEmpty
+                    ? NetworkImage(widget.receiverAvatar)
+                    : null,
+                child: widget.receiverAvatar.isEmpty
+                    ? Text(
+                        widget.receiverName.isNotEmpty
+                            ? widget.receiverName[0].toUpperCase()
+                            : '?',
+                        style: TextStyle(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

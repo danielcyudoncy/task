@@ -144,15 +144,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // Email Field
                                 TextFormField(
                                   controller: _emailController,
-                                  style: textTheme.bodyMedium,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurface,
+                                  ),
                                   decoration: InputDecoration(
                                     labelText: "Email",
-                                    labelStyle: textTheme.bodyMedium,
-                                    hintStyle: textTheme.bodyMedium,
+                                    labelStyle: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    hintStyle: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                                     prefixIcon: Icon(Icons.email,
-                                        color: colorScheme.onSurface),
+                                        color: colorScheme.onSurfaceVariant),
                                     filled: true,
-                                    fillColor: colorScheme.surface,
+                                    fillColor: Theme.of(context).brightness == Brightness.light
+                                        ? Colors.grey[200]
+                                        : Colors.grey[800],
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
@@ -173,27 +181,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 // Password Field
                                 Obx(() {
-                                  // Add safety check to ensure controller is registered
                                   if (!Get.isRegistered<AuthController>()) {
                                     return TextFormField(
                                       controller: _passwordController,
                                       obscureText: true,
-                                      style: textTheme.bodyMedium,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurface,
+                                      ),
                                       decoration: InputDecoration(
                                         labelText: "Password",
-                                        labelStyle: textTheme.bodyMedium,
-                                        hintStyle: textTheme.bodyMedium,
+                                        labelStyle: textTheme.bodyMedium?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                        hintStyle: textTheme.bodyMedium?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
                                         prefixIcon: Icon(Icons.lock,
-                                            color: colorScheme.onSurface),
+                                            color: colorScheme.onSurfaceVariant),
                                         suffixIcon: IconButton(
                                           icon: Icon(
                                             Icons.visibility_off,
-                                            color: colorScheme.onSurface,
+                                            color: colorScheme.onSurfaceVariant,
                                           ),
                                           onPressed: () {},
                                         ),
                                         filled: true,
-                                        fillColor: colorScheme.surface,
+                                        fillColor: Theme.of(context).brightness == Brightness.light
+                                            ? Colors.grey[200]
+                                            : Colors.grey[800],
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(12),
                                           borderSide: BorderSide.none,
@@ -214,19 +229,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                   return TextFormField(
                                     controller: _passwordController,
                                     obscureText: _auth.isLoginPasswordHidden.value,
-                                    style: textTheme.bodyMedium,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurface,
+                                    ),
                                     decoration: InputDecoration(
                                       labelText: "Password",
-                                      labelStyle: textTheme.bodyMedium,
-                                      hintStyle: textTheme.bodyMedium,
+                                      labelStyle: textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      hintStyle: textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
                                       prefixIcon: Icon(Icons.lock,
-                                          color: colorScheme.onSurface),
+                                          color: colorScheme.onSurfaceVariant),
                                       suffixIcon: IconButton(
                                         icon: Icon(
                                           _auth.isLoginPasswordHidden.value
                                               ? Icons.visibility_off
                                               : Icons.visibility,
-                                          color: colorScheme.onSurface,
+                                          color: colorScheme.onSurfaceVariant,
                                         ),
                                         onPressed: () {
                                           Get.find<SettingsController>().triggerFeedback();
@@ -235,7 +256,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         },
                                       ),
                                       filled: true,
-                                      fillColor: colorScheme.surface,
+                                      fillColor: Theme.of(context).brightness == Brightness.light
+                                          ? Colors.grey[200]
+                                          : Colors.grey[800],
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide.none,
@@ -257,7 +280,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 // Sign In Button
                                 Obx(() {
-                                  // Add safety check to ensure controller is registered
                                   if (!Get.isRegistered<AuthController>()) {
                                     return ElevatedButton(
                                       style: ElevatedButton.styleFrom(
@@ -380,7 +402,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: Text(
                                         "Create Account",
                                         style: textTheme.bodyMedium?.copyWith(
-                                          color: AppColors.saveColor,
+                                          color: colorScheme.secondary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
