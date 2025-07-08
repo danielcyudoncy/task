@@ -29,6 +29,12 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   final List<String> _priorities = ['Low', 'Medium', 'High', 'Normal'];
 
   @override
+  void initState() {
+    super.initState();
+    taskController.isLoading.value = false;
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
@@ -84,8 +90,10 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   }
 
   Future<void> _createTask() async {
+    debugPrint('Save button pressed');
     AppDevices.hideKeyboard(context);
     if (_formKey.currentState?.validate() ?? false) {
+      debugPrint('Form valid, calling createTask');
       try {
         await taskController.createTask(
           _titleController.text.trim(),
@@ -101,7 +109,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                 )
               : null,
         );
-
+        debugPrint('createTask completed successfully');
         // Clear form on success
         _titleController.clear();
         _descriptionController.clear();
@@ -112,12 +120,14 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           _selectedDate = null;
           _selectedTime = null;
         });
-
         // Navigate back
         Get.back();
       } catch (e) {
+        debugPrint('Error in _createTask: $e');
         // Error is already shown by the controller
       }
+    } else {
+      debugPrint('Form invalid');
     }
   }
 

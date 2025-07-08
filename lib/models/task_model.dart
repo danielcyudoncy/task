@@ -13,6 +13,9 @@ class Task {
   final Timestamp timestamp;
   final String? assignedTo; 
 
+  /// Timestamp for when the task was assigned to a user (for daily tracking)
+  final Timestamp? assignmentTimestamp;
+
   // New fields for robust filtering & permission checks
   final String createdById;
   final String? assignedReporterId;
@@ -32,6 +35,7 @@ class Task {
     required this.createdById,
     this.assignedReporterId,
     this.assignedCameramanId,
+    this.assignmentTimestamp,
   });
 
   // Factory for Firestore maps
@@ -50,6 +54,7 @@ class Task {
       assignedTo: map['assignedTo'],
       assignedReporterId: map['assignedReporter'],
       assignedCameramanId: map['assignedCameraman'],
+      assignmentTimestamp: map['assignmentTimestamp'] ?? map['assignedAt'],
     );
   }
 
@@ -67,6 +72,7 @@ class Task {
     String? createdById,
     String? assignedReporterId,
     String? assignedCameramanId,
+    Timestamp? assignmentTimestamp,
   }) {
     return Task(
       taskId: taskId ?? this.taskId,
@@ -81,6 +87,7 @@ class Task {
       createdById: createdById ?? this.createdById,
       assignedReporterId: assignedReporterId ?? this.assignedReporterId,
       assignedCameramanId: assignedCameramanId ?? this.assignedCameramanId,
+      assignmentTimestamp: assignmentTimestamp ?? this.assignmentTimestamp,
     );
   }
 
@@ -107,6 +114,7 @@ class Task {
       'status': status,
       'comments': comments,
       'timestamp': timestamp,
+      'assignmentTimestamp': assignmentTimestamp,
     };
   }
 }

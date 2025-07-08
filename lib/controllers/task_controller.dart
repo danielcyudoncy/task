@@ -283,6 +283,7 @@ class TaskController extends GetxController {
         updateData['assignedReporterId'] = reporterId;
         updateData['assignedReporterName'] = reporterName;
         debugPrint("✅ Setting reporter: $reporterId");
+        updateData['assignmentTimestamp'] = FieldValue.serverTimestamp();
       } else {
         updateData['assignedReporterId'] = null;
         updateData['assignedReporterName'] = null;
@@ -293,6 +294,7 @@ class TaskController extends GetxController {
         updateData['assignedCameramanId'] = cameramanId;
         updateData['assignedCameramanName'] = cameramanName;
         debugPrint("✅ Setting cameraman: $cameramanId");
+        updateData['assignmentTimestamp'] = FieldValue.serverTimestamp();
       } else {
         updateData['assignedCameramanId'] = null;
         updateData['assignedCameramanName'] = null;
@@ -601,6 +603,7 @@ class TaskController extends GetxController {
       }
 
       isLoading(true);
+      debugPrint('createTask: isLoading set to true');
       debugPrint('createTask: creating task in Firebase');
 
       // Create task data
@@ -621,22 +624,27 @@ class TaskController extends GetxController {
         "timestamp": FieldValue.serverTimestamp(),
       };
 
-      // Add task to Firestore
+      debugPrint('createTask: taskData = $taskData');
+      debugPrint('createTask: calling _firebaseService.createTask');
       await _firebaseService.createTask(taskData);
       debugPrint('createTask: Firebase call complete');
 
       // Update local state
+      debugPrint('createTask: refreshing tasks');
       tasks.refresh();
+      debugPrint('createTask: calculating new task count');
       calculateNewTaskCount();
 
       // Show success message
+      debugPrint('createTask: showing success snackbar');
       _safeSnackbar("Success", "Task created successfully");
 
       // Return success
+      debugPrint('createTask: finished successfully');
       return;
     } catch (e) {
       debugPrint('createTask: error: $e');
-      _safeSnackbar("Error", "Failed to create task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to create task: "+e.toString());
       rethrow; // Re-throw to let the UI know creation failed
     } finally {
       debugPrint('createTask: finally block - resetting loading state');
@@ -925,5 +933,28 @@ class TaskController extends GetxController {
     } catch (e) {
       _safeSnackbar("Error", "Failed to add comment: ${e.toString()}");
     }
+  }
+
+  /// Get the count of all tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId)
+  Future<int> getAssignedTasksCountForUser(String userId) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedTo', isEqualTo: userId)
+        .get();
+    final reporterSnapshot = await FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedReporterId', isEqualTo: userId)
+        .get();
+    final cameramanSnapshot = await FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedCameramanId', isEqualTo: userId)
+        .get();
+
+    // Use a set to avoid double-counting tasks assigned in multiple ways
+    final taskIds = <String>{};
+    taskIds.addAll(snapshot.docs.map((doc) => doc.id));
+    taskIds.addAll(reporterSnapshot.docs.map((doc) => doc.id));
+    taskIds.addAll(cameramanSnapshot.docs.map((doc) => doc.id));
+    return taskIds.length;
   }
 }
