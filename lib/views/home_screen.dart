@@ -269,9 +269,10 @@ class _HomeScreenState extends State<HomeScreen>
                               if (snapshot.hasData) {
                                 onlineUsersCount = snapshot.data!.docs.length;
                               }
-                              return FutureBuilder<int>(
-                                future: taskController.getAssignedTasksCountForUser(userId),
+                              return StreamBuilder<int>(
+                                stream: taskController.assignedTasksCountStream(userId),
                                 builder: (context, assignedSnapshot) {
+                                  debugPrint('Assigned tasks stream (all statuses): \\${assignedSnapshot.data}');
                                   final assignedTasksToday = assignedSnapshot.data ?? 0;
                                   return UserDashboardCardsWidget(
                                     assignedTasksToday: assignedTasksToday,

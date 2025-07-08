@@ -9,6 +9,7 @@ import '../models/task_model.dart';
 import '../controllers/auth_controller.dart';
 import '../service/firebase_service.dart';
 import '../utils/snackbar_utils.dart';
+import 'package:rxdart/rxdart.dart' as rx;
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
@@ -544,17 +545,13 @@ class TaskController extends GetxController {
           }
           
           // Role-based filtering
-          if (userRole == "Reporter") {
+          if (userRole == "Reporter" || userRole == "Cameraman") {
             updatedTasks = updatedTasks
                 .where((task) =>
+                    (task.createdById == userId) ||
+                    (task.assignedTo == userId) ||
                     (task.assignedReporterId == userId) ||
-                    (task.createdById == userId))
-                .toList();
-          } else if (userRole == "Cameraman") {
-            updatedTasks = updatedTasks
-                .where((task) =>
-                    (task.assignedCameramanId == userId) ||
-                    (task.createdById == userId))
+                    (task.assignedCameramanId == userId))
                 .toList();
           }
           
@@ -956,5 +953,34 @@ class TaskController extends GetxController {
     taskIds.addAll(reporterSnapshot.docs.map((doc) => doc.id));
     taskIds.addAll(cameramanSnapshot.docs.map((doc) => doc.id));
     return taskIds.length;
+  }
+
+  /// Stream of all non-completed tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId)
+  Stream<int> assignedTasksCountStream(String userId) {
+    final assignedToStream = FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedTo', isEqualTo: userId)
+        .snapshots();
+    final reporterStream = FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedReporterId', isEqualTo: userId)
+        .snapshots();
+    final cameramanStream = FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedCameramanId', isEqualTo: userId)
+        .snapshots();
+
+    return rx.CombineLatestStream.combine3<QuerySnapshot, QuerySnapshot, QuerySnapshot, int>(
+      assignedToStream,
+      reporterStream,
+      cameramanStream,
+      (a, b, c) {
+        final taskIds = <String>{};
+        taskIds.addAll(a.docs.map((doc) => doc.id));
+        taskIds.addAll(b.docs.map((doc) => doc.id));
+        taskIds.addAll(c.docs.map((doc) => doc.id));
+        return taskIds.length;
+      },
+    );
   }
 }

@@ -72,17 +72,58 @@ class TaskCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: IconButton(
-                  icon:  Icon(Icons.edit_note_rounded,
-                      color: textColor, size: 22.sp),
-                  onPressed: () {
-                    Get.find<SettingsController>().triggerFeedback();
-                    TaskActions.editTask(context, task);
-                  },
-                  tooltip: "Edit Task",
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (!isCompleted) ...[
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(40, 36),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text("Complete", style: TextStyle(fontSize: 13)),
+                      onPressed: () {
+                        TaskActions.completeTask(task);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(40, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete, size: 18),
+                    label: const Text("Delete", style: TextStyle(fontSize: 13)),
+                    onPressed: () async {
+                      final confirmed = await _showDeleteConfirmation(context);
+                      if (confirmed == true) {
+                        TaskActions.deleteTask(task);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.edit_note_rounded,
+                        color: textColor, size: 22.sp),
+                    onPressed: () {
+                      Get.find<SettingsController>().triggerFeedback();
+                      TaskActions.editTask(context, task);
+                    },
+                    tooltip: "Edit Task",
+                  ),
+                ],
               ),
             ],
           ),
