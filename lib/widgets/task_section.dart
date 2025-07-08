@@ -111,8 +111,10 @@ class TasksSection extends StatelessWidget {
           
           final userId = authController.auth.currentUser?.uid ?? "";
           final tasks = taskController.tasks;
+          for (var t in tasks) {
+            print('DEBUG: Task: \\${t.title}, status: \\${t.status}, createdById: \\${t.createdById}, assignedTo: \\${t.assignedTo}, assignedReporterId: \\${t.assignedReporterId}, assignedCameramanId: \\${t.assignedCameramanId}, userId: \\${userId}');
+          }
           final taskMap = {for (var task in tasks) task.taskId: task};
-
           final notCompletedTasks = taskMap.values.where((t) {
             return (t.status != "Completed") &&
                 (t.createdById == userId ||

@@ -24,7 +24,11 @@ class TaskCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color cardColor =
-        isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
+        isDark
+            ? const Color(0xFF292B3A)
+            : (isCompleted
+                ? const Color(0xFF171FA0)
+                : Theme.of(context).primaryColor);
     const Color textColor = Colors.white;
     const Color subTextColor = Colors.white70;
 

@@ -33,9 +33,20 @@ class _UserCardState extends State<UserCard> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.grey.shade300,
-                  child: Text(_getInitials(widget.user['fullname'])),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : Colors.white,
+                      width: 2,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.grey.shade300,
+                    child: Text(_getInitials(widget.user['fullname'])),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

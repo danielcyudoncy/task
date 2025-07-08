@@ -70,16 +70,26 @@ class ManageUsersDialog extends StatelessWidget {
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                           vertical: 12, horizontal: 20),
-                      leading: CircleAvatar(
-                        radius: 24,
-                        backgroundColor:
-                            isDark ? primaryBlue.withAlpha(128) : primaryBlue.withAlpha(204),
-
-                        child: Text(
-                          userName.isNotEmpty ? userName[0].toUpperCase() : "?",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                      leading: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? theme.colorScheme.onPrimary
+                                : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 24,
+                          backgroundColor:
+                              isDark ? primaryBlue.withAlpha(128) : primaryBlue.withAlpha(204),
+                          child: Text(
+                            userName.isNotEmpty ? userName[0].toUpperCase() : "?",
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),

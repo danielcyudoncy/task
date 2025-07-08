@@ -29,9 +29,12 @@ class ImagePickerWidget extends StatelessWidget {
             return Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: controller.profilePic.value.isEmpty
-                    ? Border.all(color: AppColors.primaryColor, width: 2)
-                    : null,
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.onPrimary
+                      : Colors.white,
+                  width: 2,
+                ),
               ),
               child: CircleAvatar(
                 radius: radius,

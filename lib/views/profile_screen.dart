@@ -90,13 +90,13 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     border: Border.all(
                       color: Theme.of(context).brightness == Brightness.dark
                           ? Theme.of(context).colorScheme.onPrimary
-                          : Theme.of(context).colorScheme.primary,
+                          : Colors.white,
                       width: 2,
                     ),
-                    borderRadius: BorderRadius.circular(18),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
@@ -105,8 +105,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
+                  child: ClipOval(
                     child: profilePicUrl.isNotEmpty
                         ? Image.network(
                             profilePicUrl,
