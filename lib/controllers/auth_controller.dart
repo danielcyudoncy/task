@@ -11,7 +11,6 @@ import 'package:task/service/firebase_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
-import 'package:task/widgets/save_success_screen.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
@@ -85,7 +84,7 @@ class AuthController extends GetxController {
   void setUserRole(String role) {
     userRole.value = role;
     isAdmin.value = role == 'Admin';
-    canCreateTasks.value = ['Admin', 'Manager', 'Editor'].contains(role);
+    canCreateTasks.value = true;
   }
 
   @override
@@ -249,6 +248,7 @@ class AuthController extends GetxController {
           fullName.value = data['fullName'] ?? '';
           profilePic.value = data['photoUrl'] ?? '';
           userRole.value = data['role'] ?? '';
+          setUserRole(userRole.value);
           isProfileComplete.value = data['profileComplete'] ?? false;
 
           userData.assignAll(data);
@@ -302,7 +302,7 @@ class AuthController extends GetxController {
 
       // Update local observables
       fullName.value = fullNameController.text.trim();
-      userRole.value = selectedRole.value;
+      setUserRole(selectedRole.value);
       isProfileComplete.value = true;
 
       debugPrint("AuthController: Profile completed successfully");
@@ -346,12 +346,6 @@ class AuthController extends GetxController {
         Get.offAllNamed("/login");
       }
     });
-  }
-
-  void _handleRoleChange() {
-    // Temporarily disabled to prevent build phase issues
-    // This will be re-enabled once we have a safer navigation mechanism
-    debugPrint("Role change detected but navigation disabled for safety");
   }
 
   void setBuildPhase(bool inBuildPhase) {
@@ -540,7 +534,7 @@ class AuthController extends GetxController {
       });
 
       fullName.value = fullNameController.text.trim();
-      userRole.value = selectedRole.value;
+      setUserRole(selectedRole.value);
       isProfileComplete.value = true;
 
       _safeSnackbar('Success', 'Profile updated successfully');
