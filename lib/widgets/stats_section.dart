@@ -67,7 +67,7 @@ class StatsSection extends StatelessWidget {
                 iconWidget: _buildNewsFeedIcon(),
                 icon: Icons.rss_feed,
                 label: "News Feed",
-                value: "12", // You can replace this with actual news count
+                value: "", // No value shown
                 color: isDark
                     ? const Color(0xFF9FA8DA)
                     : AppColors.secondaryColor,
