@@ -335,58 +335,78 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
         title: Row(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDarkMode ? colorScheme.onPrimary : colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.white,
-                backgroundImage: widget.receiverAvatar.isNotEmpty
-                    ? NetworkImage(widget.receiverAvatar)
-                    : null,
-                child: widget.receiverAvatar.isEmpty
-                    ? Text(
-                        widget.receiverName.isNotEmpty
-                            ? widget.receiverName[0].toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    widget.receiverName,
-                    style: textTheme.titleMedium?.copyWith(
-                      color:
-                          isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => DraggableScrollableSheet(
+                    initialChildSize: 0.55,
+                    minChildSize: 0.4,
+                    maxChildSize: 0.85,
+                    expand: false,
+                    builder: (context, scrollController) => SingleChildScrollView(
+                      controller: scrollController,
+                      child: UserDetailsSheet(user: widget.otherUser),
                     ),
                   ),
-                  if (_isOtherUserTyping)
-                    Text(
-                      'typing...',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: (isDarkMode
-                                ? colorScheme.onSurface
-                                : colorScheme.onPrimary)
-                            .withOpacity(0.7),
-                        fontStyle: FontStyle.italic,
+                );
+              },
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDarkMode ? colorScheme.onPrimary : colorScheme.primary,
+                        width: 2,
                       ),
                     ),
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white,
+                      backgroundImage: widget.receiverAvatar.isNotEmpty
+                          ? NetworkImage(widget.receiverAvatar)
+                          : null,
+                      child: widget.receiverAvatar.isEmpty
+                          ? Text(
+                              widget.receiverName.isNotEmpty
+                                  ? widget.receiverName[0].toUpperCase()
+                                  : '?',
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.receiverName,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (_isOtherUserTyping)
+                        Text(
+                          'typing...',
+                          style: textTheme.labelSmall?.copyWith(
+                            color: (isDarkMode
+                                    ? colorScheme.onSurface
+                                    : colorScheme.onPrimary)
+                                .withOpacity(0.7),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -575,7 +595,7 @@ class _MessageBubble extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
         decoration: BoxDecoration(
           color: isMe
-              ? colorScheme.primary
+              ? colorScheme.secondary
               : (isDark ? colorScheme.surfaceVariant : Colors.white),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(18),
@@ -600,6 +620,7 @@ class _MessageBubble extends StatelessWidget {
               style: TextStyle(
                 color: isMe ? Colors.white : colorScheme.onSurface,
                 fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
             if (time != null)
@@ -775,6 +796,116 @@ class _EditPreview extends StatelessWidget {
               icon: Icon(Icons.close,
                   color: colorScheme.onSurface.withOpacity(0.6)),
               onPressed: onCancel),
+        ],
+      ),
+    );
+  }
+}
+
+class UserDetailsSheet extends StatelessWidget {
+  final Map<String, dynamic> user;
+  const UserDetailsSheet({Key? key, required this.user}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final avatar = user['photoUrl'] ?? '';
+    final name = user['fullName'] ?? 'Unknown';
+    final phone = user['phoneNumber'] ?? 'Not set';
+    final email = user['email'] ?? 'Not set';
+    final role = user['role'] ?? '';
+    final about = user['about'] ?? '';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark ? colorScheme.onPrimary : colorScheme.primary,
+                width: 3,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 48,
+              backgroundColor: Colors.white,
+              backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
+              child: avatar.isEmpty
+                  ? Icon(Icons.person, size: 48, color: colorScheme.primary)
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            name,
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          if (role.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(role, style: textTheme.bodyMedium?.copyWith(color: colorScheme.secondary)),
+          ],
+          const SizedBox(height: 16),
+          if (about.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(Icons.info_outline, color: colorScheme.secondary, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(about, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+          Row(
+            children: [
+              Icon(Icons.phone, color: colorScheme.secondary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(phone, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.email, color: colorScheme.secondary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(email, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.secondary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                elevation: 2,
+                shadowColor: Colors.black26,
+              ),
+              icon: const Icon(Icons.message, color: Colors.white),
+              label: const Text("Message", style: TextStyle(color: Colors.white)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
         ],
       ),
     );
