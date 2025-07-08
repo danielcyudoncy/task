@@ -86,7 +86,9 @@ class _HomeScreenState extends State<HomeScreen>
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF181B2A) : Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Theme.of(context).canvasColor
+                : Theme.of(context).colorScheme.primary,
           ),
           child: SafeArea(
             child: Column(
@@ -305,11 +307,39 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                         // TasksSection is already expanded in its own widget
-                        TasksSection(
-                          tabController: _tabController,
-                          authController: authController,
-                          taskController: taskController,
-                          isDark: isDark,
+                        DefaultTabController(
+                          length: 2,
+                          child: Column(
+                            children: [
+                              TabBar(
+                                controller: _tabController,
+                                indicatorColor: isDark
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Theme.of(context).colorScheme.primary,
+                                labelColor: isDark
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Theme.of(context).colorScheme.primary,
+                                unselectedLabelColor: isDark
+                                    ? Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)
+                                    : Colors.black54,
+                                labelStyle: const TextStyle(
+                                    fontWeight: FontWeight.w500, fontSize: 15),
+                                tabs: const [
+                                  Tab(text: "Not Completed"),
+                                  Tab(text: "Completed"),
+                                ],
+                              ),
+                              // The tab views would go here, e.g.:
+                              // Expanded(
+                              //   child: TabBarView(
+                              //     controller: _tabController,
+                              //     children: [
+                              //       // ...
+                              //     ],
+                              //   ),
+                              // ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

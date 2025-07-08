@@ -36,32 +36,15 @@ class OnboardingScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Light: solid blue background, Dark: layered gradient
-    final gradientColors = isDark
-        ? [
-            colorScheme.background,
-            colorScheme.surfaceVariant,
-            colorScheme.background,
-          ]
-        : [
-            colorScheme.primary,
-            colorScheme.primary,
-          ];
-
-    final gradientStops = isDark ? const [0.0, 0.7, 1.0] : const [0.0, 1.0];
-
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: gradientColors,
-            stops: gradientStops,
-          ),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).canvasColor
+              : Theme.of(context).colorScheme.primary,
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 50),
@@ -85,22 +68,20 @@ class OnboardingScreen extends StatelessWidget {
                       foreground: Paint()
                         ..style = PaintingStyle.stroke
                         ..strokeWidth = 4
-                        ..color = isDark ? colorScheme.onSurface : Colors.white,
+                        ..color = colorScheme.onPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   Text(
                     'Welcome!',
                     style: TextStyle(
-                      color: AppColors.primaryColor, // Ensure contrast on blue bg
+                      color: colorScheme.primary,
                       fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: AppFontsStyles.raleway,
                       shadows: [
                         Shadow(
-                          color: isDark
-                              ? colorScheme.onSurface.withAlpha(92)
-                              : Colors.black26,
+                          color: colorScheme.onSurface.withAlpha(92),
                           offset: const Offset(0, 6.0),
                           blurRadius: 12.0,
                         ),
@@ -117,7 +98,7 @@ class OnboardingScreen extends StatelessWidget {
                 'started on your journey!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white, // Ensure contrast on primary bg
+                  color: colorScheme.onPrimary,
                   fontSize: 18.sp,
                   fontFamily: AppFontsStyles.openSans,
                   fontWeight: FontWeight.w400,
@@ -136,20 +117,20 @@ class OnboardingScreen extends StatelessWidget {
                         _handleGetStarted();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.saveColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Get Started',
                         style: TextStyle(
                           fontSize: AppSizes.fontNormal,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
                     ),
@@ -164,10 +145,10 @@ class OnboardingScreen extends StatelessWidget {
                         _handleMyAccount();
                       },
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: colorScheme.primary,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
                         side: BorderSide(
-                          color: colorScheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
@@ -179,7 +160,7 @@ class OnboardingScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: AppSizes.fontNormal,
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),

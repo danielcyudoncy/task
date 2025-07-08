@@ -15,14 +15,12 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check if the theme is light or dark
-    final isLightMode = Theme.of(context).brightness == Brightness.light;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       key: _scaffoldKey,
       drawer: const AppDrawer(),
-      // Background color based on the theme
-      backgroundColor: isLightMode ? const Color(0xFF08169D) : const Color(0xFF181B2A),
+      backgroundColor: colorScheme.primary,
       body: SafeArea(
         child: Obx(() {
           final fullName = authController.fullName.value;
@@ -54,9 +52,7 @@ class ProfileScreen extends StatelessWidget {
                         child: IconButton(
                           icon: Icon(
                             Icons.menu,
-                            color: isLightMode
-                                ? Colors.white
-                                : Colors.white, // White in both modes
+                            color: colorScheme.onPrimary,
                           ),
                           onPressed: () {
                             // Trigger sound/vibration feedback
@@ -80,9 +76,7 @@ class ProfileScreen extends StatelessWidget {
                         child: IconButton(
                           icon: Icon(
                             Icons.settings,
-                            color: isLightMode
-                                ? Colors.white // Retain original color in light mode
-                                : Colors.white, // White in dark mode
+                            color: colorScheme.onPrimary,
                           ),
                           onPressed: () {
                             Get.find<SettingsController>().triggerFeedback();
@@ -138,7 +132,7 @@ class ProfileScreen extends StatelessWidget {
                     fontSize: 22.sp,
                     fontWeight: FontWeight.bold,
                     fontFamily: AppFontsStyles.raleway,
-                    color: Colors.white,
+                    color: colorScheme.onPrimary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -149,7 +143,7 @@ class ProfileScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
                   decoration: BoxDecoration(
-                    color: isLightMode ? Colors.white : Colors.grey[800],
+                    color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: const [
                       BoxShadow(
@@ -168,7 +162,7 @@ class ProfileScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
-                          color: isLightMode ? Colors.black : Colors.white,
+                          color: colorScheme.onSurface,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -178,17 +172,14 @@ class ProfileScreen extends StatelessWidget {
                           Icon(
                             Icons.phone,
                             size: 19,
-                            color: isLightMode
-                                ? const Color(0xFF3739B7)
-                                : Colors.black, // Leading icon color
+                            color: colorScheme.primary,
                           ),
                           const SizedBox(width: 10),
                           Text(
                             phone,
                             style: TextStyle(
                                 fontSize: 15.sp,
-                                color:
-                                    isLightMode ? Colors.black : Colors.white),
+                                color: colorScheme.onSurface),
                           ),
                         ],
                       ),
@@ -198,17 +189,14 @@ class ProfileScreen extends StatelessWidget {
                           Icon(
                             Icons.email,
                             size: 19,
-                            color: isLightMode
-                                ? const Color(0xFF3739B7)
-                                : Colors.black, // Leading icon color
+                            color: colorScheme.primary,
                           ),
                           const SizedBox(width: 10),
                           Text(
                             email,
                             style: TextStyle(
                                 fontSize: 15.sp,
-                                color:
-                                    isLightMode ? Colors.black : Colors.white),
+                                color: colorScheme.onSurface),
                           ),
                         ],
                       ),
@@ -219,7 +207,7 @@ class ProfileScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
-                          color: isLightMode ? Colors.black : Colors.white,
+                          color: colorScheme.onSurface,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -227,17 +215,14 @@ class ProfileScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
                           Icons.notifications_none,
-                          color: isLightMode
-                              ? const Color(0xFF3739B7)
-                              : Colors.black, // Leading icon color
+                          color: colorScheme.primary,
                         ),
                         title: Text("Push Notifications",
                             style: TextStyle(
-                                color:
-                                    isLightMode ? Colors.black : Colors.white)),
+                                color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
-                          color: isLightMode ? Colors.black : Colors.white,
+                          color: colorScheme.onSurface,
                         ),
                         onTap: () {
                           Get.find<SettingsController>().triggerFeedback();
@@ -248,17 +233,14 @@ class ProfileScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
                           Icons.person_outline,
-                          color: isLightMode
-                              ? const Color(0xFF3739B7)
-                              : Colors.black, // Leading icon color
+                          color: colorScheme.primary,
                         ),
                         title: Text("Update Profile",
                             style: TextStyle(
-                                color:
-                                    isLightMode ? Colors.black : Colors.white)),
+                                color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
-                          color: isLightMode ? Colors.black : Colors.white,
+                          color: colorScheme.onSurface,
                         ),
                         onTap: () {
                           Get.find<SettingsController>().triggerFeedback();
@@ -279,7 +261,7 @@ class ProfileScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3739B7),
+                            backgroundColor: colorScheme.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -299,7 +281,7 @@ class ProfileScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3739B7),
+                            backgroundColor: colorScheme.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
