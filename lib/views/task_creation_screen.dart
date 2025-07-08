@@ -145,17 +145,19 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
             "Create Task",
             style: AppStyles.sectionTitleStyle.copyWith(
               fontSize: isTablet ? AppSizes.titleLarge : AppSizes.titleNormal,
-              color: isDarkTheme ? Colors.white : Colors.white,
+              color: Theme.of(context).colorScheme.onPrimary,
               fontFamily: 'raleway',
             ),
           ),
         ),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: Theme.of(context).primaryColor,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).canvasColor
+            : Theme.of(context).colorScheme.primary,
         padding:
             EdgeInsets.all(isTablet ? AppSizes.medium * 2 : AppSizes.medium),
         child: Center(
@@ -195,18 +197,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                       TextFormField(
                         controller: _titleController,
                         style: AppStyles.cardValueStyle.copyWith(
-                          color: isDarkTheme ? Colors.white : Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: AppSizes.fontNormal,
                         ),
                         decoration: InputDecoration(
                           labelText: "Task Title",
                           labelStyle: TextStyle(
                             fontSize: AppSizes.fontSmall,
-                            color: isDarkTheme ? Colors.white70 : Colors.black,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           filled: true,
-                          fillColor:
-                              isDarkTheme ? Colors.black26 : Colors.white,
+                          fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppSizes.small),
                           ),
@@ -228,11 +229,10 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                           labelText: "Priority",
                           labelStyle: TextStyle(
                             fontSize: AppSizes.fontSmall,
-                            color: isDarkTheme ? Colors.white70 : Colors.black,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           filled: true,
-                          fillColor:
-                              isDarkTheme ? Colors.black26 : Colors.white,
+                          fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppSizes.small),
                           ),
@@ -266,29 +266,23 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               controller: _dateController,
                               readOnly: true,
                               style: AppStyles.cardValueStyle.copyWith(
-                                color:
-                                    isDarkTheme ? Colors.white : Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: AppSizes.fontSmall,
                               ),
                               decoration: InputDecoration(
                                 labelText: "Due Date",
                                 labelStyle: TextStyle(
                                   fontSize: AppSizes.fontVerySmall,
-                                  color: isDarkTheme
-                                      ? Colors.white70
-                                      : Colors.indigo,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
-                                fillColor:
-                                    isDarkTheme ? Colors.black26 : Colors.white,
+                                fillColor: Theme.of(context).colorScheme.surface,
                                 border: OutlineInputBorder(
                                   borderRadius:
                                       BorderRadius.circular(AppSizes.small),
                                 ),
                                 suffixIcon: Icon(Icons.calendar_today,
-                                    color: isDarkTheme
-                                        ? Colors.white
-                                        : Colors.indigo),
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant),
                               ),
                               onTap: () => _pickDate(context),
                               validator: (value) {
@@ -306,29 +300,23 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               controller: _timeController,
                               readOnly: true,
                               style: AppStyles.cardValueStyle.copyWith(
-                                color:
-                                    isDarkTheme ? Colors.white : Colors.black,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: AppSizes.fontSmall,
                               ),
                               decoration: InputDecoration(
                                 labelText: "Time",
                                 labelStyle: TextStyle(
                                   fontSize: AppSizes.fontVerySmall,
-                                  color: isDarkTheme
-                                      ? Colors.white70
-                                      : Colors.indigo,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
-                                fillColor:
-                                    isDarkTheme ? Colors.black26 : Colors.white,
+                                fillColor: Theme.of(context).colorScheme.surface,
                                 border: OutlineInputBorder(
                                   borderRadius:
                                       BorderRadius.circular(AppSizes.small),
                                 ),
                                 suffixIcon: Icon(Icons.access_time,
-                                    color: isDarkTheme
-                                        ? Colors.white
-                                        : Colors.indigo),
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant),
                               ),
                               onTap: () => _pickTime(context),
                               validator: (value) {
@@ -347,18 +335,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                       TextFormField(
                         controller: _descriptionController,
                         style: AppStyles.cardValueStyle.copyWith(
-                          color: isDarkTheme ? Colors.white : Colors.black,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: AppSizes.fontSmall,
                         ),
                         decoration: InputDecoration(
                           labelText: "Task Description",
                           labelStyle: TextStyle(
                             fontSize: AppSizes.fontVerySmall,
-                            color: isDarkTheme ? Colors.white70 : Colors.indigo,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           filled: true,
-                          fillColor:
-                              isDarkTheme ? Colors.black26 : Colors.white,
+                          fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppSizes.small),
                           ),

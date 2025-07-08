@@ -13,14 +13,16 @@ class TabBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     return TabBar(
       controller: tabController,
       indicator: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: const Color(0xFF0B189B),
+        color: isDark ? Colors.white : colorScheme.primary,
       ),
-      labelColor: Colors.white,
-      unselectedLabelColor: Colors.black,
+      labelColor: isDark ? Colors.white : colorScheme.primary,
+      unselectedLabelColor: isDark ? Colors.white70 : Colors.black54,
       tabs: tabTitles
           .map((title) => Tab(
                 text: title,

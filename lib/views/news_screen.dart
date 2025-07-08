@@ -116,14 +116,9 @@ class _NewsScreenState extends State<NewsScreen> {
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.primary..withValues(alpha: 204),
-              ],
-            ),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Theme.of(context).canvasColor
+                : Theme.of(context).colorScheme.primary,
           ),
 
           child: Column(
@@ -342,7 +337,7 @@ class _NewsScreenState extends State<NewsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(

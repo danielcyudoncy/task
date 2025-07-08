@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/notification_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
-import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
@@ -490,10 +489,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color:
-                  isDark ? const Color(0xFF181B2A)
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Theme.of(context).canvasColor
                   : Theme.of(context).colorScheme.primary,
-                  
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -537,14 +535,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               fontWeight: FontWeight.w700,
                               fontFamily: 'raleway',
                               fontSize: 16.sp,
-                              color: AppColors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.grey[900] : AppColors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(26),
                               topRight: Radius.circular(26),
@@ -565,7 +563,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         height: 34.h,
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? AppColors.white
+                                              ? Theme.of(context).colorScheme.onPrimary
                                               : const Color(0xFF3739B7),
                                           shape: BoxShape.circle,
                                         ),
@@ -574,7 +572,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                           size: 22.sp,
                                           color: isDark
                                               ? const Color(0xFF3739B7)
-                                              : AppColors.white,
+                                              : Theme.of(context).colorScheme.onPrimary,
                                         ),
                                       ),
                                     ),
@@ -584,13 +582,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               TabBar(
                                 controller: _tabController,
                                 indicatorColor: isDark
-                                    ? AppColors.white
-                                    : const Color(0xFF3739B7),
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Theme.of(context).colorScheme.primary,
                                 labelColor: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF3739B7),
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Theme.of(context).colorScheme.primary,
                                 unselectedLabelColor:
-                                    isDark ? Colors.white70 : Colors.black54,
+                                    isDark ? Theme.of(context).colorScheme.onPrimary.withOpacity(0.7) : Colors.black54,
                                 labelStyle: const TextStyle(
                                     fontWeight: FontWeight.w500, fontSize: 15),
                                 tabs: const [

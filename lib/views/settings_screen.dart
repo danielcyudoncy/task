@@ -14,24 +14,22 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLightMode = Theme.of(context).brightness == Brightness.light;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor:
-          isLightMode ? const Color(0xFF05168E) : const Color(0xFF181B2A),
+      backgroundColor: colorScheme.primary,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor:
-            isLightMode ? const Color(0xFF05168E) : const Color(0xFF181B2A),
+        backgroundColor: colorScheme.primary,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Settings',
           style: TextStyle(
             fontFamily: 'raleway',
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontSize: 30.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -61,11 +59,14 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  sectionTitle("App Preferences"),
+                  sectionTitle(context, "App Preferences"),
+                  // App Preferences
+                  // Only ThemeController manages dark mode. Do not use SettingsController for theme.
                   Obx(() {
                     // Add safety check to ensure controller is registered
                     if (!Get.isRegistered<ThemeController>()) {
                       return settingsSwitchTile(
+                        context,
                         "Dark Mode",
                         "Activate dark background for app",
                         false,
@@ -74,6 +75,7 @@ class SettingsScreen extends StatelessWidget {
                     }
                     
                     return settingsSwitchTile(
+                      context,
                       "Dark Mode",
                       "Activate dark background for app",
                       themeController.isDarkMode.value,
@@ -82,8 +84,9 @@ class SettingsScreen extends StatelessWidget {
                       },
                     );
                   }),
-                  sectionTitle("Sound and Vibration"),
+                  sectionTitle(context, "Sound and Vibration"),
                   settingsSwitchTile(
+                    context,
                     "Sounds",
                     "Enable Sound",
                     settingsController.isSoundEnabled.value,
@@ -93,6 +96,7 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   settingsSwitchTile(
+                    context,
                     "Vibration",
                     "Enable/Disable Vibration",
                     settingsController.isVibrationEnabled.value,
@@ -101,8 +105,9 @@ class SettingsScreen extends StatelessWidget {
                       settingsController.saveSettings();
                     },
                   ),
-                  sectionTitle("Account Preferences"),
+                  sectionTitle(context, "Account Preferences"),
                   settingsDropdownTile(
+                    context,
                     "Language",
                     settingsController.selectedLanguage.value,
                     [
@@ -117,8 +122,9 @@ class SettingsScreen extends StatelessWidget {
                       settingsController.saveSettings();
                     },
                   ),
-                  sectionTitle("Sync Settings"),
+                  sectionTitle(context, "Sync Settings"),
                   settingsSwitchTile(
+                    context,
                     "Synchronize data across all devices",
                     "",
                     settingsController.isSyncEnabled.value,
@@ -129,18 +135,18 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   // Debug section for theme issues
                   if (kDebugMode) ...[
-                    sectionTitle("Debug Options"),
+                    sectionTitle(context, "Debug Options"),
                     ListTile(
-                      title: const Text(
+                      title: Text(
                         "Reset Theme to Light",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w500),
                       ),
-                      subtitle: const Text(
+                      subtitle: Text(
                         "Force reset theme to light mode",
-                        style: TextStyle(color: Colors.white, fontSize: 13),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13),
                       ),
                       trailing: IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.onPrimary),
                         onPressed: () {
                           themeController.resetToDefaultTheme();
                         },
@@ -161,13 +167,13 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget sectionTitle(String title) => Container(
+  Widget sectionTitle(BuildContext context, String title) => Container(
         alignment: Alignment.centerLeft,
         margin: const EdgeInsets.only(top: 18, bottom: 6),
         child: Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -175,6 +181,7 @@ class SettingsScreen extends StatelessWidget {
       );
 
   Widget settingsSwitchTile(
+    BuildContext context,
     String title,
     String subtitle,
     bool value,
@@ -188,28 +195,28 @@ class SettingsScreen extends StatelessWidget {
         contentPadding: const EdgeInsets.only(left: 0, right: 0),
         title: Text(
           title,
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w500),
         ),
         subtitle: subtitle.isNotEmpty
             ? Text(
                 subtitle,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13),
               )
             : null,
         trailing: Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
-          activeTrackColor: const Color(0xFF2F80ED),
-          inactiveThumbColor: Colors.white70,
-          inactiveTrackColor: Colors.white24,
+          activeColor: Theme.of(context).colorScheme.onPrimary,
+          activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          inactiveThumbColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+          inactiveTrackColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.24),
         ),
       ),
     );
   }
 
   Widget settingsDropdownTile(
+    BuildContext context,
     String title,
     String selected,
     List<String> options,
@@ -221,13 +228,12 @@ class SettingsScreen extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.only(left: 0, right: 0),
         title: Text(title,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w500)),
+            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w500)),
         trailing: DropdownButton<String>(
           value: selected,
-          dropdownColor: const Color(0xFF05168E),
+          dropdownColor: Theme.of(context).colorScheme.primary,
           style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.w400),
+              TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w400),
           underline: Container(),
           items: options
               .map((lang) => DropdownMenuItem(

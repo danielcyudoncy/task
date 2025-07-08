@@ -42,7 +42,7 @@ class AppTheme {
   // --- Standard Theme Colors ---=
   static const Color _primaryBlue = Color(0xFF1E2A5C);
   static const Color _secondaryBlue = Color(0xFF00B0FF);
-  static const Color _lightSurfaceVariant = Color(0xFFF3F6FD);
+  static const Color _lightSurfaceVariant = Color(0xFFDBDBDB);
   static const Color _darkSurfaceVariant = Color(0xFF23243A);
 
   // --- NEW: Define the custom dashboard colors here ---
@@ -72,7 +72,7 @@ class AppTheme {
 
   static ThemeData darkTheme = _baseTheme(
     brightness: Brightness.dark,
-    primaryColor: _primaryBlue,
+    primaryColor: const Color(0xFF181B2A),
     secondaryColor: _secondaryBlue,
     background: const Color(0xFF181B2A),
     onBackground: Colors.white,
@@ -86,7 +86,7 @@ class AppTheme {
     hintColor: Colors.white70,
     appBarBackgroundColor: Colors.transparent,
     inputFillColor: _darkSurfaceVariant,
-    textColor: Colors.white,
+    textColor: const Color(0xFFDBDBDB),
     isDark: true,
   );
 
@@ -112,11 +112,11 @@ class AppTheme {
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: primaryColor,
-      onPrimary: Colors.white,
+      onPrimary: const Color(0xFFDBDBDB),
       secondary: secondaryColor,
-      onSecondary: isDark ? Colors.black : Colors.white,
+      onSecondary: isDark ? Colors.black : const Color(0xFFDBDBDB),
       error: Colors.red,
-      onError: isDark ? Colors.black : Colors.white,
+      onError: isDark ? Colors.black : const Color(0xFFDBDBDB),
       surface: surface,
       onSurface: onSurface,
       background: background,
@@ -165,7 +165,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: WidgetStatePropertyAll(colorScheme.primary),
+          backgroundColor: const WidgetStatePropertyAll(Color(0xFF08169D)),
           foregroundColor: WidgetStatePropertyAll(colorScheme.onPrimary),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -175,8 +175,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          foregroundColor: WidgetStatePropertyAll(colorScheme.primary),
-          side: WidgetStatePropertyAll(BorderSide(color: colorScheme.primary)),
+          foregroundColor: const WidgetStatePropertyAll(Color(0xFF08169D)),
+          side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFF08169D))),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),

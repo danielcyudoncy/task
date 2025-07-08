@@ -18,20 +18,17 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    // Colors
-    final Color baseColor =
-        isDark ? const Color(0xFF121212) : const Color(0xFF1019A6);
-    final Color sectionTitleColor = isDark ? Colors.white : Colors.white;
-    final Color textColor = isDark ? Colors.white70 : Colors.white;
-    final Color dividerColor = isDark ? Colors.white24 : Colors.white54;
-    final Color saveButtonColor =
-        isDark ? const Color(0xFF1E88E5) : const Color(0xFF19A2FF);
+    final colorScheme = Theme.of(context).colorScheme;
+    final Color baseColor = colorScheme.primary;
+    const Color sectionTitleColor = Colors.white;
+    const Color textColor = Colors.white70;
+    const Color dividerColor = Colors.white54;
+    const Color saveButtonColor = Colors.white;
 
     return Scaffold(
-      backgroundColor: baseColor,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).canvasColor
+          : Theme.of(context).colorScheme.primary,
       body: SafeArea(
         child: Column(
           children: [
@@ -42,7 +39,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
                     onPressed: () {
                       Get.find<SettingsController>().triggerFeedback();
                       Get.back();
@@ -55,7 +52,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         fontSize: 30.sp,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'raleway',
-                        color: Colors.white),
+                        color: Theme.of(context).colorScheme.onPrimary),
                   ),
                   const Spacer(flex: 2),
                 ],
@@ -174,7 +171,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "Ad’s Prference",
+                        "Ad's Prference",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,

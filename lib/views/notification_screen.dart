@@ -19,7 +19,7 @@ class NotificationScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     // Get colors from theme instead of hardcoding
-    final backgroundColor = theme.colorScheme.background;
+    final backgroundColor = theme.colorScheme.primary;
     final cardColor = theme.colorScheme.surfaceVariant;
     final titleColor = theme.colorScheme.onSurface;
     final subtitleColor = theme.colorScheme.onSurface.withOpacity(0.7);
