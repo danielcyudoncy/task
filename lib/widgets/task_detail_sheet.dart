@@ -53,25 +53,36 @@ class TaskDetailSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: avatarBg,
-                  backgroundImage: data['creatorAvatar'] != null
-                      ? NetworkImage(data['creatorAvatar'])
-                      : null,
-                  child: data['creatorAvatar'] == null
-                      ? Text(
-                          (data['creatorName'].isNotEmpty
-                                  ? data['creatorName'][0]
-                                  : "?")
-                              .toUpperCase(),
-                          style: TextStyle(
-                            color: accent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18 * textScale,
-                          ),
-                        )
-                      : null,
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : Colors.white,
+                      width: 2,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: avatarBg,
+                    backgroundImage: data['creatorAvatar'] != null
+                        ? NetworkImage(data['creatorAvatar'])
+                        : null,
+                    child: data['creatorAvatar'] == null
+                        ? Text(
+                            (data['creatorName'].isNotEmpty
+                                    ? data['creatorName'][0]
+                                    : "?")
+                                .toUpperCase(),
+                            style: TextStyle(
+                              color: accent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18 * textScale,
+                            ),
+                          )
+                        : null,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(

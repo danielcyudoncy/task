@@ -93,37 +93,27 @@ class _UserListScreenState extends State<UserListScreen> {
                     final isPinned = userData['isPinned'] == true;
 
                     return ListTile(
-                      leading: userAvatar != null && userAvatar.isNotEmpty
-                          ? Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? Theme.of(context).colorScheme.onPrimary
-                                      : Theme.of(context).colorScheme.primary,
-                                  width: 2,
-                                ),
-                              ),
-                              child: CircleAvatar(
-                                backgroundImage: NetworkImage(userAvatar),
-                              ),
-                            )
-                          : Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? Theme.of(context).colorScheme.onPrimary
-                                      : Theme.of(context).colorScheme.primary,
-                                  width: 2,
-                                ),
-                              ),
-                              child: CircleAvatar(
-                                child: Text(
+                      leading: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          backgroundImage: userAvatar != null && userAvatar.isNotEmpty
+                              ? NetworkImage(userAvatar)
+                              : null,
+                          child: (userAvatar == null || userAvatar.isEmpty)
+                              ? Text(
                                   userName.isNotEmpty ? userName[0] : '?',
-                                ),
-                              ),
-                            ),
+                                )
+                              : null,
+                        ),
+                      ),
                       title: Text(userName),
                       trailing: isPinned
                           ? const Icon(Icons.push_pin, color: Colors.orange)

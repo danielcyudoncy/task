@@ -129,17 +129,26 @@ class _HomeScreenState extends State<HomeScreen>
                                   Obx(() {
                                     // Add safety check to ensure observables are initialized
                                     if (!Get.isRegistered<AuthController>()) {
-                                      return CircleAvatar(
-                                        radius: 20.sp,
-                                        backgroundColor: Colors.white,
-                                        child: Text(
-                                          '?',
-                                          style: TextStyle(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                            fontSize: 20.sp,
-                                            fontWeight: FontWeight.bold,
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Theme.of(context).colorScheme.onPrimary
+                                                : Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 20.sp,
+                                          backgroundColor: Colors.white,
+                                          child: Text(
+                                            '?',
+                                            style: TextStyle(
+                                              color: Theme.of(context).colorScheme.primary,
+                                              fontSize: 20.sp,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -153,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         border: Border.all(
                                           color: Theme.of(context).brightness == Brightness.dark
                                               ? Theme.of(context).colorScheme.onPrimary
-                                              : Theme.of(context).colorScheme.primary,
+                                              : Colors.white,
                                           width: 2,
                                         ),
                                       ),
@@ -309,49 +318,31 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         const SizedBox(height: 18),
                         Padding(
-                          padding: const EdgeInsets.only(left: 16, bottom: 8),
+                          padding: const EdgeInsets.only(left: 24, bottom: 8),
                           child: Text(
                             AppStrings.task,
                             style: AppStyles.sectionTitleStyle.copyWith(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),
-                        // TasksSection is already expanded in its own widget
-                        DefaultTabController(
-                          length: 2,
-                          child: Column(
-                            children: [
-                              TabBar(
-                                controller: _tabController,
-                                indicatorColor: isDark
-                                    ? Theme.of(context).colorScheme.onPrimary
-                                    : Theme.of(context).colorScheme.primary,
-                                labelColor: isDark
-                                    ? Theme.of(context).colorScheme.onPrimary
-                                    : Theme.of(context).colorScheme.primary,
-                                unselectedLabelColor: isDark
-                                    ? Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)
-                                    : Colors.black54,
-                                labelStyle: const TextStyle(
-                                    fontWeight: FontWeight.w500, fontSize: 15),
-                                tabs: const [
-                                  Tab(text: "Not Completed"),
-                                  Tab(text: "Completed"),
-                                ],
-                              ),
-                              // The tab views would go here, e.g.:
-                              // Expanded(
-                              //   child: TabBarView(
-                              //     controller: _tabController,
-                              //     children: [
-                              //       // ...
-                              //     ],
-                              //   ),
-                              // ),
-                            ],
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(26),
+                              topRight: Radius.circular(26),
+                            ),
+                          ),
+                          child: TasksSection(
+                            tabController: _tabController,
+                            authController: authController,
+                            taskController: taskController,
+                            isDark: isDark,
                           ),
                         ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),

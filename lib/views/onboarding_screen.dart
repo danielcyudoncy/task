@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/controllers/settings_controller.dart';
-import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_sizes.dart';
