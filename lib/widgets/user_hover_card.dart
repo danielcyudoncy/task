@@ -47,14 +47,25 @@ class UserHoverCard extends StatelessWidget {
           child: ListTile(
             leading: Semantics(
               label: 'User Avatar',
-              child: CircleAvatar(
-                backgroundColor: Colors.grey.shade300,
-                child: Text(
-                  _getInitials(user['fullname']),
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: isLargeScreen ? 18 * textScale : 14 * textScale,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : Colors.white,
+                    width: 2,
+                  ),
+                ),
+                child: CircleAvatar(
+                  backgroundColor: Colors.grey.shade300,
+                  child: Text(
+                    _getInitials(user['fullname']),
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isLargeScreen ? 18 * textScale : 14 * textScale,
+                    ),
                   ),
                 ),
               ),

@@ -180,15 +180,27 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                               child: Row(
                                 children: [
                                   // Avatar for creator
-                                  CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor: getPriorityColor(task),
-                                    child: Text(
-                                      getCreatorInitials(task),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Theme.of(context).colorScheme.onPrimary
+                                            : Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: getPriorityColor(task),
+                                      child: Text(
+                                        getCreatorInitials(task),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                     ),
                                   ),

@@ -83,42 +83,53 @@ class TaskCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-  children: [
-    CircleAvatar(
-      radius: isLargeScreen ? 25 : 18,
-      backgroundColor: avatarBg,
-      backgroundImage: creatorAvatar != null
-          ? NetworkImage(creatorAvatar)
-          : null,
-      child: creatorAvatar == null
-          ? Text(
-              (creatorName.isNotEmpty ? creatorName[0] : "?")
-                  .toUpperCase(),
-              style: TextStyle(
-                color: accent,
-                fontWeight: FontWeight.bold,
-                fontSize: isLargeScreen
-                    ? 20.sp * textScale
-                    : 15.sp * textScale,
-              ),
-            )
-          : null,
-    ),
-    SizedBox(width: isLargeScreen ? 20 : 12),
-    Expanded(
-      child: Text(
-        creatorName,
-        style: textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize:
-              isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
-          color: mainText,
-        ),
-      ),
-    ),
-    StatusChip(status: status, textScale: textScale),
-  ],
-),
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: isLargeScreen ? 25 : 18,
+                          backgroundColor: avatarBg,
+                          backgroundImage: creatorAvatar != null
+                              ? NetworkImage(creatorAvatar)
+                              : null,
+                          child: creatorAvatar == null
+                              ? Text(
+                                  (creatorName.isNotEmpty ? creatorName[0] : "?")
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    color: accent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isLargeScreen
+                                        ? 20.sp * textScale
+                                        : 15.sp * textScale,
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                      SizedBox(width: isLargeScreen ? 20 : 12),
+                      Expanded(
+                        child: Text(
+                          creatorName,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize:
+                                isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
+                            color: mainText,
+                          ),
+                        ),
+                      ),
+                      StatusChip(status: status, textScale: textScale),
+                    ],
+                  ),
                   SizedBox(height: isLargeScreen ? 16 : 10),
                   Text(
                     title,
