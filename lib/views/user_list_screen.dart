@@ -94,12 +94,34 @@ class _UserListScreenState extends State<UserListScreen> {
 
                     return ListTile(
                       leading: userAvatar != null && userAvatar.isNotEmpty
-                          ? CircleAvatar(
-                              backgroundImage: NetworkImage(userAvatar),
+                          ? Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Theme.of(context).colorScheme.onPrimary
+                                      : Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                backgroundImage: NetworkImage(userAvatar),
+                              ),
                             )
-                          : CircleAvatar(
-                              child: Text(
-                                userName.isNotEmpty ? userName[0] : '?',
+                          : Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Theme.of(context).colorScheme.onPrimary
+                                      : Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                child: Text(
+                                  userName.isNotEmpty ? userName[0] : '?',
+                                ),
                               ),
                             ),
                       title: Text(userName),

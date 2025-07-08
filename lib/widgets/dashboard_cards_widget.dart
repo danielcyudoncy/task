@@ -32,10 +32,17 @@ class DashboardCardsWidget extends StatelessWidget {
     // Get the full theme and your custom colors
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Define dark mode colors for cards
+    final darkSecondary = const Color(0xFF2D3A5A);
+    final darkSuccess = const Color(0xFF388E3C);
+    final darkWarning = const Color(0xFFB26A00);
+    final darkAccent = const Color(0xFF4527A0);
 
     return Column(
       children: [
-        // --- FIRST ROW (Using your theme's primary and secondary colors) ---
+        // --- FIRST ROW ---
         Row(
           children: [
             _StatCard(
@@ -43,7 +50,7 @@ class DashboardCardsWidget extends StatelessWidget {
               value: usersCount.toString(),
               icon: Icons.people_alt_outlined,
               onTap: onManageUsersTap,
-              color: theme.colorScheme.secondary, // Using _primaryBlue
+              color: isDark ? darkSecondary : theme.colorScheme.secondary,
             ),
             const SizedBox(width: 16),
             _StatCard(
@@ -51,13 +58,12 @@ class DashboardCardsWidget extends StatelessWidget {
               value: tasksCount.toString(),
               icon: Icons.assignment_late_outlined,
               onTap: onTotalTasksTap,
-              color: theme.colorScheme.secondary, // Using _secondaryBlue
+              color: isDark ? darkAccent : theme.colorScheme.secondary,
             ),
           ],
         ),
         const SizedBox(height: 16),
-
-        // --- SECOND ROW (Using your new custom theme colors) ---
+        // --- SECOND ROW ---
         Row(
           children: [
             _StatCard(
@@ -65,15 +71,15 @@ class DashboardCardsWidget extends StatelessWidget {
               value: onlineUsersCount.toString(),
               icon: Icons.wifi_tethering,
               onTap: onOnlineUsersTap,
-              color: appColors.success!, // Using your new green color
+              color: isDark ? darkSuccess : appColors.success!,
             ),
             const SizedBox(width: 16),
             _StatCard(
               title: 'News Feed',
               value: newsCount.toString(),
-              icon: Icons.newspaper_outlined,
+              icon: Icons.wifi_tethering,
               onTap: onNewsFeedTap,
-              color: appColors.warning!, // Using your new purple color
+              color: isDark ? darkWarning : appColors.warning!,
             ),
           ],
         ),

@@ -132,10 +132,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final name = user['fullName'] ?? '';
                     return Column(
                       children: [
-                        CircleAvatar(
-                          radius: 26,
-                          backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
-                          child: avatar.isEmpty ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?') : null,
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 26,
+                            backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
+                            child: avatar.isEmpty ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?') : null,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         SizedBox(
@@ -327,7 +338,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: ListTile(
-        leading: buildAvatar(userAvatar, userName, isOnline),
+        leading: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).colorScheme.primary,
+              width: 2,
+            ),
+          ),
+          child: CircleAvatar(
+            radius: 24.r,
+            backgroundImage: userAvatar.isEmpty ? null : NetworkImage(userAvatar),
+            child: userAvatar.isEmpty ? Text(userName[0].toUpperCase()) : null,
+          ),
+        ),
         title: buildTitleRow(userName, pinned, unreadCount),
         subtitle: buildSubtitle(conversationId, lastMessage),
         trailing: buildTrailing(lastMessageTime, unreadCount),
@@ -338,26 +364,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
           conversationId,
         ),
       ),
-    );
-  }
-
-  Widget buildAvatar(String avatarUrl, String name, bool online) {
-    return Stack(
-      children: [
-        CircleAvatar(
-          radius: 24.r,
-          backgroundImage: avatarUrl.isEmpty ? null : NetworkImage(avatarUrl),
-          child: avatarUrl.isEmpty ? Text(name[0].toUpperCase()) : null,
-        ),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: CircleAvatar(
-            radius: 6.r,
-            backgroundColor: online ? Colors.green : Colors.grey,
-          ),
-        ),
-      ],
     );
   }
 
@@ -511,9 +517,20 @@ class ChatSearchDelegate extends SearchDelegate<String> {
             final avatar = data['photoUrl'] as String? ?? '';
             final uid = doc.id;
             return ListTile(
-              leading: CircleAvatar(
-                backgroundImage: avatar.isEmpty ? null : NetworkImage(avatar),
-                child: avatar.isEmpty ? Text(name[0].toUpperCase()) : null,
+              leading: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                child: CircleAvatar(
+                  backgroundImage: avatar.isEmpty ? null : NetworkImage(avatar),
+                  child: avatar.isEmpty ? Text(name[0].toUpperCase()) : null,
+                ),
               ),
               title: Text(name),
               onTap: () {

@@ -228,22 +228,33 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                           child: ListTile(
                             leading: Stack(
                               children: [
-                                CircleAvatar(
-                                  radius: 24.r,
-                                  backgroundImage: avatar.isNotEmpty
-                                      ? NetworkImage(avatar)
-                                      : null,
-                                  child: avatar.isEmpty
-                                      ? Text(
-                                          name.isNotEmpty
-                                              ? name[0].toUpperCase()
-                                              : '?',
-                                          style: TextStyle(
-                                            color: theme.colorScheme.onSurface,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      : null,
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Theme.of(context).colorScheme.onPrimary
+                                          : Theme.of(context).colorScheme.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 24.r,
+                                    backgroundImage: avatar.isNotEmpty
+                                        ? NetworkImage(avatar)
+                                        : null,
+                                    child: avatar.isEmpty
+                                        ? Text(
+                                            name.isNotEmpty
+                                                ? name[0].toUpperCase()
+                                                : '?',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.onSurface,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
                                 ),
                                 if (isOnline)
                                   Positioned(
