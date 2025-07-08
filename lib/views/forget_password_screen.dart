@@ -23,28 +23,16 @@ class ForgotPasswordScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
-          gradient: isDark
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    colorScheme.surface,
-                    Colors.grey.shade900,
-                  ],
-                )
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF08169D),
-                    Color(0xFF08169D),
-                  ],
-                ),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).canvasColor
+              : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: Padding(
@@ -81,7 +69,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                   height: 400.h,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.grey[800] : Colors.white,
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     padding: const EdgeInsets.all(40),
@@ -95,7 +83,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                             style: textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               fontFamily: 'raleway',
-                              color: isDark ? Colors.white : Colors.black,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 15),
@@ -104,7 +92,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                           Text(
                             "Enter your email address to receive a password reset link.",
                             style: textTheme.bodyLarge?.copyWith(
-                              color: isDark ? Colors.white70 : Colors.black87,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -119,11 +107,9 @@ class ForgotPasswordScreen extends StatelessWidget {
                               labelStyle: textTheme.bodyMedium,
                               hintStyle: textTheme.bodyMedium,
                               prefixIcon: Icon(Icons.email,
-                                  color:
-                                      isDark ? Colors.white70 : Colors.black54),
+                                  color: colorScheme.onSurfaceVariant),
                               filled: true,
-                              fillColor:
-                                  isDark ? Colors.grey[700] : Colors.grey[200],
+                              fillColor: colorScheme.surfaceVariant,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,

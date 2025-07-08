@@ -94,23 +94,9 @@ class _SplashScreenState extends State<SplashScreen> {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          gradient: isDark
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    colorScheme.surface,
-                    Colors.grey.shade900,
-                  ],
-                )
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF08169D),
-                    Color(0xFF08169D),
-                  ],
-                ),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).canvasColor
+              : Theme.of(context).colorScheme.primary,
         ),
         child: Center(
           child: Column(
@@ -129,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                 'Your Home For News',
                 style: textTheme.headlineSmall?.copyWith(
-                  color: isDark ? Colors.white : Colors.white,
+                  color: colorScheme.onPrimary,
                   fontFamily: 'Raleway',
                   fontSize: 24.sp,
                   fontWeight: FontWeight.bold,
@@ -137,8 +123,8 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
               ),
             ],
           ),

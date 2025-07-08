@@ -11,7 +11,6 @@ class SettingsController extends GetxController {
   final AudioPlayer audioPlayer;
 
   // App Preferences
-  final isDarkMode = false.obs;
   final isSoundEnabled = true.obs;
   final isVibrationEnabled = true.obs;
   final selectedLanguage = "English (Default)".obs;
@@ -62,7 +61,6 @@ class SettingsController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
 
     // Load from local storage first
-    isDarkMode.value = prefs.getBool('isDarkMode') ?? false;
     isSoundEnabled.value = prefs.getBool('isSoundEnabled') ?? true;
     isVibrationEnabled.value = prefs.getBool('isVibrationEnabled') ?? true;
     selectedLanguage.value =
@@ -86,7 +84,6 @@ class SettingsController extends GetxController {
 
       if (doc.exists) {
         final data = doc.data()!;
-        isDarkMode.value = data['isDarkMode'] ?? isDarkMode.value;
         isSoundEnabled.value = data['isSoundEnabled'] ?? isSoundEnabled.value;
         isVibrationEnabled.value =
             data['isVibrationEnabled'] ?? isVibrationEnabled.value;
@@ -111,7 +108,6 @@ class SettingsController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
 
     await Future.wait([
-      prefs.setBool('isDarkMode', isDarkMode.value),
       prefs.setBool('isSoundEnabled', isSoundEnabled.value),
       prefs.setBool('isVibrationEnabled', isVibrationEnabled.value),
       prefs.setString('selectedLanguage', selectedLanguage.value),
@@ -121,13 +117,10 @@ class SettingsController extends GetxController {
       prefs.setBool('isTargetedAdsEnabled', isTargetedAdsEnabled.value),
     ]);
 
-    
-
     if (!localOnly && isSyncEnabled.value && _auth.currentUser != null) {
       try {
         final uid = _auth.currentUser!.uid;
         await _firestore.collection('user_settings').doc(uid).set({
-          'isDarkMode': isDarkMode.value,
           'isSoundEnabled': isSoundEnabled.value,
           'isVibrationEnabled': isVibrationEnabled.value,
           'selectedLanguage': selectedLanguage.value,
@@ -144,12 +137,6 @@ class SettingsController extends GetxController {
   }
 
   // Toggle methods
-  void toggleDarkMode(bool value) {
-    isDarkMode.value = value;
-    triggerFeedback();
-    saveSettings();
-  }
-
   void toggleSound(bool value) {
     isSoundEnabled.value = value;
     if (value) _playSound('click.wav');

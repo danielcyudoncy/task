@@ -20,13 +20,11 @@ class UserScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(title: const Text('User Screen')),
       body: Container(
         decoration: BoxDecoration(
-          color: isDark ? Colors.black : Theme.of(context).colorScheme.primary,
+          color: Theme.of(context).colorScheme.primary,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -34,8 +32,8 @@ class UserScreen extends StatelessWidget {
             children: [
               Text(
                 'Welcome, ${auth.fullNameController.text}',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -52,19 +50,19 @@ class UserScreen extends StatelessWidget {
                           value: task,
                           child: Text(
                             task,
-                            style: const TextStyle(color: Colors.black),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                           ),
                         );
                       }).toList(),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Select Task',
-                        labelStyle: TextStyle(color: Colors.white),
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                        border: const OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
                         ),
                       ),
                       onChanged: (value) {
@@ -74,16 +72,16 @@ class UserScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     Obx(() {
                       if (!Get.isRegistered<UserController>()) {
-                        return const Text(
+                        return Text(
                           "No users available",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                         );
                       }
                       
                       if (userController.allUsers.isEmpty) {
-                        return const Text(
+                        return Text(
                           "No users available",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                         );
                       }
                       return DropdownButtonFormField<String>(
@@ -95,19 +93,19 @@ class UserScreen extends StatelessWidget {
                             value: user['id'],
                             child: Text(
                               user['name'],
-                              style: const TextStyle(color: Colors.black),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Assign To',
-                          labelStyle: TextStyle(color: Colors.white),
-                          border: OutlineInputBorder(),
+                          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                          border: const OutlineInputBorder(),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
                           ),
                         ),
                         onChanged: (value) {
@@ -145,24 +143,24 @@ class UserScreen extends StatelessWidget {
               const SizedBox(height: 20),
               Obx(() {
                 if (!Get.isRegistered<ManageUsersController>()) {
-                  return const Text(
+                  return Text(
                     'No users to display',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                   );
                 }
                 
                 if (manageUsersController.usersList.isEmpty) {
-                  return const Text(
+                  return Text(
                     'No users to display',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                   );
                 }
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Manage Users',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
@@ -174,19 +172,19 @@ class UserScreen extends StatelessWidget {
                           value: user['id'],
                           child: Text(
                             user['fullname'],
-                            style: const TextStyle(color: Colors.black),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                           ),
                         );
                       }).toList(),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Select User',
-                        labelStyle: TextStyle(color: Colors.white),
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                        border: const OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
                         ),
                       ),
                       onChanged: (value) {

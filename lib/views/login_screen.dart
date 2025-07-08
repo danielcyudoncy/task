@@ -69,23 +69,9 @@ class _LoginScreenState extends State<LoginScreen> {
             width: double.infinity,
             height: double.infinity,
             decoration: BoxDecoration(
-              gradient: isDark
-                  ? LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        colorScheme.surface,
-                        Colors.grey.shade900,
-                      ],
-                    )
-                  : const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF08169D),
-                        Color(0xFF08169D),
-                      ],
-                    ),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Theme.of(context).canvasColor
+                  : Theme.of(context).colorScheme.primary,
             ),
             child: SafeArea(
               child: SingleChildScrollView(
@@ -149,9 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   "Fill out the information below in order to access your account.",
                                   style: textTheme.bodyMedium?.copyWith(
                                     fontSize: 14.sp,
-                                    color: isDark
-                                        ? Colors.white70
-                                        : Colors.black87,
+                                    color: colorScheme.onSurface,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -166,13 +150,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     labelStyle: textTheme.bodyMedium,
                                     hintStyle: textTheme.bodyMedium,
                                     prefixIcon: Icon(Icons.email,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.black54),
+                                        color: colorScheme.onSurface),
                                     filled: true,
-                                    fillColor: isDark
-                                        ? Colors.grey[800]
-                                        : Colors.grey[200],
+                                    fillColor: colorScheme.surface,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
@@ -204,16 +184,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                         labelStyle: textTheme.bodyMedium,
                                         hintStyle: textTheme.bodyMedium,
                                         prefixIcon: Icon(Icons.lock,
-                                            color: isDark ? Colors.white70 : Colors.black54),
+                                            color: colorScheme.onSurface),
                                         suffixIcon: IconButton(
                                           icon: Icon(
                                             Icons.visibility_off,
-                                            color: isDark ? Colors.white70 : Colors.black54,
+                                            color: colorScheme.onSurface,
                                           ),
                                           onPressed: () {},
                                         ),
                                         filled: true,
-                                        fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                                        fillColor: colorScheme.surface,
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(12),
                                           borderSide: BorderSide.none,
@@ -240,13 +220,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       labelStyle: textTheme.bodyMedium,
                                       hintStyle: textTheme.bodyMedium,
                                       prefixIcon: Icon(Icons.lock,
-                                          color: isDark ? Colors.white70 : Colors.black54),
+                                          color: colorScheme.onSurface),
                                       suffixIcon: IconButton(
                                         icon: Icon(
                                           _auth.isLoginPasswordHidden.value
                                               ? Icons.visibility_off
                                               : Icons.visibility,
-                                          color: isDark ? Colors.white70 : Colors.black54,
+                                          color: colorScheme.onSurface,
                                         ),
                                         onPressed: () {
                                           Get.find<SettingsController>().triggerFeedback();
@@ -255,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         },
                                       ),
                                       filled: true,
-                                      fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                                      fillColor: colorScheme.surface,
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide.none,
@@ -339,9 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: Text(
                                         "or continue with",
                                         style: textTheme.bodyMedium?.copyWith(
-                                          color: isDark
-                                              ? Colors.white70
-                                              : Colors.black54,
+                                          color: colorScheme.onSurface,
                                         ),
                                       ),
                                     ),
@@ -390,9 +368,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Text(
                                       "Don't have an account? ",
                                       style: textTheme.bodyMedium?.copyWith(
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.black54,
+                                        color: colorScheme.onSurface,
                                       ),
                                     ),
                                     GestureDetector(
@@ -425,9 +401,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     textAlign: TextAlign.center,
                                     style: textTheme.bodyMedium?.copyWith(
                                       decoration: TextDecoration.underline,
-                                      color: isDark
-                                          ? Colors.white70
-                                          : Colors.black87,
+                                      color: colorScheme.onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Raleway',
                                     ),
@@ -452,7 +426,7 @@ class _LoginScreenState extends State<LoginScreen> {
             left: 16,
             child: IconButton(
               icon: Icon(Icons.arrow_back,
-                  color: isDark ? Colors.white : colorScheme.primary),
+                  color: colorScheme.onPrimary),
               onPressed: () {
                 Get.find<SettingsController>().triggerFeedback();
                 Get.back();

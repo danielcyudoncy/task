@@ -30,7 +30,9 @@ class ProfileUpdateScreen extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? Colors.black : AppColors.primaryColor,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).canvasColor
+              : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -42,8 +44,8 @@ class ProfileUpdateScreen extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    color: isDark ? Colors.white : Colors.white,
+                    icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
+                    color: Theme.of(context).colorScheme.onPrimary,
                     onPressed: () {Get.find<SettingsController>().triggerFeedback(); Get.back();},
                   ),
                 ),
@@ -62,7 +64,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[900] : Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: isDark
                         ? []

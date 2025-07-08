@@ -17,7 +17,7 @@ class TasksTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color cardColor =
-        isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
+        isDark ? const Color(0xFF292B3A) : Theme.of(context).colorScheme.primary;
     const Color textColor = Colors.white;
     const Color subTextColor = Colors.white70;
     final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;

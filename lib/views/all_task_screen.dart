@@ -98,7 +98,9 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
       drawer: const AppDrawer(),
       body: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF181B2A) : colorScheme.primary,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).canvasColor
+              : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: Column(
@@ -148,7 +150,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                             _filterTasks();
                           },
                           dropdownColor:
-                              isDark ? Colors.grey[900] : Colors.blue,
+                              isDark ? Colors.grey[900] : colorScheme.primary,
                           style: TextStyle(color: colorScheme.onSurface),
                         )),
                   ],
@@ -159,21 +161,21 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   ? Container(
                       padding: EdgeInsets.symmetric(
                           vertical: 8, horizontal: basePadding),
-                      color: isDark ? Colors.blueGrey[900] : Colors.blue[100],
+                      color: isDark ? Colors.blueGrey[900] : colorScheme.primary.withOpacity(0.1),
                       child: Row(
                         children: [
                           Text(
                             '${_selectedTasks.length} selected',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.blue[900],
+                              color: isDark ? Colors.white : colorScheme.primary,
                             ),
                           ),
                           const Spacer(),
                           IconButton(
                             icon: Icon(Icons.close,
                                 color:
-                                    isDark ? Colors.white : Colors.blue[900]),
+                                    isDark ? Colors.white : colorScheme.primary),
                             onPressed: () {
                               Get.find<SettingsController>().triggerFeedback();
                               _selectedTasks.clear();
@@ -246,9 +248,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           },
                           child: Container(
                             color: _selectedTasks.contains(task.taskId)
-                                ? (isDark
-                                    ? Colors.blueGrey[800]
-                                    : Colors.blue[50])
+                                ? colorScheme.surfaceVariant
                                 : Colors.transparent,
                             child: TaskCard(
                               data: task.toMapWithUserInfo(
