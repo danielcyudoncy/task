@@ -90,6 +90,12 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: const [
                       BoxShadow(
@@ -172,7 +178,7 @@ class ProfileScreen extends StatelessWidget {
                           Icon(
                             Icons.phone,
                             size: 19,
-                            color: colorScheme.primary,
+                            color: colorScheme.onSurface,
                           ),
                           const SizedBox(width: 10),
                           Text(
@@ -189,7 +195,7 @@ class ProfileScreen extends StatelessWidget {
                           Icon(
                             Icons.email,
                             size: 19,
-                            color: colorScheme.primary,
+                            color: colorScheme.onSurface,
                           ),
                           const SizedBox(width: 10),
                           Text(
@@ -215,7 +221,7 @@ class ProfileScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
                           Icons.notifications_none,
-                          color: colorScheme.primary,
+                          color: colorScheme.onSurface,
                         ),
                         title: Text("Push Notifications",
                             style: TextStyle(
@@ -233,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
                           Icons.person_outline,
-                          color: colorScheme.primary,
+                          color: colorScheme.onSurface,
                         ),
                         title: Text("Update Profile",
                             style: TextStyle(
@@ -261,11 +267,13 @@ class ProfileScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
+                            backgroundColor: colorScheme.secondary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 2,
+                            shadowColor: Colors.black26,
                           ),
                           icon: const Icon(Icons.logout, color: Colors.white),
                           label: const Text("Log out",
@@ -281,11 +289,13 @@ class ProfileScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
+                            backgroundColor: Theme.of(context).colorScheme.error,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            elevation: 2,
+                            shadowColor: Colors.black26,
                           ),
                           icon: const Icon(Icons.delete_forever,
                               color: Colors.white),

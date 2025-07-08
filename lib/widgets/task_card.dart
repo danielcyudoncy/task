@@ -51,7 +51,7 @@ class TaskCard extends StatelessWidget {
       }
     }
 
-    final cardBg = colorScheme.surface;
+    final cardBg = isDark ? colorScheme.surface : Theme.of(context).primaryColor;
     final cardShadow = isDark ? Colors.black45 : Colors.black12;
     final mainText =
         textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black);

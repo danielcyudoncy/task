@@ -21,6 +21,11 @@ class UserDashboardCardsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appColors = theme.extension<AppColors>()!;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Define dark mode colors for cards
+    final darkAccent = const Color(0xFF4527A0);
+    final darkSecondary = const Color(0xFF2D3A5A);
 
     return Row(
       children: [
@@ -29,7 +34,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
           value: assignedTasksToday.toString(),
           icon: Icons.assignment_turned_in_outlined,
           onTap: onAssignedTasksTap,
-          color: appColors.accent1!,
+          color: isDark ? darkAccent : appColors.accent1!,
         ),
         const SizedBox(width: 16),
         _StatCard(
@@ -37,7 +42,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
           value: onlineUsersCount.toString(),
           icon: Icons.wifi_tethering,
           onTap: onOnlineUsersTap,
-          color: theme.colorScheme.secondary,
+          color: isDark ? darkSecondary : theme.colorScheme.secondary,
         ),
       ],
     );

@@ -671,7 +671,7 @@ class _TasksTabState extends State<_TasksTab> {
   @override
   Widget build(BuildContext context) {
     final Color cardColor =
-        widget.isDark ? const Color(0xFF292B3A) : const Color(0xFF171FA0);
+        widget.isDark ? const Color(0xFF292B3A) : Theme.of(context).primaryColor;
     const Color textColor = Colors.white;
     const Color subTextColor = Colors.white70;
     final Color emptyListColor =

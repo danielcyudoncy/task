@@ -80,26 +80,37 @@ class _AppDrawerState extends State<AppDrawer> {
                     padding: EdgeInsets.all(16.w),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 40.r,
-                          backgroundColor: Colors.white,
-                          backgroundImage: authController
-                                  .profilePic.value.isNotEmpty
-                              ? NetworkImage(authController.profilePic.value)
-                              : null,
-                          child: authController.profilePic.value.isEmpty
-                              ? Text(
-                                  authController.fullName.value.isNotEmpty
-                                      ? authController.fullName.value[0]
-                                          .toUpperCase()
-                                      : '?',
-                                  style: TextStyle(
-                                    fontSize: 28.sp,
-                                    fontFamily: 'Raleway',
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                )
-                              : null,
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 40.r,
+                            backgroundColor: Colors.white,
+                            backgroundImage: authController
+                                    .profilePic.value.isNotEmpty
+                                ? NetworkImage(authController.profilePic.value)
+                                : null,
+                            child: authController.profilePic.value.isEmpty
+                                ? Text(
+                                    authController.fullName.value.isNotEmpty
+                                        ? authController.fullName.value[0]
+                                            .toUpperCase()
+                                        : '?',
+                                    style: TextStyle(
+                                      fontSize: 28.sp,
+                                      fontFamily: 'Raleway',
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  )
+                                : null,
+                          ),
                         ),
                         SizedBox(width: 16.w),
                         Column(
