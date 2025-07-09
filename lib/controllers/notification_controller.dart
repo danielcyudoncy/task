@@ -8,7 +8,10 @@ import 'package:task/utils/snackbar_utils.dart';
 class NotificationController extends GetxController {
   final RxList<Map<String, dynamic>> notifications =
       <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> validNotifications =
+      <Map<String, dynamic>>[].obs;
   final RxInt unreadCount = 0.obs;
+  final RxInt validUnreadCount = 0.obs;
   final RxInt totalNotifications = 0.obs;
   final RxBool isLoading = false.obs;
 
@@ -37,7 +40,6 @@ class NotificationController extends GetxController {
         return;
       }
 
-      // Use a safer approach with error handling
       final stream = FirebaseFirestore.instance
           .collection("users")
           .doc(uid)
@@ -50,7 +52,7 @@ class NotificationController extends GetxController {
       });
 
       notifications.bindStream(
-        stream.map((snapshot) {
+        stream.asyncMap((snapshot) async {
           try {
             final docs = snapshot.docs;
             totalNotifications.value = docs.length;
@@ -65,9 +67,10 @@ class NotificationController extends GetxController {
                   'timestamp': data['timestamp'] as Timestamp?,
                   'isRead': data['isRead'] as bool? ?? false,
                   'type': data['type']?.toString(),
+                  'taskId': data['taskId'],
                 };
               } catch (e) {
-                debugPrint('Error parsing notification ${doc.id}: $e');
+                debugPrint('Error parsing notification  [${doc.id}]: $e');
                 return {
                   'id': doc.id,
                   'title': 'Invalid Notification',
@@ -78,6 +81,7 @@ class NotificationController extends GetxController {
               }
             }).toList();
 
+            await _updateValidNotifications(parsedNotifications);
             updateUnreadCount(parsedNotifications);
             return parsedNotifications;
           } catch (e) {
@@ -92,6 +96,35 @@ class NotificationController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<void> _updateValidNotifications(List<Map<String, dynamic>> notificationsList) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      validNotifications.value = [];
+      validUnreadCount.value = 0;
+      return;
+    }
+    List<Map<String, dynamic>> valid = [];
+    for (final n in notificationsList) {
+      final type = n['type']?.toString();
+      if (type == 'task_assigned' || type == 'task_assignment') {
+        final taskId = n['taskId']?.toString();
+        if (taskId != null && taskId.isNotEmpty) {
+          final taskDoc = await FirebaseFirestore.instance.collection('tasks').doc(taskId).get();
+          if (taskDoc.exists) {
+            final data = taskDoc.data() as Map<String, dynamic>;
+            if (data['assignedReporterId'] == uid || data['assignedCameramanId'] == uid || data['assignedTo'] == uid) {
+              valid.add(n);
+            }
+          }
+        }
+      } else {
+        valid.add(n);
+      }
+    }
+    validNotifications.value = valid;
+    validUnreadCount.value = valid.where((n) => !(n['isRead'] as bool? ?? true)).length;
   }
 
   void updateUnreadCount(List<Map<String, dynamic>>? currentNotifications) {
