@@ -28,9 +28,7 @@ class _NewsScreenState extends State<NewsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
         _newsService = Get.find<NewsService>();
-        print('NewsService found successfully');
       } catch (e) {
-        print('NewsService not found, creating new instance: $e');
         _newsService = Get.put(NewsService());
       }
     });
@@ -54,7 +52,6 @@ class _NewsScreenState extends State<NewsScreen> {
         }
       }
     } catch (e) {
-      print('Error launching URL: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -103,7 +100,6 @@ class _NewsScreenState extends State<NewsScreen> {
       try {
         _newsService = Get.find<NewsService>();
       } catch (e) {
-        print('NewsService not available in build: $e');
         return const Scaffold(
           body: Center(
             child: Column(
@@ -232,15 +228,12 @@ class _NewsScreenState extends State<NewsScreen> {
                               margin: const EdgeInsets.symmetric(horizontal: 16),
                               child: ElevatedButton(
                                 onPressed: () {
-                                  print('Manual refresh pressed');
                                   try {
                                     if (_newsService != null) {
                                       _newsService!.fetchNews();
                                     } else {
-                                      print('NewsService is null');
                                     }
                                   } catch (e) {
-                                    print('Error refreshing news: $e');
                                     if (mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
