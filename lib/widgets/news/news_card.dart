@@ -75,6 +75,38 @@ class NewsCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 8.h),
+              // News Image or Logo (if present)
+              if (article['imageUrl'] != null && article['imageUrl'].toString().isNotEmpty)
+                Center(
+                  child: Container(
+                    height: 80.h,
+                    width: double.infinity,
+                    margin: EdgeInsets.only(bottom: 8.h),
+                    padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.grey[100],
+                    ),
+                    clipBehavior: Clip.hardEdge,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: article['imageUrl'].toString().startsWith('assets/')
+                        ? Image.asset(
+                            article['imageUrl'],
+                            height: 40.h,
+                            width: 100.w,
+                            fit: BoxFit.contain,
+                          )
+                        : Image.network(
+                            article['imageUrl'],
+                            height: 40.h,
+                            width: 100.w,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image, size: 40, color: Colors.grey)),
+                          ),
+                    ),
+                  ),
+                ),
               // Summary
               Text(
                 article['summary'],
@@ -169,12 +201,26 @@ class NewsCarouselCard extends StatelessWidget {
         },
       );
     } else {
-      imageWidget = Image.asset(
-        imagePath.isNotEmpty ? imagePath : 'assets/png/logo.png',
-        width: 350.w,
-        height: 246.h,
-        fit: BoxFit.cover,
-      );
+      if (imagePath == 'assets/images/tv-logos/CHANNELS.png' ||
+          imagePath == 'assets/images/tv-logos/cnn.png' ||
+          imagePath == 'assets/images/tv-logos/aljazeera.png') {
+        imageWidget = Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
+          child: Image.asset(
+            imagePath,
+            width: 300.w,
+            height: 180.h,
+            fit: BoxFit.contain,
+          ),
+        );
+      } else {
+        imageWidget = Image.asset(
+          imagePath.isNotEmpty ? imagePath : 'assets/png/logo.png',
+          width: 350.w,
+          height: 246.h,
+          fit: BoxFit.cover,
+        );
+      }
     }
     return GestureDetector(
       onTap: onTap,
@@ -203,7 +249,7 @@ class NewsCarouselCard extends StatelessWidget {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: 80.h, // Adjusted for new height
+                height: 130.h, // Increased height for more coverage
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -211,7 +257,7 @@ class NewsCarouselCard extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.85),
+                        Colors.black.withOpacity(0.95),
                       ],
                     ),
                   ),

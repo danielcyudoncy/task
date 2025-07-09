@@ -183,6 +183,12 @@ class NewsService extends GetxService {
           }
           // --- IMAGE EXTRACTION PATCH END ---
 
+          // Use local asset for Channels TV
+          String? finalImageUrl = imageUrl;
+          if (sourceName == 'Channels TV') {
+            finalImageUrl = 'assets/images/tv-logos/CHANNELS.png';
+          }
+
           // Only add if we have a title and some content
           if (title.isNotEmpty && (cleanDescription.isNotEmpty || title.length > 20)) {
             articles.add({
@@ -195,7 +201,7 @@ class NewsService extends GetxService {
               'author': cleanAuthor.isNotEmpty ? cleanAuthor : sourceName,
               'date': date.isNotEmpty ? date : DateTime.now().toIso8601String(),
               'category': _categorizeArticle(title, cleanDescription),
-              'imageUrl': imageUrl,
+              'imageUrl': finalImageUrl,
               'source': sourceName,
               'url': link,
             });
@@ -228,14 +234,23 @@ class NewsService extends GetxService {
   }
 
   String _getSourceName(String url) {
-    if (url.contains('news.google.com')) {
-      if (url.contains('SPORTS')) return 'Google News - Sports';
-      if (url.contains('TECHNOLOGY')) return 'Google News - Technology';
-      if (url.contains('healthcare')) return 'Google News - Healthcare';
-      if (url.contains('Africa')) return 'Google News - Africa';
+    final lowerUrl = url.toLowerCase();
+    debugPrint('NewsService: Matching source for feed URL: $url');
+    if (lowerUrl.contains('news.google.com')) {
+      if (lowerUrl.contains('hl=en&gl=ng')) return 'Google News Nigeria';
+      if (lowerUrl.contains('sports')) return 'Google News - Sports';
+      if (lowerUrl.contains('technology')) return 'Google News - Technology';
+      if (lowerUrl.contains('healthcare')) return 'Google News - Healthcare';
+      if (lowerUrl.contains('africa')) return 'Google News - Africa';
       return 'Google News';
     }
-    // If you ever add more feeds, add them here
+    if (lowerUrl.contains('premiumtimesng.com')) return 'Premium Times Nigeria';
+    if (lowerUrl.contains('vanguardngr.com')) return 'Vanguard Nigeria';
+    if (lowerUrl.contains('thecable.ng')) return 'The Cable Nigeria';
+    if (lowerUrl.contains('guardian.ng')) return 'The Guardian Nigeria';
+    if (lowerUrl.contains('channelstv.com')) return 'Channels TV';
+    // Add more as needed
+    debugPrint('NewsService: No match for feed URL: $url');
     return 'Unknown Source';
   }
 

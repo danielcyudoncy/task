@@ -103,7 +103,7 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
       },
       {
         'source': 'Channels TV',
-        'logo': 'assets/png/logo.png',
+        'logo': 'assets/images/tv-logos/CHANNELS.png',
         'id': 'channelstv',
         'rss': 'https://www.channelstv.com/feed/',
       },
@@ -167,18 +167,31 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
               if (article != null) {
                 return Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.w),
-                  child: NewsCarouselCard(
-                    imagePath: logoPath,
-                    source: sourceName,
-                    headline: article['title'] ?? '',
-                    timeAgo: _formatTimeAgo(article['date']),
-                    onTap: () {
-                      final url = article['url'];
-                      if (url != null && url.toString().isNotEmpty) {
-                        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-                      }
-                    },
-                  ),
+                  child: sourceName == 'Channels TV'
+                      ? NewsCarouselCard(
+                          imagePath: logoPath,
+                          source: sourceName,
+                          headline: article['title'] ?? '',
+                          timeAgo: _formatTimeAgo(article['date']),
+                          onTap: () {
+                            final url = article['url'];
+                            if (url != null && url.toString().isNotEmpty) {
+                              launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        )
+                      : NewsCarouselCard(
+                          imagePath: logoPath,
+                          source: sourceName,
+                          headline: article['title'] ?? '',
+                          timeAgo: _formatTimeAgo(article['date']),
+                          onTap: () {
+                            final url = article['url'];
+                            if (url != null && url.toString().isNotEmpty) {
+                              launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
                 );
               } else if (rssUrl.isNotEmpty) {
                 // Fallback to RSS headline if no API article

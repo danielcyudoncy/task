@@ -10,6 +10,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:task/views/wallpaper_screen.dart';
 import 'package:get/get.dart';
 import '../widgets/chat_nav_bar.dart';
+import '../controllers/wallpaper_controller.dart';
 // Import the UserNavBar
 
 // Helper function
@@ -68,6 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Timer? _typingTimer;
   StreamSubscription? _typingSubscription;
   bool _shouldScrollToBottom = true;
+  final WallpaperController _wallpaperController = Get.put(WallpaperController());
 
   @override
   void initState() {
@@ -415,9 +417,9 @@ class _ChatScreenState extends State<ChatScreen> {
         titleSpacing: 0,
       ),
 
-      body: Stack(
+      body: Obx(() => Stack(
         children: [
-          _ChatBackground(backgroundValue: widget.chatBackground ?? ''),
+          _ChatBackground(backgroundValue: _wallpaperController.wallpaper.value),
           Column(
             children: [
               Expanded(
@@ -522,7 +524,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ],
-      ),
+      )),
       bottomNavigationBar: const ChatNavBar(currentIndex: 0),
     );
   }

@@ -16,7 +16,7 @@ class ChannelsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return NewsCarouselCard(
-      imagePath: 'assets/png/logo.png',
+      imagePath: 'assets/images/tv-logos/CHANNELS.png',
       source: 'Channels TV',
       headline: 'Channels TV launches new investigative series',
       timeAgo: '4 hours ago',

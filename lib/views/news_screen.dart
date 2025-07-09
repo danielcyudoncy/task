@@ -227,6 +227,18 @@ class _NewsScreenState extends State<NewsScreen> {
                             Container(
                               margin: const EdgeInsets.symmetric(horizontal: 16),
                               child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.primary,
+                                  foregroundColor: theme.colorScheme.onPrimary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  textStyle: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                                 onPressed: () {
                                   try {
                                     if (_newsService != null) {
@@ -302,6 +314,18 @@ class _NewsScreenState extends State<NewsScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: theme.colorScheme.primary,
+                                          foregroundColor: theme.colorScheme.onPrimary,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                          textStyle: TextStyle(
+                                            fontSize: 16.sp,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                         onPressed: () {
                                           if (_newsService != null) {
                                             _newsService!.fetchNews();
@@ -378,7 +402,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   style:  TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.titleLarge?.color,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -388,7 +412,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   _stripHtmlTags(article['summary'] ?? ''),
                   style:  TextStyle(
                     fontSize: 14.sp,
-                    color: Colors.grey,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
@@ -399,7 +423,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     Icon(
                       Icons.source,
                       size: 16,
-                      color: primaryColor,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -407,7 +431,7 @@ class _NewsScreenState extends State<NewsScreen> {
                         article['source'] ?? 'Unknown Source',
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: primaryColor,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -415,14 +439,14 @@ class _NewsScreenState extends State<NewsScreen> {
                     Icon(
                       Icons.access_time,
                       size: 16,
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _formatDate(article['date'] ?? ''),
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ],
