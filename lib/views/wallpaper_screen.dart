@@ -1,8 +1,8 @@
 // views/wallpaper_screen.dart
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/wallpaper_controller.dart';
 
 
 class WallpaperScreen extends StatefulWidget {
@@ -35,24 +35,21 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
     Colors.red.shade900,
   ];
 
-  final String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  late final WallpaperController _wallpaperController;
+
+  @override
+  void initState() {
+    super.initState();
+    _wallpaperController = Get.put(WallpaperController());
+  }
 
   Future<void> _updateWallpaper(String backgroundValue) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUserId)
-          .update({'chatBackground': backgroundValue});
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Wallpaper updated!')),
-      );
-      Navigator.of(context).pop(); // Go back to chat screen
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update wallpaper: $e')),
-      );
-    }
+    await _wallpaperController.setWallpaper(backgroundValue);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Wallpaper updated!')),
+    );
+    Navigator.of(context).pop();
   }
 
   // NOTE: Picking from gallery and uploading is a more advanced feature
@@ -60,6 +57,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
   // We can add the upload logic in a future step if you wish.
   Future<void> _pickFromGallery() async {
     // This is a placeholder for a more complex flow.
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Gallery feature coming soon!')),
     );
@@ -81,6 +79,40 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- Move action buttons to the top ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.photo_library, size: 18),
+                  label: const Text('Photos', style: TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: _pickFromGallery,
+                ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Remove', style: TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () async {
+                    await _wallpaperController.setWallpaper('');
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Wallpaper removed!')),
+                    );
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
             Text('Solid Colors', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             GridView.builder(
@@ -134,14 +166,6 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                 );
               },
             ),
-            const SizedBox(height: 32),
-            Center(
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.photo_library),
-                label: const Text('From My Photos'),
-                onPressed: _pickFromGallery,
-              ),
-            )
           ],
         ),
       ),

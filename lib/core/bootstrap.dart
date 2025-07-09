@@ -19,6 +19,7 @@ import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/user_controller.dart';
+import 'package:task/controllers/wallpaper_controller.dart';
 import 'package:task/firebase_options.dart';
 import 'package:task/myApp.dart';
 import 'package:task/service/mock_user_deletion_service.dart';
@@ -96,6 +97,8 @@ Future<void> bootstrapApp() async {
         permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting NotificationController');
     Get.put(NotificationController(), permanent: true);
+    debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
+    Get.put(WallpaperController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: All controllers put successfully');
 
     // Step 6: Perform post-initialization actions (simplified to prevent issues)
