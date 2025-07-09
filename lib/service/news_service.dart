@@ -1,14 +1,10 @@
 // service/news_service.dart
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:task/utils/constants/news_config.dart';
 
 class NewsService extends GetxService {
-  // News API keys from config
-  static const String _newsApiKey = NewsConfig.newsApiKey;
-  static const String _newsDataApiKey = NewsConfig.newsDataApiKey;
   
   final RxList<Map<String, dynamic>> newsArticles = <Map<String, dynamic>>[].obs;
   final RxBool isLoading = false.obs;
@@ -34,29 +30,10 @@ class NewsService extends GetxService {
       isLoading(true);
       errorMessage.value = '';
       
-      debugPrint('NewsService: Fetching recent news (today and yesterday)...');
+      debugPrint('NewsService: Fetching recent news (Google News RSS only)...');
       
-      // Try multiple news APIs for better coverage
-      final List<Map<String, dynamic>> allNews = [];
-      
-      // Method 1: NewsAPI.org
-      debugPrint('NewsService: Fetching from NewsAPI.org...');
-      final newsApiResults = await _fetchFromNewsAPI();
-      allNews.addAll(newsApiResults);
-      debugPrint('NewsService: Got ${newsApiResults.length} articles from NewsAPI.org');
-      
-      // Method 2: NewsData.io
-      debugPrint('NewsService: Fetching from NewsData.io...');
-      final newsDataResults = await _fetchFromNewsData();
-      allNews.addAll(newsDataResults);
-      debugPrint('NewsService: Got ${newsDataResults.length} articles from NewsData.io');
-      
-      // Method 3: Fallback to RSS feeds if both APIs fail
-      if (allNews.isEmpty) {
-        debugPrint('NewsService: Both APIs failed, trying RSS feeds as fallback');
-        final rssResults = await _fetchFromRSSFeeds();
-        allNews.addAll(rssResults);
-      }
+      // Only fetch from Google News RSS feeds
+      final List<Map<String, dynamic>> allNews = await _fetchFromRSSFeeds();
       
       // Remove duplicates and sort by date
       final uniqueNews = _removeDuplicates(allNews);
@@ -83,175 +60,10 @@ class NewsService extends GetxService {
     } catch (e) {
       debugPrint('NewsService: Error fetching recent news: $e');
       errorMessage.value = 'Failed to load news. Please try again.';
-      
-      // Fallback to mock data if all APIs fail
       _loadMockNews();
     } finally {
       isLoading(false);
     }
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchFromNewsAPI() async {
-    try {
-      // Fetch from multiple countries for better coverage
-      final List<Map<String, dynamic>> allArticles = [];
-      
-      // US news
-      final usResponse = await http.get(
-        Uri.parse('https://newsapi.org/v2/top-headlines?country=us&apiKey=$_newsApiKey'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
-
-      if (usResponse.statusCode == 200) {
-        final data = json.decode(usResponse.body);
-        final articles = data['articles'] as List;
-        
-        allArticles.addAll(articles.map((article) {
-          final description = article['description'] ?? '';
-          final content = article['content'] ?? description;
-          
-          // Create a better summary and content
-          String summary = description;
-          String fullContent = content;
-          
-          // If content is truncated (ends with [...]), try to get more content
-          if (content.contains('[...]') || content.length < 200) {
-            // Use description as full content if it's longer
-            if (description.length > content.length) {
-              fullContent = description;
-            }
-          }
-          
-          // Create a better summary
-          if (summary.isEmpty || summary.length < 50) {
-            summary = fullContent.length > 200 
-              ? '${fullContent.substring(0, 200)}...' 
-              : fullContent;
-          }
-          
-          final url = article['url'];
-          debugPrint('NewsService: Article URL: $url');
-          return {
-            'id': url ?? DateTime.now().millisecondsSinceEpoch.toString(),
-            'title': article['title'] ?? 'No Title',
-            'summary': summary,
-            'content': fullContent,
-            'author': article['author'] ?? 'Unknown Author',
-            'date': article['publishedAt'] ?? DateTime.now().toIso8601String(),
-            'category': _categorizeArticle(article['title'] ?? '', description),
-            'imageUrl': article['urlToImage'],
-            'source': article['source']['name'] ?? 'Unknown Source',
-            'url': url,
-          };
-        }).toList());
-      }
-      
-      // UK news
-      final ukResponse = await http.get(
-        Uri.parse('https://newsapi.org/v2/top-headlines?country=gb&apiKey=$_newsApiKey'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
-
-      if (ukResponse.statusCode == 200) {
-        final data = json.decode(ukResponse.body);
-        final articles = data['articles'] as List;
-        
-        allArticles.addAll(articles.map((article) {
-          final description = article['description'] ?? '';
-          final content = article['content'] ?? description;
-          
-          // Create a better summary and content
-          String summary = description;
-          String fullContent = content;
-          
-          // If content is truncated (ends with [...]), try to get more content
-          if (content.contains('[...]') || content.length < 200) {
-            // Use description as full content if it's longer
-            if (description.length > content.length) {
-              fullContent = description;
-            }
-          }
-          
-          // Create a better summary
-          if (summary.isEmpty || summary.length < 50) {
-            summary = fullContent.length > 200 
-              ? '${fullContent.substring(0, 200)}...' 
-              : fullContent;
-          }
-          
-          final url = article['url'];
-          debugPrint('NewsService: Article URL: $url');
-          return {
-            'id': url ?? DateTime.now().millisecondsSinceEpoch.toString(),
-            'title': article['title'] ?? 'No Title',
-            'summary': summary,
-            'content': fullContent,
-            'author': article['author'] ?? 'Unknown Author',
-            'date': article['publishedAt'] ?? DateTime.now().toIso8601String(),
-            'category': _categorizeArticle(article['title'] ?? '', description),
-            'imageUrl': article['urlToImage'],
-            'source': article['source']['name'] ?? 'Unknown Source',
-            'url': url,
-          };
-        }).toList());
-      }
-      
-      return allArticles;
-    } catch (e) {
-      debugPrint('NewsService: NewsAPI error: $e');
-    }
-    return [];
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchFromNewsData() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://newsdata.io/api/1/news?apikey=$_newsDataApiKey&country=us,gb,za&language=en'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final articles = data['results'] as List;
-        
-        return articles.map((article) {
-          final description = article['description'] ?? '';
-          final content = article['content'] ?? description;
-          
-          // Create a better summary and content
-          String summary = description;
-          String fullContent = content;
-          
-          // If content is truncated or too short, use description
-          if (content.isEmpty || content.length < 200) {
-            fullContent = description;
-          }
-          
-          // Create a better summary
-          if (summary.isEmpty || summary.length < 50) {
-            summary = fullContent.length > 200 
-              ? '${fullContent.substring(0, 200)}...' 
-              : fullContent;
-          }
-          
-          return {
-            'id': article['link'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-            'title': article['title'] ?? 'No Title',
-            'summary': summary,
-            'content': fullContent,
-            'author': article['creator']?[0] ?? 'Unknown Author',
-            'date': article['pubDate'] ?? DateTime.now().toIso8601String(),
-            'category': _categorizeArticle(article['title'] ?? '', description),
-            'imageUrl': article['image_url'],
-            'source': article['source_id'] ?? 'Unknown Source',
-            'url': article['link'],
-          };
-        }).toList();
-      }
-    } catch (e) {
-      debugPrint('NewsService: NewsData error: $e');
-    }
-    return [];
   }
 
   Future<List<Map<String, dynamic>>> _fetchFromRSSFeeds() async {
@@ -347,7 +159,30 @@ class NewsService extends GetxService {
           final creatorMatch = RegExp(r'<dc:creator>(.*?)</dc:creator>').firstMatch(itemContent);
           final author = authorMatch?.group(1) ?? creatorMatch?.group(1) ?? '';
           final cleanAuthor = _cleanHtml(author);
-          
+
+          // --- IMAGE EXTRACTION PATCH START ---
+          String? imageUrl;
+          // Try <media:content url="...">
+          final mediaContentMatch = RegExp(r'<media:content[^>]*url=["\"](.*?)["\"][^>]*/?>', dotAll: true).firstMatch(itemContent);
+          if (mediaContentMatch != null) {
+            imageUrl = mediaContentMatch.group(1);
+          }
+          // Try <enclosure url="...">
+          if (imageUrl == null) {
+            final enclosureMatch = RegExp(r'<enclosure[^>]*url=["\"](.*?)["\"][^>]*/?>', dotAll: true).firstMatch(itemContent);
+            if (enclosureMatch != null) {
+              imageUrl = enclosureMatch.group(1);
+            }
+          }
+          // Try <img ... src="..."> in description
+          if (imageUrl == null && description.isNotEmpty) {
+            final imgTagMatch = RegExp(r'<img[^>]*src=["\"](.*?)["\"][^>]*>', dotAll: true).firstMatch(description);
+            if (imgTagMatch != null) {
+              imageUrl = imgTagMatch.group(1);
+            }
+          }
+          // --- IMAGE EXTRACTION PATCH END ---
+
           // Only add if we have a title and some content
           if (title.isNotEmpty && (cleanDescription.isNotEmpty || title.length > 20)) {
             articles.add({
@@ -360,7 +195,7 @@ class NewsService extends GetxService {
               'author': cleanAuthor.isNotEmpty ? cleanAuthor : sourceName,
               'date': date.isNotEmpty ? date : DateTime.now().toIso8601String(),
               'category': _categorizeArticle(title, cleanDescription),
-              'imageUrl': null,
+              'imageUrl': imageUrl,
               'source': sourceName,
               'url': link,
             });
@@ -393,12 +228,14 @@ class NewsService extends GetxService {
   }
 
   String _getSourceName(String url) {
-    if (url.contains('bbc')) return 'BBC News';
-    if (url.contains('cnn')) return 'CNN';
-    if (url.contains('aljazeera')) return 'Al Jazeera';
-    if (url.contains('reuters')) return 'Reuters';
-    if (url.contains('npr')) return 'NPR';
-    if (url.contains('techcrunch')) return 'TechCrunch';
+    if (url.contains('news.google.com')) {
+      if (url.contains('SPORTS')) return 'Google News - Sports';
+      if (url.contains('TECHNOLOGY')) return 'Google News - Technology';
+      if (url.contains('healthcare')) return 'Google News - Healthcare';
+      if (url.contains('Africa')) return 'Google News - Africa';
+      return 'Google News';
+    }
+    // If you ever add more feeds, add them here
     return 'Unknown Source';
   }
 
