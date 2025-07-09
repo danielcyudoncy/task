@@ -35,10 +35,10 @@ class DashboardCardsWidget extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Define dark mode colors for cards
-    final darkSecondary = const Color(0xFF2D3A5A);
-    final darkSuccess = const Color(0xFF388E3C);
-    final darkWarning = const Color(0xFFB26A00);
-    final darkAccent = const Color(0xFF4527A0);
+    const darkSecondary = Color(0xFF2D3A5A);
+    const darkSuccess = Color(0xFF388E3C);
+    const darkWarning = Color(0xFFB26A00);
+    const darkAccent = Color(0xFF4527A0);
 
     return Column(
       children: [
@@ -77,7 +77,7 @@ class DashboardCardsWidget extends StatelessWidget {
             _StatCard(
               title: 'News Feed',
               value: newsCount.toString(),
-              icon: Icons.wifi_tethering,
+              icon: Icons.rss_feed,
               onTap: onNewsFeedTap,
               color: isDark ? darkWarning : appColors.warning!,
             ),
@@ -88,8 +88,7 @@ class DashboardCardsWidget extends StatelessWidget {
   }
 }
 
-// Helper widget for a single card. No changes needed here,
-// as it just accepts and displays whatever color it's given.
+// Helper widget for a single card. 
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -138,6 +137,7 @@ class _StatCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
                     color: Colors.white.withOpacity(0.9),
                   ),
                 ),
