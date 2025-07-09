@@ -48,12 +48,12 @@ class NewsCategoryFilter extends StatelessWidget {
                 onCategoryChanged(category);
               },
               backgroundColor: isSelected 
-                ? colorScheme.primaryContainer
+                ? colorScheme.primary
                 : colorScheme.surfaceVariant,
-              selectedColor: colorScheme.primaryContainer,
+              selectedColor: colorScheme.primary,
               labelStyle: TextStyle(
                 color: isSelected 
-                  ? colorScheme.onPrimaryContainer
+                  ? colorScheme.onPrimary
                   : colorScheme.onSurfaceVariant,
                 fontSize: 12.sp,
               ),

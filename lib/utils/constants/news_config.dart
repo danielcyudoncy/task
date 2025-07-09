@@ -12,6 +12,14 @@ class NewsConfig {
   static const List<String> rssFeeds = [
     // Google News Top Headlines (English only):
     'https://news.google.com/rss?hl=en&gl=US&ceid=US:en', // Top headlines (US, English)
+    // Google News Nigeria (English):
+    'https://news.google.com/rss?hl=en&gl=NG&ceid=NG:en', // Top headlines (Nigeria, English)
+    // Nigerian news RSS feeds:
+    'https://www.premiumtimesng.com/feed',
+    'https://www.vanguardngr.com/feed',
+    'https://www.thecable.ng/feed',
+    'https://guardian.ng/feed',
+    'https://www.channelstv.com/feed',
   ];
   
   // News categories
@@ -22,8 +30,8 @@ class NewsConfig {
     'Technology',
     'Sports',
     'Entertainment',
-    'Health',
     'Science',
+    'Nigeria', // Added Nigeria category
     'All',
   ];
   
