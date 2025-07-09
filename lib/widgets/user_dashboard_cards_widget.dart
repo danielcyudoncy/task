@@ -24,8 +24,8 @@ class UserDashboardCardsWidget extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Define dark mode colors for cards
-    final darkAccent = const Color(0xFF4527A0);
-    final darkSecondary = const Color(0xFF2D3A5A);
+    const darkAccent = Color(0xFF4527A0);
+    const darkSecondary = Color(0xFF2D3A5A);
 
     return Row(
       children: [

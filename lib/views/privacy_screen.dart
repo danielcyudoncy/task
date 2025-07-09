@@ -58,7 +58,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 ],
               ),
             ),
-            Divider(height: 1, color: dividerColor, thickness: 2),
+            const Divider(height: 1, color: dividerColor, thickness: 2),
             Expanded(
               child: SingleChildScrollView(
                 padding:
@@ -86,7 +86,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ),
 
                     // Privacy Settings Title
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Privacy Settings",
@@ -100,7 +100,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     const SizedBox(height: 20),
 
                     // Third Party Services
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Third Party Services",
@@ -114,7 +114,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: Text(
                             "Get alerts of new assignments",
                             style: TextStyle(
@@ -134,7 +134,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     const SizedBox(height: 14),
 
                     // Location Services
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Location Services",
@@ -148,7 +148,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: Text(
                             "Enable/Disable Location",
                             style: TextStyle(
@@ -168,7 +168,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     const SizedBox(height: 14),
 
                     // Ad's Preference
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Ad's Prference",
@@ -182,7 +182,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: Text(
                             "Targeted Ads",
                             style: TextStyle(
@@ -201,7 +201,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     const SizedBox(height: 14),
 
                     // Privacy Policy
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Privacy Policy",
@@ -215,7 +215,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text(
+                      title: const Text(
                         "View Privacy Policy",
                         style: TextStyle(
                           color: textColor,
@@ -229,7 +229,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ),
 
                     // Security
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Security",
@@ -243,7 +243,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text(
+                      title: const Text(
                         "Set up two - factor authentication",
                         style: TextStyle(
                           color: textColor,
