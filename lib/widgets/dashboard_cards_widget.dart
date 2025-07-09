@@ -76,7 +76,7 @@ class DashboardCardsWidget extends StatelessWidget {
             const SizedBox(width: 16),
             _StatCard(
               title: 'News Feed',
-              value: newsCount.toString(),
+              value: newsCount == 0 ? '' : newsCount.toString(),
               icon: Icons.rss_feed,
               onTap: onNewsFeedTap,
               color: isDark ? darkWarning : appColors.warning!,
