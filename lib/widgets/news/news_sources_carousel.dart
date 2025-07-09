@@ -10,6 +10,12 @@ import 'package:task/views/channels_card.dart';
 import 'package:task/views/cnn_card.dart';
 import 'package:task/views/reuter_card.dart';
 import 'package:task/views/tvc_card.dart';
+import 'package:get/get.dart';
+import 'package:task/service/news_service.dart';
+import 'package:task/widgets/news/news_card.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'package:xml/xml.dart';
 
 
 class NewsSourcesCarousel extends StatefulWidget {
@@ -68,62 +74,162 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    final NewsService newsService = Get.find<NewsService>();
+    // Define the static logos and their corresponding sources
+    final List<Map<String, String>> staticSources = [
+      {
+        'source': 'BBC News',
+        'logo': 'assets/images/tv-logos/BBC News-01.png',
+        'id': 'bbc-news',
+        'rss': 'https://feeds.bbci.co.uk/news/world/rss.xml', // Updated to world news feed
+      },
+      {
+        'source': 'CNN',
+        'logo': 'assets/images/tv-logos/cnn.png',
+        'id': 'cnn',
+        'rss': 'http://rss.cnn.com/rss/edition.rss',
+      },
+      {
+        'source': 'Al Jazeera',
+        'logo': 'assets/images/tv-logos/aljazeera.png',
+        'id': 'al-jazeera-english',
+        'rss': 'https://www.aljazeera.com/xml/rss/all.xml',
+      },
+      {
+        'source': 'Reuters',
+        'logo': 'assets/images/tv-logos/reuters.png',
+        'id': 'reuters',
+        'rss': 'https://www.reuters.com/rssFeed/topNews', // Updated to new Reuters feed
+      },
+      {
+        'source': 'Channels TV',
+        'logo': 'assets/png/logo.png',
+        'id': 'channelstv',
+        'rss': 'https://www.channelstv.com/feed/',
+      },
+      {
+        'source': 'Africanews',
+        'logo': 'assets/images/tv-logos/newsroom_africa.png',
+        'id': 'africanews',
+        'rss': 'https://www.africanews.com/feed/rss',
+      },
+      {
+        'source': 'TVC News',
+        'logo': 'assets/images/tv-logos/tvcnews.jpg',
+        'id': 'tvc-news',
+        'rss': '', // Add correct RSS if available
+      },
+    ];
+
+    Future<Map<String, String>?> fetchLatestRssHeadline(String rssUrl) async {
+      try {
+        final response = await http.get(Uri.parse(rssUrl));
+        if (response.statusCode == 200) {
+          final document = XmlDocument.parse(response.body);
+          final item = document.findAllElements('item').first;
+          final title = item.findElements('title').first.text;
+          final link = item.findElements('link').first.text;
+          return {'title': title, 'url': link};
+        }
+      } catch (e) {
+        // ignore: avoid_print
+        print('RSS fetch error: $e');
+      }
+      return null;
+    }
     return Column(
       children: [
-        // Header
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Row(
-            children: [
-              Icon(Icons.trending_up,
-                  size: 20.sp, color: AppColors.primaryColor),
-              SizedBox(width: 8.w),
-              Text(
-                'Major News Sources',
-                style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryText),
-              ),
-              const Spacer(),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: Text(
-                  'Tap to Visit',
-                  style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-        ),
+        // (Removed header row with 'Major News Sources' and 'Tap to Visit')
         SizedBox(height: 12.h),
         // Carousel
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) => setState(() => _currentIndex = index),
-            itemCount: _cards.length,
-            itemBuilder: (_, index) {
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.w),
-                child: _cards[index],
+        SizedBox(
+          width: 350.w,
+          height: 246.h,
+          child: Obx(() {
+            final articles = newsService.newsArticles;
+            if (newsService.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (articles.isEmpty) {
+              return Center(
+                child: Text('No news available', style: TextStyle(fontSize: 16.sp)),
               );
-            },
-          ),
+            }
+            // For each static source, find the latest article for that source
+            final List<Widget> cards = staticSources.map((sourceInfo) {
+              final sourceName = sourceInfo['source']!;
+              final logoPath = sourceInfo['logo']!;
+              final sourceId = sourceInfo['id']!;
+              final rssUrl = sourceInfo['rss'] ?? '';
+              final article = articles.firstWhereOrNull(
+                (a) => (a['source']?.toString().toLowerCase() ?? '') == sourceId.toLowerCase(),
+              );
+              if (article != null) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: NewsCarouselCard(
+                    imagePath: logoPath,
+                    source: sourceName,
+                    headline: article['title'] ?? '',
+                    timeAgo: _formatTimeAgo(article['date']),
+                    onTap: () {
+                      final url = article['url'];
+                      if (url != null && url.toString().isNotEmpty) {
+                        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
+                );
+              } else if (rssUrl.isNotEmpty) {
+                // Fallback to RSS headline if no API article
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: FutureBuilder<Map<String, String>?>(
+                    future: fetchLatestRssHeadline(rssUrl),
+                    builder: (context, snapshot) {
+                      final rssHeadline = snapshot.data?['title'] ?? 'No headline available';
+                      final rssUrlLink = snapshot.data?['url'];
+                      return NewsCarouselCard(
+                        imagePath: logoPath,
+                        source: sourceName,
+                        headline: rssHeadline,
+                        timeAgo: '',
+                        onTap: () {
+                          if (rssUrlLink != null) {
+                            launchUrl(Uri.parse(rssUrlLink), mode: LaunchMode.externalApplication);
+                          }
+                        },
+                      );
+                    },
+                  ),
+                );
+              } else {
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: NewsCarouselCard(
+                    imagePath: logoPath,
+                    source: sourceName,
+                    headline: 'No headline available',
+                    timeAgo: '',
+                    onTap: () {},
+                  ),
+                );
+              }
+            }).toList();
+            return PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) => setState(() => _currentIndex = index),
+              itemCount: cards.length,
+              itemBuilder: (_, index) => cards[index],
+            );
+          }),
         ),
         // Indicators
         SizedBox(height: 8.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            _cards.length,
+            staticSources.length,
             (index) => Container(
               width: 8.w,
               height: 8.h,
@@ -139,5 +245,26 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
         ),
       ],
     );
+  }
+
+  String _formatTimeAgo(dynamic date) {
+    if (date == null) return '';
+    try {
+      final parsed = DateTime.tryParse(date.toString());
+      if (parsed == null) return '';
+      final now = DateTime.now();
+      final diff = now.difference(parsed);
+      if (diff.inDays > 0) {
+        return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+      } else if (diff.inHours > 0) {
+        return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+      } else if (diff.inMinutes > 0) {
+        return '${diff.inMinutes} minute${diff.inMinutes > 1 ? 's' : ''} ago';
+      } else {
+        return 'Just now';
+      }
+    } catch (_) {
+      return '';
+    }
   }
 }

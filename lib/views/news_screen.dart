@@ -133,13 +133,50 @@ class _NewsScreenState extends State<NewsScreen> {
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     const SizedBox(width: 8),
-                     Text(
+                    Text(
                       'News',
                       style: TextStyle(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.search, color: Colors.white),
+                      onPressed: () async {
+                        final result = await showDialog<String>(
+                          context: context,
+                          builder: (context) {
+                            String searchText = '';
+                            return AlertDialog(
+                              title: const Text('Search News'),
+                              content: TextField(
+                                autofocus: true,
+                                decoration: const InputDecoration(hintText: 'Search news...'),
+                                onChanged: (value) {
+                                  searchText = value;
+                                },
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.of(context).pop(searchText),
+                                  child: const Text('Search'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                        if (result != null && result.isNotEmpty) {
+                          setState(() {
+                            _searchController.text = result;
+                          });
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -158,168 +195,134 @@ class _NewsScreenState extends State<NewsScreen> {
                   child: Column(
                     children: [
                       // Search Bar - Fixed at top
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText: 'Search news...',
-                            prefixIcon: Icon(Icons.search, size: 20),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              // Trigger rebuild to update search results
-                            });
-                          },
-                        ),
-                      ),
+                      // (Removed search bar here)
                       // Scrollable Content below search bar
                       Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () async {
-                            if (_newsService != null) {
-                              await _newsService!.fetchNews();
-                            }
-                          },
-                          child: ListView(
-                            padding: EdgeInsets.zero,
-                            children: [
-                              // News Sources Carousel using existing widget
-                              Container(
-                                height: 140.h,
-                                margin: const EdgeInsets.symmetric(horizontal: 16),
-                                child: NewsSourcesCarousel(colorScheme: theme.colorScheme),
+                        child: ListView(
+                          padding: EdgeInsets.zero,
+                          children: [
+                            // Carousel at the top, always fully visible
+                            SizedBox(
+                              width: 403.w,
+                              height: 326.h,
+                              child: NewsSourcesCarousel(colorScheme: theme.colorScheme),
+                            ),
+                            const SizedBox(height: 16),
+                            // News Category Filter
+                            if (_newsService != null)
+                              NewsCategoryFilter(
+                                newsService: _newsService!,
+                                selectedCategory: _selectedCategory,
+                                onCategoryChanged: (category) {
+                                  setState(() {
+                                    _selectedCategory = category;
+                                  });
+                                },
                               ),
-                              const SizedBox(height: 16),
-                              // News Category Filter
-                              if (_newsService != null)
-                                NewsCategoryFilter(
-                                  newsService: _newsService!,
-                                  selectedCategory: _selectedCategory,
-                                  onCategoryChanged: (category) {
-                                    setState(() {
-                                      _selectedCategory = category;
-                                    });
-                                  },
-                                ),
-                              const SizedBox(height: 16),
-                              // Manual Refresh Button for Testing
-                              Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 16),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    print('Manual refresh pressed');
-                                    try {
-                                      if (_newsService != null) {
-                                        _newsService!.fetchNews();
-                                      } else {
-                                        print('NewsService is null');
-                                      }
-                                    } catch (e) {
-                                      print('Error refreshing news: $e');
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error refreshing news: $e'),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
+                            const SizedBox(height: 16),
+                            // Manual Refresh Button for Testing
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  print('Manual refresh pressed');
+                                  try {
+                                    if (_newsService != null) {
+                                      _newsService!.fetchNews();
+                                    } else {
+                                      print('NewsService is null');
                                     }
-                                  },
-                                  child: const Text('Refresh News'),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // News Articles
-                              Obx(() {
-                                if (_newsService == null) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                if (_newsService?.isLoading.value == true) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                // Get articles filtered by category
-                                var filteredArticles = _newsService!.getNewsByCategory(_selectedCategory);
-                                // Apply search filter if search text is not empty
-                                if (_searchController.text.isNotEmpty) {
-                                  filteredArticles = filteredArticles.where((article) {
-                                    final query = _searchController.text.toLowerCase();
-                                    final title = article['title']?.toString().toLowerCase() ?? '';
-                                    final summary = article['summary']?.toString().toLowerCase() ?? '';
-                                    final content = article['content']?.toString().toLowerCase() ?? '';
-                                    final source = article['source']?.toString().toLowerCase() ?? '';
-                                    final author = article['author']?.toString().toLowerCase() ?? '';
-                                    final category = article['category']?.toString().toLowerCase() ?? '';
-                                    return title.contains(query) ||
-                                           summary.contains(query) ||
-                                           content.contains(query) ||
-                                           source.contains(query) ||
-                                           author.contains(query) ||
-                                           category.contains(query);
-                                  }).toList();
-                                }
-                                if (filteredArticles.isEmpty) {
-                                  return Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.newspaper,
-                                          size: 64,
-                                          color: Colors.grey[400],
+                                  } catch (e) {
+                                    print('Error refreshing news: $e');
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error refreshing news: $e'),
+                                          backgroundColor: Colors.red,
                                         ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          _selectedCategory == 'All' || _selectedCategory == 'All News'
-                                              ? 'No news articles found'
-                                              : 'No news articles found in $_selectedCategory category',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            if (_newsService != null) {
-                                              _newsService!.fetchNews();
-                                            }
-                                          },
-                                          child: const Text('Refresh'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                                return filteredArticles.isNotEmpty
-                                    ? Column(
-                                        children: filteredArticles.map((article) {
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                                            child: _buildNewsCard(article, primaryColor),
-                                          );
-                                        }).toList(),
-                                      )
-                                    : const Center(
-                                        child: Text('No news articles available'),
                                       );
-                              }),
-                            ],
-                          ),
+                                    }
+                                  }
+                                },
+                                child: const Text('Refresh News'),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // News Articles
+                            Obx(() {
+                              if (_newsService == null) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (_newsService?.isLoading.value == true) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              // Get articles filtered by category
+                              var filteredArticles = _newsService!.getNewsByCategory(_selectedCategory);
+                              // Apply search filter if search text is not empty
+                              if (_searchController.text.isNotEmpty) {
+                                filteredArticles = filteredArticles.where((article) {
+                                  final query = _searchController.text.toLowerCase();
+                                  final title = article['title']?.toString().toLowerCase() ?? '';
+                                  final summary = article['summary']?.toString().toLowerCase() ?? '';
+                                  final content = article['content']?.toString().toLowerCase() ?? '';
+                                  final source = article['source']?.toString().toLowerCase() ?? '';
+                                  final author = article['author']?.toString().toLowerCase() ?? '';
+                                  final category = article['category']?.toString().toLowerCase() ?? '';
+                                  return title.contains(query) ||
+                                         summary.contains(query) ||
+                                         content.contains(query) ||
+                                         source.contains(query) ||
+                                         author.contains(query) ||
+                                         category.contains(query);
+                                }).toList();
+                              }
+                              if (filteredArticles.isEmpty) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.newspaper,
+                                        size: 64,
+                                        color: Colors.grey[400],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        _selectedCategory == 'All' || _selectedCategory == 'All News'
+                                            ? 'No news articles found'
+                                            : 'No news articles found in $_selectedCategory category',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          if (_newsService != null) {
+                                            _newsService!.fetchNews();
+                                          }
+                                        },
+                                        child: const Text('Refresh'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              return Column(
+                                children: filteredArticles.map((article) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: _buildNewsCard(article, primaryColor),
+                                  );
+                                }).toList(),
+                              );
+                            }),
+                          ],
                         ),
                       ),
                     ],
