@@ -287,7 +287,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                     children: [
                                       Icon(
                                         Icons.newspaper,
-                                        size: 64,
+                                        size: 50,
                                         color: Colors.grey[400],
                                       ),
                                       const SizedBox(height: 16),
@@ -296,7 +296,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                             ? 'No news articles found'
                                             : 'No news articles found in $_selectedCategory category',
                                         style: TextStyle(
-                                          fontSize: 16,
+                                          fontSize: 16.sp,
                                           color: Colors.grey[600],
                                         ),
                                       ),
@@ -342,11 +342,11 @@ class _NewsScreenState extends State<NewsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -375,8 +375,8 @@ class _NewsScreenState extends State<NewsScreen> {
                 const SizedBox(height: 12),
                 Text(
                   article['title'] ?? 'No Title',
-                  style: const TextStyle(
-                    fontSize: 18,
+                  style:  TextStyle(
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
@@ -386,8 +386,8 @@ class _NewsScreenState extends State<NewsScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _stripHtmlTags(article['summary'] ?? ''),
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style:  TextStyle(
+                    fontSize: 14.sp,
                     color: Colors.grey,
                   ),
                   maxLines: 3,
@@ -406,7 +406,7 @@ class _NewsScreenState extends State<NewsScreen> {
                       child: Text(
                         article['source'] ?? 'Unknown Source',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 12.sp,
                           color: primaryColor,
                           fontWeight: FontWeight.w500,
                         ),
@@ -421,7 +421,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     Text(
                       _formatDate(article['date'] ?? ''),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 12.sp,
                         color: Colors.grey[600],
                       ),
                     ),
