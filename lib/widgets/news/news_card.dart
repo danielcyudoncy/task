@@ -125,4 +125,153 @@ class NewsCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class NewsCarouselCard extends StatelessWidget {
+  final String imagePath;
+  final String source;
+  final String headline;
+  final String timeAgo;
+  final VoidCallback onTap;
+
+  const NewsCarouselCard({
+    super.key,
+    required this.imagePath,
+    required this.source,
+    required this.headline,
+    required this.timeAgo,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget imageWidget;
+    if (imagePath.startsWith('http')) {
+      imageWidget = Image.network(
+        imagePath,
+        width: 350.w,
+        height: 246.h,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          'assets/png/logo.png',
+          width: 350.w,
+          height: 246.h,
+          fit: BoxFit.cover,
+        ),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 350.w,
+            height: 246.h,
+            color: Colors.grey[200],
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    } else {
+      imageWidget = Image.asset(
+        imagePath.isNotEmpty ? imagePath : 'assets/png/logo.png',
+        width: 350.w,
+        height: 246.h,
+        fit: BoxFit.cover,
+      );
+    }
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 350.w,
+        height: 246.h, // Increased size
+        margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20.r),
+          child: Stack(
+            children: [
+              // News image (network or asset)
+              imageWidget,
+              // Gradient overlay at the bottom
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 80.h, // Adjusted for new height
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.85),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Overlaid text
+              Positioned(
+                left: 16.w,
+                right: 16.w,
+                bottom: 18.h,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      source,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.85),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14.sp,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.4),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      headline,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17.sp,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      timeAgo,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 } 
