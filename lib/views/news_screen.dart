@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../service/news_service.dart';
 import '../widgets/news/news_sources_carousel.dart';
 import '../widgets/news/news_category_filter.dart';
+import 'package:html/parser.dart' as html_parser;
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
@@ -84,6 +85,12 @@ class _NewsScreenState extends State<NewsScreen> {
     } catch (e) {
       return 'Recently';
     }
+  }
+
+  // Helper to strip HTML tags from a string
+  String _stripHtmlTags(String htmlString) {
+    final document = html_parser.parse(htmlString);
+    return document.body?.text ?? '';
   }
 
   @override
@@ -385,7 +392,7 @@ class _NewsScreenState extends State<NewsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  article['summary'] ?? '',
+                  _stripHtmlTags(article['summary'] ?? ''),
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.grey,

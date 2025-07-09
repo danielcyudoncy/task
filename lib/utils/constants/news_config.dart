@@ -10,12 +10,8 @@ class NewsConfig {
   
   // RSS feed URLs for fallback (no API key required)
   static const List<String> rssFeeds = [
-    'https://feeds.bbci.co.uk/news/world/rss.xml', // BBC World News
-    'https://rss.cnn.com/rss/edition_world.rss', // CNN World
-    'https://www.aljazeera.com/xml/rss/all.xml', // Al Jazeera
-    'https://feeds.reuters.com/Reuters/worldNews', // Reuters World
-    'https://feeds.npr.org/1004/rss.xml', // NPR News
-    'https://feeds.feedburner.com/TechCrunch', // TechCrunch
+    // Google News Top Headlines (English only):
+    'https://news.google.com/rss?hl=en&gl=US&ceid=US:en', // Top headlines (US, English)
   ];
   
   // News categories
