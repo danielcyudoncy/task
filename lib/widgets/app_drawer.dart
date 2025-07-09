@@ -117,13 +117,19 @@ class _AppDrawerState extends State<AppDrawer> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              authController.fullName.value,
-                              style: TextStyle(
-                                  fontSize: 24.sp,
-                                  fontFamily: 'Raleway',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: 120.w), // adjust as needed
+                              child: Text(
+                                authController.fullName.value,
+                                style: TextStyle(
+                                    fontSize: 24.sp,
+                                    fontFamily: 'Raleway',
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                softWrap: false,
+                              ),
                             ),
                             SizedBox(height: 4.h),
                             Text(
