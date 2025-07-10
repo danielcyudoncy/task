@@ -1,4 +1,5 @@
 // models/task_model.dart
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Task {
@@ -20,6 +21,7 @@ class Task {
   final String createdById;
   final String? assignedReporterId;
   final String? assignedCameramanId;
+  final String? creatorAvatar; // Avatar URL from task document
 
   Task({
     required this.taskId,
@@ -36,6 +38,7 @@ class Task {
     this.assignedReporterId,
     this.assignedCameramanId,
     this.assignmentTimestamp,
+    this.creatorAvatar,
   });
 
   // Factory for Firestore maps
@@ -55,6 +58,7 @@ class Task {
       assignedReporterId: map['assignedReporter'],
       assignedCameramanId: map['assignedCameraman'],
       assignmentTimestamp: map['assignmentTimestamp'] ?? map['assignedAt'],
+      creatorAvatar: map['creatorAvatar'], // Get avatar directly from task document
     );
   }
 
@@ -73,6 +77,7 @@ class Task {
     String? assignedReporterId,
     String? assignedCameramanId,
     Timestamp? assignmentTimestamp,
+    String? creatorAvatar,
   }) {
     return Task(
       taskId: taskId ?? this.taskId,
@@ -88,18 +93,29 @@ class Task {
       assignedReporterId: assignedReporterId ?? this.assignedReporterId,
       assignedCameramanId: assignedCameramanId ?? this.assignedCameramanId,
       assignmentTimestamp: assignmentTimestamp ?? this.assignmentTimestamp,
+      creatorAvatar: creatorAvatar ?? this.creatorAvatar,
     );
   }
 
   /// Converts the Task to a Map for UI widgets, injecting human-readable names from cache if needed.
   Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache, [Map<String, String>? userAvatarCache]) {
+    // Use creatorAvatar from task document first, fallback to cache
+    final avatarFromTask = creatorAvatar ?? '';
+    final avatarFromCache = userAvatarCache?[createdById] ?? '';
+    final finalCreatorAvatar = avatarFromTask.isNotEmpty ? avatarFromTask : avatarFromCache;
+    
+    debugPrint("TaskModel: createdById = $createdById");
+    debugPrint("TaskModel: creatorAvatar from task = $avatarFromTask");
+    debugPrint("TaskModel: creatorAvatar from cache = $avatarFromCache");
+    debugPrint("TaskModel: final creatorAvatar = $finalCreatorAvatar");
+    
     return {
       'taskId': taskId,
       'title': title,
       'description': description,
       'createdBy': createdById, // original user id
       'creatorName': userNameCache[createdById] ?? createdBy,
-      'creatorAvatar': userAvatarCache?[createdById] ?? '',
+      'creatorAvatar': finalCreatorAvatar,
       'assignedReporter': assignedReporterId,
       'assignedReporterName': assignedReporterId != null
           ? (userNameCache[assignedReporterId!] ??
