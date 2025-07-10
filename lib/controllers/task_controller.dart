@@ -39,14 +39,17 @@ class TaskController extends GetxController {
     
     // If it's already a valid network URL, return it
     if (url.startsWith('http://') || url.startsWith('https://')) {
+      debugPrint("TaskController: Valid avatar URL found: $url");
       return url;
     }
     
     // If it's a local file path, return empty string
     if (url.startsWith('file://') || url.startsWith('/')) {
+      debugPrint("TaskController: Local file path filtered out: $url");
       return '';
     }
     
+    debugPrint("TaskController: Invalid avatar URL filtered out: $url");
     return '';
   }
 
@@ -81,19 +84,7 @@ class TaskController extends GetxController {
 
   // Initialize cache from local storage if available
   Future<void> initializeCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? userCache = prefs.getString("userNameCache");
-    if (userCache != null) {
-      userNameCache.addAll(Map<String, String>.from(jsonDecode(userCache)));
-    }
-    String? avatarCache = prefs.getString("userAvatarCache");
-    if (avatarCache != null) {
-      userAvatarCache.addAll(Map<String, String>.from(jsonDecode(avatarCache)));
-    }
-    String? titleCache = prefs.getString("taskTitleCache");
-    if (titleCache != null) {
-      taskTitleCache.addAll(Map<String, String>.from(jsonDecode(titleCache)));
-    }
+    await loadCache();
   }
 
   // Save cache to local storage
@@ -105,28 +96,71 @@ class TaskController extends GetxController {
     prefs.setInt("cacheTimestamp", DateTime.now().millisecondsSinceEpoch);
   }
 
+  // Load cache from local storage
+  Future<void> loadCache() async {
+    try {
+      debugPrint("TaskController: loadCache called");
+      final prefs = await SharedPreferences.getInstance();
+      final userNameCacheString = prefs.getString("userNameCache");
+      final userAvatarCacheString = prefs.getString("userAvatarCache");
+      final taskTitleCacheString = prefs.getString("taskTitleCache");
+      
+      if (userNameCacheString != null) {
+        final Map<String, dynamic> decoded = jsonDecode(userNameCacheString);
+        userNameCache.clear();
+        userNameCache.addAll(Map<String, String>.from(decoded));
+        debugPrint("TaskController: Loaded ${userNameCache.length} user names from cache");
+      }
+      
+      if (userAvatarCacheString != null) {
+        final Map<String, dynamic> decoded = jsonDecode(userAvatarCacheString);
+        userAvatarCache.clear();
+        userAvatarCache.addAll(Map<String, String>.from(decoded));
+        debugPrint("TaskController: Loaded ${userAvatarCache.length} user avatars from cache");
+        debugPrint("TaskController: Avatar cache keys: ${userAvatarCache.keys.toList()}");
+      }
+      
+      if (taskTitleCacheString != null) {
+        final Map<String, dynamic> decoded = jsonDecode(taskTitleCacheString);
+        taskTitleCache.clear();
+        taskTitleCache.addAll(Map<String, String>.from(decoded));
+        debugPrint("TaskController: Loaded ${taskTitleCache.length} task titles from cache");
+      }
+    } catch (e) {
+      debugPrint("TaskController: Error loading cache: $e");
+    }
+  }
+
   // Pre-fetch all user names and avatars and cache them
   Future<void> preFetchUserNames() async {
     try {
+      debugPrint("TaskController: preFetchUserNames called");
       final prefs = await SharedPreferences.getInstance();
       int? lastUpdate = prefs.getInt("cacheTimestamp");
       if (lastUpdate != null &&
           DateTime.now().millisecondsSinceEpoch - lastUpdate < 86400000) {
+        debugPrint("TaskController: Using cached user data (less than 24h old)");
         return;
       }
+      debugPrint("TaskController: Fetching all users for caching");
       QuerySnapshot usersSnapshot =
           await FirebaseFirestore.instance.collection("users").get();
+      debugPrint("TaskController: Found ${usersSnapshot.docs.length} users");
       for (var doc in usersSnapshot.docs) {
         var data = doc.data() as Map<String, dynamic>;
         String uid = doc.id;
         String fullName = data["fullName"] ?? "Unknown";
         String photoUrl = _validateAvatarUrl(data["photoUrl"]);
+        debugPrint("TaskController: Caching user $uid: $fullName, avatar: $photoUrl");
         userNameCache[uid] = fullName;
         userAvatarCache[uid] = photoUrl;
       }
       saveCache();
+      debugPrint("TaskController: User cache saved");
       // ignore: empty_catches
-    } catch (e) {}
+    } catch (e) {
+      debugPrint("TaskController: Error in preFetchUserNames: $e");
+    }
   }
 
   // --- PAGINATED, FILTERED, SEARCHABLE TASK LOADING ---
@@ -231,6 +265,7 @@ class TaskController extends GetxController {
           createdById: taskData["createdBy"] ?? "",
           assignedReporterId: taskData["assignedReporterId"],
           assignedCameramanId: taskData["assignedCameramanId"],
+          creatorAvatar: taskData["creatorAvatar"], // Get avatar from task document
         ));
       }
 
@@ -352,6 +387,7 @@ class TaskController extends GetxController {
           createdById: taskData["createdBy"] ?? "",
           assignedReporterId: taskData["assignedReporterId"],
           assignedCameramanId: taskData["assignedCameramanId"],
+          creatorAvatar: taskData["creatorAvatar"], // Get avatar from task document
         ));
         debugPrint("TaskController: Added task: $taskTitle");
       }
@@ -397,20 +433,28 @@ class TaskController extends GetxController {
     if (uid == null) return "Not Assigned";
     try {
       if (userNameCache.containsKey(uid)) {
+        debugPrint("TaskController: Using cached name for $uid: ${userNameCache[uid]}");
+        debugPrint("TaskController: Cached avatar for $uid: ${userAvatarCache[uid]}");
         return userNameCache[uid]!;
       }
+      debugPrint("TaskController: Fetching user data for $uid");
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection("users").doc(uid).get();
       if (userDoc.exists) {
         String fullName = userDoc["fullName"] ?? "Unknown";
         String photoUrl = _validateAvatarUrl(userDoc["photoUrl"]);
+        debugPrint("TaskController: Fetched fullName: $fullName");
+        debugPrint("TaskController: Fetched photoUrl: ${userDoc["photoUrl"]}");
+        debugPrint("TaskController: Validated photoUrl: $photoUrl");
         userNameCache[uid] = fullName;
         userAvatarCache[uid] = photoUrl;
         return fullName;
       } else {
+        debugPrint("TaskController: User document not found for $uid");
         return "User not found";
       }
     } catch (e) {
+      debugPrint("TaskController: Error fetching user $uid: $e");
       return "Error fetching user";
     }
   }
