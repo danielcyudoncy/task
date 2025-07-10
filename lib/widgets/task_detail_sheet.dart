@@ -17,6 +17,10 @@ class TaskDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    
     // Robust timestamp extraction & formatting
     final dynamic timestampRaw = data['timestamp'];
     String formattedTimestamp = '';
@@ -37,11 +41,13 @@ class TaskDetailSheet extends StatelessWidget {
       }
     }
 
-    final Color bgColor = isDark ? Colors.grey[900]! : Colors.white;
-    final Color mainText = isDark ? Colors.white : Colors.black;
-    final Color subText = isDark ? Colors.white70 : Colors.black54;
-    final Color avatarBg = isDark ? Colors.grey[850]! : Colors.grey[200]!;
-    const Color accent = Color(0xFF08169D);
+    // Theme-aware colors for better visibility
+    final Color bgColor = colorScheme.surface;
+    final Color mainText = colorScheme.onSurface;
+    final Color subText = colorScheme.onSurfaceVariant;
+    final Color avatarBg = isDark ? Colors.grey[700]! : Colors.grey[200]!;
+    final Color accent = colorScheme.primary;
+    final Color borderColor = colorScheme.outline;
 
     return Container(
       color: bgColor,
@@ -57,19 +63,26 @@ class TaskDetailSheet extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : Colors.white,
+                      color: accent,
                       width: 2,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: CircleAvatar(
                     radius: 20,
                     backgroundColor: avatarBg,
-                    backgroundImage: data['creatorAvatar'] != null
+                    backgroundImage: (data['creatorAvatar'] != null && data['creatorAvatar'].isNotEmpty && 
+                        (data['creatorAvatar'].startsWith('http://') || data['creatorAvatar'].startsWith('https://')))
                         ? NetworkImage(data['creatorAvatar'])
                         : null,
-                    child: data['creatorAvatar'] == null
+                    child: (data['creatorAvatar'] == null || data['creatorAvatar'].isEmpty || 
+                        !(data['creatorAvatar'].startsWith('http://') || data['creatorAvatar'].startsWith('https://')))
                         ? Text(
                             (data['creatorName'].isNotEmpty
                                     ? data['creatorName'][0]
@@ -87,11 +100,10 @@ class TaskDetailSheet extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   data['creatorName'] ?? '',
-                  style: TextStyle(
+                  style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'raleway',
                     fontSize: 16 * textScale,
-                    color: accent,
+                    color: mainText,
                   ),
                 ),
                 const Spacer(),
@@ -101,7 +113,7 @@ class TaskDetailSheet extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               data['title'] ?? '',
-              style: TextStyle(
+              style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 20.sp * textScale,
                 color: mainText,
@@ -110,20 +122,37 @@ class TaskDetailSheet extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               data['description'] ?? '',
-              style: TextStyle(fontSize: 15.sp * textScale, color: mainText),
+              style: textTheme.bodyMedium?.copyWith(
+                fontSize: 15.sp * textScale, 
+                color: mainText
+              ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, size: 16, color: subText),
-                const SizedBox(width: 6),
-                Text(
-                  formattedTimestamp.isNotEmpty
-                      ? formattedTimestamp
-                      : 'No date',
-                  style: TextStyle(fontSize: 13.sp * textScale, color: subText),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: borderColor.withOpacity(0.3),
+                  width: 1,
                 ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 16, color: subText),
+                  const SizedBox(width: 6),
+                  Text(
+                    formattedTimestamp.isNotEmpty
+                        ? formattedTimestamp
+                        : 'No date',
+                    style: textTheme.bodySmall?.copyWith(
+                      fontSize: 13.sp * textScale, 
+                      color: subText
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
           ],
