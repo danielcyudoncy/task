@@ -32,6 +32,21 @@ class TaskCard extends StatelessWidget {
     final status = data['status'] ?? 'No status';
     final creatorName = data['creatorName'] ?? data['createdBy'];
     final creatorAvatar = data['creatorAvatar'];
+    
+    // Debug prints for avatar troubleshooting
+    debugPrint("TaskCard: creatorName = $creatorName");
+    debugPrint("TaskCard: creatorAvatar = $creatorAvatar");
+    debugPrint("TaskCard: creatorAvatar type = ${creatorAvatar.runtimeType}");
+    if (creatorAvatar != null) {
+      debugPrint("TaskCard: creatorAvatar starts with http = ${creatorAvatar.toString().startsWith('http')}");
+    }
+    
+    // Check CircleAvatar conditions
+    final hasValidAvatar = creatorAvatar != null && creatorAvatar.isNotEmpty && 
+        (creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://'));
+    debugPrint("TaskCard: hasValidAvatar = $hasValidAvatar");
+    debugPrint("TaskCard: Will show backgroundImage = $hasValidAvatar");
+    debugPrint("TaskCard: Will show child text = ${!hasValidAvatar}");
 
     // Robust timestamp extraction & formatting
     final dynamic timestampRaw = data['timestamp'];
