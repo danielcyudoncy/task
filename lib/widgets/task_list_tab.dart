@@ -16,13 +16,17 @@ class TaskListTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     if (tasks.isEmpty) {
       return Center(
         child: Text(
           "No tasks.",
-          style: TextStyle(color: emptyListColor),
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }

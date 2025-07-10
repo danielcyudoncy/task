@@ -92,13 +92,14 @@ class Task {
   }
 
   /// Converts the Task to a Map for UI widgets, injecting human-readable names from cache if needed.
-  Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache) {
+  Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache, [Map<String, String>? userAvatarCache]) {
     return {
       'taskId': taskId,
       'title': title,
       'description': description,
       'createdBy': createdById, // original user id
       'creatorName': userNameCache[createdById] ?? createdBy,
+      'creatorAvatar': userAvatarCache?[createdById] ?? '',
       'assignedReporter': assignedReporterId,
       'assignedReporterName': assignedReporterId != null
           ? (userNameCache[assignedReporterId!] ??

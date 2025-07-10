@@ -25,11 +25,29 @@ class TaskController extends GetxController {
   var isRefreshing = false.obs; // Added newTaskCount variable
 
   final Map<String, String> userNameCache = {};
+  final Map<String, String> userAvatarCache = {};
   final Map<String, String> taskTitleCache = {};
 
   // Safe snackbar method
   void _safeSnackbar(String title, String message) {
     SnackbarUtils.showSnackbar(title, message);
+  }
+
+  // Helper method to validate and clean avatar URLs
+  String _validateAvatarUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    
+    // If it's already a valid network URL, return it
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // If it's a local file path, return empty string
+    if (url.startsWith('file://') || url.startsWith('/')) {
+      return '';
+    }
+    
+    return '';
   }
 
   // Pagination, filter, and search
@@ -68,6 +86,10 @@ class TaskController extends GetxController {
     if (userCache != null) {
       userNameCache.addAll(Map<String, String>.from(jsonDecode(userCache)));
     }
+    String? avatarCache = prefs.getString("userAvatarCache");
+    if (avatarCache != null) {
+      userAvatarCache.addAll(Map<String, String>.from(jsonDecode(avatarCache)));
+    }
     String? titleCache = prefs.getString("taskTitleCache");
     if (titleCache != null) {
       taskTitleCache.addAll(Map<String, String>.from(jsonDecode(titleCache)));
@@ -78,11 +100,12 @@ class TaskController extends GetxController {
   Future<void> saveCache() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString("userNameCache", jsonEncode(userNameCache));
+    prefs.setString("userAvatarCache", jsonEncode(userAvatarCache));
     prefs.setString("taskTitleCache", jsonEncode(taskTitleCache));
     prefs.setInt("cacheTimestamp", DateTime.now().millisecondsSinceEpoch);
   }
 
-  // Pre-fetch all user names and cache them
+  // Pre-fetch all user names and avatars and cache them
   Future<void> preFetchUserNames() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -97,7 +120,9 @@ class TaskController extends GetxController {
         var data = doc.data() as Map<String, dynamic>;
         String uid = doc.id;
         String fullName = data["fullName"] ?? "Unknown";
+        String photoUrl = _validateAvatarUrl(data["photoUrl"]);
         userNameCache[uid] = fullName;
+        userAvatarCache[uid] = photoUrl;
       }
       saveCache();
       // ignore: empty_catches
@@ -227,6 +252,130 @@ class TaskController extends GetxController {
     }
   }
 
+  // Method specifically for AllTaskScreen - loads all tasks without role filtering
+  Future<void> loadAllTasksForAllUsers({
+    String? search,
+    String? filter,
+    String? sort,
+  }) async {
+    debugPrint("TaskController: loadAllTasksForAllUsers called");
+    // Debug: Check if there are any tasks in Firestore at all
+    await _debugCheckTasksInFirestore();
+    // Reset loading state to ensure we can proceed
+    isLoading.value = false;
+    hasMore = true;
+    tasks.clear();
+    lastDocument = null;
+    errorMessage.value = '';
+    searchTerm = search ?? searchTerm;
+    filterStatus = filter ?? filterStatus;
+    sortBy = sort ?? sortBy;
+    debugPrint("TaskController: About to call loadMoreTasksForAllUsers");
+    await loadMoreTasksForAllUsers(reset: true);
+    debugPrint("TaskController: loadMoreTasksForAllUsers completed");
+    calculateNewTaskCount();
+    debugPrint("TaskController: loadAllTasksForAllUsers completed, tasks count: ${tasks.length}");
+  }
+
+  // Debug method to check if there are any tasks in Firestore
+  Future<void> _debugCheckTasksInFirestore() async {
+    try {
+      debugPrint("TaskController: _debugCheckTasksInFirestore called");
+      final snapshot = await FirebaseFirestore.instance.collection('tasks').get();
+      debugPrint("TaskController: Total tasks in Firestore: ${snapshot.docs.length}");
+      if (snapshot.docs.isNotEmpty) {
+        debugPrint("TaskController: First task ID: ${snapshot.docs.first.id}");
+        debugPrint("TaskController: First task data: ${snapshot.docs.first.data()}");
+      }
+    } catch (e) {
+      debugPrint("TaskController: Error checking tasks in Firestore: $e");
+    }
+  }
+
+  Future<void> loadMoreTasksForAllUsers({bool reset = false}) async {
+    debugPrint("TaskController: loadMoreTasksForAllUsers METHOD ENTRY");
+    debugPrint("TaskController: loadMoreTasksForAllUsers entry - hasMore: $hasMore, isLoading: ${isLoading.value}");
+    if (!hasMore || isLoading.value) {
+      debugPrint("TaskController: loadMoreTasksForAllUsers returning early - hasMore: $hasMore, isLoading: ${isLoading.value}");
+      return;
+    }
+    isLoading.value = true;
+    debugPrint("TaskController: loadMoreTasksForAllUsers called, reset: $reset");
+    try {
+      if (reset) {
+        tasks.clear();
+        lastDocument = null;
+        hasMore = true; // Reset hasMore when resetting
+      }
+
+      List<QueryDocumentSnapshot> docs = [];
+
+      // Simplified query - just get all tasks
+      debugPrint("TaskController: Using simplified query");
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .get();
+      docs = snapshot.docs;
+      debugPrint("TaskController: Simplified query returned ${docs.length} documents");
+
+      debugPrint("TaskController: Total docs to process: ${docs.length}");
+
+      List<Task> pageTasks = [];
+
+      for (var doc in docs) {
+        debugPrint("TaskController: Processing doc ${doc.id}");
+        var taskData = doc.data() as Map<String, dynamic>;
+        debugPrint("TaskController: Task data keys: ${taskData.keys.toList()}");
+        String createdByName = await _getUserName(taskData["createdBy"]);
+        String assignedReporterName = taskData["assignedReporterName"] ??
+            (taskData["assignedReporterId"] != null
+                ? await _getUserName(taskData["assignedReporterId"])
+                : "Not Assigned");
+        String assignedCameramanName = taskData["assignedCameramanName"] ??
+            (taskData["assignedCameramanId"] != null
+                ? await _getUserName(taskData["assignedCameramanId"])
+                : "Not Assigned");
+        String taskTitle = taskData["title"];
+        taskTitleCache[doc.id] = taskTitle;
+
+        // NO ROLE-BASED FILTERING - SHOW ALL TASKS
+        pageTasks.add(Task(
+          taskId: doc.id,
+          title: taskTitle,
+          description: taskData["description"],
+          createdBy: createdByName,
+          assignedReporter: assignedReporterName,
+          assignedCameraman: assignedCameramanName,
+          status: taskData["status"] ?? "Pending",
+          comments: List<String>.from(taskData["comments"] ?? []),
+          timestamp: taskData["timestamp"] ?? Timestamp.now(),
+          createdById: taskData["createdBy"] ?? "",
+          assignedReporterId: taskData["assignedReporterId"],
+          assignedCameramanId: taskData["assignedCameramanId"],
+        ));
+        debugPrint("TaskController: Added task: $taskTitle");
+      }
+
+      debugPrint("TaskController: pageTasks.length: ${pageTasks.length}");
+      tasks.addAll(pageTasks);
+
+      if (docs.isNotEmpty) {
+        lastDocument = docs.last;
+        if (docs.length < pageSize) hasMore = false;
+      } else {
+        hasMore = false;
+      }
+
+      errorMessage.value = '';
+    } catch (e) {
+      debugPrint("TaskController: Error in loadMoreTasksForAllUsers: $e");
+      errorMessage.value = 'Failed to load tasks: $e';
+      hasMore = false;
+    } finally {
+      isLoading.value = false;
+      debugPrint("TaskController: loadMoreTasksForAllUsers finished, isLoading set to false");
+    }
+  }
 
   // Calculate new task count
   void calculateNewTaskCount() {
@@ -254,7 +403,9 @@ class TaskController extends GetxController {
           await FirebaseFirestore.instance.collection("users").doc(uid).get();
       if (userDoc.exists) {
         String fullName = userDoc["fullName"] ?? "Unknown";
+        String photoUrl = _validateAvatarUrl(userDoc["photoUrl"]);
         userNameCache[uid] = fullName;
+        userAvatarCache[uid] = photoUrl;
         return fullName;
       } else {
         return "User not found";
@@ -609,7 +760,7 @@ class TaskController extends GetxController {
         "description": description,
         "createdBy": userId,
         "createdByName": authController.fullName.value,
-        "creatorAvatar": authController.profilePic.value,
+        "creatorAvatar": _validateAvatarUrl(userAvatarCache[userId] ?? authController.profilePic.value),
         "assignedReporterId": null,
         "assignedReporterName": null,
         "assignedCameramanId": null,

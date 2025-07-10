@@ -24,13 +24,20 @@ class TasksSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[900] : Colors.white,
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(26),
           topRight: Radius.circular(26),
+        ),
+        border: Border.all(
+          color: colorScheme.outline.withOpacity(0.3),
+          width: 1,
         ),
       ),
       child: Column(
@@ -49,6 +56,9 @@ class TasksSection extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.only(top: 18, left: 16, right: 16, bottom: 10),
       child: Row(
@@ -60,16 +70,19 @@ class TasksSection extends StatelessWidget {
               width: 34.w,
               height: 34.h,
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white
-                    : Theme.of(context).colorScheme.primary,
+                color: colorScheme.primary,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Icon(
                 Icons.add,
-                color: isDark
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.white,
+                color: colorScheme.onPrimary,
                 size: 22,
               ),
             ),
@@ -80,19 +93,24 @@ class TasksSection extends StatelessWidget {
   }
 
   Widget _buildTabBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return TabBar(
       controller: tabController,
       isScrollable: false,
-      indicatorColor:
-          isDark ? Colors.white : Theme.of(context).colorScheme.primary,
+      indicatorColor: colorScheme.primary,
       indicatorWeight: 2.5,
-      labelColor: isDark ? Colors.white : Theme.of(context).colorScheme.primary,
-      unselectedLabelColor: isDark ? Colors.white70 : Colors.black54,
+      labelColor: colorScheme.primary,
+      unselectedLabelColor: colorScheme.onSurfaceVariant,
       labelStyle: AppStyles.tabSelectedStyle.copyWith(
         fontWeight: FontWeight.w500,
         fontSize: 15,
+        color: colorScheme.primary,
       ),
-      unselectedLabelStyle: AppStyles.tabUnselectedStyle,
+      unselectedLabelStyle: AppStyles.tabUnselectedStyle.copyWith(
+        color: colorScheme.onSurfaceVariant,
+      ),
       tabs: const [
         Tab(text: AppStrings.notCompleted),
         Tab(text: AppStrings.completed),

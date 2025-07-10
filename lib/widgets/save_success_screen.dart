@@ -23,17 +23,20 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, Color(0xFF2e3bb5)],
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).canvasColor
+              : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: Column(
@@ -43,7 +46,7 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  color: AppColors.primaryColor,
+                  color: colorScheme.onPrimary,
                   onPressed: () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
@@ -66,26 +69,35 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 24),
                     padding: const EdgeInsets.symmetric(vertical: 48),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        if (!isDark)
+                          const BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                      ],
                     ),
-                    child: const Column(
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.check_circle,
                           size: 100,
-                          color: AppColors.primaryColor,
+                          color: colorScheme.primary,
                         ),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         Text(
                           'Changes Saved\nsuccessfully',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2e3bb5),
+                            fontSize: 18,
+                            fontFamily: 'Raleway',
+                            color: textTheme.headlineMedium?.color,
                           ),
                         ),
                       ],
@@ -98,8 +110,8 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                 padding: const EdgeInsets.only(bottom: 32.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: colorScheme.onPrimary,
+                    backgroundColor: colorScheme.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -118,7 +130,14 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                       }
                     });
                   },
-                  child: const Text("Go to Home"),
+                  child: Text(
+                    "Go to Home",
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Raleway',
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
                 ),
               ),
             ],

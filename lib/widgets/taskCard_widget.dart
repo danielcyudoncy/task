@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
 import './task_action_utility.dart';
 import '../../utils/constants/app_strings.dart';
-import '../../utils/constants/app_styles.dart';
 
 
 class TaskCardWidget extends StatelessWidget {
@@ -23,14 +22,17 @@ class TaskCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color cardColor =
-        isDark
-            ? const Color(0xFF292B3A)
-            : (isCompleted
-                ? const Color(0xFF171FA0)
-                : Theme.of(context).primaryColor);
-    const Color textColor = Colors.white;
-    const Color subTextColor = Colors.white70;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    
+    // Theme-aware colors for better visibility
+    final Color cardColor = isCompleted 
+        ? colorScheme.primaryContainer 
+        : colorScheme.surface;
+    final Color textColor = colorScheme.onSurface;
+    final Color subTextColor = colorScheme.onSurfaceVariant;
+    final Color borderColor = colorScheme.outline.withOpacity(0.3);
 
     return Dismissible(
       key: ValueKey(task.taskId ?? task.hashCode),
@@ -44,9 +46,13 @@ class TaskCardWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: borderColor,
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black38 : const Color(0x22000000),
+                color: colorScheme.shadow.withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 5),
               ),
@@ -56,11 +62,17 @@ class TaskCardWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(task.title ?? "", style: AppStyles.cardTitleStyle),
+              Text(
+                task.title ?? "", 
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
               const SizedBox(height: 7),
               Text(
                 task.description ?? AppStrings.taskDetails,
-                style: AppStyles.cardValueStyle.copyWith(
+                style: textTheme.bodyMedium?.copyWith(
                   color: subTextColor,
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w400,
@@ -69,7 +81,7 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 "Due Date ${task.timestamp != null ? DateFormat('yyyy-MM-dd').format(task.timestamp!.toDate()) : 'N/A'}",
-                style: AppStyles.cardValueStyle.copyWith(
+                style: textTheme.bodySmall?.copyWith(
                   color: subTextColor,
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w400,
@@ -82,7 +94,7 @@ class TaskCardWidget extends StatelessWidget {
                   if (!isCompleted) ...[
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: Colors.green[600],
                         foregroundColor: Colors.white,
                         minimumSize: const Size(40, 36),
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -100,7 +112,7 @@ class TaskCardWidget extends StatelessWidget {
                   ],
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor: Colors.red[600],
                       foregroundColor: Colors.white,
                       minimumSize: const Size(40, 36),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -138,7 +150,7 @@ class TaskCardWidget extends StatelessWidget {
 
   Widget _buildCompleteBackground() {
     return Container(
-      color: Colors.green,
+      color: Colors.green[600],
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.only(left: 20),
       child: const Row(
@@ -153,7 +165,7 @@ class TaskCardWidget extends StatelessWidget {
 
   Widget _buildDeleteBackground() {
     return Container(
-      color: Colors.red,
+      color: Colors.red[600],
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: 20),
       child: const Row(
@@ -185,25 +197,45 @@ class TaskCardWidget extends StatelessWidget {
   }
 
   Future<bool?> _showDeleteConfirmation(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Delete Task"),
-        content: const Text("Are you sure you want to delete this task?"),
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          "Delete Task",
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: colorScheme.onSurface,
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to delete this task?",
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Get.find<SettingsController>().triggerFeedback();
               Navigator.of(ctx).pop(false);
             },
-            child: const Text("Cancel"),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: colorScheme.primary),
+            ),
           ),
           TextButton(
             onPressed: () {
               Get.find<SettingsController>().triggerFeedback();
               Navigator.of(ctx).pop(true);
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            child: Text(
+              "Delete", 
+              style: TextStyle(color: Colors.red[600]),
+            ),
           ),
         ],
       ),
