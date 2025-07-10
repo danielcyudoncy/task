@@ -51,13 +51,14 @@ class TaskCard extends StatelessWidget {
       }
     }
 
-    final cardBg = isDark ? colorScheme.surface : Theme.of(context).primaryColor;
+    // Theme-aware colors for better visibility
+    final cardBg = colorScheme.surface;
     final cardShadow = isDark ? Colors.black45 : Colors.black12;
-    final mainText =
-        textTheme.bodyLarge?.color ?? (isDark ? Colors.white : Colors.black);
-    final subText = isDark ? Colors.white70 : Colors.black54;
+    final mainText = colorScheme.onSurface;
+    final subText = colorScheme.onSurfaceVariant;
     final accent = colorScheme.primary;
-    final avatarBg = isDark ? Colors.grey[800] : Colors.grey[200];
+    final avatarBg = isDark ? Colors.grey[700]! : Colors.grey[200]!;
+    final borderColor = colorScheme.outline.withOpacity(0.3);
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -78,6 +79,10 @@ class TaskCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: borderColor,
+                  width: 1,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,19 +93,26 @@ class TaskCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : Colors.white,
+                            color: accent,
                             width: 2,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: CircleAvatar(
                           radius: isLargeScreen ? 25 : 18,
                           backgroundColor: avatarBg,
-                          backgroundImage: creatorAvatar != null
+                          backgroundImage: (creatorAvatar != null && creatorAvatar.isNotEmpty && 
+                              (creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://')))
                               ? NetworkImage(creatorAvatar)
                               : null,
-                          child: creatorAvatar == null
+                          child: (creatorAvatar == null || creatorAvatar.isEmpty || 
+                              !(creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://')))
                               ? Text(
                                   (creatorName.isNotEmpty ? creatorName[0] : "?")
                                       .toUpperCase(),
@@ -136,7 +148,7 @@ class TaskCard extends StatelessWidget {
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: isLargeScreen ? 20 * textScale : 16.sp * textScale,
-                      color: accent,
+                      color: mainText,
                     ),
                   ),
                   SizedBox(height: isLargeScreen ? 10 : 6),

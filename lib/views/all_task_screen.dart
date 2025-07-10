@@ -21,7 +21,7 @@ class AllTaskScreen extends StatefulWidget {
 }
 
 class _AllTaskScreenState extends State<AllTaskScreen> {
-  final TaskController taskController = Get.put(TaskController());
+  final TaskController taskController = Get.find<TaskController>();
   final TextEditingController _searchController = TextEditingController();
   final RxString _searchQuery = ''.obs;
   final RxString _selectedFilter = 'All'.obs;
@@ -36,7 +36,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     debugPrint("AllTaskScreen: initState called");
     debugPrint("AllTaskScreen: TaskController registered: "+Get.isRegistered<TaskController>().toString());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      taskController.loadInitialTasks();
+      taskController.loadAllTasksForAllUsers();
     });
     _searchController.addListener(() {
       _searchQuery.value = _searchController.text;
@@ -201,7 +201,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   if (taskController.errorMessage.isNotEmpty) {
                     return ErrorStateWidget(
                       message: taskController.errorMessage.value,
-                      onRetry: () => taskController.loadInitialTasks(),
+                      onRetry: () => taskController.loadAllTasksForAllUsers(),
                     );
                   }
                   if (_filteredTasks.isEmpty) {
@@ -214,7 +214,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   return RefreshIndicator(
                     onRefresh: () async {
                       _selectedTasks.clear();
-                      await taskController.loadInitialTasks();
+                      await taskController.loadAllTasksForAllUsers();
                       _filterTasks();
                     },
                     child: ListView.separated(
@@ -252,7 +252,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                                 : Colors.transparent,
                             child: TaskCard(
                               data: task.toMapWithUserInfo(
-                                  taskController.userNameCache),
+                                  taskController.userNameCache,
+                                  taskController.userAvatarCache),
                               isLargeScreen: isLargeScreen,
                               textScale: textScale,
                               onTap: () {
@@ -273,7 +274,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                                     ),
                                     builder: (_) => TaskDetailSheet(
                                       data: task.toMapWithUserInfo(
-                                          taskController.userNameCache),
+                                          taskController.userNameCache,
+                                          taskController.userAvatarCache),
                                       textScale: textScale,
                                       isDark: isDark,
                                     ),
