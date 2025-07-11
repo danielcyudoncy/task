@@ -30,7 +30,6 @@ class AuthController extends GetxController {
   RxBool isConfirmPasswordHidden = true.obs;
  
   // Add a flag to track if the app is ready for snackbars
-  bool _isAppReady = false;
 
   User? get currentUser => user.value ?? _auth.currentUser;
 
@@ -77,7 +76,6 @@ class AuthController extends GetxController {
 
   // Method to mark app as ready (called from MyApp after initialization)
   void markAppAsReady() {
-    _isAppReady = true;
     debugPrint("AuthController: App marked as ready for snackbars");
   }
 
