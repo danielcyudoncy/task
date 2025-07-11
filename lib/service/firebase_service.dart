@@ -1,6 +1,9 @@
 // service/firebase_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -124,5 +127,17 @@ class FirebaseService {
       }
       rethrow; // Rethrow error to handle it at a higher level if needed
     }
+  }
+}
+
+void useFirebaseEmulator() {
+  // Only use emulators in debug mode
+  if (kDebugMode) {
+    // Auth Emulator
+    FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    // Firestore Emulator
+    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+    FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
+    FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
   }
 }
