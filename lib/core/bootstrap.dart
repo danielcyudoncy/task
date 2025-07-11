@@ -26,6 +26,7 @@ import 'package:task/service/mock_user_deletion_service.dart';
 import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
+import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
 
 // Global flag to track bootstrap state
 bool _isBootstrapComplete = false;
@@ -45,6 +46,10 @@ Future<void> bootstrapApp() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    // Use Firebase Emulator in debug mode
+    if (kDebugMode) {
+      useFirebaseEmulator();
+    }
     debugPrint("🚀 BOOTSTRAP: Firebase initialized");
     debugPrint("🚀 BOOTSTRAP: Verifying Firebase services");
     await _verifyFirebaseServices();
