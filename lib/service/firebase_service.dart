@@ -133,11 +133,14 @@ class FirebaseService {
 void useFirebaseEmulator() {
   // Only use emulators in debug mode
   if (kDebugMode) {
+    // Use localhost for web, IP address for mobile
+    final String host = kIsWeb ? 'localhost' : '192.168.1.7';
+    
     // Auth Emulator
-    FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    FirebaseAuth.instance.useAuthEmulator(host, 8002);
     // Firestore Emulator
-    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-    FirebaseFunctions.instance.useFunctionsEmulator('localhost', 5001);
-    FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8003);
+    FirebaseFunctions.instance.useFunctionsEmulator(host, 8001);
+    FirebaseStorage.instance.useStorageEmulator(host, 8005);
   }
 }
