@@ -1,5 +1,6 @@
 // service/firebase_storage_service.dart
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
@@ -94,6 +95,48 @@ class FirebaseStorageService {
       }
     } catch (e) {
       debugPrint('Firebase Storage: Profile picture upload error: $e');
+      return null;
+    }
+  }
+
+  /// Upload profile picture from bytes (for web platform)
+  Future<String?> uploadProfilePictureFromBytes({
+    required Uint8List bytes,
+    required String fileName,
+    required String userId,
+  }) async {
+    try {
+      debugPrint('Firebase Storage: Uploading profile picture from bytes for user: $userId');
+      
+      // Create a unique filename with timestamp
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final storageFileName = 'profile_pictures/${userId}_$timestamp.jpg';
+      
+      // Create a reference to the file location
+      final storageRef = _storage.ref().child('user-profiles/$storageFileName');
+      
+      // Upload the bytes
+      final uploadTask = storageRef.putData(
+        bytes,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {
+            'uploaded_at': DateTime.now().toIso8601String(),
+            'original_filename': fileName,
+          },
+        ),
+      );
+
+      // Wait for the upload to complete
+      final snapshot = await uploadTask;
+      
+      // Get the download URL
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      
+      debugPrint('Firebase Storage: Profile picture uploaded successfully from bytes');
+      return downloadUrl;
+    } catch (e) {
+      debugPrint('Firebase Storage: Profile picture upload from bytes error: $e');
       return null;
     }
   }

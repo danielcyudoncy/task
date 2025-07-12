@@ -1,5 +1,6 @@
 // controllers/auth_controller.dart
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -490,6 +491,54 @@ class AuthController extends GetxController {
       debugPrint("AuthController: Uploading new profile picture");
       final downloadUrl = await storageService.uploadProfilePicture(
         imageFile: imageFile,
+        userId: user.uid,
+      );
+
+      if (downloadUrl != null) {
+        // Save the Firebase Storage URL in Firestore user profile
+        await _firestore.collection('users').doc(user.uid).update({
+          'photoUrl': downloadUrl,
+        });
+
+        profilePic.value = downloadUrl;
+        debugPrint("AuthController: Profile picture updated successfully");
+        _safeSnackbar("Success", "Profile picture updated successfully.");
+      } else {
+        debugPrint("AuthController: Profile picture upload failed");
+        _safeSnackbar("Upload Failed", "Could not upload the image.");
+      }
+    } catch (e) {
+      debugPrint("AuthController: Profile picture upload error: $e");
+      _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Profile picture upload using bytes (for web platform)
+  Future<void> uploadProfilePictureFromBytes(Uint8List bytes, String fileName) async {
+    final User? user = _auth.currentUser;
+    if (user == null) {
+      _safeSnackbar("Error", "User not logged in.");
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+      debugPrint("AuthController: Starting profile picture upload from bytes");
+
+      // Delete old profile picture if it exists
+      String oldPhotoUrl = profilePic.value;
+      if (oldPhotoUrl.isNotEmpty) {
+        debugPrint("AuthController: Deleting old profile picture");
+        await storageService.deleteProfilePicture(oldPhotoUrl);
+      }
+
+      // Upload new profile picture to Firebase Storage
+      debugPrint("AuthController: Uploading new profile picture from bytes");
+      final downloadUrl = await storageService.uploadProfilePictureFromBytes(
+        bytes: bytes,
+        fileName: fileName,
         userId: user.uid,
       );
 

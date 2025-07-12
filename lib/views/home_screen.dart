@@ -299,11 +299,19 @@ class _HomeScreenState extends State<HomeScreen>
                                   return UserDashboardCardsWidget(
                                     assignedTasksToday: assignedTasksToday,
                                     onlineUsersCount: onlineUsersCount,
+                                    tasksCreatedCount: 0, // TODO: Replace with actual count
+                                    newsFeedCount: 0, // TODO: Replace with actual count
                                     onAssignedTasksTap: () {
                                       _tabController.animateTo(1);
                                     },
                                     onOnlineUsersTap: () {
                                       Get.toNamed('/all-users-chat');
+                                    },
+                                    onTasksCreatedTap: () {
+                                      // TODO: Implement navigation or action for Task Created
+                                    },
+                                    onNewsFeedTap: () {
+                                      // TODO: Implement navigation or action for News Feed
                                     },
                                   );
                                 },
