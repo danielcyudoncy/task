@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/snackbar_utils.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
 
 class ImagePickerWidget extends StatelessWidget {
   final AuthController controller;
@@ -77,11 +79,31 @@ class ImagePickerWidget extends StatelessWidget {
     try {
       final XFile? pickedImage = await _showImagePickerDialog(context);
       if (pickedImage != null) {
-        final File imageFile = File(pickedImage.path);
-        if (await imageFile.exists()) {
-          await controller.uploadProfilePicture(imageFile);
+        debugPrint("Image selected: ${pickedImage.name}");
+        
+        if (kIsWeb) {
+          // For web, read as bytes
+          try {
+            final bytes = await pickedImage.readAsBytes();
+            debugPrint("Image bytes read successfully, size: ${bytes.length}");
+            await controller.uploadProfilePictureFromBytes(bytes, pickedImage.name);
+          } catch (e) {
+            debugPrint("Error reading image bytes: $e");
+            SnackbarUtils.showSnackbar("Error", "Failed to read image: ${e.toString()}");
+          }
         } else {
-          SnackbarUtils.showSnackbar("Error", "Selected image doesn't exist");
+          // For mobile, use File
+          try {
+            final File imageFile = File(pickedImage.path);
+            if (await imageFile.exists()) {
+              await controller.uploadProfilePicture(imageFile);
+            } else {
+              SnackbarUtils.showSnackbar("Error", "Selected image doesn't exist");
+            }
+          } catch (e) {
+            debugPrint("Error with file: $e");
+            SnackbarUtils.showSnackbar("Error", "Failed to process image: ${e.toString()}");
+          }
         }
       }
     } catch (e) {
@@ -100,33 +122,37 @@ class ImagePickerWidget extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 try {
+                  debugPrint("Attempting to pick from gallery...");
                   final XFile? picked = await ImagePicker().pickImage(
                     source: ImageSource.gallery,
                     maxWidth: 800,
                     maxHeight: 800,
                     imageQuality: 85,
                   );
+                  debugPrint("Gallery pick result: ${picked?.name ?? 'null'}");
                   if (context.mounted) Navigator.of(context).pop(picked);
                 } catch (e) {
-                  if (context.mounted) Navigator.of(context).pop();
                   debugPrint("Gallery pick error: $e");
+                  if (context.mounted) Navigator.of(context).pop();
                 }
               },
               child: const Text('Gallery'),
             ),
-            TextButton(
+            if (!kIsWeb) TextButton(
               onPressed: () async {
                 try {
+                  debugPrint("Attempting to pick from camera...");
                   final XFile? picked = await ImagePicker().pickImage(
                     source: ImageSource.camera,
                     maxWidth: 800,
                     maxHeight: 800,
                     imageQuality: 85,
                   );
+                  debugPrint("Camera pick result: ${picked?.name ?? 'null'}");
                   if (context.mounted) Navigator.of(context).pop(picked);
                 } catch (e) {
-                  if (context.mounted) Navigator.of(context).pop();
                   debugPrint("Camera pick error: $e");
+                  if (context.mounted) Navigator.of(context).pop();
                 }
               },
               child: const Text('Camera'),
