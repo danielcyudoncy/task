@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       // TODO: Implement navigation or action for Task Created
                                     },
                                     onNewsFeedTap: () {
-                                      // TODO: Implement navigation or action for News Feed
+                                      Get.toNamed('/news');
                                     },
                                   );
                                 },
@@ -319,12 +319,12 @@ class _HomeScreenState extends State<HomeScreen>
                             },
                           ),
                         ),
-                        const SizedBox(height: 18),
-                        StatsSection(
-                          taskController: taskController,
-                          isDark: isDark,
-                        ),
-                        const SizedBox(height: 18),
+                        // const SizedBox(height: 18),
+                        // StatsSection(
+                        //   taskController: taskController,
+                        //   isDark: isDark,
+                        // ),
+                        // const SizedBox(height: 18),
                         Padding(
                           padding: const EdgeInsets.only(left: 24, bottom: 8),
                           child: Text(

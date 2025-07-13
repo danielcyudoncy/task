@@ -391,7 +391,9 @@ class _NewsScreenState extends State<NewsScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       image: DecorationImage(
-                        image: NetworkImage(article['imageUrl']),
+                        image: article['imageUrl'].toString().startsWith('assets/')
+                            ? AssetImage(article['imageUrl'])
+                            : NetworkImage(article['imageUrl']),
                         fit: BoxFit.cover,
                       ),
                     ),
