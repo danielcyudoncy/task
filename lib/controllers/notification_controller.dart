@@ -60,7 +60,7 @@ class NotificationController extends GetxController {
             final parsedNotifications = docs.map((doc) {
               try {
                 final data = doc.data() as Map<String, dynamic>? ?? {};
-                return {
+                final notification = {
                   'id': doc.id,
                   'title': data['title']?.toString() ?? 'No Title',
                   'message': data['message']?.toString() ?? 'No Message',
@@ -69,6 +69,8 @@ class NotificationController extends GetxController {
                   'type': data['type']?.toString(),
                   'taskId': data['taskId'],
                 };
+                debugPrint('Parsed notification: ${notification['type']} - ${notification['taskId']}');
+                return notification;
               } catch (e) {
                 debugPrint('Error parsing notification  [${doc.id}]: $e');
                 return {
@@ -81,7 +83,9 @@ class NotificationController extends GetxController {
               }
             }).toList();
 
+            debugPrint('About to call _updateValidNotifications with ${parsedNotifications.length} notifications');
             await _updateValidNotifications(parsedNotifications);
+            debugPrint('Finished _updateValidNotifications call');
             updateUnreadCount(parsedNotifications);
             return parsedNotifications;
           } catch (e) {
@@ -105,24 +109,47 @@ class NotificationController extends GetxController {
       validUnreadCount.value = 0;
       return;
     }
+    
+    debugPrint('_updateValidNotifications: Processing ${notificationsList.length} notifications for user $uid');
+    
     List<Map<String, dynamic>> valid = [];
     for (final n in notificationsList) {
       final type = n['type']?.toString();
+      debugPrint('_updateValidNotifications: Notification type: $type');
+      
       if (type == 'task_assigned' || type == 'task_assignment') {
         final taskId = n['taskId']?.toString();
+        debugPrint('_updateValidNotifications: Task ID: $taskId');
+        
         if (taskId != null && taskId.isNotEmpty) {
           final taskDoc = await FirebaseFirestore.instance.collection('tasks').doc(taskId).get();
           if (taskDoc.exists) {
             final data = taskDoc.data() as Map<String, dynamic>;
+            debugPrint('_updateValidNotifications: Task data keys: ${data.keys.toList()}');
+            debugPrint('_updateValidNotifications: assignedReporterId: ${data['assignedReporterId']}');
+            debugPrint('_updateValidNotifications: assignedCameramanId: ${data['assignedCameramanId']}');
+            debugPrint('_updateValidNotifications: assignedTo: ${data['assignedTo']}');
+            debugPrint('_updateValidNotifications: Current user ID: $uid');
+            
             if (data['assignedReporterId'] == uid || data['assignedCameramanId'] == uid || data['assignedTo'] == uid) {
+              debugPrint('_updateValidNotifications: Task assignment matches! Adding notification');
               valid.add(n);
+            } else {
+              debugPrint('_updateValidNotifications: Task assignment does not match');
             }
+          } else {
+            debugPrint('_updateValidNotifications: Task document does not exist');
           }
+        } else {
+          debugPrint('_updateValidNotifications: Task ID is null or empty');
         }
       } else {
+        debugPrint('_updateValidNotifications: Non-task notification, adding directly');
         valid.add(n);
       }
     }
+    
+    debugPrint('_updateValidNotifications: Final valid notifications: ${valid.length}');
     validNotifications.value = valid;
     validUnreadCount.value = valid.where((n) => !(n['isRead'] as bool? ?? true)).length;
   }

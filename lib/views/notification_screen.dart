@@ -5,8 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/notification_controller.dart';
-import '../controllers/task_controller.dart';
-import '../controllers/auth_controller.dart';
 
 
 class NotificationScreen extends StatelessWidget {
@@ -21,11 +19,9 @@ class NotificationScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     // Get colors from theme instead of hardcoding
-    final backgroundColor = theme.colorScheme.primary;
-    final cardColor = theme.colorScheme.surfaceVariant;
-    final titleColor = theme.colorScheme.onSurface;
-    final subtitleColor = theme.colorScheme.onSurface.withOpacity(0.7);
-    final timeColor = theme.colorScheme.onSurface.withOpacity(0.5);
+    final backgroundColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF2A2A3E) : Colors.grey.shade50;
+    final subtitleColor = isDark ? Colors.white70 : Colors.grey.shade600;
 
     return Scaffold(
       appBar: AppBar(
@@ -62,28 +58,40 @@ class NotificationScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        return FutureBuilder<List<Map<String, dynamic>>>(
-          future: _filterValidNotifications(notificationController.notifications),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final filteredNotifications = snapshot.data!;
-            if (filteredNotifications.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.notifications_off, size: 50, color: subtitleColor),
-                    SizedBox(height: 16.h),
+                        return Obx(() {
+          final allNotifications = notificationController.notifications;
+          
+          // Debug information
+          debugPrint('NotificationScreen: Total notifications: ${allNotifications.length}');
+          debugPrint('NotificationScreen: Total unread count: ${notificationController.unreadCount.value}');
+          
+          if (allNotifications.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.notifications_off, size: 50, color: isDark ? Colors.white70 : Colors.grey.shade600),
+                  SizedBox(height: 16.h),
+                  Text(
+                    "No notifications yet",
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16.sp),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    "Total: ${allNotifications.length}",
+                    style: TextStyle(color: isDark ? Colors.white70 : Colors.grey.shade600, fontSize: 12.sp),
+                  ),
+                  if (allNotifications.isNotEmpty) ...[
+                    SizedBox(height: 8.h),
                     Text(
-                      "No notifications yet",
-                      style: TextStyle(color: subtitleColor, fontSize: 16.sp),
+                      "First notification type: ${allNotifications.first['type']}",
+                      style: TextStyle(color: subtitleColor, fontSize: 12.sp),
                     ),
                   ],
-                ),
-              );
-            }
+                ],
+              ),
+            );
+          }
             return Column(
               children: [
                 Padding(
@@ -93,8 +101,10 @@ class NotificationScreen extends StatelessWidget {
                     children: [
                       Text(
                         "Recent Notifications",
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: titleColor,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       Obx(() {
@@ -110,8 +120,9 @@ class NotificationScreen extends StatelessWidget {
                         return Text(
                           "${notificationController.unreadCount.value} Unread",
                           style: TextStyle(
-                            color: theme.colorScheme.secondary,
+                            color: isDark ? Colors.blue.shade300 : Colors.blue.shade600,
                             fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
                           ),
                         );
                       }),
@@ -121,10 +132,10 @@ class NotificationScreen extends StatelessWidget {
                 Expanded(
                   child: ListView.separated(
                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                    itemCount: filteredNotifications.length,
+                    itemCount: allNotifications.length,
                     separatorBuilder: (context, index) => SizedBox(height: 8.h),
                     itemBuilder: (context, index) {
-                      final n = filteredNotifications[index];
+                      final n = allNotifications[index];
                       final isRead = n['isRead'] as bool? ?? true;
                       final timestamp = n['timestamp'] as Timestamp?;
                       final timeText = timestamp != null
@@ -171,9 +182,9 @@ class NotificationScreen extends StatelessWidget {
                                       Expanded(
                                         child: Text(
                                           n['title'] ?? 'No Title',
-                                          style:
-                                              theme.textTheme.bodyLarge?.copyWith(
-                                            color: titleColor,
+                                          style: TextStyle(
+                                            color: isDark ? Colors.white : Colors.black87,
+                                            fontSize: 16.sp,
                                             fontWeight: isRead
                                                 ? FontWeight.normal
                                                 : FontWeight.bold,
@@ -182,17 +193,42 @@ class NotificationScreen extends StatelessWidget {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      if (!isRead)
-                                        Icon(Icons.circle,
-                                            size: 12.r,
-                                            color: theme.colorScheme.primary),
+                                      Row(
+                                        children: [
+                                          if (!isRead)
+                                            Icon(Icons.circle,
+                                                size: 12.r,
+                                                color: theme.colorScheme.primary),
+                                          SizedBox(width: 8.w),
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.delete_outline,
+                                              size: 18.r,
+                                              color: isDark ? Colors.red.shade300 : Colors.red.shade600,
+                                            ),
+                                            onPressed: () async {
+                                              final shouldDelete = await _showDeleteDialog(context, n['id']);
+                                              if (shouldDelete) {
+                                                notificationController.deleteNotification(n['id']);
+                                              }
+                                            },
+                                            tooltip: "Delete notification",
+                                            padding: EdgeInsets.zero,
+                                            constraints: BoxConstraints(
+                                              minWidth: 24.w,
+                                              minHeight: 24.h,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                   SizedBox(height: 4.h),
                                   Text(
                                     n['message'] ?? 'No Message',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: subtitleColor,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white70 : Colors.grey.shade600,
+                                      fontSize: 14.sp,
                                     ),
                                   ),
                                   SizedBox(height: 8.h),
@@ -202,8 +238,9 @@ class NotificationScreen extends StatelessWidget {
                                     children: [
                                       Text(
                                         timeText,
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: timeColor,
+                                        style: TextStyle(
+                                          color: isDark ? Colors.white54 : Colors.grey.shade500,
+                                          fontSize: 12.sp,
                                         ),
                                       ),
                                       if (n['type'] != null)
@@ -260,53 +297,73 @@ class NotificationScreen extends StatelessWidget {
   }
 
   Future<bool> _showDeleteDialog(BuildContext context, String id) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Delete Notification"),
-        content:
-            const Text("Are you sure you want to delete this notification?"),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.delete_outline,
+              color: Theme.of(ctx).colorScheme.error,
+              size: 24.r,
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              "Delete Notification",
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to delete this notification? This action cannot be undone.",
+          style: TextStyle(
+            color: isDark ? Colors.white70 : Colors.grey.shade600,
+            fontSize: 14.sp,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text("Cancel"),
+            child: Text(
+              "Cancel",
+              style: TextStyle(
+                color: isDark ? Colors.white70 : Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
-              notificationController.deleteNotification(id);
               Navigator.of(ctx).pop(true);
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
             child: Text(
               "Delete",
-              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14.sp,
+              ),
             ),
           ),
         ],
+        actionsPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       ),
     );
     return result ?? false;
   }
 
-  Future<List<Map<String, dynamic>>> _filterValidNotifications(List notifications) async {
-    final TaskController taskController = Get.find<TaskController>();
-    final AuthController authController = Get.find<AuthController>();
-    final String? userId = authController.auth.currentUser?.uid;
-    if (userId == null) return [];
-    List<Map<String, dynamic>> valid = [];
-    for (final n in notifications) {
-      final type = n['type']?.toString();
-      if (type == 'task_assigned' || type == 'task_assignment') {
-        final taskId = n['taskId']?.toString();
-        if (taskId != null && taskId.isNotEmpty) {
-          final task = await taskController.getTaskById(taskId);
-          if (task != null && (task.assignedReporterId == userId || task.assignedCameramanId == userId || task.assignedTo == userId)) {
-            valid.add(n);
-          }
-        }
-      } else {
-        valid.add(n);
-      }
-    }
-    return valid;
-  }
+
 }

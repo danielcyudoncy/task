@@ -263,6 +263,7 @@ class TaskController extends GetxController {
           comments: List<String>.from(taskData["comments"] ?? []),
           timestamp: taskData["timestamp"] ?? Timestamp.now(),
           createdById: taskData["createdBy"] ?? "",
+          assignedTo: taskData["assignedTo"], // Add this field
           assignedReporterId: taskData["assignedReporterId"],
           assignedCameramanId: taskData["assignedCameramanId"],
           creatorAvatar: taskData["creatorAvatar"], // Get avatar from task document
@@ -385,6 +386,7 @@ class TaskController extends GetxController {
           comments: List<String>.from(taskData["comments"] ?? []),
           timestamp: taskData["timestamp"] ?? Timestamp.now(),
           createdById: taskData["createdBy"] ?? "",
+          assignedTo: taskData["assignedTo"], // Add this field
           assignedReporterId: taskData["assignedReporterId"],
           assignedCameramanId: taskData["assignedCameramanId"],
           creatorAvatar: taskData["creatorAvatar"], // Get avatar from task document
@@ -734,6 +736,7 @@ class TaskController extends GetxController {
               comments: List<String>.from(taskData["comments"] ?? []),
               timestamp: taskData["timestamp"] ?? Timestamp.now(),
               createdById: taskData["createdBy"] ?? "",
+              assignedTo: taskData["assignedTo"], // Add this field
               assignedReporterId: taskData["assignedReporterId"],
               assignedCameramanId: taskData["assignedCameramanId"],
             ));
@@ -969,6 +972,7 @@ class TaskController extends GetxController {
           comments: List<String>.from(data["comments"] ?? []),
           timestamp: data["timestamp"] ?? Timestamp.now(),
           createdById: data["createdBy"] ?? "",
+          assignedTo: data["assignedTo"], // Add this field
           assignedReporterId: data["assignedReporterId"],
           assignedCameramanId: data["assignedCameramanId"],
         );
@@ -1012,6 +1016,7 @@ class TaskController extends GetxController {
           comments: List<String>.from(data["comments"] ?? []),
           timestamp: data["timestamp"] ?? Timestamp.now(),
           createdById: data["createdBy"] ?? "",
+          assignedTo: data["assignedTo"], // Add this field
           assignedReporterId: data["assignedReporterId"],
           assignedCameramanId: data["assignedCameramanId"],
         );
@@ -1054,6 +1059,7 @@ class TaskController extends GetxController {
           comments: List<String>.from(data["comments"] ?? []),
           timestamp: data["timestamp"] ?? Timestamp.now(),
           createdById: data["createdBy"] ?? "",
+          assignedTo: data["assignedTo"], // Add this field
           assignedReporterId: data["assignedReporterId"],
           assignedCameramanId: data["assignedCameramanId"],
         );
@@ -1095,6 +1101,7 @@ class TaskController extends GetxController {
           comments: List<String>.from(data["comments"] ?? []),
           timestamp: data["timestamp"] ?? Timestamp.now(),
           createdById: data["createdBy"] ?? "",
+          assignedTo: data["assignedTo"], // Add this field
           assignedReporterId: data["assignedReporterId"],
           assignedCameramanId: data["assignedCameramanId"],
         );
