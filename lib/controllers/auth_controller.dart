@@ -40,6 +40,7 @@ class AuthController extends GetxController {
   var isLoading = false.obs;
   var fullName = "".obs;
   var profilePic = "".obs;
+  var phoneNumber = "".obs;
   var selectedRole = ''.obs;
   var userRole = ''.obs;
   var isProfileComplete = false.obs;
@@ -246,6 +247,7 @@ class AuthController extends GetxController {
           final data = userDoc.data()!;
           fullName.value = data['fullName'] ?? '';
           profilePic.value = data['photoUrl'] ?? '';
+          phoneNumber.value = data['phoneNumber'] ?? '';
           userRole.value = data['role'] ?? '';
           setUserRole(userRole.value);
           isProfileComplete.value = data['profileComplete'] ?? false;
@@ -276,6 +278,7 @@ class AuthController extends GetxController {
   void resetUserData() {
     fullName.value = '';
     profilePic.value = '';
+    phoneNumber.value = '';
     userRole.value = '';
     isProfileComplete.value = false;
     userData.clear();
@@ -301,6 +304,7 @@ class AuthController extends GetxController {
 
       // Update local observables
       fullName.value = fullNameController.text.trim();
+      phoneNumber.value = phoneNumberController.text.trim();
       setUserRole(selectedRole.value);
       isProfileComplete.value = true;
 
@@ -581,6 +585,7 @@ class AuthController extends GetxController {
       });
 
       fullName.value = fullNameController.text.trim();
+      phoneNumber.value = phoneNumberController.text.trim();
       setUserRole(selectedRole.value);
       isProfileComplete.value = true;
 
