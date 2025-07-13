@@ -30,58 +30,78 @@ class DashboardCardsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const cardColor = Color(0xFF357088);
+    // Card heights
+    const double totalUsersHeight = 160;
+    const double pendingTasksHeight = 120;
+    const double onlineNowHeight = 120;
+    const double newsFeedHeight = 160;
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _DashboardGridCard(
-                  icon: Icons.people_alt_outlined,
-                  value: usersCount,
-                  label: 'Total Users',
-                  onTap: onManageUsersTap,
-                  color: cardColor,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Left column
+            Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                SizedBox(
+                  width: 140,
+                  height: totalUsersHeight,
+                  child: _DashboardGridCard(
+                    icon: Icons.people_alt_outlined,
+                    value: usersCount,
+                    label: 'Total Users',
+                    onTap: onManageUsersTap,
+                    color: cardColor,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _DashboardGridCard(
-                  icon: Icons.assignment_late_outlined,
-                  value: tasksCount,
-                  label: 'Pending Tasks',
-                  onTap: onTotalTasksTap,
-                  color: cardColor,
+                SizedBox(height: 14),
+                SizedBox(
+                  width: 140,
+                  height: pendingTasksHeight,
+                  child: _DashboardGridCard(
+                    icon: Icons.assignment_late_outlined,
+                    value: tasksCount,
+                    label: 'Pending Tasks',
+                    onTap: onTotalTasksTap,
+                    color: cardColor,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _DashboardGridCard(
-                  icon: Icons.wifi_tethering,
-                  value: onlineUsersCount,
-                  label: 'Online Now',
-                  onTap: onOnlineUsersTap,
-                  color: cardColor,
+              ],
+            ),
+            SizedBox(width: 14),
+            // Right column
+            Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                SizedBox(
+                  width: 140,
+                  height: onlineNowHeight,
+                  child: _DashboardGridCard(
+                    icon: Icons.wifi_tethering,
+                    value: onlineUsersCount,
+                    label: 'Online Now',
+                    onTap: onOnlineUsersTap,
+                    color: cardColor,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _DashboardGridCard(
-                  icon: Icons.rss_feed,
-                  value: newsCount,
-                  label: 'News Feed',
-                  onTap: onNewsFeedTap,
-                  color: cardColor,
+                SizedBox(height: 14),
+                SizedBox(
+                  width: 140,
+                  height: newsFeedHeight,
+                  child: _DashboardGridCard(
+                    icon: Icons.rss_feed,
+                    value: newsCount,
+                    label: 'News Feed',
+                    onTap: onNewsFeedTap,
+                    color: cardColor,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -106,35 +126,37 @@ class _DashboardGridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 32),
-            const SizedBox(height: 12),
-            Text(
-              value.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+      child: SizedBox.square(
+        dimension: 120.w, // You can adjust this size as needed
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 36),
+              const SizedBox(height: 10),
+              Text(
+                value.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
