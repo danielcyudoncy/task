@@ -25,7 +25,7 @@ class ProfileScreen extends StatelessWidget {
         child: Obx(() {
           final fullName = authController.fullName.value;
           final profilePicUrl = authController.profilePic.value;
-          final phone = authController.userData['phoneNumber'] ?? '';
+          final phone = authController.phoneNumber.value;
           final email = authController.currentUser?.email ?? '';
 
           if (authController.currentUser == null) {

@@ -187,11 +187,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  void _showManageUsersDialog() {
+  void _showManageUsersDialog() async {
+    // Ensure users are fetched before showing dialog - fetch ALL users for dialog
+    await manageUsersController.fetchUsers(fetchAll: true);
+    
     final currentUserId = authController.user.value?.uid;
+    debugPrint('Current user ID: $currentUserId');
+    debugPrint('Total users in list: ${manageUsersController.usersList.length}');
+    debugPrint('Users list: ${manageUsersController.usersList}');
+    
+    // Debug user photo URLs
+    for (int i = 0; i < manageUsersController.usersList.length; i++) {
+      final user = manageUsersController.usersList[i];
+      debugPrint('User $i: ${user['fullName']} - photoUrl: "${user['photoUrl']}"');
+    }
+    
     final otherUsers = manageUsersController.usersList
-        .where((user) => user['uid'] != currentUserId) // Use uid consistently
+        .where((user) => 
+            user['uid'] != currentUserId && 
+            user['id'] != currentUserId) // Check both uid and id fields
         .toList();
+    
+    debugPrint('Other users count: ${otherUsers.length}');
 
     Get.dialog(
       Dialog(
@@ -204,10 +221,225 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               return const Center(child: CircularProgressIndicator());
             }
             if (otherUsers.isEmpty) {
-              return const Center(child: Text('No users available.'));
+              // If no other users, show all users including current user
+              final allUsers = manageUsersController.usersList;
+              if (allUsers.isEmpty) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.people_outline, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No users available.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Total users in system: ${allUsers.length}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                );
+              }
+              return ListView.builder(
+                itemCount: allUsers.length,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemBuilder: (context, index) {
+                  final user = allUsers[index];
+                  final userName = user['fullName']?.toString().isNotEmpty == true
+                      ? user['fullName']
+                      : (user['fullname']?.toString().isNotEmpty == true
+                          ? user['fullname']
+                          : AppStrings.unknownUser);
+                  final userRole = user['role'] ?? 'Unknown';
+                  final userEmail = user['email'] ?? 'No email';
+                  final isCurrentUser = user['uid'] == currentUserId || user['id'] == currentUserId;
+                  
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: isCurrentUser 
+                          ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
+                          : BorderSide.none,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          // User Avatar
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: isCurrentUser 
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).colorScheme.secondary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: ClipOval(
+                              child: user['photoUrl'] != null && user['photoUrl'].toString().isNotEmpty
+                                  ? Image.network(
+                                      user['photoUrl'],
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            color: isCurrentUser 
+                                                ? Theme.of(context).colorScheme.primary
+                                                : Theme.of(context).colorScheme.secondary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            color: isCurrentUser 
+                                                ? Theme.of(context).colorScheme.primary
+                                                : Theme.of(context).colorScheme.secondary,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: isCurrentUser 
+                                            ? Theme.of(context).colorScheme.primary
+                                            : Theme.of(context).colorScheme.secondary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          
+                          // User Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        userName + (isCurrentUser ? ' (You)' : ''),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isCurrentUser)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Text(
+                                          'Current',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  userRole,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context).colorScheme.secondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  userEmail,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          // Action Buttons
+                          if (!isCurrentUser) ...[
+                            const SizedBox(width: 8),
+                            Column(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.assignment, color: Colors.blue),
+                                  tooltip: 'Assign Task',
+                                  onPressed: () {
+                                    Get.find<SettingsController>().triggerFeedback();
+                                    _showAssignTaskDialog(user);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  tooltip: 'Delete User',
+                                  onPressed: () {
+                                    Get.find<SettingsController>().triggerFeedback();
+                                    _confirmUserDeletion(user);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
             }
             return ListView.builder(
               itemCount: otherUsers.length,
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemBuilder: (context, index) {
                 final user = otherUsers[index];
                 final userName = user['fullName']?.toString().isNotEmpty == true
@@ -216,27 +448,155 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         ? user['fullname']
                         : AppStrings.unknownUser);
                 final userRole = user['role'] ?? 'Unknown';
-                return ListTile(
-                  title: Text(userName),
-                  subtitle: Text("Role: $userRole"),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.assignment, color: Colors.blue),
-                        onPressed: () {
-                          Get.find<SettingsController>().triggerFeedback();
-                          _showAssignTaskDialog(user);
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          Get.find<SettingsController>().triggerFeedback();
-                          _confirmUserDeletion(user);
-                        },
-                      ),
-                    ],
+                final userEmail = user['email'] ?? 'No email';
+                
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        // User Avatar
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: ClipOval(
+                            child: user['photoUrl'] != null && user['photoUrl'].toString().isNotEmpty
+                                ? Image.network(
+                                    user['photoUrl'],
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      debugPrint('Image load error for ${user['fullName']}: $error');
+                                      return Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.secondary,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        debugPrint('Image loaded successfully for ${user['fullName']}');
+                                        return child;
+                                      }
+                                      debugPrint('Loading image for ${user['fullName']}: ${loadingProgress.expectedTotalBytes != null ? '${loadingProgress.cumulativeBytesLoaded}/${loadingProgress.expectedTotalBytes}' : 'Unknown size'}');
+                                      return Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.secondary,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        ),
+                                      );
+                                    },
+
+                                  )
+                                : Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.secondary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        
+                        // User Info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                userRole,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                userEmail,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Action Buttons
+                        Column(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.assignment, color: Colors.blue),
+                              tooltip: 'Assign Task',
+                              onPressed: () {
+                                Get.find<SettingsController>().triggerFeedback();
+                                _showAssignTaskDialog(user);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              tooltip: 'Delete User',
+                              onPressed: () {
+                                Get.find<SettingsController>().triggerFeedback();
+                                _confirmUserDeletion(user);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

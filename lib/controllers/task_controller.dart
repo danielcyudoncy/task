@@ -1178,4 +1178,13 @@ class TaskController extends GetxController {
       },
     );
   }
+
+  /// Stream of all tasks created by a user
+  Stream<int> createdTasksCountStream(String userId) {
+    return FirebaseFirestore.instance
+        .collection('tasks')
+        .where('createdBy', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
 }

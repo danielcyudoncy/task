@@ -120,8 +120,13 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           _selectedDate = null;
           _selectedTime = null;
         });
-        // Navigate back
-        Get.back();
+        // Navigate back to appropriate screen based on user role
+        final userRole = taskController.authController.userRole.value;
+        if (["Admin", "Assignment Editor", "Head of Department"].contains(userRole)) {
+          Get.offAllNamed('/admin-dashboard');
+        } else {
+          Get.offAllNamed('/home');
+        }
       } catch (e) {
         debugPrint('Error in _createTask: $e');
         // Error is already shown by the controller
