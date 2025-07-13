@@ -99,17 +99,17 @@ class TasksSection extends StatelessWidget {
     return TabBar(
       controller: tabController,
       isScrollable: false,
-      indicatorColor: colorScheme.primary,
+      indicatorColor: isDark ? colorScheme.onPrimary : colorScheme.primary,
       indicatorWeight: 2.5,
-      labelColor: colorScheme.primary,
-      unselectedLabelColor: colorScheme.onSurfaceVariant,
-      labelStyle: AppStyles.tabSelectedStyle.copyWith(
+      labelColor: isDark ? colorScheme.onPrimary : colorScheme.primary,
+      unselectedLabelColor: isDark ? colorScheme.onPrimary.withOpacity(0.7) : Colors.black54,
+      labelStyle: const TextStyle(
         fontWeight: FontWeight.w500,
         fontSize: 15,
-        color: colorScheme.primary,
       ),
-      unselectedLabelStyle: AppStyles.tabUnselectedStyle.copyWith(
-        color: colorScheme.onSurfaceVariant,
+      unselectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.w500,
+        fontSize: 15,
       ),
       tabs: const [
         Tab(text: AppStrings.notCompleted),

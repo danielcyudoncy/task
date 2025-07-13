@@ -46,18 +46,21 @@ class ManageUsersController extends GetxController {
   }
 
   /// Fetch users with pagination.
-  Future<void> fetchUsers({bool isNextPage = false}) async {
+  Future<void> fetchUsers({bool isNextPage = false, bool fetchAll = false}) async {
     if (!hasMoreUsers.value || isLoading.value) return;
     try {
       isLoading.value = true;
 
       Query query = FirebaseFirestore.instance
           .collection('users')
-          .orderBy('fullName')
-          .limit(usersLimit);
+          .orderBy('fullName');
 
-      if (isNextPage && lastDocument != null) {
-        query = query.startAfterDocument(lastDocument as DocumentSnapshot);
+      // If fetching all users for dialog, don't use pagination
+      if (!fetchAll) {
+        query = query.limit(usersLimit);
+        if (isNextPage && lastDocument != null) {
+          query = query.startAfterDocument(lastDocument as DocumentSnapshot);
+        }
       }
 
       QuerySnapshot snapshot = await query.get();
@@ -65,17 +68,30 @@ class ManageUsersController extends GetxController {
       if (snapshot.docs.isNotEmpty) {
         final newUsers = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
+          
+          // Try multiple possible field names for profile picture
+          final photoUrl = data['photoUrl'] ?? 
+                          data['photoURL'] ?? 
+                          data['profilePic'] ?? 
+                          data['profile_pic'] ?? 
+                          data['avatarUrl'] ?? 
+                          data['avatar_url'] ?? 
+                          '';
+          
+          debugPrint('User ${data['fullName']}: photoUrl = "$photoUrl"');
+          
           return {
             'uid': doc.id,
             'id': doc.id,
-            'fullName': data['fullName'] ?? 'Unknown User',
-            'fullname': data['fullName'] ?? 'Unknown User',
+            'fullName': data['fullName'] ?? data['fullname'] ?? 'Unknown User',
+            'fullname': data['fullName'] ?? data['fullname'] ?? 'Unknown User',
             'role': data['role'] ?? 'No Role',
             'email': data['email'] ?? 'No Email',
+            'photoUrl': photoUrl,
           };
         }).toList();
 
-        if (isNextPage) {
+        if (isNextPage && !fetchAll) {
           usersList.addAll(newUsers);
         } else {
           usersList.value = newUsers;
@@ -84,12 +100,18 @@ class ManageUsersController extends GetxController {
         filteredUsersList.assignAll(usersList);
         isHovered.assignAll(List.filled(usersList.length, false));
 
-        lastDocument = snapshot.docs.last;
-        if (snapshot.docs.length < usersLimit) hasMoreUsers.value = false;
+        if (!fetchAll) {
+          lastDocument = snapshot.docs.last;
+          if (snapshot.docs.length < usersLimit) hasMoreUsers.value = false;
+        }
       } else {
         hasMoreUsers.value = false;
       }
+      
+      debugPrint('FetchUsers: Loaded ${usersList.length} users');
+      debugPrint('FetchUsers: Users data: ${usersList.map((u) => '${u['fullName']} (${u['uid']})').toList()}');
     } catch (e) {
+      debugPrint('FetchUsers Error: $e');
       _safeSnackbar('Error', 'Failed to fetch users: $e');
     } finally {
       isLoading.value = false;
@@ -260,6 +282,20 @@ class ManageUsersController extends GetxController {
   void updateHoverState(int index, bool value) {
     if (index >= 0 && index < isHovered.length) {
       isHovered[index] = value;
+    }
+  }
+
+  /// Get total user count for dashboard
+  Future<int> getTotalUserCount() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .count()
+          .get();
+      return snapshot.count ?? usersList.length;
+    } catch (e) {
+      debugPrint('GetTotalUserCount Error: $e');
+      return usersList.length; // Fallback to current list length
     }
   }
 

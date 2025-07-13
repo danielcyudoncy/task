@@ -26,12 +26,12 @@ class TaskCardWidget extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     
-    // Theme-aware colors for better visibility
-    final Color cardColor = isCompleted 
-        ? colorScheme.primaryContainer 
-        : colorScheme.surface;
-    final Color textColor = colorScheme.onSurface;
-    final Color subTextColor = colorScheme.onSurfaceVariant;
+    // Use the same color scheme as admin dashboard
+    final Color cardColor = isDark 
+        ? const Color(0xFF292B3A) 
+        : Theme.of(context).primaryColor;
+    const Color textColor = Colors.white;
+    const Color subTextColor = Colors.white70;
     final Color borderColor = colorScheme.outline.withOpacity(0.3);
 
     return Dismissible(
@@ -52,7 +52,7 @@ class TaskCardWidget extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.1),
+                color: isDark ? Colors.black38 : const Color(0x22000000),
                 blurRadius: 8,
                 offset: const Offset(0, 5),
               ),
@@ -64,15 +64,16 @@ class TaskCardWidget extends StatelessWidget {
             children: [
               Text(
                 task.title ?? "", 
-                style: textTheme.titleMedium?.copyWith(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: textColor,
+                  fontSize: 16,
                 ),
               ),
               const SizedBox(height: 7),
               Text(
                 task.description ?? AppStrings.taskDetails,
-                style: textTheme.bodyMedium?.copyWith(
+                style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w400,
@@ -81,7 +82,7 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 "Due Date ${task.timestamp != null ? DateFormat('yyyy-MM-dd').format(task.timestamp!.toDate()) : 'N/A'}",
-                style: textTheme.bodySmall?.copyWith(
+                style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w400,

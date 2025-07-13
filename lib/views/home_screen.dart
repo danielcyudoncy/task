@@ -296,22 +296,29 @@ class _HomeScreenState extends State<HomeScreen>
                                 builder: (context, assignedSnapshot) {
                                   debugPrint('Assigned tasks stream (all statuses): \\${assignedSnapshot.data}');
                                   final assignedTasksToday = assignedSnapshot.data ?? 0;
-                                  return UserDashboardCardsWidget(
-                                    assignedTasksToday: assignedTasksToday,
-                                    onlineUsersCount: onlineUsersCount,
-                                    tasksCreatedCount: 0, // TODO: Replace with actual count
-                                    newsFeedCount: 0, // TODO: Replace with actual count
-                                    onAssignedTasksTap: () {
-                                      _tabController.animateTo(1);
-                                    },
-                                    onOnlineUsersTap: () {
-                                      Get.toNamed('/all-users-chat');
-                                    },
-                                    onTasksCreatedTap: () {
-                                      // TODO: Implement navigation or action for Task Created
-                                    },
-                                    onNewsFeedTap: () {
-                                      Get.toNamed('/news');
+                                  return StreamBuilder<int>(
+                                    stream: taskController.createdTasksCountStream(userId),
+                                    builder: (context, createdSnapshot) {
+                                      debugPrint('Created tasks stream: \\${createdSnapshot.data}');
+                                      final tasksCreatedCount = createdSnapshot.data ?? 0;
+                                      return UserDashboardCardsWidget(
+                                        assignedTasksToday: assignedTasksToday,
+                                        onlineUsersCount: onlineUsersCount,
+                                        tasksCreatedCount: tasksCreatedCount,
+                                        newsFeedCount: 0, // TODO: Replace with actual count
+                                        onAssignedTasksTap: () {
+                                          _tabController.animateTo(1);
+                                        },
+                                        onOnlineUsersTap: () {
+                                          Get.toNamed('/all-users-chat');
+                                        },
+                                        onTasksCreatedTap: () {
+                                          // TODO: Implement navigation or action for Task Created
+                                        },
+                                        onNewsFeedTap: () {
+                                          Get.toNamed('/news');
+                                        },
+                                      );
                                     },
                                   );
                                 },
