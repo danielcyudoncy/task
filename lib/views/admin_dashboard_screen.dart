@@ -8,6 +8,7 @@ import 'package:task/controllers/notification_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/widgets/app_drawer.dart';
+import 'package:task/widgets/assign_task_dialog.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
 import 'package:task/widgets/user_header.dart';
 import 'package:task/widgets/user_nav_bar.dart';
@@ -79,111 +80,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   void _showAssignTaskDialog(Map<String, dynamic> user) async {
-    selectedTaskTitle = null;
-    await Get.defaultDialog(
-      title:
-          "Assign Task to ${user['fullName'] ?? user['fullname'] ?? "Unknown"}",
-      content: Obx(() {
-        final tasks = adminController.taskTitles;
-        if (tasks.isEmpty) {
-          return const Text("No tasks available");
-        }
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Theme.of(context).dividerColor,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Text(
-                    "Select Task: ",
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: selectedTaskTitle,
-                        dropdownColor: Theme.of(context).cardColor,
-                        hint: Text(
-                          "Select Task",
-                          style: TextStyle(
-                            color: Theme.of(context).hintColor,
-                          ),
-                        ),
-                        icon: Icon(Icons.arrow_drop_down,
-                            color: Theme.of(context).iconTheme.color),
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                          fontSize: 16,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        items: tasks
-                            .map((t) =>
-                                DropdownMenuItem(value: t, child: Text(t)))
-                            .toList(),
-                        onChanged: (val) =>
-                            setState(() => selectedTaskTitle = val),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ),
-            );
-          },
-        );
-      }),
-      textConfirm: "Assign",
-      onConfirm: () async {
-        if (selectedTaskTitle == null) {
-          Get.snackbar("Error", "Please select a task");
-          return;
-        }
-        final userId = user['uid'];
-        if (userId == null) {
-          Get.snackbar("Error", "User ID is missing");
-          return;
-        }
-        final selectedTaskDoc = adminController.taskSnapshotDocs
-            .firstWhere((d) => d['title'] == selectedTaskTitle);
-
-        final String taskId =
-            selectedTaskDoc['id'] ?? selectedTaskDoc['taskId'];
-        final String taskDescription = selectedTaskDoc['description'] ?? "";
-        final DateTime dueDate = (selectedTaskDoc['dueDate'] is Timestamp)
-            ? (selectedTaskDoc['dueDate'] as Timestamp).toDate()
-            : DateTime.tryParse(selectedTaskDoc['dueDate']?.toString() ?? "") ??
-                DateTime.now();
-
-        try {
-          await adminController.assignTaskToUser(
-            userId: userId,
-            assignedName: user['fullName'] ?? user['fullname'] ?? "Unknown",
-            taskTitle: selectedTaskTitle!,
-            taskDescription: taskDescription,
-            dueDate: dueDate,
-            taskId: taskId,
-          );
-          Get.back();
-          Get.snackbar("Success",
-              "Task assigned to ${user['fullName'] ?? user['fullname'] ?? "Unknown"}");
-        } catch (e) {
-          Get.snackbar("Error", "Failed to assign task: $e");
-        }
-      },
+    Get.dialog(
+      AssignTaskDialog(
+        user: user,
+        adminController: adminController,
+      ),
     );
   }
 

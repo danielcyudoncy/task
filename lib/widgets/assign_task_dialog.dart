@@ -39,7 +39,12 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
-        width: 380.w,
+        width: MediaQuery.of(context).size.width * 0.85,
+        constraints: BoxConstraints(
+          maxWidth: 380.w,
+          minWidth: 300.w,
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -67,26 +72,27 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
         ),
         child: assignableTasks.isEmpty
             ? _buildEmptyState(theme, isDark)
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header with gradient
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          primaryColor,
-                          primaryColor.withOpacity(0.8),
-                        ],
+            : SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header with gradient
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            primaryColor,
+                            primaryColor.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
                       ),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(24),
-                        topRight: Radius.circular(24),
-                      ),
-                    ),
                     child: Row(
                       children: [
                         Container(
@@ -148,18 +154,23 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                         const SizedBox(height: 12),
                         
                         // Modern Dropdown
-                        Container(
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           decoration: BoxDecoration(
                             color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
-                              width: 1.5,
+                              color: selectedTaskTitle != null 
+                                  ? primaryColor.withOpacity(0.3)
+                                  : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2)),
+                              width: selectedTaskTitle != null ? 2 : 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
+                                color: selectedTaskTitle != null 
+                                    ? primaryColor.withOpacity(0.1)
+                                    : Colors.black.withOpacity(0.05),
+                                blurRadius: selectedTaskTitle != null ? 15 : 10,
                                 offset: const Offset(0, 4),
                               ),
                             ],
@@ -168,9 +179,10 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                             child: DropdownButton<String>(
                               isExpanded: true,
                               value: selectedTaskTitle,
+                              menuMaxHeight: 200,
                               dropdownColor: isDark ? const Color(0xFF2A2A3E) : Colors.white,
                               hint: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 child: Row(
                                   children: [
                                     Icon(
@@ -178,13 +190,16 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                       color: isDark ? Colors.white54 : Colors.grey.shade600,
                                       size: 20,
                                     ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      "Choose a task to assign",
-                                      style: TextStyle(
-                                        color: isDark ? Colors.white54 : Colors.grey.shade600,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        "Select task",
+                                        style: TextStyle(
+                                          color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -228,7 +243,11 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                   ),
                                 );
                               }).toList(),
-                              onChanged: (val) => setState(() => selectedTaskTitle = val),
+                              onChanged: (val) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  setState(() => selectedTaskTitle = val);
+                                });
+                              },
                             ),
                           ),
                         ),
@@ -249,11 +268,11 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                 isOutlined: true,
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: _buildButton(
                                 context,
-                                "Assign Task",
+                                "Assign",
                                 Icons.check_circle,
                                 primaryColor,
                                 Colors.white,
@@ -267,6 +286,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                   ),
                 ],
               ),
+                ),
       ),
     );
   }
@@ -278,10 +298,23 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark 
+                    ? [Colors.grey.shade800, Colors.grey.shade700]
+                    : [Colors.grey.shade100, Colors.grey.shade200],
+              ),
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: Icon(
               Icons.task_alt_outlined,
@@ -330,120 +363,67 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     Color primaryColor,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF3A3A4E) : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? const Color(0xFF2A2A3E) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              // Creator Avatar
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primaryColor, primaryColor.withOpacity(0.7)],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    getCreatorInitials(task),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+          // Creator Avatar
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, primaryColor.withOpacity(0.7)],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                getCreatorInitials(task),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 9,
                 ),
               ),
-              const SizedBox(width: 12),
-              
-              // Creator Name
-              if (creatorName.isNotEmpty) ...[
-                Expanded(
-                  child: Text(
-                    creatorName,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white70 : Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              
-              // Status Icon
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: getPriorityColor(task).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  getStatusIcon(task),
-                  color: getPriorityColor(task),
-                  size: 16,
-                ),
-              ),
-            ],
+            ),
           ),
-          
-          const SizedBox(height: 8),
+          const SizedBox(width: 6),
           
           // Task Title
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           
-          if (description.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white60 : Colors.grey.shade600,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+          // Status Icon
+          Container(
+            padding: const EdgeInsets.all(1),
+            decoration: BoxDecoration(
+              color: getPriorityColor(task).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(2),
             ),
-          ],
-          
-          if (dueDate != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.schedule,
-                  size: 14,
-                  color: isDark ? Colors.white54 : Colors.grey.shade500,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  "Due: ${formatDueDate(dueDate)}",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            child: Icon(
+              getStatusIcon(task),
+              color: getPriorityColor(task),
+              size: 10,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -462,23 +442,25 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       height: 48,
       decoration: BoxDecoration(
         gradient: isOutlined ? null : LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
         ),
         color: isOutlined ? Colors.transparent : backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: isOutlined ? Border.all(color: backgroundColor, width: 1.5) : null,
+        borderRadius: BorderRadius.circular(16),
+        border: isOutlined ? Border.all(color: backgroundColor, width: 2) : null,
         boxShadow: isOutlined ? null : [
           BoxShadow(
             color: backgroundColor.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+              child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
           onTap: () {
             Get.find<SettingsController>().triggerFeedback();
             onPressed();
@@ -486,15 +468,19 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: textColor, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  text,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                Icon(icon, color: textColor, size: 18),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

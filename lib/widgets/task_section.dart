@@ -129,8 +129,10 @@ class TasksSection extends StatelessWidget {
           
           final userId = authController.auth.currentUser?.uid ?? "";
           final tasks = taskController.tasks;
+          // DEBUG PRINT ALL TASKS AND ASSIGNMENT FIELDS
+          print('DEBUG: Current userId: ' + userId);
           for (var t in tasks) {
-            print('DEBUG: Task: \\${t.title}, status: \\${t.status}, createdById: \\${t.createdById}, assignedTo: \\${t.assignedTo}, assignedReporterId: \\${t.assignedReporterId}, assignedCameramanId: \\${t.assignedCameramanId}, userId: \\${userId}');
+            print('DEBUG: Task: ' + t.title + ', status: ' + t.status + ', createdById: ' + t.createdById + ', assignedTo: ' + (t.assignedTo ?? 'null') + ', assignedReporterId: ' + (t.assignedReporterId ?? 'null') + ', assignedCameramanId: ' + (t.assignedCameramanId ?? 'null'));
           }
           final taskMap = {for (var task in tasks) task.taskId: task};
           final notCompletedTasks = taskMap.values.where((t) {
@@ -140,6 +142,11 @@ class TasksSection extends StatelessWidget {
                     t.assignedReporterId == userId ||
                     t.assignedCameramanId == userId);
           }).toList();
+
+          print('DEBUG: notCompletedTasks count: ' + notCompletedTasks.length.toString());
+          for (var t in notCompletedTasks) {
+            print('DEBUG: notCompletedTask: ' + t.title);
+          }
 
           return TaskListTab(
             isCompleted: false,
@@ -164,6 +171,12 @@ class TasksSection extends StatelessWidget {
                       t.assignedReporterId == userId ||
                       t.assignedCameramanId == userId))
               .toList();
+
+          // DEBUG PRINT COMPLETED TASKS
+          print('DEBUG: completedTasks count: ' + completedTasks.length.toString());
+          for (var t in completedTasks) {
+            print('DEBUG: completedTask: ' + t.title + ' (created by: ' + t.createdById + ', assigned to: ' + (t.assignedTo ?? 'null') + ')');
+          }
 
           return TaskListTab(
             isCompleted: true,

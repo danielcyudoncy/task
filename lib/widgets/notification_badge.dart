@@ -11,7 +11,7 @@ class NotificationBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final NotificationController notificationController = Get.find<NotificationController>();
     return Obx(() {
-      final hasUnread = notificationController.validUnreadCount.value > 0;
+      final hasUnread = notificationController.unreadCount.value > 0;
       return Stack(
         children: [
           const Icon(Icons.notifications),
