@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/localization/app_localizations.dart';
 
 class SettingsController extends GetxController {
   final AudioPlayer audioPlayer;
@@ -176,6 +177,7 @@ class SettingsController extends GetxController {
   void setLanguage(String lang) {
     selectedLanguage.value = lang;
     triggerFeedback();
+    AppLocalizations.instance.changeLanguage(lang);
     saveSettings();
   }
 }

@@ -247,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen>
                           children: [
                             Obx(() => Center(
                               child: Text(
-                                "Hello, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'User'}",
+                                "${'hello'.tr}, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'user'.tr}",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 20.sp,
@@ -335,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen>
                         Padding(
                           padding: const EdgeInsets.only(left: 24, bottom: 8),
                           child: Text(
-                            AppStrings.task,
+                            'task'.tr,
                             style: AppStyles.sectionTitleStyle.copyWith(
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),

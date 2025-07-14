@@ -2,173 +2,205 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:task/controllers/settings_controller.dart';
-import 'package:task/utils/constants/app_fonts_family.dart';
-import 'package:task/utils/constants/app_icons.dart';
-import 'package:task/utils/constants/app_sizes.dart';
+import '../controllers/onboarding_controller.dart';
+import '../utils/constants/app_colors.dart';
 
 class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key});
+  OnboardingScreen({super.key});
 
-  void _handleGetStarted() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('hasSeenOnboarding', true);
-    Get.offAllNamed("/signup");
-  }
-
-  void _handleMyAccount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('hasSeenOnboarding', true);
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      Get.offAllNamed("/home");
-    } else {
-      Get.offAllNamed("/login");
-    }
-  }
+  final OnboardingController controller = Get.put(OnboardingController());
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).canvasColor
-              : Theme.of(context).colorScheme.primary,
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 50),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image.asset(
-                AppIcons.logo,
-                width: 250.w,
-                height: 250.h,
-              ),
-              const SizedBox(height: 20),
-              Stack(
-                children: [
-                  Text(
-                    'Welcome!',
+      backgroundColor: isDark 
+          ? theme.canvasColor
+          : theme.colorScheme.primary,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Skip button
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: EdgeInsets.all(16.w),
+                child: TextButton(
+                  onPressed: controller.skipOnboarding,
+                  child: Text(
+                    'skip'.tr,
                     style: TextStyle(
-                      fontSize: 40.sp,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: AppFontsStyles.raleway,
-                      foreground: Paint()
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 4
-                        ..color = colorScheme.onPrimary,
+                      color: isDark ? Colors.white70 : Colors.white70,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  Text(
-                    'Welcome!',
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                      fontSize: 40.sp,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: AppFontsStyles.raleway,
-                      shadows: [
-                        Shadow(
-                          color: colorScheme.onSurface.withAlpha(92),
-                          offset: const Offset(0, 6.0),
-                          blurRadius: 12.0,
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Thanks for joining! Access or\n'
-                'create your account below, and get\n'
-                'started on your journey!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontSize: 18.sp,
-                  fontFamily: AppFontsStyles.openSans,
-                  fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 150),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 144.w,
-                    height: 38.h,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.find<SettingsController>().triggerFeedback();
-                        _handleGetStarted();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Get Started',
-                        style: TextStyle(
-                          fontSize: AppSizes.fontNormal,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 26),
-                  SizedBox(
-                    width: 144.w,
-                    height: 38.h,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Get.find<SettingsController>().triggerFeedback();
-                        _handleMyAccount();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.surface,
-                        foregroundColor: Theme.of(context).colorScheme.primary,
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'My Account',
-                        style: TextStyle(
-                          fontSize: AppSizes.fontNormal,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            ),
+            
+            // Page content
+            Expanded(
+              child: PageView.builder(
+                controller: controller.pageController,
+                onPageChanged: controller.onPageChanged,
+                itemCount: controller.pages.length,
+                itemBuilder: (context, index) {
+                  final page = controller.pages[index];
+                  return _buildPage(context, page, isDark, theme);
+                },
               ),
-              const SizedBox(height: 120),
+            ),
+            
+            // Bottom navigation
+            _buildBottomNavigation(context, isDark, theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPage(BuildContext context, OnboardingPage page, bool isDark, ThemeData theme) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.w),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon
+          Container(
+            width: 120.w,
+            height: 120.h,
+            decoration: BoxDecoration(
+              color: page.color.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: page.color.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              page.icon,
+              size: 60.sp,
+              color: page.color,
+            ),
+          ),
+          
+          SizedBox(height: 40.h),
+          
+          // Title
+          Text(
+            page.title,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.white,
+              fontSize: 28.sp,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Raleway',
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          SizedBox(height: 16.h),
+          
+          // Subtitle
+          Text(
+            page.subtitle,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.white70,
+              fontSize: 16.sp,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          SizedBox(height: 40.h),
+          
+          // CTA Button
+          Obx(() => SizedBox(
+            width: double.infinity,
+            height: 50.h,
+            child: ElevatedButton(
+              onPressed: controller.isLastPage.value 
+                  ? controller.completeOnboarding 
+                  : controller.nextPage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: page.color,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                elevation: 2,
+              ),
+              child: Text(
+                page.ctaText,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigation(BuildContext context, bool isDark, ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Page indicators
+          Row(
+            children: List.generate(
+              controller.pages.length,
+              (index) => Obx(() => Container(
+                width: 12.w,
+                height: 12.h,
+                margin: EdgeInsets.only(right: 8.w),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: controller.currentPage.value == index
+                      ? (isDark ? Colors.blue.shade300 : Colors.blue.shade600)
+                      : (isDark ? Colors.white24 : Colors.grey.shade300),
+                ),
+              )),
+            ),
+          ),
+          
+          // Navigation buttons
+          Row(
+            children: [
+              // Previous button
+              Obx(() => controller.currentPage.value > 0
+                  ? IconButton(
+                      onPressed: controller.previousPage,
+                      icon: Icon(
+                        Icons.arrow_back_ios,
+                        color: isDark ? Colors.white70 : Colors.grey.shade600,
+                        size: 20.sp,
+                      ),
+                    )
+                  : SizedBox(width: 48.w)),
+              
+              SizedBox(width: 8.w),
+              
+              // Next button
+              Obx(() => controller.currentPage.value < controller.pages.length - 1
+                  ? IconButton(
+                      onPressed: controller.nextPage,
+                      icon: Icon(
+                        Icons.arrow_forward_ios,
+                        color: isDark ? Colors.white70 : Colors.grey.shade600,
+                        size: 20.sp,
+                      ),
+                    )
+                  : SizedBox(width: 48.w)),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
