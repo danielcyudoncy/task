@@ -80,7 +80,7 @@ class SignUpScreen extends StatelessWidget {
                           child: Column(
                             children: [
                               Text(
-                                "Create Account",
+                                'create_account'.tr,
                                 style: textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'raleway',
@@ -88,7 +88,7 @@ class SignUpScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                "Adjust the content below to update your profile.",
+                                'adjust_content_below'.tr,
                                 style: textTheme.bodyMedium,
                                 textAlign: TextAlign.center,
                               ),
@@ -99,10 +99,10 @@ class SignUpScreen extends StatelessWidget {
                                 context: context,
                                 controller: fullNameController,
                                 icon: Icons.person,
-                                hint: "Full Name",
+                                hint: 'full_name'.tr,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return "Full Name cannot be empty";
+                                    return 'full_name_cannot_be_empty'.tr;
                                   }
                                   return null;
                                 },
@@ -114,14 +114,14 @@ class SignUpScreen extends StatelessWidget {
                                 context: context,
                                 controller: emailController,
                                 icon: Icons.email,
-                                hint: "Email",
+                                hint: 'email'.tr,
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return "Email cannot be empty";
+                                    return 'email_cannot_be_empty'.tr;
                                   }
                                   if (!GetUtils.isEmail(value)) {
-                                    return "Enter a valid email";
+                                    return 'enter_valid_email'.tr;
                                   }
                                   return null;
                                 },
@@ -135,13 +135,13 @@ class SignUpScreen extends StatelessWidget {
                                     obscureText: authController
                                         .isSignUpPasswordHidden.value,
                                     icon: Icons.lock,
-                                    hint: "Password",
+                                    hint: 'password'.tr,
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        return "Password cannot be empty";
+                                        return 'password_cannot_be_empty'.tr;
                                       }
                                       if (value.length < 6) {
-                                        return "Password must be at least 6 characters";
+                                        return 'password_min_length'.tr;
                                       }
                                       return null;
                                     },
@@ -169,13 +169,13 @@ class SignUpScreen extends StatelessWidget {
                                     obscureText: authController
                                         .isConfirmPasswordHidden.value,
                                     icon: Icons.lock,
-                                    hint: "Confirm Password",
+                                    hint: 'confirm_password'.tr,
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        return "Please confirm your password";
+                                        return 'please_confirm_password'.tr;
                                       }
                                       if (value != passwordController.text) {
-                                        return "Passwords do not match";
+                                        return 'passwords_do_not_match'.tr;
                                       }
                                       return null;
                                     },
@@ -205,7 +205,7 @@ class SignUpScreen extends StatelessWidget {
                                     icon: const Icon(Icons.arrow_drop_down),
                                     isExpanded: true,
                                     decoration: InputDecoration(
-                                      hintText: "Select Role",
+                                      hintText: 'select_role'.tr,
                                       prefixIcon:
                                           const Icon(Icons.person_outline),
                                       filled: true,
@@ -222,7 +222,7 @@ class SignUpScreen extends StatelessWidget {
                                     style: textTheme.bodyMedium,
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        return "Please select a role";
+                                        return 'please_select_role'.tr;
                                       }
                                       return null;
                                     },
@@ -255,7 +255,7 @@ class SignUpScreen extends StatelessWidget {
                                       ),
                                       onPressed: _signUp,
                                       child: Text(
-                                        "Save & Continue",
+                                        'save_continue'.tr,
                                         style: textTheme.bodyLarge?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           color: colorScheme.onPrimary,
@@ -280,7 +280,7 @@ class SignUpScreen extends StatelessWidget {
                                           ),
                                           onPressed: _signUp,
                                           child: Text(
-                                            "Save & Continue",
+                                            'save_continue'.tr,
                                             style: textTheme.bodyLarge?.copyWith(
                                               fontWeight: FontWeight.bold,
                                               color: colorScheme.onPrimary,
@@ -299,7 +299,7 @@ class SignUpScreen extends StatelessWidget {
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8),
-                                    child: Text("Or sign up with",
+                                    child: Text('or_sign_up_with'.tr,
                                         style: textTheme.bodyMedium),
                                   ),
                                   const Expanded(child: Divider()),
@@ -316,8 +316,8 @@ class SignUpScreen extends StatelessWidget {
                                     onPressed: () {
                                       Get.find<SettingsController>()
                                           .triggerFeedback();
-                                      Get.snackbar("Coming Soon",
-                                          "Google sign-up not yet implemented.",
+                                      Get.snackbar('coming_soon'.tr,
+                                          'google_signup_not_implemented'.tr,
                                           backgroundColor: Theme.of(context)
                                             .colorScheme
                                             .surface,
@@ -334,8 +334,8 @@ class SignUpScreen extends StatelessWidget {
                                     onPressed: () {
                                       Get.find<SettingsController>()
                                           .triggerFeedback();
-                                      Get.snackbar("Coming Soon",
-                                          "Apple sign-up not yet implemented.",
+                                      Get.snackbar('coming_soon'.tr,
+                                          'apple_signup_not_implemented'.tr,
                                           backgroundColor: Theme.of(context)
                                             .colorScheme
                                             .surface,
@@ -351,12 +351,12 @@ class SignUpScreen extends StatelessWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text("Already have an account? ",
+                                  Text('already_have_account'.tr,
                                       style: textTheme.bodyMedium),
                                   GestureDetector(
                                     onTap: () {Get.find<SettingsController>().triggerFeedback(); Get.toNamed('/login');},
                                     child: Text(
-                                      "Sign In",
+                                      'sign_in'.tr,
                                       style: textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.secondary,
                                         fontWeight: FontWeight.bold,

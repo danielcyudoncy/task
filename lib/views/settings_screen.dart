@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/settings_controller.dart';
 import '../controllers/theme_controller.dart';
+import '../utils/localization/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
   final SettingsController settingsController = Get.find<SettingsController>();
@@ -26,7 +27,7 @@ class SettingsScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Settings',
+          'settings'.tr,
           style: TextStyle(
             fontFamily: 'raleway',
             color: Theme.of(context).colorScheme.onPrimary,
@@ -84,11 +85,11 @@ class SettingsScreen extends StatelessWidget {
                       },
                     );
                   }),
-                  sectionTitle(context, "Sound and Vibration"),
+                  sectionTitle(context, 'sound_and_vibration'.tr),
                   settingsSwitchTile(
                     context,
-                    "Sounds",
-                    "Enable Sound",
+                    'sounds'.tr,
+                    'enable_sound'.tr,
                     settingsController.isSoundEnabled.value,
                     (value) {
                       settingsController.toggleSound(value);
@@ -97,35 +98,66 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   settingsSwitchTile(
                     context,
-                    "Vibration",
-                    "Enable/Disable Vibration",
+                    'vibration'.tr,
+                    'enable_disable_vibration'.tr,
                     settingsController.isVibrationEnabled.value,
                     (value) {
                       settingsController.toggleVibration(value);
                       settingsController.saveSettings();
                     },
                   ),
-                  sectionTitle(context, "Account Preferences"),
+                  sectionTitle(context, 'account_preferences'.tr),
                   settingsDropdownTile(
                     context,
-                    "Language",
+                    'language'.tr,
                     settingsController.selectedLanguage.value,
                     [
-                      "English (Default)",
-                      "French",
-                      "Hausa",
-                      "Yoruba",
-                      "Igbo"
+                      'English (Default)',
+                      'French',
+                      'Hausa',
+                      'Yoruba',
+                      'Igbo'
                     ],
                     (lang) {
                       settingsController.setLanguage(lang);
                       settingsController.saveSettings();
                     },
                   ),
-                  sectionTitle(context, "Sync Settings"),
+                  // Warning message for unsupported languages
+                  if (!AppLocalizations.isLanguageFullySupported(settingsController.selectedLanguage.value))
+                    Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'unsupported_language_note'.trParams({'language': settingsController.selectedLanguage.value}),
+                              style: TextStyle(
+                                color: Colors.orange.shade700,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  sectionTitle(context, 'sync_settings'.tr),
                   settingsSwitchTile(
                     context,
-                    "Synchronize data across all devices",
+                    'synchronize_data'.tr,
                     "",
                     settingsController.isSyncEnabled.value,
                     (value) {
@@ -238,7 +270,20 @@ class SettingsScreen extends StatelessWidget {
           items: options
               .map((lang) => DropdownMenuItem(
                     value: lang,
-                    child: Text(lang),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(lang),
+                        if (!AppLocalizations.isLanguageFullySupported(lang)) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 16,
+                            color: Colors.orange,
+                          ),
+                        ],
+                      ],
+                    ),
                   ))
               .toList(),
           onChanged: (String? value) {
@@ -267,16 +312,16 @@ class SettingsScreen extends StatelessWidget {
           await controller.saveSettings();
 
           Get.snackbar(
-            "Settings Saved",
-            "Your preferences have been updated.",
+            'settings_saved'.tr,
+            'preferences_updated'.tr,
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.grey[900],
             colorText: Colors.white,
           );
         },
-        child: const Text(
-          "Save",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        child: Text(
+          'save'.tr,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
       ),
     );
@@ -296,8 +341,8 @@ class SettingsScreen extends StatelessWidget {
         onPressed: () {
           Get.toNamed('/privacy');
         },
-        child: const Text("Next: Privacy Settings",
-            style: TextStyle(fontSize: 16)),
+        child: Text('next_privacy_settings'.tr,
+            style: const TextStyle(fontSize: 16)),
       ),
     );
   }

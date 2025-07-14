@@ -38,7 +38,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/onboarding",
-      page: () => const OnboardingScreen(),
+      page: () => OnboardingScreen(),
       binding: GlobalBindings(),
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 200),
