@@ -110,14 +110,14 @@ class _SplashScreenState extends State<SplashScreen> {
             children: [
               // Logo with rounded corners
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16.r),
                 child: Image.asset(
                   AppIcons.logo,
                   width: 200.w,
                   height: 200.h,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6.h),
               Text(
                 'your_home_for_news'.tr,
                 style: textTheme.headlineSmall?.copyWith(
@@ -128,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
               ),

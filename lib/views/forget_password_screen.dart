@@ -36,17 +36,17 @@ class ForgotPasswordScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24.w),
             child: Column(
               children: [
                 // Back arrow
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(
+                      icon:  Icon(
                         Icons.arrow_back,
                         color: Colors.white,
-                        size: 24, // adjust the size as needed
+                        size: 24.sp, // adjust the size as needed
                       ),
                       onPressed: () {
                         Get.find<SettingsController>().triggerFeedback();
@@ -61,7 +61,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                   width: 113.w,
                   height: 116.h,
                 ),
-                const SizedBox(height: 56),
+                SizedBox(height: 56.h),
 
                 // Forgot Password Card
                 SizedBox(
@@ -70,9 +70,9 @@ class ForgotPasswordScreen extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(16.r),
                     ),
-                    padding: const EdgeInsets.all(40),
+                    padding: EdgeInsets.all(40.w),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -86,7 +86,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                               color: colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 15),
+                          SizedBox(height: 15.h),
 
                           // Description
                           Text(
@@ -96,7 +96,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 31),
+                          SizedBox(height: 31.h),
 
                           // Email Field
                           TextFormField(
@@ -111,7 +111,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                               filled: true,
                               fillColor: colorScheme.surfaceVariant,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(12.r),
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -126,7 +126,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                             },
                           ),
 
-                          const SizedBox(height: 30),
+                          SizedBox(height: 30.h),
 
                           // Save Changes Button
                           Obx(() {
@@ -134,12 +134,12 @@ class ForgotPasswordScreen extends StatelessWidget {
                             if (!Get.isRegistered<AuthController>()) {
                               return SizedBox(
                                 width: double.infinity,
-                                height: 48,
+                                height: 48.h,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: colorScheme.primary,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(12.r),
                                     ),
                                   ),
                                   onPressed: () {
@@ -162,12 +162,12 @@ class ForgotPasswordScreen extends StatelessWidget {
                                 ? const Center(child: CircularProgressIndicator())
                                 : SizedBox(
                                     width: double.infinity,
-                                    height: 48,
+                                    height: 48.h,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: colorScheme.primary,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(12.r),
                                         ),
                                       ),
                                       onPressed: () {

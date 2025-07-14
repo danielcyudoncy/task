@@ -12,6 +12,7 @@ import 'package:task/widgets/task_card.dart';
 import 'package:task/widgets/task_detail_sheet.dart';
 import 'package:task/widgets/task_skeleton_list.dart';
 import 'package:task/widgets/user_nav_bar.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AllTaskScreen extends StatefulWidget {
   const AllTaskScreen({super.key});
@@ -87,7 +88,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     final media = MediaQuery.of(context);
     final isLargeScreen = media.size.width > 600;
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final basePadding = isLargeScreen ? 32.0 : 16.0;
+    final basePadding = isLargeScreen ? 32.0.w : 16.0.w;
 
     final colorScheme = Theme.of(context).colorScheme;
     final dividerColor = Theme.of(context).dividerColor;
@@ -141,7 +142,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                                   .map((filter) => DropdownMenuItem(
                                         value: filter,
                                         child: Text(filter,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 color: Colors.white)),
                                       ))
                                   .toList(),
@@ -219,14 +220,14 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                     },
                     child: ListView.separated(
                       padding: EdgeInsets.symmetric(
-                          horizontal: isLargeScreen ? 32 : 8, vertical: 20),
+                          horizontal: isLargeScreen ? 32.w : 8.w, vertical: 20),
                       itemCount: _filteredTasks.length +
                           (taskController.hasMore ? 1 : 0),
                       separatorBuilder: (_, __) => Divider(
                         color: dividerColor,
                         thickness: 1,
-                        indent: 16,
-                        endIndent: 16,
+                        indent: 16.w,
+                        endIndent: 16.w,
                       ),
                       itemBuilder: (context, index) {
                         if (index >= _filteredTasks.length) {

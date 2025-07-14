@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 import '../widgets/chat_nav_bar.dart';
 import '../controllers/wallpaper_controller.dart';
 // Import the UserNavBar
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // Helper function
 bool isSameDay(Timestamp? a, Timestamp? b) {
@@ -592,8 +593,8 @@ class _MessageBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
         decoration: BoxDecoration(
           color: isMe
@@ -621,18 +622,18 @@ class _MessageBubble extends StatelessWidget {
               text,
               style: TextStyle(
                 color: isMe ? Colors.white : colorScheme.onSurface,
-                fontSize: 16,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),
             if (time != null)
               Padding(
-                padding: const EdgeInsets.only(top: 4.0),
+                padding: EdgeInsets.only(top: 4.h),
                 child: Text(
                   DateFormat('h:mm a').format(time),
                   style: TextStyle(
                     color: isMe ? Colors.white70 : Colors.grey,
-                    fontSize: 11,
+                    fontSize: 11.sp,
                   ),
                 ),
               ),
@@ -696,7 +697,7 @@ class _MessageInputField extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 16.h),
       child: Material(
         elevation: 6,
         borderRadius: BorderRadius.circular(28),
@@ -712,7 +713,7 @@ class _MessageInputField extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Type here your message',
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
                 ),
               ),
             ),
@@ -744,7 +745,7 @@ class _ReplyPreview extends StatelessWidget {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            Container(width: 4, color: colorScheme.secondary),
+            Container(width: 4.w, color: colorScheme.secondary),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -838,11 +839,11 @@ class UserDetailsSheet extends StatelessWidget {
               ),
             ),
             child: CircleAvatar(
-              radius: 48,
+              radius: 48.w,
               backgroundColor: Colors.white,
               backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
               child: avatar.isEmpty
-                  ? Icon(Icons.person, size: 48, color: colorScheme.primary)
+                  ? Icon(Icons.person, size: 48.sp, color: colorScheme.primary)
                   : null,
             ),
           ),
@@ -862,7 +863,7 @@ class UserDetailsSheet extends StatelessWidget {
           if (about.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.info_outline, color: colorScheme.secondary, size: 20),
+                Icon(Icons.info_outline, color: colorScheme.secondary, size: 20.sp),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(about, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
@@ -873,7 +874,7 @@ class UserDetailsSheet extends StatelessWidget {
           ],
           Row(
             children: [
-              Icon(Icons.phone, color: colorScheme.secondary, size: 20),
+              Icon(Icons.phone, color: colorScheme.secondary, size: 20.sp),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(phone, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
@@ -883,7 +884,7 @@ class UserDetailsSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.email, color: colorScheme.secondary, size: 20),
+              Icon(Icons.email, color: colorScheme.secondary, size: 20.sp),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(email, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),

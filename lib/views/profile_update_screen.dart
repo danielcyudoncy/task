@@ -36,7 +36,7 @@ class ProfileUpdateScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -49,7 +49,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                     onPressed: () {Get.find<SettingsController>().triggerFeedback(); Get.back();},
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
 
                 // App logo
                 Image.asset(
@@ -57,22 +57,22 @@ class ProfileUpdateScreen extends StatelessWidget {
                   width: 80.w,
                   height: 80.h,
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
 
                 // Form Card
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(24.w),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16.r),
                     boxShadow: isDark
                         ? []
-                        : const [
+                        : [
                             BoxShadow(
                               color: Colors.black26,
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
+                              blurRadius: 8.r,
+                              offset: Offset(0, 4.h),
                             ),
                           ],
                   ),
@@ -93,7 +93,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                               ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
 
                         Text(
                           'Adjust the content below to update your profile.',
@@ -105,10 +105,10 @@ class ProfileUpdateScreen extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24.h),
 
                         ImagePickerWidget(controller: auth),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24.h),
 
                         // Full Name
                         TextFormField(
@@ -124,7 +124,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                             fillColor:
                                 isDark ? Colors.grey[850] : Colors.grey[200],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide.none,
                             ),
                           ),
@@ -132,7 +132,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                               ? 'Please enter your name'
                               : null,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
 
                         // Phone Number
                         TextFormField(
@@ -149,7 +149,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                             fillColor:
                                 isDark ? Colors.grey[850] : Colors.grey[200],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide.none,
                             ),
                           ),
@@ -157,7 +157,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                               ? 'Please enter phone number'
                               : null,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
 
                         // Email Address
                         TextFormField(
@@ -174,7 +174,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                             fillColor:
                                 isDark ? Colors.grey[850] : Colors.grey[200],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12.r),
                               borderSide: BorderSide.none,
                             ),
                           ),
@@ -182,7 +182,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                               ? 'Please enter a valid email'
                               : null,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16.h),
 
                         // Role Dropdown
                         Obx(
@@ -216,7 +216,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                               fillColor:
                                   isDark ? Colors.grey[850] : Colors.grey[200],
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(12.r),
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -225,7 +225,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                                 : null,
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24.h),
 
                         // Save Changes button
                         Obx(
@@ -233,12 +233,12 @@ class ProfileUpdateScreen extends StatelessWidget {
                               ? const CircularProgressIndicator()
                               : SizedBox(
                                   width: double.infinity,
-                                  height: 48,
+                                  height: 48.h,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primaryColor,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(12.r),
                                       ),
                                     ),
                                     onPressed: () async {
