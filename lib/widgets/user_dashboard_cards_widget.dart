@@ -36,6 +36,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: IntrinsicHeight(
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Left column
@@ -43,8 +44,8 @@ class UserDashboardCardsWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: [
                 SizedBox(
-                  width: 140,
-                  height: assignedTaskHeight,
+                  width: 140.w,
+                  height: assignedTaskHeight.h,
                   child: _DashboardGridCard(
                     icon: Icons.assignment_turned_in,
                     value: assignedTasksToday,
@@ -53,10 +54,10 @@ class UserDashboardCardsWidget extends StatelessWidget {
                     color: cardColor,
                   ),
                 ),
-                SizedBox(height: 14),
+                SizedBox(height: 14.h),
                 SizedBox(
-                  width: 140,
-                  height: taskCreatedHeight,
+                  width: 140.w,
+                  height: taskCreatedHeight.h,
                   child: _DashboardGridCard(
                     icon: Icons.create,
                     value: tasksCreatedCount,
@@ -67,14 +68,14 @@ class UserDashboardCardsWidget extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(width: 14),
+            SizedBox(width: 14.w),
             // Right column
             Column(
               mainAxisSize: MainAxisSize.max,
               children: [
                 SizedBox(
-                  width: 140,
-                  height: onlineNowHeight,
+                  width: 140.w,
+                  height: onlineNowHeight.h,
                   child: _DashboardGridCard(
                     icon: Icons.wifi_tethering,
                     value: onlineUsersCount,
@@ -83,10 +84,10 @@ class UserDashboardCardsWidget extends StatelessWidget {
                     color: cardColor,
                   ),
                 ),
-                SizedBox(height: 14),
+                SizedBox(height: 14.h),
                 SizedBox(
-                  width: 140,
-                  height: newsFeedHeight,
+                  width: 140.w,
+                  height: newsFeedHeight.h,
                   child: _DashboardGridCard(
                     icon: Icons.rss_feed,
                     value: newsFeedCount,
@@ -146,9 +147,9 @@ class _DashboardGridCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: const TextStyle(
+                style:  TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -141,15 +141,14 @@ class ProfileScreen extends StatelessWidget {
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 // Card with Info and Profile Actions
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 18),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                  margin: EdgeInsets.symmetric(horizontal: 18.w),
+                  padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 20.w),
                   decoration: BoxDecoration(
                     color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(28.r),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,

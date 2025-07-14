@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/app_drawer.dart';
-import 'package:task/widgets/stats_section.dart';
 import 'package:task/widgets/task_section.dart';
 import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/auth_controller.dart';
@@ -13,7 +12,6 @@ import '../controllers/notification_controller.dart';
 import 'package:task/widgets/user_dashboard_cards_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../utils/constants/app_strings.dart';
 import '../utils/constants/app_styles.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -279,51 +277,54 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                          child: StreamBuilder<QuerySnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('users')
-                                .where('isOnline', isEqualTo: true)
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              int onlineUsersCount = 0;
-                              if (snapshot.hasData) {
-                                onlineUsersCount = snapshot.data!.docs.length;
-                              }
-                              return StreamBuilder<int>(
-                                stream: taskController.assignedTasksCountStream(userId),
-                                builder: (context, assignedSnapshot) {
-                                  debugPrint('Assigned tasks stream (all statuses): \\${assignedSnapshot.data}');
-                                  final assignedTasksToday = assignedSnapshot.data ?? 0;
-                                  return StreamBuilder<int>(
-                                    stream: taskController.createdTasksCountStream(userId),
-                                    builder: (context, createdSnapshot) {
-                                      debugPrint('Created tasks stream: \\${createdSnapshot.data}');
-                                      final tasksCreatedCount = createdSnapshot.data ?? 0;
-                                      return UserDashboardCardsWidget(
-                                        assignedTasksToday: assignedTasksToday,
-                                        onlineUsersCount: onlineUsersCount,
-                                        tasksCreatedCount: tasksCreatedCount,
-                                        newsFeedCount: 0, // TODO: Replace with actual count
-                                        onAssignedTasksTap: () {
-                                          _tabController.animateTo(1);
-                                        },
-                                        onOnlineUsersTap: () {
-                                          Get.toNamed('/all-users-chat');
-                                        },
-                                        onTasksCreatedTap: () {
-                                          // TODO: Implement navigation or action for Task Created
-                                        },
-                                        onNewsFeedTap: () {
-                                          Get.toNamed('/news');
-                                        },
-                                      );
-                                    },
-                                  );
-                                },
-                              );
-                            },
+                        Center(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                            constraints: const BoxConstraints(maxWidth: 500),
+                            child: StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .where('isOnline', isEqualTo: true)
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                int onlineUsersCount = 0;
+                                if (snapshot.hasData) {
+                                  onlineUsersCount = snapshot.data!.docs.length;
+                                }
+                                return StreamBuilder<int>(
+                                  stream: taskController.assignedTasksCountStream(userId),
+                                  builder: (context, assignedSnapshot) {
+                                    debugPrint('Assigned tasks stream (all statuses): \\${assignedSnapshot.data}');
+                                    final assignedTasksToday = assignedSnapshot.data ?? 0;
+                                    return StreamBuilder<int>(
+                                      stream: taskController.createdTasksCountStream(userId),
+                                      builder: (context, createdSnapshot) {
+                                        debugPrint('Created tasks stream: \\${createdSnapshot.data}');
+                                        final tasksCreatedCount = createdSnapshot.data ?? 0;
+                                        return UserDashboardCardsWidget(
+                                          assignedTasksToday: assignedTasksToday,
+                                          onlineUsersCount: onlineUsersCount,
+                                          tasksCreatedCount: tasksCreatedCount,
+                                          newsFeedCount: 0, // TODO: Replace with actual count
+                                          onAssignedTasksTap: () {
+                                            _tabController.animateTo(1);
+                                          },
+                                          onOnlineUsersTap: () {
+                                            Get.toNamed('/all-users-chat');
+                                          },
+                                          onTasksCreatedTap: () {
+                                            // TODO: Implement navigation or action for Task Created
+                                          },
+                                          onNewsFeedTap: () {
+                                            Get.toNamed('/news');
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         ),
                         // const SizedBox(height: 18),

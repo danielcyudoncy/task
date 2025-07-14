@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import '../../controllers/manage_users_controller.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class UserHoverCard extends StatelessWidget {
   final Map<String, dynamic> user;
@@ -30,7 +31,7 @@ class UserHoverCard extends StatelessWidget {
         final isHovered = controller.isHovered[index];
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          margin: EdgeInsets.symmetric(vertical: isLargeScreen ? 12 : 8, horizontal: isLargeScreen ? 32 : 16),
+          margin: EdgeInsets.symmetric(vertical: isLargeScreen ? 12.h : 8.h, horizontal: isLargeScreen ? 32.w : 16.w),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -64,7 +65,7 @@ class UserHoverCard extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
-                      fontSize: isLargeScreen ? 18 * textScale : 14 * textScale,
+                      fontSize: isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
                     ),
                   ),
                 ),
@@ -72,11 +73,11 @@ class UserHoverCard extends StatelessWidget {
             ),
             title: Text(
               user['fullname'],
-              style: TextStyle(fontSize: 16 * textScale, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16.sp * textScale, fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               "Role: ${user['role']}",
-              style: TextStyle(fontSize: 14 * textScale, color: Colors.grey),
+              style: TextStyle(fontSize: 14.sp * textScale, color: Colors.grey),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
