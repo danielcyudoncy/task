@@ -5,6 +5,7 @@ import '../controllers/task_controller.dart';
 import 'package:task/utils/constants/app_styles.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/utils/devices/app_devices.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TaskCreationScreen extends StatefulWidget {
   const TaskCreationScreen({super.key});
@@ -145,11 +146,11 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Padding(
-          padding: const EdgeInsets.all(28.0),
+          padding: EdgeInsets.all(28.0.w),
           child: Text(
             "Create Task",
             style: AppStyles.sectionTitleStyle.copyWith(
-              fontSize: isTablet ? AppSizes.titleLarge : AppSizes.titleNormal,
+              fontSize: isTablet ? AppSizes.titleLarge.sp : AppSizes.titleNormal.sp,
               color: Theme.of(context).colorScheme.onPrimary,
               fontFamily: 'raleway',
             ),
@@ -169,18 +170,18 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           child: SingleChildScrollView(
             child: Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.small),
+                borderRadius: BorderRadius.circular(AppSizes.small.r),
               ),
               elevation: 4,
               child: Container(
-                width: isTablet ? 500 : double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppSizes.medium,
-                  horizontal: AppSizes.medium,
+                width: isTablet ? 500.w : double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: AppSizes.medium.h,
+                  horizontal: AppSizes.medium.w,
                 ),
                 decoration: BoxDecoration(
                   gradient: AppStyles.cardGradient,
-                  borderRadius: BorderRadius.circular(AppSizes.small),
+                  borderRadius: BorderRadius.circular(AppSizes.small.r),
                 ),
                 child: Form(
                   key: _formKey,
@@ -192,8 +193,8 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                         "New Task",
                         style: AppStyles.cardTitleStyle.copyWith(
                           fontSize: isTablet
-                              ? AppSizes.titleSmall
-                              : AppSizes.titleVerySmall,
+                              ? AppSizes.titleSmall.sp
+                              : AppSizes.titleVerySmall.sp,
                         ),
                       ),
                       const SizedBox(height: AppSizes.medium),
@@ -203,18 +204,18 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                         controller: _titleController,
                         style: AppStyles.cardValueStyle.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: AppSizes.fontNormal,
+                          fontSize: AppSizes.fontNormal.sp,
                         ),
                         decoration: InputDecoration(
                           labelText: "Task Title",
                           labelStyle: TextStyle(
-                            fontSize: AppSizes.fontSmall,
+                            fontSize: AppSizes.fontSmall.sp,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           filled: true,
                           fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.small),
+                            borderRadius: BorderRadius.circular(AppSizes.small.r),
                           ),
                         ),
                         validator: (value) {
@@ -233,13 +234,13 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                         decoration: InputDecoration(
                           labelText: "Priority",
                           labelStyle: TextStyle(
-                            fontSize: AppSizes.fontSmall,
+                            fontSize: AppSizes.fontSmall.sp,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           filled: true,
                           fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.small),
+                            borderRadius: BorderRadius.circular(AppSizes.small.r),
                           ),
                         ),
                         items: _priorities
@@ -272,19 +273,19 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               readOnly: true,
                               style: AppStyles.cardValueStyle.copyWith(
                                 color: Theme.of(context).colorScheme.onSurface,
-                                fontSize: AppSizes.fontSmall,
+                                fontSize: AppSizes.fontSmall.sp,
                               ),
                               decoration: InputDecoration(
                                 labelText: "Due Date",
                                 labelStyle: TextStyle(
-                                  fontSize: AppSizes.fontVerySmall,
+                                  fontSize: AppSizes.fontVerySmall.sp,
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
                                 fillColor: Theme.of(context).colorScheme.surface,
                                 border: OutlineInputBorder(
                                   borderRadius:
-                                      BorderRadius.circular(AppSizes.small),
+                                      BorderRadius.circular(AppSizes.small.r),
                                 ),
                                 suffixIcon: Icon(Icons.calendar_today,
                                     color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -306,19 +307,19 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               readOnly: true,
                               style: AppStyles.cardValueStyle.copyWith(
                                 color: Theme.of(context).colorScheme.onSurface,
-                                fontSize: AppSizes.fontSmall,
+                                fontSize: AppSizes.fontSmall.sp,
                               ),
                               decoration: InputDecoration(
                                 labelText: "Time",
                                 labelStyle: TextStyle(
-                                  fontSize: AppSizes.fontVerySmall,
+                                  fontSize: AppSizes.fontVerySmall.sp,
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
                                 fillColor: Theme.of(context).colorScheme.surface,
                                 border: OutlineInputBorder(
                                   borderRadius:
-                                      BorderRadius.circular(AppSizes.small),
+                                      BorderRadius.circular(AppSizes.small.r),
                                 ),
                                 suffixIcon: Icon(Icons.access_time,
                                     color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -341,18 +342,18 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                         controller: _descriptionController,
                         style: AppStyles.cardValueStyle.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: AppSizes.fontSmall,
+                          fontSize: AppSizes.fontSmall.sp,
                         ),
                         decoration: InputDecoration(
                           labelText: "Task Description",
                           labelStyle: TextStyle(
-                            fontSize: AppSizes.fontVerySmall,
+                            fontSize: AppSizes.fontVerySmall.sp,
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           filled: true,
                           fillColor: Theme.of(context).colorScheme.surface,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.small),
+                            borderRadius: BorderRadius.circular(AppSizes.small.r),
                           ),
                         ),
                         maxLines: 3,
@@ -372,8 +373,8 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                             ? const Center(child: CircularProgressIndicator())
                             : ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: AppSizes.small,
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: AppSizes.small.h,
                                   ),
                                   backgroundColor:
                                       Theme.of(context).colorScheme.primary,
@@ -383,7 +384,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                   "Save",
                                   style: AppStyles.cardTitleStyle.copyWith(
                                     color: Colors.white,
-                                    fontSize: AppSizes.fontNormal,
+                                    fontSize: AppSizes.fontNormal.sp,
                                   ),
                                 ),
                               )),

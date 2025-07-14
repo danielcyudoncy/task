@@ -77,7 +77,7 @@ class TaskCard extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.symmetric(
-          horizontal: isLargeScreen ? 16 : 8.0, vertical: 4.0),
+          horizontal: isLargeScreen ? 16.w : 8.0.w, vertical: 4.0.h),
       child: Material(
         elevation: 3,
         borderRadius: BorderRadius.circular(12),
@@ -90,7 +90,7 @@ class TaskCard extends StatelessWidget {
             label: "Task card: $title, status $status, created by $creatorName",
             container: true,
             child: Container(
-              padding: EdgeInsets.all(isLargeScreen ? 24 : 16),
+              padding: EdgeInsets.all(isLargeScreen ? 24.w : 16.w),
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(12),
@@ -162,7 +162,7 @@ class TaskCard extends StatelessWidget {
                     title,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: isLargeScreen ? 20 * textScale : 16.sp * textScale,
+                      fontSize: isLargeScreen ? 20.sp * textScale : 16.sp * textScale,
                       color: mainText,
                     ),
                   ),

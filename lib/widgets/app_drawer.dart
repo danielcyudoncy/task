@@ -113,31 +113,33 @@ class _AppDrawerState extends State<AppDrawer> {
                           ),
                         ),
                         SizedBox(width: 16.w),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: 120.w), // adjust as needed
-                              child: Text(
-                                authController.fullName.value,
-                                style: TextStyle(
-                                    fontSize: 24.sp,
-                                    fontFamily: 'Raleway',
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                                softWrap: false,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: 120.w), // adjust as needed
+                                child: Text(
+                                  authController.fullName.value,
+                                  style: TextStyle(
+                                      fontSize: 24.sp,
+                                      fontFamily: 'Raleway',
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  softWrap: false,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              authController.currentUser?.email ?? '',
-                              style: TextStyle(
-                                  fontSize: 14.sp, color: Colors.white70),
-                            ),
-                          ],
+                              SizedBox(height: 4.h),
+                              Text(
+                                authController.currentUser?.email ?? '',
+                                style: TextStyle(
+                                    fontSize: 14.sp, color: Colors.white70),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -409,7 +411,7 @@ class ConcentricCirclePainter extends CustomPainter {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
-    final radii = [60.0, 100.0, 140.0];
+    final radii = [60.0.w, 100.0.w, 140.0.w];
     final alphas = [0.4, 0.25, 0.12];
     for (int i = 0; i < radii.length; i++) {
       paint.color = ringColor.withOpacity(alphas[i]);

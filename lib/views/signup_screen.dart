@@ -51,26 +51,26 @@ class SignUpScreen extends StatelessWidget {
                       const SizedBox(height: 20),
                       Center(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(20.r),
                           child: Image.asset(
                             AppIcons.logo,
-                            height: 100,
+                            height: 100.h,
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(24),
+                        padding: EdgeInsets.all(24.w),
                         decoration: BoxDecoration(
                           color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(16.r),
                           boxShadow: theme.brightness == Brightness.light
-                              ? const [
+                              ? [
                                   BoxShadow(
                                     color: Colors.black12,
-                                    blurRadius: 10,
-                                    offset: Offset(0, 4),
+                                    blurRadius: 10.r,
+                                    offset: Offset(0, 4.h),
                                   ),
                                 ]
                               : null,
@@ -84,15 +84,16 @@ class SignUpScreen extends StatelessWidget {
                                 style: textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'raleway',
+                                  fontSize: 22.sp,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              SizedBox(height: 6.h),
                               Text(
                                 'adjust_content_below'.tr,
                                 style: textTheme.bodyMedium,
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 24),
+                              SizedBox(height: 24.h),
 
                               // Full Name
                               _buildTextField(
@@ -107,7 +108,7 @@ class SignUpScreen extends StatelessWidget {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
 
                               // Email
                               _buildTextField(
@@ -126,7 +127,7 @@ class SignUpScreen extends StatelessWidget {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
 
                               // Password with visibility toggle
                               Obx(() => _buildTextField(
@@ -160,7 +161,7 @@ class SignUpScreen extends StatelessWidget {
                                       },
                                     ),
                                   )),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
 
                               // Confirm Password with visibility toggle
                               Obx(() => _buildTextField(
@@ -194,7 +195,7 @@ class SignUpScreen extends StatelessWidget {
                                       },
                                     ),
                                   )),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
 
                               // Role Dropdown
                               Obx(() => DropdownButtonFormField<String>(
@@ -237,7 +238,7 @@ class SignUpScreen extends StatelessWidget {
                                       );
                                     }).toList(),
                                   )),
-                              const SizedBox(height: 20),
+                              SizedBox(height: 20.h),
 
                               // Sign Up Button
                               Obx(() {
@@ -291,7 +292,7 @@ class SignUpScreen extends StatelessWidget {
                                       );
                               }),
 
-                              const SizedBox(height: 20),
+                              SizedBox(height: 20.h),
 
                               Row(
                                 children: [
@@ -305,7 +306,7 @@ class SignUpScreen extends StatelessWidget {
                                   const Expanded(child: Divider()),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: 16.h),
 
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -327,7 +328,7 @@ class SignUpScreen extends StatelessWidget {
                                       );
                                     },
                                   ),
-                                  const SizedBox(width: 20),
+                                  SizedBox(width: 20.w),
                                   IconButton(
                                     icon: Image.asset(AppIcons.apple,
                                         width: 48.w, height: 48.h),
@@ -347,7 +348,7 @@ class SignUpScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -370,7 +371,7 @@ class SignUpScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      SizedBox(height: 40.h),
                     ],
                   ),
                 ),
@@ -378,8 +379,8 @@ class SignUpScreen extends StatelessWidget {
 
               // Back Arrow
               Positioned(
-                top: 10,
-                left: 20,
+                top: 10.h,
+                left: 20.w,
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: colorScheme.primary),
                   onPressed: () {Get.find<SettingsController>().triggerFeedback(); Get.back();},

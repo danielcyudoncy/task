@@ -128,7 +128,7 @@ class _NewsScreenState extends State<NewsScreen> {
             children: [
               // Custom App Bar
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16.w),
                 child: Row(
                   children: [
                     IconButton(
@@ -156,7 +156,7 @@ class _NewsScreenState extends State<NewsScreen> {
                               title: const Text('Search News'),
                               content: TextField(
                                 autofocus: true,
-                                decoration: const InputDecoration(hintText: 'Search news...'),
+                                decoration: InputDecoration(hintText: 'Search news...'),
                                 onChanged: (value) {
                                   searchText = value;
                                 },
@@ -210,7 +210,7 @@ class _NewsScreenState extends State<NewsScreen> {
                               height: 326.h,
                               child: NewsSourcesCarousel(colorScheme: theme.colorScheme),
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16.h),
                             // News Category Filter
                             if (_newsService != null)
                               NewsCategoryFilter(
@@ -222,7 +222,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                   });
                                 },
                               ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16.h),
                             // Manual Refresh Button for Testing
                             Container(
                               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -259,7 +259,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                 child: const Text('Refresh News'),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8.h),
                             // News Articles
                             Obx(() {
                               if (_newsService == null) {
@@ -302,7 +302,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                         size: 50,
                                         color: Colors.grey[400],
                                       ),
-                                      const SizedBox(height: 16),
+                                      SizedBox(height: 16.h),
                                       Text(
                                         _selectedCategory == 'All' || _selectedCategory == 'All News'
                                             ? 'No news articles found'
@@ -312,7 +312,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                           color: Colors.grey[600],
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      SizedBox(height: 8.h),
                                       ElevatedButton(
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: theme.colorScheme.primary,
@@ -386,7 +386,7 @@ class _NewsScreenState extends State<NewsScreen> {
               children: [
                 if (article['imageUrl'] != null)
                   Container(
-                    height: 200,
+                    height: 200.h,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
@@ -398,10 +398,10 @@ class _NewsScreenState extends State<NewsScreen> {
                       ),
                     ),
                   ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Text(
                   article['title'] ?? 'No Title',
-                  style:  TextStyle(
+                  style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).textTheme.titleLarge?.color,
@@ -409,17 +409,17 @@ class _NewsScreenState extends State<NewsScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Text(
                   _stripHtmlTags(article['summary'] ?? ''),
-                  style:  TextStyle(
+                  style: TextStyle(
                     fontSize: 14.sp,
                     color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Row(
                   children: [
                     Icon(
