@@ -9,6 +9,9 @@ import 'package:task/utils/themes/app_theme.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/utils/snackbar_utils.dart';
+import 'utils/localization/app_localizations.dart';
+import 'utils/localization/translations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -20,6 +23,9 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   // Finding the controller is fine, as it's already put by bootstrap.
   final ThemeController themeController = Get.find<ThemeController>();
+  
+  // For double-tap back button to exit
+  DateTime? _lastBackPressTime;
 
   @override
   void initState() {
@@ -82,6 +88,32 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
+  // Handle back button press
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+    if (_lastBackPressTime == null || 
+        now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+      _lastBackPressTime = now;
+      
+      // Show snackbar asking user to press back again
+      Get.snackbar(
+        'Press back again to exit',
+        'Tap the back button once more to close the app',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.all(8),
+        borderRadius: 8,
+        icon: const Icon(Icons.info_outline, color: Colors.white),
+      );
+      
+      return false; // Don't exit
+    }
+    
+    return true; // Exit the app
+  }
+
   @override
   Widget build(BuildContext context) {
     debugPrint("📱 MYAPP: build called");
@@ -95,17 +127,28 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           final currentThemeMode = themeController.isDarkMode.value
               ? ThemeMode.dark
               : ThemeMode.light;
-          debugPrint("📱 MYAPP: Current theme mode: ${currentThemeMode.name}");
+          debugPrint("📱 MYAPP: Current theme mode:  [1m");
           
-          return GetMaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Assignment Logging App',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: currentThemeMode,
-            // REMOVED: initialBinding and onInit are no longer needed.
-            initialRoute: "/",
-            getPages: AppRoutes.routes,
+          return WillPopScope(
+            onWillPop: _onWillPop,
+            child: GetMaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'Assignment Logging App',
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: currentThemeMode,
+              initialRoute: "/",
+              getPages: AppRoutes.routes,
+              translations: AppTranslations(),
+              locale: AppLocalizations.instance.currentLocale,
+              fallbackLocale: AppLocalizations.defaultLocale,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+            ),
           );
         });
       },

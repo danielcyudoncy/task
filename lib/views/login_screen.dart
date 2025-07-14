@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Text(
-                                  "Welcome Back",
+                                  'welcome_back'.tr,
                                   style: textTheme.headlineMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 24.sp,
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  "Fill out the information below in order to access your account.",
+                                  'fill_info_below'.tr,
                                   style: textTheme.bodyMedium?.copyWith(
                                     fontSize: 14.sp,
                                     color: colorScheme.onSurface,
@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: colorScheme.onSurface,
                                   ),
                                   decoration: InputDecoration(
-                                    labelText: "Email",
+                                    labelText: 'email'.tr,
                                     labelStyle: textTheme.bodyMedium?.copyWith(
                                       color: colorScheme.onSurfaceVariant,
                                     ),
@@ -167,10 +167,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return "Please enter your email";
+                                      return 'please_enter_email'.tr;
                                     }
                                     if (!GetUtils.isEmail(value)) {
-                                      return "Please enter a valid email";
+                                      return 'please_enter_valid_email'.tr;
                                     }
                                     return null;
                                   },
@@ -188,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         color: colorScheme.onSurface,
                                       ),
                                       decoration: InputDecoration(
-                                        labelText: "Password",
+                                        labelText: 'password'.tr,
                                         labelStyle: textTheme.bodyMedium?.copyWith(
                                           color: colorScheme.onSurfaceVariant,
                                         ),
@@ -215,10 +215,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return "Please enter your password";
+                                          return 'please_enter_password'.tr;
                                         }
                                         if (value.length < 6) {
-                                          return "Password must be at least 6 characters";
+                                          return 'password_min_length'.tr;
                                         }
                                         return null;
                                       },
@@ -232,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       color: colorScheme.onSurface,
                                     ),
                                     decoration: InputDecoration(
-                                      labelText: "Password",
+                                      labelText: 'password'.tr,
                                       labelStyle: textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.onSurfaceVariant,
                                       ),
@@ -265,10 +265,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        return "Please enter your password";
+                                        return 'please_enter_password'.tr;
                                       }
                                       if (value.length < 6) {
-                                        return "Password must be at least 6 characters";
+                                        return 'password_min_length'.tr;
                                       }
                                       return null;
                                     },
@@ -294,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         _submit();
                                       },
                                       child: Text(
-                                        "Sign In",
+                                        'sign_in'.tr,
                                         style: textTheme.bodyLarge?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             fontFamily: 'Raleway',
@@ -319,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             _submit();
                                           },
                                           child: Text(
-                                            "Sign In",
+                                            'sign_in'.tr,
                                             style: textTheme.bodyLarge?.copyWith(
                                                 fontWeight: FontWeight.bold,
                                                 fontFamily: 'Raleway',
@@ -338,7 +338,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8),
                                       child: Text(
-                                        "or continue with",
+                                        'or_continue_with'.tr,
                                         style: textTheme.bodyMedium?.copyWith(
                                           color: colorScheme.onSurface,
                                         ),
@@ -360,8 +360,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       onPressed: () {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        _safeSnackbar("Coming Soon",
-                                            "Google sign-up not yet implemented.");
+                                        _safeSnackbar('coming_soon'.tr,
+                                            'google_signup_not_implemented'.tr);
                                       },
                                     ),
                                     const SizedBox(width: 20),
@@ -372,8 +372,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
                                         _safeSnackbar(
-                                          "Coming Soon",
-                                          "Apple sign-up not yet implemented.",
+                                          'coming_soon'.tr,
+                                          'apple_signup_not_implemented'.tr,
                                         );
                                       },
                                     ),
@@ -387,7 +387,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      "Don't have an account? ",
+                                      'dont_have_account'.tr,
                                       style: textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.onSurface,
                                       ),
@@ -399,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Get.toNamed('/signup');
                                       },
                                       child: Text(
-                                        "Create Account",
+                                        'create_account'.tr,
                                         style: textTheme.bodyMedium?.copyWith(
                                           color: colorScheme.secondary,
                                           fontWeight: FontWeight.bold,
@@ -418,7 +418,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Get.toNamed('/forgot-password');
                                     },
                                   child: Text(
-                                    "Forget password?",
+                                    'forget_password'.tr,
                                     textAlign: TextAlign.center,
                                     style: textTheme.bodyMedium?.copyWith(
                                       decoration: TextDecoration.underline,

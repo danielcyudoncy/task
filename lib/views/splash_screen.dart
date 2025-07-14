@@ -39,8 +39,14 @@ class _SplashScreenState extends State<SplashScreen> {
         }
         
         final prefs = await SharedPreferences.getInstance();
+        
+        // TEMPORARY: Reset onboarding for testing (remove this after testing)
+        await prefs.remove('hasSeenOnboarding');
+        debugPrint("Splash screen: TEMPORARILY RESET onboarding state for testing");
+        
         final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
         debugPrint("Splash screen: hasSeenOnboarding = $hasSeenOnboarding");
+        debugPrint("Splash screen: All SharedPreferences keys: ${prefs.getKeys()}");
 
         if (!hasSeenOnboarding) {
           debugPrint("Splash screen: Navigating to onboarding");
@@ -113,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Your Home For News',
+                'your_home_for_news'.tr,
                 style: textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onPrimary,
                   fontFamily: 'Raleway',
