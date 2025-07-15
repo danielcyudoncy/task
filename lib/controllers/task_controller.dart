@@ -10,6 +10,7 @@ import '../controllers/auth_controller.dart';
 import '../service/firebase_service.dart';
 import '../utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
+import 'package:task/service/fcm_service.dart';
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
@@ -538,41 +539,28 @@ class TaskController extends GetxController {
         final String formattedDate =
             DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
 
-        // Send notifications without awaiting to prevent blocking
-        if (reporterId != null) {
-          debugPrint("📧 Sending notification to reporter: $reporterId");
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(reporterId)
-              .collection('notifications')
-              .add({
-                'type': 'task_assigned',
-                'taskId': taskId,
-                'title': taskTitle,
-                'message': 'Description: $taskDescription\nDue: $formattedDate',
-                'isRead': false,
-                'timestamp': FieldValue.serverTimestamp(),
-              })
-                          .then((_) => debugPrint("✅ Reporter notification sent"))
-            .catchError((e) => debugPrint("❌ Reporter notification error: $e"));
-        }
-
-        if (cameramanId != null) {
-          debugPrint("📧 Sending notification to cameraman: $cameramanId");
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(cameramanId)
-              .collection('notifications')
-              .add({
-                'type': 'task_assigned',
-                'taskId': taskId,
-                'title': taskTitle,
-                'message': 'Description: $taskDescription\nDue: $formattedDate',
-                'isRead': false,
-                'timestamp': FieldValue.serverTimestamp(),
-              })
-                          .then((_) => debugPrint("✅ Cameraman notification sent"))
-            .catchError((e) => debugPrint("❌ Cameraman notification error: $e"));
+        // Send notifications and push notifications to all assigned users
+        final List<String?> assignedUserIds = [reporterId, cameramanId];
+        for (final userId in assignedUserIds) {
+          if (userId != null) {
+            // In-app notification
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .collection('notifications')
+                .add({
+                  'type': 'task_assigned',
+                  'taskId': taskId,
+                  'title': taskTitle,
+                  'message': 'Description: $taskDescription\nDue: $formattedDate',
+                  'isRead': false,
+                  'timestamp': FieldValue.serverTimestamp(),
+                })
+                .then((_) => debugPrint("✅ Notification sent to $userId"))
+                .catchError((e) => debugPrint("❌ Notification error for $userId: $e"));
+            // Push notification
+            await sendTaskNotification(userId, taskTitle);
+          }
         }
       }
 

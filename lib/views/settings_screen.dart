@@ -98,6 +98,15 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   settingsSwitchTile(
                     context,
+                    'Enable Biometric Login',
+                    'Use fingerprint or face to login',
+                    settingsController.isBiometricEnabled.value,
+                    (value) {
+                      settingsController.toggleBiometric(value);
+                    },
+                  ),
+                  settingsSwitchTile(
+                    context,
                     'vibration'.tr,
                     'enable_disable_vibration'.tr,
                     settingsController.isVibrationEnabled.value,

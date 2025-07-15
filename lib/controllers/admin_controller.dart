@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/utils/snackbar_utils.dart';
+import 'package:task/service/fcm_service.dart';
 
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -484,6 +485,9 @@ class AdminController extends GetxController {
         'timestamp': FieldValue.serverTimestamp(),
         'read': false,
       });
+
+      // Send push notification via FCM
+      await sendTaskNotification(userId, taskTitle);
     } catch (e) {
       _safeSnackbar("Error", "Failed to assign task or notify user: $e");
     }

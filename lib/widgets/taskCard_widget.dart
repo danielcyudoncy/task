@@ -34,6 +34,14 @@ class TaskCardWidget extends StatelessWidget {
     const Color subTextColor = Colors.white70;
     final Color borderColor = colorScheme.outline.withOpacity(0.3);
 
+    // Localized fallback for status and assignment
+    final String notAssigned = 'not_assigned'.tr;
+    final String pending = 'pending'.tr;
+    final String completed = 'completed'.tr;
+    final String inProgress = 'in_progress'.tr;
+    final String review = 'review'.tr;
+    final String unknown = 'unknown'.tr;
+
     return Dismissible(
       key: ValueKey(task.taskId ?? task.hashCode),
       background: !isCompleted ? _buildCompleteBackground() : Container(),
@@ -72,7 +80,7 @@ class TaskCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 7),
               Text(
-                task.description ?? AppStrings.taskDetails,
+                task.description ?? 'task_details'.tr,
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -81,7 +89,7 @@ class TaskCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                "Due Date ${task.timestamp != null ? DateFormat('yyyy-MM-dd').format(task.timestamp!.toDate()) : 'N/A'}",
+                'due_date'.trParams({'date': task.timestamp != null ? DateFormat('yyyy-MM-dd').format(task.timestamp!.toDate()) : 'n_a'.tr}),
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,

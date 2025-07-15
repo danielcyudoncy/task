@@ -111,9 +111,9 @@ class TasksSection extends StatelessWidget {
         fontWeight: FontWeight.w500,
         fontSize: 15,
       ),
-      tabs: const [
-        Tab(text: AppStrings.notCompleted),
-        Tab(text: AppStrings.completed),
+      tabs: [
+        Tab(text: 'not_completed'.tr),
+        Tab(text: 'completed'.tr),
       ],
     );
   }
