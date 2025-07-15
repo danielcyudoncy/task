@@ -57,10 +57,10 @@ class ManageUsersScreen extends StatelessWidget {
                 return UserSkeletonList(isLargeScreen: isLargeScreen, textScale: textScale);
               }
               if (manageUsersController.usersList.isEmpty) {
-                return const EmptyStateWidget(
+                return EmptyStateWidget(
                   icon: Icons.group_outlined,
-                  title: "No users found",
-                  message: "Try a different search or check back later.",
+                  title: "no_users_found".tr,
+                  message: "try_a_different_search_or_check_back_later".tr,
                 );
               }
               return ListView.builder(

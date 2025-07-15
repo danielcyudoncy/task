@@ -1,6 +1,7 @@
 // widgets/empty_state_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final IconData icon;
@@ -8,8 +9,8 @@ class EmptyStateWidget extends StatelessWidget {
   final String message;
   const EmptyStateWidget({
     this.icon = Icons.inbox_rounded,
-    this.title = "Nothing here yet!",
-    this.message = "No data available.",
+    required this.title,
+    required this.message,
     super.key,
   });
 
