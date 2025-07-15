@@ -44,7 +44,7 @@ class _NewsScreenState extends State<NewsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Could not launch $url'),
+              content: Text('could_not_launch_url'.tr),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 3),
             ),
@@ -55,7 +55,7 @@ class _NewsScreenState extends State<NewsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error launching URL: $e'),
+            content: Text('error_launching_url'.tr),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -77,10 +77,10 @@ class _NewsScreenState extends State<NewsScreen> {
       } else if (difference.inMinutes > 0) {
         return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
       } else {
-        return 'Just now';
+        return 'recently'.tr;
       }
     } catch (e) {
-      return 'Recently';
+      return 'recently'.tr;
     }
   }
 
@@ -100,14 +100,14 @@ class _NewsScreenState extends State<NewsScreen> {
       try {
         _newsService = Get.find<NewsService>();
       } catch (e) {
-        return const Scaffold(
+        return Scaffold(
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading News Service...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text('loading_news_service'.tr),
               ],
             ),
           ),
@@ -137,7 +137,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'News',
+                      'news'.tr,
                       style: TextStyle(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
@@ -153,10 +153,10 @@ class _NewsScreenState extends State<NewsScreen> {
                           builder: (context) {
                             String searchText = '';
                             return AlertDialog(
-                              title: const Text('Search News'),
+                              title: Text('search_news'.tr),
                               content: TextField(
                                 autofocus: true,
-                                decoration: InputDecoration(hintText: 'Search news...'),
+                                decoration: InputDecoration(hintText: 'search_news_hint'.tr),
                                 onChanged: (value) {
                                   searchText = value;
                                 },
@@ -164,11 +164,11 @@ class _NewsScreenState extends State<NewsScreen> {
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('Cancel'),
+                                  child: Text('cancel'.tr),
                                 ),
                                 ElevatedButton(
                                   onPressed: () => Navigator.of(context).pop(searchText),
-                                  child: const Text('Search'),
+                                  child: Text('search'.tr),
                                 ),
                               ],
                             );
@@ -249,14 +249,14 @@ class _NewsScreenState extends State<NewsScreen> {
                                     if (mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text('Error refreshing news: $e'),
+                                          content: Text('error_launching_url'.tr),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
                                     }
                                   }
                                 },
-                                child: const Text('Refresh News'),
+                                child: Text('refresh_news'.tr),
                               ),
                             ),
                             SizedBox(height: 8.h),
@@ -305,8 +305,8 @@ class _NewsScreenState extends State<NewsScreen> {
                                       SizedBox(height: 16.h),
                                       Text(
                                         _selectedCategory == 'All' || _selectedCategory == 'All News'
-                                            ? 'No news articles found'
-                                            : 'No news articles found in $_selectedCategory category',
+                                            ? 'no_news_articles_found'.tr
+                                            : 'no_news_articles_found_in_category'.tr,
                                         style: TextStyle(
                                           fontSize: 16.sp,
                                           color: Colors.grey[600],
@@ -331,7 +331,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                             _newsService!.fetchNews();
                                           }
                                         },
-                                        child: const Text('Refresh'),
+                                        child: Text('refresh'.tr),
                                       ),
                                     ],
                                   ),
@@ -400,7 +400,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   ),
                 SizedBox(height: 12.h),
                 Text(
-                  article['title'] ?? 'No Title',
+                  article['title'] ?? 'no_title'.tr,
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
@@ -430,7 +430,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        article['source'] ?? 'Unknown Source',
+                        article['source'] ?? 'unknown_source'.tr,
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),

@@ -82,7 +82,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          'Update Account',
+                          'update_account'.tr,
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -96,7 +96,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                         SizedBox(height: 8.h),
 
                         Text(
-                          'Adjust the content below to update your profile.',
+                          'adjust_content_below'.tr,
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontFamily: 'raleway',
@@ -116,7 +116,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                           style: TextStyle(
                               color: isDark ? Colors.white : Colors.black),
                           decoration: InputDecoration(
-                            hintText: 'Full Name',
+                            hintText: 'full_name'.tr,
                             hintStyle: TextStyle(
                                 color:
                                     isDark ? Colors.white54 : Colors.black54),
@@ -129,7 +129,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                             ),
                           ),
                           validator: (v) => v == null || v.isEmpty
-                              ? 'Please enter your name'
+                              ? 'please_enter_your_name'.tr
                               : null,
                         ),
                         SizedBox(height: 16.h),
@@ -141,7 +141,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                           style: TextStyle(
                               color: isDark ? Colors.white : Colors.black),
                           decoration: InputDecoration(
-                            hintText: 'Phone Number',
+                            hintText: 'phone_number'.tr,
                             hintStyle: TextStyle(
                                 color:
                                     isDark ? Colors.white54 : Colors.black54),
@@ -154,7 +154,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                             ),
                           ),
                           validator: (v) => v == null || v.isEmpty
-                              ? 'Please enter phone number'
+                              ? 'please_enter_phone_number'.tr
                               : null,
                         ),
                         SizedBox(height: 16.h),
@@ -166,7 +166,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                           style: TextStyle(
                               color: isDark ? Colors.white : Colors.black),
                           decoration: InputDecoration(
-                            hintText: 'Email Address',
+                            hintText: 'email_address'.tr,
                             hintStyle: TextStyle(
                                 color:
                                     isDark ? Colors.white54 : Colors.black54),
@@ -179,7 +179,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                             ),
                           ),
                           validator: (v) => v == null || !GetUtils.isEmail(v)
-                              ? 'Please enter a valid email'
+                              ? 'please_enter_a_valid_email'.tr
                               : null,
                         ),
                         SizedBox(height: 16.h),
@@ -208,7 +208,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                             style: TextStyle(
                                 color: isDark ? Colors.white : Colors.black),
                             decoration: InputDecoration(
-                              hintText: 'Role',
+                              hintText: 'role'.tr,
                               hintStyle: TextStyle(
                                   color:
                                       isDark ? Colors.white54 : Colors.black54),
@@ -221,7 +221,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                               ),
                             ),
                             validator: (v) => v == null || v.isEmpty
-                                ? 'Please select a role'
+                                ? 'please_select_a_role'.tr
                                 : null,
                           ),
                         ),
@@ -250,7 +250,7 @@ class ProfileUpdateScreen extends StatelessWidget {
                                       }
                                     },
                                     child:  Text(
-                                      'Save Changes',
+                                      'save_changes'.tr,
                                       style: TextStyle(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.bold,

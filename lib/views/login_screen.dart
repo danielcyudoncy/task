@@ -6,6 +6,7 @@ import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/snackbar_utils.dart';
+import 'package:task/service/biometric_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _auth = Get.find();
+  final BiometricService _biometricService = BiometricService();
 
   // Safe snackbar method
   void _safeSnackbar(String title, String message) {
@@ -50,6 +52,21 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } else {
       debugPrint("LoginScreen: Form validation failed");
+    }
+  }
+
+  void _biometricLogin() async {
+    final canCheck = await _biometricService.canCheckBiometrics();
+    if (!canCheck) {
+      _safeSnackbar('Error', 'Biometric authentication not available on this device.');
+      return;
+    }
+    final authenticated = await _biometricService.authenticate(reason: 'Please authenticate to login');
+    if (authenticated) {
+      // You can customize this: auto-login, unlock, or pre-fill credentials
+      _submit();
+    } else {
+      _safeSnackbar('Error', 'Biometric authentication failed.');
     }
   }
 
@@ -433,6 +450,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 40),
+                        const SizedBox(height: 16),
+                        // Biometric login button
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.fingerprint),
+                          label: Text('login_with_fingerprint'.tr),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: _biometricLogin,
+                        ),
                       ],
                     ),
                   ),

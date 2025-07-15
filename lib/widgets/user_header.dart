@@ -126,7 +126,7 @@ class UserHeader extends StatelessWidget {
               children: [
                 Obx(() => Center(
                   child: Text(
-                        "Hello, ${authController.fullName.value}!",
+                        "${'hello'.tr}, ${authController.fullName.value}!",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 22.sp,

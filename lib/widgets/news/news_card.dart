@@ -1,6 +1,7 @@
 // widgets/news/news_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 class NewsCard extends StatelessWidget {
   final Map<String, dynamic> article;
@@ -44,7 +45,7 @@ class NewsCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      article['category'],
+                      article['category'] ?? 'unknown_category'.tr,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontSize: 12.sp,
@@ -54,7 +55,7 @@ class NewsCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    article['date'],
+                    article['date'] ?? 'unknown_date'.tr,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12.sp,
@@ -65,7 +66,7 @@ class NewsCard extends StatelessWidget {
               SizedBox(height: 12.h),
               // Title
               Text(
-                article['title'],
+                article['title'] ?? 'no_title'.tr,
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
@@ -109,7 +110,7 @@ class NewsCard extends StatelessWidget {
                 ),
               // Summary
               Text(
-                article['summary'],
+                article['summary'] ?? 'no_summary'.tr,
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: Colors.grey[600],

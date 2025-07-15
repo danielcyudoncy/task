@@ -1,6 +1,7 @@
 // widgets/task_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'status_chip.dart';
 
 class TaskCard extends StatelessWidget {
@@ -27,10 +28,10 @@ class TaskCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final title = data['title'] ?? 'No title';
-    final description = data['description'] ?? 'No description';
-    final status = data['status'] ?? 'No status';
-    final creatorName = data['creatorName'] ?? data['createdBy'];
+    final title = data['title'] ?? 'no_title'.tr;
+    final description = data['description'] ?? 'no_description'.tr;
+    final status = data['status'] ?? 'no_status'.tr;
+    final creatorName = data['creatorName'] ?? data['createdBy'] ?? 'unknown'.tr;
     final creatorAvatar = data['creatorAvatar'];
     
     // Debug prints for avatar troubleshooting

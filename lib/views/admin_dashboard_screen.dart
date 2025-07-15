@@ -130,10 +130,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   children: [
                     const Icon(Icons.people_outline, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
-                    const Text(
-                      'No users available.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
+                    Text('no_users_available'.tr, style: TextStyle(fontSize: 16, color: Colors.grey)),
                     const SizedBox(height: 8),
                     Text(
                       'Total users in system: ${allUsers.length}',
