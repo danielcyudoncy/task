@@ -380,7 +380,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
             height: 20,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [primaryColor, primaryColor.withOpacity(0.7)],
+                colors: [primaryColor, primaryColor.withAlpha((0.7 * 255).round())],
               ),
               shape: BoxShape.circle,
             ),
@@ -415,7 +415,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
           Container(
             padding: const EdgeInsets.all(1),
             decoration: BoxDecoration(
-              color: getPriorityColor(task).withOpacity(0.1),
+              color: getPriorityColor(task).withAlpha((0.1 * 255).round()),
               borderRadius: BorderRadius.circular(2),
             ),
             child: Icon(
@@ -444,14 +444,14 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
         gradient: isOutlined ? null : LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+          colors: [backgroundColor, backgroundColor.withAlpha((0.8 * 255).round())],
         ),
         color: isOutlined ? Colors.transparent : backgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: isOutlined ? Border.all(color: backgroundColor, width: 2) : null,
         boxShadow: isOutlined ? null : [
           BoxShadow(
-            color: backgroundColor.withOpacity(0.3),
+            color: backgroundColor.withAlpha((0.3 * 255).round()),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

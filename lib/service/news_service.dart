@@ -69,7 +69,7 @@ class NewsService extends GetxService {
   Future<List<Map<String, dynamic>>> _fetchFromRSSFeeds() async {
     try {
       // RSS feed URLs from config
-      final rssUrls = NewsConfig.rssFeeds;
+      const rssUrls = NewsConfig.rssFeeds;
       final List<Map<String, dynamic>> allRssNews = [];
 
       debugPrint('NewsService: Starting to fetch from ${rssUrls.length} RSS feeds');

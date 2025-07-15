@@ -21,7 +21,7 @@ import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/user_controller.dart';
 import 'package:task/controllers/wallpaper_controller.dart';
 import 'package:task/firebase_options.dart';
-import 'package:task/myApp.dart';
+import 'package:task/my_app.dart';
 import 'package:task/service/mock_user_deletion_service.dart';
 import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
@@ -102,7 +102,7 @@ Future<void> bootstrapApp() async {
     debugPrint('🚀 BOOTSTRAP: Putting ManageUsersController');
     Get.put(ManageUsersController(Get.find<MockUserDeletionService>()),
         permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting NotificationController');
+    debugPrint('�� BOOTSTRAP: Putting NotificationController');
     Get.put(NotificationController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
     Get.put(WallpaperController(), permanent: true);

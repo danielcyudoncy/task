@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/dashboard_utils.dart';
 import '../../controllers/admin_controller.dart';
-import '../../utils/constants/app_strings.dart';
 
 
 class TaskDetailsDialog extends StatelessWidget {

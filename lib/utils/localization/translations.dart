@@ -1,4 +1,6 @@
 // utils/localization/translations.dart
+// ignore_for_file: equal_keys_in_map
+
 import 'package:get/get.dart';
 
 class AppTranslations extends Translations {
@@ -33,7 +35,6 @@ class AppTranslations extends Translations {
       'confirm': 'Confirm',
       'delete': 'Delete',
       'edit': 'Edit',
-      'save': 'Save',
       'update': 'Update',
       'create': 'Create',
       'add': 'Add',
@@ -62,7 +63,6 @@ class AppTranslations extends Translations {
       
       // Task related
       'task': 'TASK',
-      'tasks': 'Tasks',
       'task_details': 'Task Details',
       'task_created': 'Task Created',
       'task_assigned': 'Task Assigned',
@@ -79,9 +79,11 @@ class AppTranslations extends Translations {
       'pending': 'Pending',
       'overdue': 'Overdue',
       'unknown_task': 'Unknown Task',
+      'category': 'Category: @category',
+      'due_date': 'Due Date: @date',
+      'tags': 'Tags: @tags',
       
       // User related
-      'users': 'Users',
       'total_users': 'Total Users',
       'manage_users': 'Manage Users',
       'user_details': 'User Details',
@@ -197,7 +199,6 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Assignment Editor',
       'head_of_department': 'Head of Department',
       'head_of_unit': 'Head of Unit',
-      'admin': 'Admin',
     },
     'fr_FR': {
       // Settings Screen
@@ -228,7 +229,6 @@ class AppTranslations extends Translations {
       'confirm': 'Confirmer',
       'delete': 'Supprimer',
       'edit': 'Modifier',
-      'save': 'Enregistrer',
       'update': 'Mettre à jour',
       'create': 'Créer',
       'add': 'Ajouter',
@@ -257,7 +257,6 @@ class AppTranslations extends Translations {
       
       // Task related
       'task': 'TÂCHE',
-      'tasks': 'Tâches',
       'task_details': 'Détails de la tâche',
       'task_created': 'Tâche créée',
       'task_assigned': 'Tâche assignée',
@@ -274,9 +273,11 @@ class AppTranslations extends Translations {
       'pending': 'En attente',
       'overdue': 'En retard',
       'unknown_task': 'Tâche inconnue',
+      'category': 'Catégorie: @category',
+      'due_date': 'Date d\'échéance: @date',
+      'tags': 'Tags: @tags',
       
       // User related
-      'users': 'Utilisateurs',
       'total_users': 'Total des utilisateurs',
       'manage_users': 'Gérer les utilisateurs',
       'user_details': 'Détails de l\'utilisateur',
@@ -392,7 +393,6 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Éditeur d\'assignation',
       'head_of_department': 'Chef de département',
       'head_of_unit': 'Chef d\'unité',
-      'admin': 'Administrateur',
     },
     'ha_NG': {
       // Settings Screen
@@ -452,7 +452,6 @@ class AppTranslations extends Translations {
       
       // Task related
       'task': 'AIKI',
-      'tasks': 'Ayyuka',
       'task_details': 'Cikakkun bayanai na aiki',
       'task_created': 'An ƙirƙiri aiki',
       'task_assigned': 'An sanya aiki',
@@ -469,9 +468,11 @@ class AppTranslations extends Translations {
       'pending': 'Mai jiran',
       'overdue': 'Mai lalacewa',
       'unknown_task': 'Aiki da ba a sani ba',
+      'category': 'Kategori: @category',
+      'due_date': 'Tarihi: @date',
+      'tags': 'Teg: @tags',
       
       // User related
-      'users': 'Masu amfani',
       'total_users': 'Jimlar masu amfani',
       'manage_users': 'Sarrafa masu amfani',
       'user_details': 'Cikakkun bayanai na mai amfani',
@@ -547,7 +548,6 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Editan aiki',
       'head_of_department': 'Shugaban sashe',
       'head_of_unit': 'Shugaban rukuni',
-      'admin': 'Admin',
     },
     'yo_NG': {
       // Settings Screen
@@ -607,7 +607,6 @@ class AppTranslations extends Translations {
       
       // Task related
       'task': 'IṢẸ́',
-      'tasks': 'Iṣẹ́',
       'task_details': 'Alaye iṣẹ́',
       'task_created': 'Iṣẹ́ ti dá',
       'task_assigned': 'Iṣẹ́ ti fun',
@@ -624,9 +623,11 @@ class AppTranslations extends Translations {
       'pending': 'Ti duro',
       'overdue': 'Ti kọja',
       'unknown_task': 'Iṣẹ́ aimọ',
+      'category': 'Kategori: @category',
+      'due_date': 'Tarihi: @date',
+      'tags': 'Teg: @tags',
       
       // User related
-      'users': 'Awọn olumulo',
       'total_users': 'Lapapọ awọn olumulo',
       'manage_users': 'Ṣàkóso awọn olumulo',
       'user_details': 'Alaye olumulo',
@@ -702,7 +703,6 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Olùtúnṣe iṣẹ́',
       'head_of_department': 'Olùṣàkóso ẹ̀ka',
       'head_of_unit': 'Olùṣàkóso ìdílé',
-      'admin': 'Olùṣàkóso',
     },
     'ig_NG': {
       // Settings Screen
@@ -733,6 +733,8 @@ class AppTranslations extends Translations {
       'confirm': 'Kwenye',
       'delete': 'Hichapụ',
       'edit': 'Dezie',
+      // ignore: duplicate_ignore
+      // ignore: equal_keys_in_map
       'save': 'Chekwa',
       'update': 'Melite',
       'create': 'Kee',
@@ -762,7 +764,6 @@ class AppTranslations extends Translations {
       
       // Task related
       'task': 'ỌRỤ',
-      'tasks': 'Ọrụ',
       'task_details': 'Nkọwa ọrụ',
       'task_created': 'E kere ọrụ',
       'task_assigned': 'E kenyere ọrụ',
@@ -779,9 +780,11 @@ class AppTranslations extends Translations {
       'pending': 'Na-echere',
       'overdue': 'Gafere oge',
       'unknown_task': 'Ọrụ amaghị',
+      'category': 'Kategori: @category',
+      'due_date': 'Tarihi: @date',
+      'tags': 'Teg: @tags',
       
       // User related
-      'users': 'Ndị ọrụ',
       'total_users': 'Ngụkọta ndị ọrụ',
       'manage_users': 'Jikwaa ndị ọrụ',
       'user_details': 'Nkọwa onye ọrụ',
@@ -800,7 +803,7 @@ class AppTranslations extends Translations {
       'password': 'Okwuntughe',
       'confirm_password': 'Kwenye okwuntughe',
       'forgot_password': 'Echefuru okwuntughe',
-      'reset_password': 'Tọgharịa okwuntughe',
+      'reset_password': 'Tun ọrọ igbaniwọle',
       'full_name': 'Aha zuru ezu',
       'phone_number': 'Nọmba ekwentị',
       'role': 'Ọrụ',
@@ -835,12 +838,12 @@ class AppTranslations extends Translations {
       'today': 'Taa',
       'yesterday': 'Ụnyaahụ',
       'this_week': 'Izu a',
-      'this_month': 'Ọnwa a',
+      'this_month': 'Oṣù yii',
       'ago': 'garị',
       'just_now': 'Ugbu a',
       'minutes_ago': 'nkeji',
       'hours_ago': 'awa',
-      'days_ago': 'ụbọchị',
+      'days_ago': 'ọjọ́',
       
       // Status
       'status': 'Ọnọdụ',
@@ -857,7 +860,6 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Onye nchịkọta ọrụ',
       'head_of_department': 'Onye isi ngalaba',
       'head_of_unit': 'Onye isi nkeji',
-      'admin': 'Onye nchịkwa',
     },
   };
 } 

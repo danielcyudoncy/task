@@ -44,21 +44,18 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _initializeData() {
-    debugPrint("HomeScreen: Initializing data");
     // Use a small delay to ensure the screen is fully built before fetching data
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
-        debugPrint("HomeScreen: Fetching data");
         try {
           taskController.fetchTasks();
           taskController.fetchTaskCounts();
           notificationController.fetchNotifications();
-          debugPrint("HomeScreen: Data fetching initiated");
         } catch (e) {
-          debugPrint("HomeScreen: Error initializing data: $e");
+          // debugPrint("HomeScreen: Error initializing data: $e");
         }
       } else {
-        debugPrint("HomeScreen: Widget not mounted, skipping data fetch");
+        // debugPrint("HomeScreen: Widget not mounted, skipping data fetch");
       }
     });
   }
@@ -71,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("HomeScreen: Building widget");
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Calculate the number of tasks assigned to the user (matches notification logic)
@@ -153,7 +149,6 @@ class _HomeScreenState extends State<HomeScreen>
                                     }
                                     final profilePic = authController.profilePic.value;
                                     final fullName = authController.fullName.value;
-                                    debugPrint('HomeScreen: Using profilePic for user: \\${authController.currentUser?.uid} pic: \\$profilePic');
                                     return Container(
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
@@ -294,12 +289,10 @@ class _HomeScreenState extends State<HomeScreen>
                                 return StreamBuilder<int>(
                                   stream: taskController.assignedTasksCountStream(userId),
                                   builder: (context, assignedSnapshot) {
-                                    debugPrint('Assigned tasks stream (all statuses): \\${assignedSnapshot.data}');
                                     final assignedTasksToday = assignedSnapshot.data ?? 0;
                                     return StreamBuilder<int>(
                                       stream: taskController.createdTasksCountStream(userId),
                                       builder: (context, createdSnapshot) {
-                                        debugPrint('Created tasks stream: \\${createdSnapshot.data}');
                                         final tasksCreatedCount = createdSnapshot.data ?? 0;
                                         return UserDashboardCardsWidget(
                                           assignedTasksToday: assignedTasksToday,
@@ -313,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen>
                                             Get.toNamed('/all-users-chat');
                                           },
                                           onTasksCreatedTap: () {
-                                            // TODO: Implement navigation or action for Task Created
+                                            _tabController.animateTo(0); // Switch to the Created Tasks tab
                                           },
                                           onNewsFeedTap: () {
                                             Get.toNamed('/news');

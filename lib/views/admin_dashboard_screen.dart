@@ -1,6 +1,5 @@
 // views/admin_dashboard_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -130,7 +129,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   children: [
                     const Icon(Icons.people_outline, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
-                    Text('no_users_available'.tr, style: TextStyle(fontSize: 16, color: Colors.grey)),
+                    Text('no_users_available'.tr, style: const TextStyle(fontSize: 16, color: Colors.grey)),
                     const SizedBox(height: 8),
                     Text(
                       'Total users in system: ${allUsers.length}',
@@ -297,7 +296,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   userEmail,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                    color: Theme.of(context).colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
                                   ),
                                 ),
                               ],
@@ -465,7 +464,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 userEmail,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  color: Theme.of(context).colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
                                 ),
                               ),
                             ],
@@ -514,13 +513,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
 
     try {
-      final currentUserDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .get();
-      final chatBackground =
-          currentUserDoc.data()?['chatBackground'] as String?;
-
       Get.back();
       Get.toNamed('/all-users-chat');
     } catch (e) {

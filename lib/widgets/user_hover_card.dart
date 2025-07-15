@@ -37,8 +37,8 @@ class UserHoverCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               if (isHovered)
-                const BoxShadow(
-                  color: Colors.grey,
+                BoxShadow(
+                  color: Colors.grey.withAlpha((1.0 * 255).round()),
                   spreadRadius: 2,
                   blurRadius: 6,
                   offset: Offset(0, 3),

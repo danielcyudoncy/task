@@ -45,7 +45,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/login",
-      page: () => LoginScreen(),
+      page: () => const LoginScreen(),
       binding: GlobalBindings(),
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 200),

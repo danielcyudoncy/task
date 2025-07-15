@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/auth_controller.dart';
+import 'package:intl/intl.dart';
 
 class TaskListScreen extends StatelessWidget {
   final TaskController taskController = Get.put(TaskController());
@@ -71,6 +72,9 @@ class TaskListScreen extends StatelessWidget {
                     Text('${'assigned_reporter'.tr}: ${task.assignedReporter ?? 'not_assigned'.tr}'),
                     Text('${'assigned_cameraman'.tr}: ${task.assignedCameraman ?? 'not_assigned'.tr}'),
                     Text('${'status'.tr}: ${task.status}'),
+                    Text('${'due_date'.tr}: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
+                    Text('${'category'.tr}: ${task.category ?? 'N/A'}'),
+                    Text('${'tags'.tr}: ${task.tags != null && task.tags!.isNotEmpty ? task.tags!.join(', ') : 'N/A'}'),
                   ],
                 ),
                 trailing: Row(

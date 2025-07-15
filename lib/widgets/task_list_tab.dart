@@ -1,6 +1,7 @@
 // widgets/task_list_tab.dart
 import 'package:flutter/material.dart';
-import 'package:task/widgets/taskCard_widget.dart';
+
+import 'package:task/widgets/task_card_widget.dart';
 
 class TaskListTab extends StatelessWidget {
   final bool isCompleted;
