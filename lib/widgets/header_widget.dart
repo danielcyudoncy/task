@@ -136,7 +136,7 @@ class HeaderWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Hello, ${authController.fullName.value}!",
+                "${'hello'.tr}, ${authController.fullName.value}!",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20.sp,

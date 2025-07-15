@@ -1,11 +1,12 @@
 // widgets/dashboard_utils.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
 
 // Helpers for formatting and UI logic
 
 String formatDueDate(dynamic dueDate) {
-  if (dueDate == null) return "Not set";
+  if (dueDate == null) return "not_set".tr;
   if (dueDate is Timestamp) {
     final dt = dueDate.toDate();
     return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
@@ -21,7 +22,7 @@ String formatDueDate(dynamic dueDate) {
       return dueDate;
     }
   }
-  return "Not set";
+  return "not_set".tr;
 }
 
 String getCreatorInitials(Map<String, dynamic> task) {

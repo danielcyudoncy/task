@@ -1,6 +1,7 @@
 // widgets/task_detail_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'status_chip.dart';
 
 class TaskDetailSheet extends StatelessWidget {
@@ -145,7 +146,7 @@ class TaskDetailSheet extends StatelessWidget {
                   Text(
                     formattedTimestamp.isNotEmpty
                         ? formattedTimestamp
-                        : 'No date',
+                        : 'no_date'.tr,
                     style: textTheme.bodySmall?.copyWith(
                       fontSize: 13.sp * textScale, 
                       color: subText

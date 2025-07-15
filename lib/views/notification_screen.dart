@@ -25,7 +25,7 @@ class NotificationScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Notifications",
+        title: Text("notifications".tr,
             style: TextStyle(fontFamily: 'raleway')),
         backgroundColor: theme.appBarTheme.backgroundColor,
         foregroundColor: theme.appBarTheme.iconTheme?.color,
@@ -40,7 +40,7 @@ class NotificationScreen extends StatelessWidget {
             return notificationController.unreadCount.value > 0
                 ? IconButton(
                     icon: const Icon(Icons.mark_email_read),
-                    tooltip: "Mark all as read",
+                    tooltip: "mark_all_as_read".tr,
                     onPressed: notificationController.markAllAsRead,
                   )
                 : const SizedBox();
@@ -73,18 +73,18 @@ class NotificationScreen extends StatelessWidget {
                   Icon(Icons.notifications_off, size: 50, color: isDark ? Colors.white70 : Colors.grey.shade600),
                   SizedBox(height: 16.h),
                   Text(
-                    "No notifications yet",
+                    "no_notifications_yet".tr,
                     style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16.sp),
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    "Total: ${allNotifications.length}",
+                    "total".tr,
                     style: TextStyle(color: isDark ? Colors.white70 : Colors.grey.shade600, fontSize: 12.sp),
                   ),
                   if (allNotifications.isNotEmpty) ...[
                     SizedBox(height: 8.h),
                     Text(
-                      "First notification type: ${allNotifications.first['type']}",
+                      "first_notification_type".tr,
                       style: TextStyle(color: subtitleColor, fontSize: 12.sp),
                     ),
                   ],
@@ -100,7 +100,7 @@ class NotificationScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Recent Notifications",
+                        "recent_notifications".tr,
                         style: TextStyle(
                           color: isDark ? Colors.white : Colors.black87,
                           fontSize: 18.sp,
@@ -110,7 +110,7 @@ class NotificationScreen extends StatelessWidget {
                       Obx(() {
                         if (!Get.isRegistered<NotificationController>()) {
                           return Text(
-                            "0 Unread",
+                            "0 unread".tr,
                             style: TextStyle(
                               color: theme.colorScheme.secondary,
                               fontWeight: FontWeight.bold,
@@ -118,7 +118,7 @@ class NotificationScreen extends StatelessWidget {
                           );
                         }
                         return Text(
-                          "${notificationController.unreadCount.value} Unread",
+                          "${notificationController.unreadCount.value} unread".tr,
                           style: TextStyle(
                             color: isDark ? Colors.blue.shade300 : Colors.blue.shade600,
                             fontWeight: FontWeight.bold,
@@ -212,7 +212,7 @@ class NotificationScreen extends StatelessWidget {
                                                 notificationController.deleteNotification(n['id']);
                                               }
                                             },
-                                            tooltip: "Delete notification",
+                                            tooltip: "delete_notification".tr,
                                             padding: EdgeInsets.zero,
                                             constraints: BoxConstraints(
                                               minWidth: 24.w,
@@ -313,7 +313,7 @@ class NotificationScreen extends StatelessWidget {
             ),
             SizedBox(width: 8.w),
             Text(
-              "Delete Notification",
+              "delete_notification".tr,
               style: TextStyle(
                 color: isDark ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.w600,
@@ -332,7 +332,7 @@ class NotificationScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              "Cancel",
+              "cancel".tr,
               style: TextStyle(
                 color: isDark ? Colors.white70 : Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
@@ -351,7 +351,7 @@ class NotificationScreen extends StatelessWidget {
               ),
             ),
             child: Text(
-              "Delete",
+              "delete".tr,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14.sp,

@@ -7,10 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../models/task_model.dart';
+import 'package:task/controllers/theme_controller.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key, String? chatBackground});
@@ -84,9 +86,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                  : Theme.of(context).primaryColor,
+                              color: Colors.white,
                               width: 2,
                             ),
                           ),
@@ -118,25 +118,24 @@ class _AppDrawerState extends State<AppDrawer> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: 120.w), // adjust as needed
-                                child: Text(
-                                  authController.fullName.value,
-                                  style: TextStyle(
-                                      fontSize: 24.sp,
-                                      fontFamily: 'Raleway',
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  softWrap: false,
-                                ),
+                              AutoSizeText(
+                                authController.fullName.value,
+                                style: TextStyle(
+                                    fontSize: 20.sp,
+                                    fontFamily: 'Raleway',
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                                maxLines: 2,
+                                minFontSize: 12,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               SizedBox(height: 4.h),
                               Text(
                                 authController.currentUser?.email ?? '',
                                 style: TextStyle(
-                                    fontSize: 14.sp, color: Colors.white70),
+                                    fontSize: 11.sp, color: Colors.white70),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
                               ),
                             ],
                           ),
@@ -163,7 +162,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         _showCalendar ? Theme.of(context).primaryColor : null,
                   ),
                   title:
-                      Text(_showCalendar ? 'Hide Calendar' : 'Show Calendar'),
+                      Text(_showCalendar ? 'hide_calendar'.tr : 'show_calendar'.tr),
                   onTap: () {
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _showCalendar = !_showCalendar);
@@ -325,7 +324,7 @@ class _AppDrawerState extends State<AppDrawer> {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      child: ListTile(leading: Icon(icon), title: Text(label), onTap: onTap),
+      child: ListTile(leading: Icon(icon), title: Text(label.tr), onTap: onTap),
     );
   }
 
@@ -335,18 +334,18 @@ class _AppDrawerState extends State<AppDrawer> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: ExpansionTile(
         leading: const Icon(Icons.task),
-        title: const Text('My Tasks'),
+        title: Text('my_tasks'.tr),
         children: _userTasks.isEmpty
             ? [
                 Padding(
                   padding: EdgeInsets.all(16.w),
-                  child: const Text('No tasks assigned'),
+                  child: Text('no_tasks_assigned'.tr),
                 )
               ]
             : _userTasks
                 .map((t) => ListTile(
                       title: Text(t.title),
-                      subtitle: Text('Due: ${_formatDate(t.timestamp)}'),
+                      subtitle: Text('due'.trParams({'date': _formatDate(t.timestamp)})),
                     ))
                 .toList(),
       ),
@@ -354,39 +353,40 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   Widget _buildDarkModeCard(bool isDark) {
+    final ThemeController themeController = Get.find<ThemeController>();
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      child: SwitchListTile(
-        title: Text('Dark Mode',
+      child: Obx(() => SwitchListTile(
+        title: Text('dark_mode'.tr,
             style: TextStyle(
                 fontSize: 16.sp,
                 color: Theme.of(context).textTheme.bodyLarge?.color)),
-        value: isDark,
+        value: themeController.isDarkMode.value,
         onChanged: (value) {
-          Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+          themeController.toggleTheme(value);
         },
-      ),
+      )),
     );
   }
 
   String _formatDate(dynamic d) {
     if (d is Timestamp) return DateFormat('MMM dd, yyyy').format(d.toDate());
-    return 'No deadline';
+    return 'no_deadline'.tr;
   }
 
   Future<void> _confirmLogout() async {
     final confirm = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Confirm Logout'),
-        content: const Text('Are you sure?'),
+        title: Text('confirm_logout'.tr),
+        content: Text('are_you_sure'.tr),
         actions: [
           TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Cancel')),
+              child: Text('cancel'.tr)),
           ElevatedButton(
               onPressed: () => Get.back(result: true),
-              child: const Text('Logout')),
+              child: Text('logout'.tr)),
         ],
       ),
     );

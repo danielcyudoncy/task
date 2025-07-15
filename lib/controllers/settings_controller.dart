@@ -21,6 +21,7 @@ class SettingsController extends GetxController {
   final isAssignmentAlertEnabled = false.obs;
   final isLocationEnabled = false.obs;
   final isTargetedAdsEnabled = false.obs;
+  final isBiometricEnabled = false.obs;
 
   SettingsController(this.audioPlayer);
 
@@ -71,6 +72,7 @@ class SettingsController extends GetxController {
         prefs.getBool('isAssignmentAlertEnabled') ?? false;
     isLocationEnabled.value = prefs.getBool('isLocationEnabled') ?? false;
     isTargetedAdsEnabled.value = prefs.getBool('isTargetedAdsEnabled') ?? false;
+    isBiometricEnabled.value = prefs.getBool('isBiometricEnabled') ?? false;
 
     // If sync is enabled and user is logged in, fetch from Firestore
     if (isSyncEnabled.value && _auth.currentUser != null) {
@@ -96,6 +98,7 @@ class SettingsController extends GetxController {
             data['isLocationEnabled'] ?? isLocationEnabled.value;
         isTargetedAdsEnabled.value =
             data['isTargetedAdsEnabled'] ?? isTargetedAdsEnabled.value;
+        isBiometricEnabled.value = data['isBiometricEnabled'] ?? isBiometricEnabled.value;
 
         // Save pulled settings to local preferences too
         await saveSettings(localOnly: true);
@@ -116,6 +119,7 @@ class SettingsController extends GetxController {
       prefs.setBool('isAssignmentAlertEnabled', isAssignmentAlertEnabled.value),
       prefs.setBool('isLocationEnabled', isLocationEnabled.value),
       prefs.setBool('isTargetedAdsEnabled', isTargetedAdsEnabled.value),
+      prefs.setBool('isBiometricEnabled', isBiometricEnabled.value),
     ]);
 
     if (!localOnly && isSyncEnabled.value && _auth.currentUser != null) {
@@ -128,6 +132,7 @@ class SettingsController extends GetxController {
           'isAssignmentAlertEnabled': isAssignmentAlertEnabled.value,
           'isLocationEnabled': isLocationEnabled.value,
           'isTargetedAdsEnabled': isTargetedAdsEnabled.value,
+          'isBiometricEnabled': isBiometricEnabled.value,
         }, SetOptions(merge: true));
       } catch (e) {
         debugPrint('⚠️ Firestore save error: $e');
@@ -170,6 +175,12 @@ class SettingsController extends GetxController {
 
   void toggleTargetedAds(bool value) {
     isTargetedAdsEnabled.value = value;
+    triggerFeedback();
+    saveSettings();
+  }
+
+  void toggleBiometric(bool value) {
+    isBiometricEnabled.value = value;
     triggerFeedback();
     saveSettings();
   }
