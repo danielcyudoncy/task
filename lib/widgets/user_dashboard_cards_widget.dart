@@ -1,6 +1,7 @@
 // widgets/user_dashboard_cards_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 class UserDashboardCardsWidget extends StatelessWidget {
   final int assignedTasksToday;
@@ -49,7 +50,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
                   child: _DashboardGridCard(
                     icon: Icons.assignment_turned_in,
                     value: assignedTasksToday,
-                    label: 'Assigned Task',
+                    label: 'assigned_task'.tr,
                     onTap: onAssignedTasksTap,
                     color: cardColor,
                   ),
@@ -61,7 +62,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
                   child: _DashboardGridCard(
                     icon: Icons.create,
                     value: tasksCreatedCount,
-                    label: 'Task Created',
+                    label: 'task_created'.tr,
                     onTap: onTasksCreatedTap,
                     color: cardColor,
                   ),
@@ -79,7 +80,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
                   child: _DashboardGridCard(
                     icon: Icons.wifi_tethering,
                     value: onlineUsersCount,
-                    label: 'Online Now',
+                    label: 'online_users_count'.tr,
                     onTap: onOnlineUsersTap,
                     color: cardColor,
                   ),
@@ -91,7 +92,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
                   child: _DashboardGridCard(
                     icon: Icons.rss_feed,
                     value: newsFeedCount,
-                    label: 'News Feed',
+                    label: 'news_feed'.tr,
                     onTap: onNewsFeedTap,
                     color: cardColor,
                   ),
@@ -145,12 +146,18 @@ class _DashboardGridCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                label,
-                style:  TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w500,
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],

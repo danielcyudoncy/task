@@ -206,10 +206,10 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                     );
                   }
                   if (_filteredTasks.isEmpty) {
-                    return const EmptyStateWidget(
+                    return EmptyStateWidget(
                       icon: Icons.list_alt_outlined,
-                      title: "No tasks found",
-                      message: "Try adjusting your filters or search.",
+                      title: "no_tasks_found".tr,
+                      message: "try_adjusting_your_filters_or_search".tr,
                     );
                   }
                   return RefreshIndicator(

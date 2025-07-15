@@ -23,30 +23,29 @@ class TaskDetailsDialog extends StatelessWidget {
             .firstWhereOrNull((d) => d['title'] == title) ??
         <String, dynamic>{};
     return AlertDialog(
-      title: const Text(AppStrings.taskDetails),
+      title: Text('task_details'.tr),
       content: doc.isNotEmpty
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Title: $title"),
+                Text('title'.trParams({'title': title})),
                 const SizedBox(height: 6),
-                Text("Status: ${doc['status'] ?? AppStrings.unknown}"),
+                Text('status'.trParams({'status': doc['status'] ?? 'unknown'.tr})),
                 const SizedBox(height: 6),
-                Text(
-                    "Created by: ${doc['creatorName'] ?? doc['creator'] ?? 'Unknown'}"),
+                Text('created_by'.trParams({'name': doc['creatorName'] ?? doc['creator'] ?? 'unknown'.tr})),
                 const SizedBox(height: 6),
-                Text("Due Date: ${formatDueDate(doc['dueDate'])}"),
+                Text('due_date'.trParams({'date': formatDueDate(doc['dueDate'])})),
               ],
             )
-          : const Text("Task not found"),
+          : Text('task_not_found'.tr),
       actions: [
         TextButton(
           onPressed: () {
             Get.find<SettingsController>().triggerFeedback();
             Get.back();
           },
-          child: const Text(AppStrings.close),
+          child: Text('close'.tr),
         ),
       ],
     );
