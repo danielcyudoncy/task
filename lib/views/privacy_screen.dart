@@ -18,8 +18,6 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final Color baseColor = colorScheme.primary;
     const Color sectionTitleColor = Colors.white;
     const Color textColor = Colors.white70;
     const Color dividerColor = Colors.white54;

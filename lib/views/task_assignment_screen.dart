@@ -296,23 +296,14 @@ class TaskAssignmentScreen extends StatelessWidget {
                   ),
                   onPressed: () async {
                     Get.find<SettingsController>().triggerFeedback();
-                    print("🔘 ASSIGN BUTTON PRESSED!");
-                    print("Selected Task ID: $selectedTaskId");
-                    print("Selected Reporter ID: $selectedReporterId");
-                    print("Selected Reporter Name: $selectedReporterName");
-                    print("Selected Cameraman ID: $selectedCameramanId");
-                    print("Selected Cameraman Name: $selectedCameramanName");
 
                     if (selectedTaskId == null ||
                         (selectedReporterId == null &&
                             selectedCameramanId == null)) {
-                      print("❌ Validation failed - missing task or assignee");
                       Get.snackbar("Error",
                           "Please select a task and at least one assignee.");
                       return;
                     }
-
-                    print("✅ Validation passed - calling assignTaskWithNames");
 
                     try {
                       // Close the dialog BEFORE calling the assignment
@@ -326,12 +317,9 @@ class TaskAssignmentScreen extends StatelessWidget {
                         cameramanName: selectedCameramanName,
                       );
 
-                      print("🔘 Assignment method completed!");
-
                       // Show success message
                       Get.snackbar("Success", "Task assigned successfully!");
                     } catch (e) {
-                      print("❌ Assignment error: $e");
                       Get.snackbar("Error", "Failed to assign task: $e");
                     }
                   },

@@ -20,7 +20,7 @@ class NewsCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.only(bottom: 16.h),
       elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withAlpha((0.1 * 255).round()),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -233,7 +233,7 @@ class NewsCarouselCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withAlpha((0.12 * 255).round()),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -275,12 +275,12 @@ class NewsCarouselCard extends StatelessWidget {
                     Text(
                       source,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withAlpha((0.85 * 255).round()),
                         fontWeight: FontWeight.w600,
                         fontSize: 14.sp,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.4),
+                            color: Colors.black.withAlpha((0.4 * 255).round()),
                             blurRadius: 4,
                           ),
                         ],
@@ -295,7 +295,7 @@ class NewsCarouselCard extends StatelessWidget {
                         fontSize: 17.sp,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withAlpha((0.5 * 255).round()),
                             blurRadius: 6,
                           ),
                         ],
@@ -307,7 +307,7 @@ class NewsCarouselCard extends StatelessWidget {
                     Text(
                       timeAgo,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withAlpha((0.7 * 255).round()),
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w400,
                       ),

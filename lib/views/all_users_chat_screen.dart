@@ -1,7 +1,5 @@
 // views/all_users_chat_screen.dart
 
-// ignore_for_file: deprecated_member_use
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -81,6 +79,7 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
         });
       }
 
+      if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
 
       if (!mounted) return;
@@ -104,6 +103,7 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     } catch (e) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Failed to start chat: $e')));
     }
@@ -233,8 +233,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                 }
                 final users = snapshot.data!.docs.where((doc) => doc['uid'] != currentUserId).toList();
                 if (users.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text('No one is online', style: TextStyle(color: Colors.grey)),

@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
-import 'package:task/utils/constants/app_colors.dart';
 
 class SaveSuccessScreen extends StatefulWidget {
   const SaveSuccessScreen({super.key});

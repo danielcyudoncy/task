@@ -30,7 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint("LoginScreen: initState called");
     // Reset loading state to ensure we're not stuck in loading
     _auth.resetLoadingState();
   }
@@ -43,15 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submit() {
-    debugPrint("LoginScreen: _submit called");
     if (_formKey.currentState!.validate()) {
-      debugPrint("LoginScreen: Form validation passed, calling signIn");
       _auth.signIn(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-    } else {
-      debugPrint("LoginScreen: Form validation failed");
     }
   }
 
@@ -72,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("LoginScreen: build called, isLoading: ${_auth.isLoading.value}");
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;

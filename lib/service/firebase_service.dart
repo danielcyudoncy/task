@@ -134,7 +134,7 @@ void useFirebaseEmulator() {
   // Only use emulators in debug mode
   if (kDebugMode) {
     // Use localhost for web, IP address for mobile
-    final String host = kIsWeb ? 'localhost' : '192.168.1.7';
+    const String host = kIsWeb ? 'localhost' : '192.168.1.7';
     
     // Auth Emulator
     FirebaseAuth.instance.useAuthEmulator(host, 8002);

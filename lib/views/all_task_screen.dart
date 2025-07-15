@@ -142,7 +142,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                                   .map((filter) => DropdownMenuItem(
                                         value: filter,
                                         child: Text(filter,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 color: Colors.white)),
                                       ))
                                   .toList(),

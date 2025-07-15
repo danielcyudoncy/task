@@ -1,4 +1,4 @@
-// myApp.dart
+// my_app.dart
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -129,8 +129,33 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               : ThemeMode.light;
           debugPrint("📱 MYAPP: Current theme mode:  [1m");
           
-          return WillPopScope(
-            onWillPop: _onWillPop,
+          return PopScope(
+            canPop: true,
+            onPopInvoked: (didPop) async {
+              if (!didPop) {
+                final now = DateTime.now();
+                if (_lastBackPressTime == null ||
+                    now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+                  _lastBackPressTime = now;
+                  // Show snackbar asking user to press back again
+                  Get.snackbar(
+                    'Press back again to exit',
+                    'Tap the back button once more to close the app',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.black87,
+                    colorText: Colors.white,
+                    duration: const Duration(seconds: 2),
+                    margin: const EdgeInsets.all(8),
+                    borderRadius: 8,
+                    icon: const Icon(Icons.info_outline, color: Colors.white),
+                  );
+                  // Prevent pop
+                  return;
+                }
+                // Allow pop
+                Navigator.of(context).maybePop();
+              }
+            },
             child: GetMaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Assignment Logging App',

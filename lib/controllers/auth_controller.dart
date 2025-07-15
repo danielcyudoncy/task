@@ -1,6 +1,5 @@
 // controllers/auth_controller.dart
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -63,8 +62,6 @@ class AuthController extends GetxController {
     "Admin"
   ];
   bool get isLoggedIn => currentUser != null;
-  bool _isNavigating = false;
-  bool _isInBuildPhase = false;
 
   // Safe snackbar method that checks if app is ready
   void _safeSnackbar(String title, String message) {
@@ -352,7 +349,7 @@ class AuthController extends GetxController {
   }
 
   void setBuildPhase(bool inBuildPhase) {
-    _isInBuildPhase = inBuildPhase;
+    // _isInBuildPhase = inBuildPhase; // This line was removed
   }
 
   void resetLoadingState() {

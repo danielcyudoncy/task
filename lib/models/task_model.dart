@@ -12,7 +12,7 @@ class Task {
   final String status;
   final List<String> comments;
   final Timestamp timestamp;
-  final String? assignedTo; 
+  final String? assignedTo;
 
   /// Timestamp for when the task was assigned to a user (for daily tracking)
   final Timestamp? assignmentTimestamp;
@@ -22,6 +22,11 @@ class Task {
   final String? assignedReporterId;
   final String? assignedCameramanId;
   final String? creatorAvatar; // Avatar URL from task document
+
+  // --- New fields for category, tags, dueDate ---
+  final String? category;
+  final List<String>? tags;
+  final DateTime? dueDate;
 
   Task({
     required this.taskId,
@@ -39,10 +44,14 @@ class Task {
     this.assignedCameramanId,
     this.assignmentTimestamp,
     this.creatorAvatar,
+    this.category,
+    this.tags,
+    this.dueDate,
   });
 
   // Factory for Firestore maps
   factory Task.fromMap(Map<String, dynamic> map, String id) {
+    debugPrint('Task.fromMap: id=$id, category= [32m${map['category']} [0m, tags= [32m${map['tags']} [0m, dueDate= [32m${map['dueDate']} [0m');
     return Task(
       taskId: id,
       title: map['title'] ?? '',
@@ -59,6 +68,13 @@ class Task {
       assignedCameramanId: map['assignedCameraman'],
       assignmentTimestamp: map['assignmentTimestamp'] ?? map['assignedAt'],
       creatorAvatar: map['creatorAvatar'], // Get avatar directly from task document
+      category: map['category'],
+      tags: map['tags'] != null ? List<String>.from(map['tags']) : null,
+      dueDate: map['dueDate'] != null
+          ? (map['dueDate'] is Timestamp
+              ? (map['dueDate'] as Timestamp).toDate()
+              : DateTime.tryParse(map['dueDate'].toString()))
+          : null,
     );
   }
 
@@ -78,6 +94,9 @@ class Task {
     String? assignedCameramanId,
     Timestamp? assignmentTimestamp,
     String? creatorAvatar,
+    String? category,
+    List<String>? tags,
+    DateTime? dueDate,
   }) {
     return Task(
       taskId: taskId ?? this.taskId,
@@ -94,6 +113,9 @@ class Task {
       assignedCameramanId: assignedCameramanId ?? this.assignedCameramanId,
       assignmentTimestamp: assignmentTimestamp ?? this.assignmentTimestamp,
       creatorAvatar: creatorAvatar ?? this.creatorAvatar,
+      category: category ?? this.category,
+      tags: tags ?? this.tags,
+      dueDate: dueDate ?? this.dueDate,
     );
   }
 
@@ -132,6 +154,9 @@ class Task {
       'comments': comments,
       'timestamp': timestamp,
       'assignmentTimestamp': assignmentTimestamp,
+      'category': category,
+      'tags': tags,
+      'dueDate': dueDate?.toIso8601String(),
     };
   }
 }

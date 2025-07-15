@@ -78,8 +78,6 @@ class ManageUsersController extends GetxController {
                           data['avatar_url'] ?? 
                           '';
           
-          debugPrint('User ${data['fullName']}: photoUrl = "$photoUrl"');
-          
           return {
             'uid': doc.id,
             'id': doc.id,
@@ -108,10 +106,7 @@ class ManageUsersController extends GetxController {
         hasMoreUsers.value = false;
       }
       
-      debugPrint('FetchUsers: Loaded ${usersList.length} users');
-      debugPrint('FetchUsers: Users data: ${usersList.map((u) => '${u['fullName']} (${u['uid']})').toList()}');
     } catch (e) {
-      debugPrint('FetchUsers Error: $e');
       _safeSnackbar('Error', 'Failed to fetch users: $e');
     } finally {
       isLoading.value = false;
@@ -200,9 +195,6 @@ class ManageUsersController extends GetxController {
     try {
       isDeletingUser.value = true;
 
-      print('Starting deletion process for user: $userId');
-      print('User details: ${userToDelete.toString()}');
-
       // Optimistic UI update
       usersList.removeWhere((user) => user['uid'] == userId);
       filteredUsersList.removeWhere((user) => user['uid'] == userId);
@@ -211,7 +203,6 @@ class ManageUsersController extends GetxController {
       // Perform actual deletion
       await userDeletionService.deleteUserByAdmin(userId);
 
-      print('User deletion completed successfully');
       _safeSnackbar(
         'Success',
         'User ${userToDelete['fullName']} deleted successfully',
@@ -222,8 +213,6 @@ class ManageUsersController extends GetxController {
       usersList.assignAll(backupUsersList);
       filteredUsersList.assignAll(backupFilteredList);
       isHovered.assignAll(List.filled(usersList.length, false));
-
-      print('Error deleting user: $e');
 
       String errorMessage = 'Failed to delete user';
       if (e.toString().contains('Insufficient permissions')) {
@@ -294,7 +283,6 @@ class ManageUsersController extends GetxController {
           .get();
       return snapshot.count ?? usersList.length;
     } catch (e) {
-      debugPrint('GetTotalUserCount Error: $e');
       return usersList.length; // Fallback to current list length
     }
   }

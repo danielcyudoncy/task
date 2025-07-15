@@ -50,7 +50,7 @@ class StatusChip extends StatelessWidget {
         backgroundColor: chipColor,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         side: BorderSide(
-          color: textColor.withOpacity(0.3),
+          color: textColor.withAlpha((0.3 * 255).round()),
           width: 1,
         ),
       ),

@@ -43,11 +43,11 @@ class AppLocalizations {
   };
 
   static final Map<Locale, String> localeToLanguageName = {
-    Locale('en', 'US'): 'English (Default)',
-    Locale('fr', 'FR'): 'French',
-    Locale('ha', 'NG'): 'Hausa',
-    Locale('yo', 'NG'): 'Yoruba',
-    Locale('ig', 'NG'): 'Igbo',
+    const Locale('en', 'US'): 'English (Default)',
+    const Locale('fr', 'FR'): 'French',
+    const Locale('ha', 'NG'): 'Hausa',
+    const Locale('yo', 'NG'): 'Yoruba',
+    const Locale('ig', 'NG'): 'Igbo',
   };
 
   // Check if a locale is fully supported by Flutter

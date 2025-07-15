@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/onboarding_controller.dart';
-import '../utils/constants/app_colors.dart';
 
 class OnboardingScreen extends StatelessWidget {
   OnboardingScreen({super.key});
@@ -73,10 +72,10 @@ class OnboardingScreen extends StatelessWidget {
             width: 120.w,
             height: 120.h,
             decoration: BoxDecoration(
-              color: page.color.withOpacity(0.1),
+              color: page.color.withAlpha((0.1 * 255).round()),
               shape: BoxShape.circle,
               border: Border.all(
-                color: page.color.withOpacity(0.3),
+                color: page.color.withAlpha((0.3 * 255).round()),
                 width: 2,
               ),
             ),
