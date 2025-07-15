@@ -414,7 +414,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   _stripHtmlTags(article['summary'] ?? ''),
                   style: TextStyle(
                     fontSize: 14.sp,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.8 * 255).round()),
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,

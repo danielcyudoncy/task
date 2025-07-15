@@ -5,6 +5,6 @@ class MockUserDeletionService implements UserDeletionService {
   @override
   Future<void> deleteUserByAdmin(String uid) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    print('Mock: User $uid deleted.');
+    // print('Mock: User $uid deleted.');
   }
 }

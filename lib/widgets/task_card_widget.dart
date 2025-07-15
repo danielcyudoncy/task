@@ -1,11 +1,11 @@
-// widgets/taskCard_widget.dart
+// widgets/task_card_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
 import './task_action_utility.dart';
-import '../../utils/constants/app_strings.dart';
+import 'package:task/models/task_model.dart';
 
 
 class TaskCardWidget extends StatelessWidget {
@@ -24,7 +24,6 @@ class TaskCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
     
     // Use the same color scheme as admin dashboard
     final Color cardColor = isDark 
@@ -32,15 +31,7 @@ class TaskCardWidget extends StatelessWidget {
         : Theme.of(context).primaryColor;
     const Color textColor = Colors.white;
     const Color subTextColor = Colors.white70;
-    final Color borderColor = colorScheme.outline.withOpacity(0.3);
-
-    // Localized fallback for status and assignment
-    final String notAssigned = 'not_assigned'.tr;
-    final String pending = 'pending'.tr;
-    final String completed = 'completed'.tr;
-    final String inProgress = 'in_progress'.tr;
-    final String review = 'review'.tr;
-    final String unknown = 'unknown'.tr;
+    final Color borderColor = colorScheme.outline.withAlpha((0.3 * 255).toInt());
 
     return Dismissible(
       key: ValueKey(task.taskId ?? task.hashCode),
@@ -60,7 +51,7 @@ class TaskCardWidget extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black38 : const Color(0x22000000),
+                color: isDark ? Colors.black.withAlpha((0.38 * 255).round()) : const Color(0x22000000),
                 blurRadius: 8,
                 offset: const Offset(0, 5),
               ),
@@ -71,7 +62,7 @@ class TaskCardWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                task.title ?? "", 
+                task.title ?? task['title'] ?? "", 
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: textColor,
@@ -80,7 +71,7 @@ class TaskCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 7),
               Text(
-                task.description ?? 'task_details'.tr,
+                task.description ?? task['description'] ?? 'task_details'.tr,
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -88,13 +79,72 @@ class TaskCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(
-                'due_date'.trParams({'date': task.timestamp != null ? DateFormat('yyyy-MM-dd').format(task.timestamp!.toDate()) : 'n_a'.tr}),
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
+              // Due Date
+              Builder(
+                builder: (context) {
+                  DateTime? dueDate;
+                  if (task is Map && task['dueDate'] != null) {
+                    final val = task['dueDate'];
+                    if (val is DateTime) {
+                      dueDate = val;
+                    } else if (val is String) {
+                      dueDate = DateTime.tryParse(val);
+                    }
+                  } else if (task is Task && task.dueDate != null) {
+                    dueDate = task.dueDate;
+                  }
+                  final dueDateStr = dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(dueDate) : 'N/A';
+                  debugPrint('TaskCardWidget: dueDate = $dueDateStr');
+                  return Text(
+                    'due_date'.trParams({'date': dueDateStr}),
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 6),
+              // Category
+              Builder(
+                builder: (context) {
+                  final category = task is Map ? (task['category'] ?? 'N/A') : (task.category ?? 'N/A');
+                  debugPrint('TaskCardWidget: category = $category');
+                  return Text(
+                    'category'.trParams({'category': category}),
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 6),
+              // Tags
+              Builder(
+                builder: (context) {
+                  List<String>? tags;
+                  if (task is Map && task['tags'] != null) {
+                    final val = task['tags'];
+                    if (val is List) {
+                      tags = val.cast<String>();
+                    }
+                  } else if (task is Task && task.tags != null) {
+                    tags = task.tags;
+                  }
+                  final tagsStr = tags != null && tags.isNotEmpty ? tags.join(', ') : 'N/A';
+                  debugPrint('TaskCardWidget: tags = $tagsStr');
+                  return Text(
+                    'tags'.trParams({'tags': tagsStr}),
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 8),
               Row(

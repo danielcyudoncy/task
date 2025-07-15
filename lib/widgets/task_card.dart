@@ -34,21 +34,6 @@ class TaskCard extends StatelessWidget {
     final creatorName = data['creatorName'] ?? data['createdBy'] ?? 'unknown'.tr;
     final creatorAvatar = data['creatorAvatar'];
     
-    // Debug prints for avatar troubleshooting
-    debugPrint("TaskCard: creatorName = $creatorName");
-    debugPrint("TaskCard: creatorAvatar = $creatorAvatar");
-    debugPrint("TaskCard: creatorAvatar type = ${creatorAvatar.runtimeType}");
-    if (creatorAvatar != null) {
-      debugPrint("TaskCard: creatorAvatar starts with http = ${creatorAvatar.toString().startsWith('http')}");
-    }
-    
-    // Check CircleAvatar conditions
-    final hasValidAvatar = creatorAvatar != null && creatorAvatar.isNotEmpty && 
-        (creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://'));
-    debugPrint("TaskCard: hasValidAvatar = $hasValidAvatar");
-    debugPrint("TaskCard: Will show backgroundImage = $hasValidAvatar");
-    debugPrint("TaskCard: Will show child text = ${!hasValidAvatar}");
-
     // Robust timestamp extraction & formatting
     final dynamic timestampRaw = data['timestamp'];
     String formattedTimestamp = '';
@@ -74,7 +59,7 @@ class TaskCard extends StatelessWidget {
     final subText = colorScheme.onSurfaceVariant;
     final accent = colorScheme.primary;
     final avatarBg = isDark ? Colors.grey[700]! : Colors.grey[200]!;
-    final borderColor = colorScheme.outline.withOpacity(0.3);
+    final borderColor = colorScheme.outline.withAlpha((0.3 * 255).round());
 
     return Padding(
       padding: EdgeInsets.symmetric(

@@ -19,16 +19,13 @@ class StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("StatsSection: Building widget");
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
           Expanded(
             child: Obx(() {
-              debugPrint("StatsSection: Building Obx widget");
               if (!Get.isRegistered<TaskController>()) {
-                debugPrint("StatsSection: TaskController not registered");
                 return _statCard(
                   icon: Icons.create,
                   label: AppStrings.taskCreated,
@@ -39,7 +36,6 @@ class StatsSection extends StatelessWidget {
               
               try {
                 final totalTasks = taskController.totalTaskCreated.value;
-                debugPrint("StatsSection: Total tasks: $totalTasks");
                 return _statCard(
                   icon: Icons.create,
                   label: AppStrings.taskCreated,
@@ -47,7 +43,6 @@ class StatsSection extends StatelessWidget {
                   color: isDark ? Colors.white : AppColors.secondaryColor,
                 );
               } catch (e) {
-                debugPrint("StatsSection: Error getting total tasks: $e");
                 return _statCard(
                   icon: Icons.create,
                   label: AppStrings.taskCreated,

@@ -40,17 +40,14 @@ class TaskController extends GetxController {
     
     // If it's already a valid network URL, return it
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      debugPrint("TaskController: Valid avatar URL found: $url");
       return url;
     }
     
     // If it's a local file path, return empty string
     if (url.startsWith('file://') || url.startsWith('/')) {
-      debugPrint("TaskController: Local file path filtered out: $url");
       return '';
     }
     
-    debugPrint("TaskController: Invalid avatar URL filtered out: $url");
     return '';
   }
 
@@ -100,7 +97,6 @@ class TaskController extends GetxController {
   // Load cache from local storage
   Future<void> loadCache() async {
     try {
-      debugPrint("TaskController: loadCache called");
       final prefs = await SharedPreferences.getInstance();
       final userNameCacheString = prefs.getString("userNameCache");
       final userAvatarCacheString = prefs.getString("userAvatarCache");
@@ -110,64 +106,52 @@ class TaskController extends GetxController {
         final Map<String, dynamic> decoded = jsonDecode(userNameCacheString);
         userNameCache.clear();
         userNameCache.addAll(Map<String, String>.from(decoded));
-        debugPrint("TaskController: Loaded ${userNameCache.length} user names from cache");
       }
       
       if (userAvatarCacheString != null) {
         final Map<String, dynamic> decoded = jsonDecode(userAvatarCacheString);
         userAvatarCache.clear();
         userAvatarCache.addAll(Map<String, String>.from(decoded));
-        debugPrint("TaskController: Loaded ${userAvatarCache.length} user avatars from cache");
-        debugPrint("TaskController: Avatar cache keys: ${userAvatarCache.keys.toList()}");
       }
       
       if (taskTitleCacheString != null) {
         final Map<String, dynamic> decoded = jsonDecode(taskTitleCacheString);
         taskTitleCache.clear();
         taskTitleCache.addAll(Map<String, String>.from(decoded));
-        debugPrint("TaskController: Loaded ${taskTitleCache.length} task titles from cache");
       }
     } catch (e) {
-      debugPrint("TaskController: Error loading cache: $e");
+      // debugPrint("TaskController: Error loading cache: $e");
     }
   }
 
   // Pre-fetch all user names and avatars and cache them
   Future<void> preFetchUserNames() async {
     try {
-      debugPrint("TaskController: preFetchUserNames called");
       final prefs = await SharedPreferences.getInstance();
       int? lastUpdate = prefs.getInt("cacheTimestamp");
       if (lastUpdate != null &&
           DateTime.now().millisecondsSinceEpoch - lastUpdate < 86400000) {
-        debugPrint("TaskController: Using cached user data (less than 24h old)");
         return;
       }
-      debugPrint("TaskController: Fetching all users for caching");
       QuerySnapshot usersSnapshot =
           await FirebaseFirestore.instance.collection("users").get();
-      debugPrint("TaskController: Found ${usersSnapshot.docs.length} users");
       for (var doc in usersSnapshot.docs) {
         var data = doc.data() as Map<String, dynamic>;
         String uid = doc.id;
         String fullName = data["fullName"] ?? "Unknown";
         String photoUrl = _validateAvatarUrl(data["photoUrl"]);
-        debugPrint("TaskController: Caching user $uid: $fullName, avatar: $photoUrl");
         userNameCache[uid] = fullName;
         userAvatarCache[uid] = photoUrl;
       }
       saveCache();
-      debugPrint("TaskController: User cache saved");
-      // ignore: empty_catches
     } catch (e) {
-      debugPrint("TaskController: Error in preFetchUserNames: $e");
+      // debugPrint("TaskController: Error in preFetchUserNames: $e");
     }
   }
 
   // --- PAGINATED, FILTERED, SEARCHABLE TASK LOADING ---
   Future<void> loadInitialTasks(
       {String? search, String? filter, String? sort}) async {
-    debugPrint("TaskController: loadInitialTasks called");
     tasks.clear();
     lastDocument = null;
     hasMore = true;
@@ -177,7 +161,6 @@ class TaskController extends GetxController {
     sortBy = sort ?? sortBy;
     await loadMoreTasks(reset: true);
     calculateNewTaskCount(); // Calculate new task count after loading tasks
-    debugPrint("TaskController: loadInitialTasks completed, tasks count: ${tasks.length}");
   }
 
  Future<void> loadMoreTasks({bool reset = false}) async {
@@ -252,23 +235,10 @@ class TaskController extends GetxController {
         String taskTitle = taskData["title"];
         taskTitleCache[doc.id] = taskTitle;
 
-        // REMOVED THE ROLE-BASED FILTERING - JUST ADD ALL TASKS
-        pageTasks.add(Task(
-          taskId: doc.id,
-          title: taskTitle,
-          description: taskData["description"],
-          createdBy: createdByName,
-          assignedReporter: assignedReporterName,
-          assignedCameraman: assignedCameramanName,
-          status: taskData["status"] ?? "Pending",
-          comments: List<String>.from(taskData["comments"] ?? []),
-          timestamp: taskData["timestamp"] ?? Timestamp.now(),
-          createdById: taskData["createdBy"] ?? "",
-          assignedTo: taskData["assignedTo"], // Add this field
-          assignedReporterId: taskData["assignedReporterId"],
-          assignedCameramanId: taskData["assignedCameramanId"],
-          creatorAvatar: taskData["creatorAvatar"], // Get avatar from task document
-        ));
+        // Use Task.fromMap to ensure all fields are included
+        final task = Task.fromMap(taskData, doc.id);
+        debugPrint('TaskController: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        pageTasks.add(task);
       }
 
       tasks.addAll(pageTasks);
@@ -295,9 +265,6 @@ class TaskController extends GetxController {
     String? filter,
     String? sort,
   }) async {
-    debugPrint("TaskController: loadAllTasksForAllUsers called");
-    // Debug: Check if there are any tasks in Firestore at all
-    await _debugCheckTasksInFirestore();
     // Reset loading state to ensure we can proceed
     isLoading.value = false;
     hasMore = true;
@@ -307,37 +274,14 @@ class TaskController extends GetxController {
     searchTerm = search ?? searchTerm;
     filterStatus = filter ?? filterStatus;
     sortBy = sort ?? sortBy;
-    debugPrint("TaskController: About to call loadMoreTasksForAllUsers");
     await loadMoreTasksForAllUsers(reset: true);
-    debugPrint("TaskController: loadMoreTasksForAllUsers completed");
-    calculateNewTaskCount();
-    debugPrint("TaskController: loadAllTasksForAllUsers completed, tasks count: ${tasks.length}");
-  }
-
-  // Debug method to check if there are any tasks in Firestore
-  Future<void> _debugCheckTasksInFirestore() async {
-    try {
-      debugPrint("TaskController: _debugCheckTasksInFirestore called");
-      final snapshot = await FirebaseFirestore.instance.collection('tasks').get();
-      debugPrint("TaskController: Total tasks in Firestore: ${snapshot.docs.length}");
-      if (snapshot.docs.isNotEmpty) {
-        debugPrint("TaskController: First task ID: ${snapshot.docs.first.id}");
-        debugPrint("TaskController: First task data: ${snapshot.docs.first.data()}");
-      }
-    } catch (e) {
-      debugPrint("TaskController: Error checking tasks in Firestore: $e");
-    }
   }
 
   Future<void> loadMoreTasksForAllUsers({bool reset = false}) async {
-    debugPrint("TaskController: loadMoreTasksForAllUsers METHOD ENTRY");
-    debugPrint("TaskController: loadMoreTasksForAllUsers entry - hasMore: $hasMore, isLoading: ${isLoading.value}");
     if (!hasMore || isLoading.value) {
-      debugPrint("TaskController: loadMoreTasksForAllUsers returning early - hasMore: $hasMore, isLoading: ${isLoading.value}");
       return;
     }
     isLoading.value = true;
-    debugPrint("TaskController: loadMoreTasksForAllUsers called, reset: $reset");
     try {
       if (reset) {
         tasks.clear();
@@ -348,21 +292,15 @@ class TaskController extends GetxController {
       List<QueryDocumentSnapshot> docs = [];
 
       // Simplified query - just get all tasks
-      debugPrint("TaskController: Using simplified query");
       final snapshot = await FirebaseFirestore.instance
           .collection('tasks')
           .get();
       docs = snapshot.docs;
-      debugPrint("TaskController: Simplified query returned ${docs.length} documents");
-
-      debugPrint("TaskController: Total docs to process: ${docs.length}");
 
       List<Task> pageTasks = [];
 
       for (var doc in docs) {
-        debugPrint("TaskController: Processing doc ${doc.id}");
         var taskData = doc.data() as Map<String, dynamic>;
-        debugPrint("TaskController: Task data keys: ${taskData.keys.toList()}");
         String createdByName = await _getUserName(taskData["createdBy"]);
         String assignedReporterName = taskData["assignedReporterName"] ??
             (taskData["assignedReporterId"] != null
@@ -375,27 +313,12 @@ class TaskController extends GetxController {
         String taskTitle = taskData["title"];
         taskTitleCache[doc.id] = taskTitle;
 
-        // NO ROLE-BASED FILTERING - SHOW ALL TASKS
-        pageTasks.add(Task(
-          taskId: doc.id,
-          title: taskTitle,
-          description: taskData["description"],
-          createdBy: createdByName,
-          assignedReporter: assignedReporterName,
-          assignedCameraman: assignedCameramanName,
-          status: taskData["status"] ?? "Pending",
-          comments: List<String>.from(taskData["comments"] ?? []),
-          timestamp: taskData["timestamp"] ?? Timestamp.now(),
-          createdById: taskData["createdBy"] ?? "",
-          assignedTo: taskData["assignedTo"], // Add this field
-          assignedReporterId: taskData["assignedReporterId"],
-          assignedCameramanId: taskData["assignedCameramanId"],
-          creatorAvatar: taskData["creatorAvatar"], // Get avatar from task document
-        ));
-        debugPrint("TaskController: Added task: $taskTitle");
+        // Use Task.fromMap to ensure all fields are included
+        final task = Task.fromMap(taskData, doc.id);
+        debugPrint('TaskController: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        pageTasks.add(task);
       }
 
-      debugPrint("TaskController: pageTasks.length: ${pageTasks.length}");
       tasks.addAll(pageTasks);
 
       if (docs.isNotEmpty) {
@@ -407,12 +330,11 @@ class TaskController extends GetxController {
 
       errorMessage.value = '';
     } catch (e) {
-      debugPrint("TaskController: Error in loadMoreTasksForAllUsers: $e");
+      // debugPrint("TaskController: Error in loadMoreTasksForAllUsers: $e");
       errorMessage.value = 'Failed to load tasks: $e';
       hasMore = false;
     } finally {
       isLoading.value = false;
-      debugPrint("TaskController: loadMoreTasksForAllUsers finished, isLoading set to false");
     }
   }
 
@@ -420,7 +342,6 @@ class TaskController extends GetxController {
   void calculateNewTaskCount() {
     String? userId = authController.auth.currentUser?.uid;
     if (userId == null || userId.isEmpty) {
-      debugPrint("calculateNewTaskCount: User not authenticated");
       newTaskCount.value = 0;
       return;
     }
@@ -436,28 +357,21 @@ class TaskController extends GetxController {
     if (uid == null) return "Not Assigned";
     try {
       if (userNameCache.containsKey(uid)) {
-        debugPrint("TaskController: Using cached name for $uid: ${userNameCache[uid]}");
-        debugPrint("TaskController: Cached avatar for $uid: ${userAvatarCache[uid]}");
         return userNameCache[uid]!;
       }
-      debugPrint("TaskController: Fetching user data for $uid");
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection("users").doc(uid).get();
       if (userDoc.exists) {
         String fullName = userDoc["fullName"] ?? "Unknown";
         String photoUrl = _validateAvatarUrl(userDoc["photoUrl"]);
-        debugPrint("TaskController: Fetched fullName: $fullName");
-        debugPrint("TaskController: Fetched photoUrl: ${userDoc["photoUrl"]}");
-        debugPrint("TaskController: Validated photoUrl: $photoUrl");
         userNameCache[uid] = fullName;
         userAvatarCache[uid] = photoUrl;
         return fullName;
       } else {
-        debugPrint("TaskController: User document not found for $uid");
         return "User not found";
       }
     } catch (e) {
-      debugPrint("TaskController: Error fetching user $uid: $e");
+      // debugPrint("TaskController: Error fetching user $uid: $e");
       return "Error fetching user";
     }
   }
@@ -471,38 +385,25 @@ class TaskController extends GetxController {
     String? cameramanName,
   }) async {
     try {
-          debugPrint("=== ASSIGNMENT DEBUG ===");
-    debugPrint("Task ID: $taskId");
-    debugPrint("Reporter ID: $reporterId");
-    debugPrint("Reporter Name: $reporterName");
-
-      final updateData = <String, dynamic>{};
+          final updateData = <String, dynamic>{};
 
       if (reporterId != null && reporterName != null) {
         updateData['assignedReporterId'] = reporterId;
         updateData['assignedReporterName'] = reporterName;
-        debugPrint("✅ Setting reporter: $reporterId");
-        updateData['assignmentTimestamp'] = FieldValue.serverTimestamp();
       } else {
         updateData['assignedReporterId'] = null;
         updateData['assignedReporterName'] = null;
-        debugPrint("❌ Clearing reporter fields");
       }
 
       if (cameramanId != null && cameramanName != null) {
         updateData['assignedCameramanId'] = cameramanId;
         updateData['assignedCameramanName'] = cameramanName;
-        debugPrint("✅ Setting cameraman: $cameramanId");
-        updateData['assignmentTimestamp'] = FieldValue.serverTimestamp();
       } else {
         updateData['assignedCameramanId'] = null;
         updateData['assignedCameramanName'] = null;
-        debugPrint("❌ Clearing cameraman fields");
       }
 
       updateData['assignedAt'] = FieldValue.serverTimestamp();
-
-      debugPrint("📝 Update data: $updateData");
 
       // Update the task document
       await FirebaseFirestore.instance
@@ -510,15 +411,11 @@ class TaskController extends GetxController {
           .doc(taskId)
           .update(updateData);
 
-              debugPrint("✅ Task document updated successfully!");
-
       // Get task details for notification
       final taskDoc = await FirebaseFirestore.instance
           .collection('tasks')
           .doc(taskId)
           .get();
-
-              debugPrint("📖 Task doc retrieved: ${taskDoc.exists}");
 
       if (taskDoc.exists) {
         final String taskTitle =
@@ -567,12 +464,9 @@ class TaskController extends GetxController {
       // Use a delayed call to avoid setState after dispose
       Future.delayed(const Duration(milliseconds: 100), () {
         calculateNewTaskCount();
-        debugPrint("🔄 Task count recalculated");
       });
-
-              debugPrint("=== ASSIGNMENT COMPLETE ===");
     } catch (e) {
-              debugPrint("❌ Assignment error: $e");
+        debugPrint("❌ Assignment error: $e");
         debugPrint("Stack trace: ${StackTrace.current}");
       // Don't show snackbar here since dialog might be closed
     }
@@ -611,24 +505,10 @@ class TaskController extends GetxController {
       final querySnapshot = await _firebaseService.getAllTasks().first;
       final docs = querySnapshot.docs;
 
-          debugPrint("=== ENHANCED DEBUG ===");
-    debugPrint("Current User ID: $userId");
-    debugPrint("User Role: $userRole");
-    debugPrint("Total tasks in database: ${docs.length}");
-
       // Check ALL tasks and their assignment fields
       for (int i = 0; i < docs.length; i++) {
         final doc = docs[i];
         final data = doc.data() as Map<String, dynamic>;
-
-        debugPrint("\n--- Task ${i + 1}: ${doc.id} ---");
-        debugPrint("Title: ${data['title']}");
-        debugPrint("createdBy: ${data['createdBy']}");
-        debugPrint("assignedTo: ${data['assignedTo']}");
-        debugPrint("assignedReporterId: ${data['assignedReporterId']}");
-        debugPrint("assignedCameramanId: ${data['assignedCameramanId']}");
-        debugPrint("assignedReporterName: ${data['assignedReporterName']}");
-        debugPrint("assignedCameramanName: ${data['assignedCameramanName']}");
 
         // Check each condition
         bool createdByUser = data["createdBy"] == userId;
@@ -636,16 +516,10 @@ class TaskController extends GetxController {
         bool assignedAsReporter = data["assignedReporterId"] == userId;
         bool assignedAsCameraman = data["assignedCameramanId"] == userId;
 
-        debugPrint("Created by current user: $createdByUser");
-        debugPrint("Assigned to current user (general): $assignedToUser");
-        debugPrint("Assigned as reporter: $assignedAsReporter");
-        debugPrint("Assigned as cameraman: $assignedAsCameraman");
-
         if (createdByUser ||
             assignedToUser ||
             assignedAsReporter ||
             assignedAsCameraman) {
-          debugPrint("*** THIS TASK SHOULD BE COUNTED ***");
         }
       }
 
@@ -656,7 +530,6 @@ class TaskController extends GetxController {
       }).toList();
 
       totalTaskCreated.value = createdTasks.length;
-              debugPrint("\nTasks created by user: ${createdTasks.length}");
 
       // Count tasks assigned to user
       var assignedTasks = docs.where((doc) {
@@ -667,11 +540,7 @@ class TaskController extends GetxController {
       }).toList();
 
       taskAssigned.value = assignedTasks.length;
-      debugPrint("Tasks assigned to user: ${assignedTasks.length}");
 
-      debugPrint("=== END ENHANCED DEBUG ===\n");
-
-      calculateNewTaskCount();
     } catch (e) {
       _safeSnackbar("Error", "Failed to fetch task counts: ${e.toString()}");
       debugPrint("Error in fetchTaskCounts: $e");
@@ -764,6 +633,8 @@ class TaskController extends GetxController {
     String description, {
     String priority = 'Normal',
     DateTime? dueDate,
+    String? category,
+    List<String>? tags,
   }) async {
     debugPrint('createTask: started');
     try {
@@ -805,6 +676,8 @@ class TaskController extends GetxController {
         "dueDate": dueDate?.toIso8601String(),
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
+        "category": category,
+        "tags": tags ?? [],
       };
 
       debugPrint('createTask: taskData = $taskData');
@@ -827,7 +700,7 @@ class TaskController extends GetxController {
       return;
     } catch (e) {
       debugPrint('createTask: error: $e');
-      _safeSnackbar("Error", "Failed to create task: "+e.toString());
+      _safeSnackbar("Error", "Failed to create task: $e");
       rethrow; // Re-throw to let the UI know creation failed
     } finally {
       debugPrint('createTask: finally block - resetting loading state');
@@ -939,31 +812,10 @@ class TaskController extends GetxController {
 
       return await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
-        final createdByName = await _getUserName(data["createdBy"]);
-        final assignedReporterName = data["assignedReporterName"] ??
-            (data["assignedReporterId"] != null
-                ? await _getUserName(data["assignedReporterId"])
-                : "Not Assigned");
-        final assignedCameramanName = data["assignedCameramanName"] ??
-            (data["assignedCameramanId"] != null
-                ? await _getUserName(data["assignedCameramanId"])
-                : "Not Assigned");
-
-        return Task(
-          taskId: doc.id,
-          title: data["title"],
-          description: data["description"],
-          createdBy: createdByName,
-          assignedReporter: assignedReporterName,
-          assignedCameraman: assignedCameramanName,
-          status: data["status"] ?? "Pending",
-          comments: List<String>.from(data["comments"] ?? []),
-          timestamp: data["timestamp"] ?? Timestamp.now(),
-          createdById: data["createdBy"] ?? "",
-          assignedTo: data["assignedTo"], // Add this field
-          assignedReporterId: data["assignedReporterId"],
-          assignedCameramanId: data["assignedCameramanId"],
-        );
+        // Use Task.fromMap for consistent mapping
+        final task = Task.fromMap(data, doc.id);
+        debugPrint('getAllTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        return task;
       }));
     } catch (e) {
       errorMessage.value = 'Failed to get all tasks: $e';
@@ -972,8 +824,7 @@ class TaskController extends GetxController {
   }
 
   /// Get tasks assigned to current user
-   /// Get tasks assigned to current user
-  Future<List<Task>> getMyAssignedTasks() async {
+  Future<List<Task>> getAssignedTasks() async {
     try {
       final userId = authController.auth.currentUser?.uid ?? "";
       final snapshot = await FirebaseFirestore.instance
@@ -983,31 +834,10 @@ class TaskController extends GetxController {
 
       return await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
-        final createdByName = await _getUserName(data["createdBy"]);
-        final assignedReporterName = data["assignedReporterName"] ?? 
-            (data["assignedReporterId"] != null 
-                ? await _getUserName(data["assignedReporterId"]) 
-                : "Not Assigned");
-        final assignedCameramanName = data["assignedCameramanName"] ?? 
-            (data["assignedCameramanId"] != null 
-                ? await _getUserName(data["assignedCameramanId"]) 
-                : "Not Assigned");
-
-        return Task(
-          taskId: doc.id,
-          title: data["title"] ?? "",
-          description: data["description"] ?? "",
-          createdBy: createdByName,
-          assignedReporter: assignedReporterName,
-          assignedCameraman: assignedCameramanName,
-          status: data["status"] ?? "Pending",
-          comments: List<String>.from(data["comments"] ?? []),
-          timestamp: data["timestamp"] ?? Timestamp.now(),
-          createdById: data["createdBy"] ?? "",
-          assignedTo: data["assignedTo"], // Add this field
-          assignedReporterId: data["assignedReporterId"],
-          assignedCameramanId: data["assignedCameramanId"],
-        );
+        // Use Task.fromMap for consistent mapping
+        final task = Task.fromMap(data, doc.id);
+        debugPrint('getAssignedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        return task;
       }));
     } catch (e) {
       errorMessage.value = 'Failed to get assigned tasks: $e';
@@ -1026,31 +856,10 @@ class TaskController extends GetxController {
 
       return await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
-        final createdByName = await _getUserName(data["createdBy"]);
-        final assignedReporterName = data["assignedReporterName"] ?? 
-            (data["assignedReporterId"] != null 
-                ? await _getUserName(data["assignedReporterId"]) 
-                : "Not Assigned");
-        final assignedCameramanName = data["assignedCameramanName"] ?? 
-            (data["assignedCameramanId"] != null 
-                ? await _getUserName(data["assignedCameramanId"]) 
-                : "Not Assigned");
-
-        return Task(
-          taskId: doc.id,
-          title: data["title"] ?? "",
-          description: data["description"] ?? "",
-          createdBy: createdByName,
-          assignedReporter: assignedReporterName,
-          assignedCameraman: assignedCameramanName,
-          status: data["status"] ?? "Pending",
-          comments: List<String>.from(data["comments"] ?? []),
-          timestamp: data["timestamp"] ?? Timestamp.now(),
-          createdById: data["createdBy"] ?? "",
-          assignedTo: data["assignedTo"], // Add this field
-          assignedReporterId: data["assignedReporterId"],
-          assignedCameramanId: data["assignedCameramanId"],
-        );
+        // Use Task.fromMap for consistent mapping
+        final task = Task.fromMap(data, doc.id);
+        debugPrint('getMyCreatedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        return task;
       }));
     } catch (e) {
       errorMessage.value = 'Failed to get created tasks: $e';
@@ -1068,31 +877,10 @@ class TaskController extends GetxController {
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        final createdByName = await _getUserName(data["createdBy"]);
-        final assignedReporterName = data["assignedReporterName"] ?? 
-            (data["assignedReporterId"] != null 
-                ? await _getUserName(data["assignedReporterId"]) 
-                : "Not Assigned");
-        final assignedCameramanName = data["assignedCameramanName"] ?? 
-            (data["assignedCameramanId"] != null 
-                ? await _getUserName(data["assignedCameramanId"]) 
-                : "Not Assigned");
-
-        return Task(
-          taskId: doc.id,
-          title: data["title"] ?? "",
-          description: data["description"] ?? "",
-          createdBy: createdByName,
-          assignedReporter: assignedReporterName,
-          assignedCameraman: assignedCameramanName,
-          status: data["status"] ?? "Pending",
-          comments: List<String>.from(data["comments"] ?? []),
-          timestamp: data["timestamp"] ?? Timestamp.now(),
-          createdById: data["createdBy"] ?? "",
-          assignedTo: data["assignedTo"], // Add this field
-          assignedReporterId: data["assignedReporterId"],
-          assignedCameramanId: data["assignedCameramanId"],
-        );
+        // Use Task.fromMap for consistent mapping
+        final task = Task.fromMap(data, doc.id);
+        debugPrint('getTaskById: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        return task;
       }
       return null;
     } catch (e) {

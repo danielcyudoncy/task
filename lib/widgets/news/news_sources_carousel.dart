@@ -133,7 +133,6 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
         }
       } catch (e) {
         // ignore: avoid_print
-        print('RSS fetch error: $e');
       }
       return null;
     }

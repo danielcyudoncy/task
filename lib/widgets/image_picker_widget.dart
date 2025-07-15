@@ -7,7 +7,6 @@ import '../controllers/auth_controller.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/snackbar_utils.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:typed_data';
 
 class ImagePickerWidget extends StatelessWidget {
   final AuthController controller;
@@ -79,16 +78,13 @@ class ImagePickerWidget extends StatelessWidget {
     try {
       final XFile? pickedImage = await _showImagePickerDialog(context);
       if (pickedImage != null) {
-        debugPrint("Image selected: ${pickedImage.name}");
         
         if (kIsWeb) {
           // For web, read as bytes
           try {
             final bytes = await pickedImage.readAsBytes();
-            debugPrint("Image bytes read successfully, size: ${bytes.length}");
             await controller.uploadProfilePictureFromBytes(bytes, pickedImage.name);
           } catch (e) {
-            debugPrint("Error reading image bytes: $e");
             SnackbarUtils.showSnackbar("Error", "Failed to read image: ${e.toString()}");
           }
         } else {
@@ -101,13 +97,11 @@ class ImagePickerWidget extends StatelessWidget {
               SnackbarUtils.showSnackbar("Error", "Selected image doesn't exist");
             }
           } catch (e) {
-            debugPrint("Error with file: $e");
             SnackbarUtils.showSnackbar("Error", "Failed to process image: ${e.toString()}");
           }
         }
       }
     } catch (e) {
-      debugPrint("Image selection error: $e");
       SnackbarUtils.showSnackbar("Error", "Failed to select image: ${e.toString()}");
     }
   }
@@ -122,17 +116,14 @@ class ImagePickerWidget extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 try {
-                  debugPrint("Attempting to pick from gallery...");
                   final XFile? picked = await ImagePicker().pickImage(
                     source: ImageSource.gallery,
                     maxWidth: 800,
                     maxHeight: 800,
                     imageQuality: 85,
                   );
-                  debugPrint("Gallery pick result: ${picked?.name ?? 'null'}");
                   if (context.mounted) Navigator.of(context).pop(picked);
                 } catch (e) {
-                  debugPrint("Gallery pick error: $e");
                   if (context.mounted) Navigator.of(context).pop();
                 }
               },
@@ -141,17 +132,14 @@ class ImagePickerWidget extends StatelessWidget {
             if (!kIsWeb) TextButton(
               onPressed: () async {
                 try {
-                  debugPrint("Attempting to pick from camera...");
                   final XFile? picked = await ImagePicker().pickImage(
                     source: ImageSource.camera,
                     maxWidth: 800,
                     maxHeight: 800,
                     imageQuality: 85,
                   );
-                  debugPrint("Camera pick result: ${picked?.name ?? 'null'}");
                   if (context.mounted) Navigator.of(context).pop(picked);
                 } catch (e) {
-                  debugPrint("Camera pick error: $e");
                   if (context.mounted) Navigator.of(context).pop();
                 }
               },

@@ -36,7 +36,7 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   Future<void> _loadUserTasks() async {
-    final assigned = await taskController.getMyAssignedTasks();
+    final assigned = await taskController.getAssignedTasks();
     final created = await taskController.getMyCreatedTasks();
     final all = [...assigned, ...created];
     final unique = {for (var t in all) t.taskId: t}.values.toList();
@@ -202,7 +202,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           ),
                           selectedDecoration: BoxDecoration(
                             color:
-                                Theme.of(context).primaryColor.withOpacity(0.6),
+                                Theme.of(context).primaryColor.withAlpha((0.6 * 255).toInt()),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -239,7 +239,6 @@ class _AppDrawerState extends State<AppDrawer> {
                         await Get.offNamed('/admin-dashboard');
                       }
                     } catch (e) {
-                      debugPrint("Navigation error: $e");
                       // Fallback navigation
                       Get.offAllNamed('/login');
                     } finally {
@@ -267,7 +266,6 @@ class _AppDrawerState extends State<AppDrawer> {
                     try {
                       await Get.toNamed('/all-users-chat');
                     } catch (e) {
-                      debugPrint("Chat navigation error: $e");
                       Get.snackbar("Error", "Could not open chat");
                     } finally {
                       if (mounted) {

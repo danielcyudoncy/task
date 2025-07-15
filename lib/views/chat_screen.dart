@@ -404,7 +404,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             color: (isDarkMode
                                     ? colorScheme.onSurface
                                     : colorScheme.onPrimary)
-                                .withOpacity(0.7),
+                                .withAlpha((0.7 * 255).round()),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -601,16 +601,16 @@ class _MessageBubble extends StatelessWidget {
               ? colorScheme.secondary
               : (isDark ? colorScheme.surfaceVariant : Colors.white),
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(18),
-            topRight: Radius.circular(18),
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
             bottomLeft: Radius.circular(isMe ? 18 : 4),
             bottomRight: Radius.circular(isMe ? 4 : 18),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withAlpha((0.04 * 255).round()),
               blurRadius: 4,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -632,7 +632,7 @@ class _MessageBubble extends StatelessWidget {
                 child: Text(
                   DateFormat('h:mm a').format(time),
                   style: TextStyle(
-                    color: isMe ? Colors.white70 : Colors.grey,
+                    color: isMe ? Colors.white.withAlpha((0.7 * 255).round()) : Colors.grey,
                     fontSize: 11.sp,
                   ),
                 ),
@@ -650,7 +650,7 @@ class _DateDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (timestamp == null) return SizedBox.shrink();
+    if (timestamp == null) return const SizedBox.shrink();
     final date = timestamp!.toDate();
     final now = DateTime.now();
     String label;
@@ -741,7 +741,7 @@ class _ReplyPreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
+          color: colorScheme.surfaceContainerHighest.withAlpha((0.2 * 255).round())),
       child: IntrinsicHeight(
         child: Row(
           children: [
@@ -760,13 +760,13 @@ class _ReplyPreview extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          color: colorScheme.onSurface.withOpacity(0.8))),
+                          color: colorScheme.onSurface.withAlpha((0.8 * 255).round()))),
                 ],
               ),
             ),
             IconButton(
                 icon: Icon(Icons.close,
-                    color: colorScheme.onSurface.withOpacity(0.6)),
+                    color: colorScheme.onSurface.withAlpha((0.6 * 255).round())),
                 onPressed: onCancel),
           ],
         ),
@@ -785,7 +785,7 @@ class _EditPreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withOpacity(0.2)),
+          color: colorScheme.surfaceContainerHighest.withAlpha((0.2 * 255).round())),
       child: Row(
         children: [
           Icon(Icons.edit, color: colorScheme.secondary),
@@ -797,7 +797,7 @@ class _EditPreview extends StatelessWidget {
                       fontWeight: FontWeight.bold))),
           IconButton(
               icon: Icon(Icons.close,
-                  color: colorScheme.onSurface.withOpacity(0.6)),
+                  color: colorScheme.onSurface.withAlpha((0.6 * 255).round())),
               onPressed: onCancel),
         ],
       ),
@@ -807,7 +807,7 @@ class _EditPreview extends StatelessWidget {
 
 class UserDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> user;
-  const UserDetailsSheet({Key? key, required this.user}) : super(key: key);
+  const UserDetailsSheet({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {

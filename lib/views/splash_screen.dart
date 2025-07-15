@@ -19,14 +19,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint("🎨 SPLASH: initState called");
     Timer(const Duration(seconds: 3), () async {
       try {
-        debugPrint("Splash screen: Starting navigation logic");
         
         // Wait for bootstrap to complete
         while (!isBootstrapComplete) {
-          debugPrint("Splash screen: Waiting for bootstrap to complete...");
+          
           await Future.delayed(const Duration(milliseconds: 100));
         }
         
@@ -42,45 +40,32 @@ class _SplashScreenState extends State<SplashScreen> {
         
         // TEMPORARY: Reset onboarding for testing (remove this after testing)
         await prefs.remove('hasSeenOnboarding');
-        debugPrint("Splash screen: TEMPORARILY RESET onboarding state for testing");
         
         final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-        debugPrint("Splash screen: hasSeenOnboarding = $hasSeenOnboarding");
-        debugPrint("Splash screen: All SharedPreferences keys: ${prefs.getKeys()}");
-
+        
         if (!hasSeenOnboarding) {
-          debugPrint("Splash screen: Navigating to onboarding");
           Get.offAllNamed('/onboarding');
         } else {
           // Check if user is already logged in
           if (!Get.isRegistered<AuthController>()) {
-            debugPrint("Splash screen: AuthController not registered, going to login");
             Get.offAllNamed('/login');
             return;
           }
           
           final authController = Get.find<AuthController>();
-          debugPrint("Splash screen: AuthController found, checking login status");
           
           // Wait a bit for Firebase auth to initialize
           await Future.delayed(const Duration(milliseconds: 500));
           
-          debugPrint("Splash screen: currentUser = ${authController.currentUser?.uid}");
-          debugPrint("Splash screen: isLoggedIn = ${authController.isLoggedIn}");
-          debugPrint("Splash screen: Firebase auth currentUser = ${authController.auth.currentUser?.uid}");
-          
           if (authController.isLoggedIn) {
             // User is logged in, navigate based on role
-            debugPrint("Splash screen: User is already logged in, navigating based on role");
             authController.navigateBasedOnRole();
           } else {
             // User is not logged in, go to login screen
-            debugPrint("Splash screen: User is not logged in, going to login screen");
             Get.offAllNamed('/login');
           }
         }
       } catch (e) {
-        debugPrint("Splash screen navigation error: $e");
         // Fallback to login screen
         Get.offAllNamed('/login');
       }
@@ -89,9 +74,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("🎨 SPLASH: build called");
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
