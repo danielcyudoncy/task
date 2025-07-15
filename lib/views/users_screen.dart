@@ -31,7 +31,7 @@ class UserScreen extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'Welcome, ${auth.fullNameController.text}',
+                'welcome'.trParams({'name': auth.fullNameController.text}),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimary,
                 ),
@@ -55,7 +55,7 @@ class UserScreen extends StatelessWidget {
                         );
                       }).toList(),
                       decoration: InputDecoration(
-                        labelText: 'Select Task',
+                        labelText: 'select_task'.tr,
                         labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                         border: const OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
@@ -73,14 +73,14 @@ class UserScreen extends StatelessWidget {
                     Obx(() {
                       if (!Get.isRegistered<UserController>()) {
                         return Text(
-                          "No users available",
+                          'no_users_available'.tr,
                           style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                         );
                       }
                       
                       if (userController.allUsers.isEmpty) {
                         return Text(
-                          "No users available",
+                          'no_users_available'.tr,
                           style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                         );
                       }
@@ -98,7 +98,7 @@ class UserScreen extends StatelessWidget {
                           );
                         }).toList(),
                         decoration: InputDecoration(
-                          labelText: 'Assign To',
+                          labelText: 'assign_to'.tr,
                           labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                           border: const OutlineInputBorder(),
                           enabledBorder: OutlineInputBorder(
@@ -118,7 +118,7 @@ class UserScreen extends StatelessWidget {
                       if (!Get.isRegistered<AuthController>()) {
                         return ElevatedButton(
                           onPressed: () {},
-                          child: const Text('Assign Task'),
+                          child: Text('assign_task'.tr),
                         );
                       }
                       
@@ -135,7 +135,7 @@ class UserScreen extends StatelessWidget {
                                       'Error', 'Please select a task and a user');
                                 }
                               },
-                              child: const Text('Assign Task'),
+                              child: Text('assign_task'.tr),
                             );
                     }),
                   ],
@@ -144,14 +144,14 @@ class UserScreen extends StatelessWidget {
               Obx(() {
                 if (!Get.isRegistered<ManageUsersController>()) {
                   return Text(
-                    'No users to display',
+                    'no_users_to_display'.tr,
                     style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                   );
                 }
                 
                 if (manageUsersController.usersList.isEmpty) {
                   return Text(
-                    'No users to display',
+                    'no_users_to_display'.tr,
                     style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                   );
                 }
@@ -159,7 +159,7 @@ class UserScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Manage Users',
+                      'manage_users'.tr,
                       style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                     ),
                     const SizedBox(height: 10),
@@ -177,7 +177,7 @@ class UserScreen extends StatelessWidget {
                         );
                       }).toList(),
                       decoration: InputDecoration(
-                        labelText: 'Select User',
+                        labelText: 'select_user'.tr,
                         labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
                         border: const OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
@@ -199,7 +199,7 @@ class UserScreen extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                           ),
-                          child: const Text('Delete User'),
+                          child: Text('delete_user'.tr),
                         );
                       }
                       
@@ -209,7 +209,7 @@ class UserScreen extends StatelessWidget {
                             manageUsersController
                                 .deleteUser(selectedManagedUser.value);
                             Get.snackbar(
-                                'Success', 'User deleted successfully');
+                                'Success', 'user_deleted_successfully'.tr);
                           } else {
                             Get.snackbar(
                                 'Error', 'Please select a user to manage');
@@ -218,7 +218,7 @@ class UserScreen extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                         ),
-                        child: const Text('Delete User'),
+                        child: Text('delete_user'.tr),
                       );
                     }),
                   ],

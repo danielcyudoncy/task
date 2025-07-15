@@ -87,7 +87,7 @@ class _UserListScreenState extends State<UserListScreen> {
                     if (userData == null) return const SizedBox.shrink();
 
                     final userId = userData['uid'] ?? ''; // ✅ fixed
-                    final userName = userData['fullName'] ?? 'Unknown'; // ✅ fixed
+                    final userName = userData['fullName'] ?? 'unknown'.tr; // ✅ fixed
                     final userAvatar = userData['photoUrl']; // ✅ fixed
 
                     final isPinned = userData['isPinned'] == true;

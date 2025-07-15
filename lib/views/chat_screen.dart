@@ -169,7 +169,7 @@ class _ChatScreenState extends State<ChatScreen> {
         'messageId': messageId,
         'messageText': messageData['text'],
         'senderName': messageData['senderId'] == currentUserId
-            ? "You"
+            ? "You".tr
             : widget.receiverName,
       };
     });
@@ -399,7 +399,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       if (_isOtherUserTyping)
                         Text(
-                          'typing...',
+                          'typing'.tr,
                           style: textTheme.labelSmall?.copyWith(
                             color: (isDarkMode
                                     ? colorScheme.onSurface
@@ -447,7 +447,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     }
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return Center(
-                          child: Text('Say hello!',
+                          child: Text('say_hello'.tr,
                               style: TextStyle(
                                   color: isDarkMode
                                       ? colorScheme.onBackground
@@ -655,7 +655,7 @@ class _DateDivider extends StatelessWidget {
     final now = DateTime.now();
     String label;
     if (date.year == now.year && date.month == now.month && date.day == now.day) {
-      label = 'Today';
+      label = 'Today'.tr;
     } else {
       label = DateFormat('d MMM yyyy').format(date);
     }
@@ -711,7 +711,7 @@ class _MessageInputField extends StatelessWidget {
                 minLines: 1,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  hintText: 'Type here your message',
+                  hintText: 'type_here_your_message'.tr,
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
                 ),
@@ -791,7 +791,7 @@ class _EditPreview extends StatelessWidget {
           Icon(Icons.edit, color: colorScheme.secondary),
           const SizedBox(width: 8),
           Expanded(
-              child: Text("Editing Message",
+              child: Text("Editing Message".tr,
                   style: TextStyle(
                       color: colorScheme.secondary,
                       fontWeight: FontWeight.bold))),
@@ -905,7 +905,7 @@ class UserDetailsSheet extends StatelessWidget {
                 shadowColor: Colors.black26,
               ),
               icon: const Icon(Icons.message, color: Colors.white),
-              label: const Text("Message", style: TextStyle(color: Colors.white)),
+              label: Text("Message".tr, style: const TextStyle(color: Colors.white)),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),

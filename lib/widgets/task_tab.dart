@@ -1,5 +1,6 @@
 // widgets/task_tab.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class TasksTab extends StatelessWidget {
   final List<dynamic> tasks;
@@ -24,7 +25,10 @@ class TasksTab extends StatelessWidget {
 
     if (tasks.isEmpty) {
       return Center(
-        child: Text("No tasks.", style: TextStyle(color: emptyListColor)),
+        child: Text(
+          "no_tasks".tr,
+          style: TextStyle(color: emptyListColor),
+        ),
       );
     }
 
@@ -67,14 +71,13 @@ class TasksTab extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     doc.isNotEmpty && doc.containsKey('description')
-                        ? doc['description']?.toString() ??
-                            "Task details not available."
-                        : "Task details not available.",
+                        ? doc['description']?.toString() ?? 'task_details_not_available'.tr
+                        : 'task_details_not_available'.tr,
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Assigned to: ${doc['assignedName'] ?? 'Unassigned'}",
+                    'assigned_to'.trParams({'name': doc['assignedName'] ?? 'unassigned'.tr}),
                     style: const TextStyle(color: subTextColor, fontSize: 13),
                   ),
                 ],

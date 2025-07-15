@@ -57,7 +57,7 @@ dependencies:
   http: ^0.13.6
   image_picker: ^1.1.2
   internet_connection_checker: ^1.0.0+1
-  intl: ^0.19.0
+  intl: ^0.20.2
   lucide_icons: ^0.257.0
   path_provider: ^2.1.5
   persistent_bottom_nav_bar: ^6.2.1
@@ -73,6 +73,8 @@ dependencies:
   video_player: ^2.10.0
   xml: ^6.5.0
   flutter_staggered_grid_view: ^0.7.0
+  auto_size_text: ^3.0.0
+  local_auth: ^2.1.7
  
 
 

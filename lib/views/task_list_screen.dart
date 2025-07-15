@@ -14,17 +14,17 @@ class TaskListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("All Tasks")),
+      appBar: AppBar(title: Text('all_tasks'.tr)),
       body: Obx(() {
         if (taskController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (taskController.tasks.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
-              "No tasks available",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'no_tasks_available'.tr,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           );
         }
@@ -44,10 +44,10 @@ class TaskListScreen extends StatelessWidget {
         }).toList();
 
         if (filteredTasks.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
-              "No tasks to show for your role.",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'no_tasks_for_role'.tr,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           );
         }
@@ -67,12 +67,10 @@ class TaskListScreen extends StatelessWidget {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Created by: ${task.createdBy}"),
-                    Text(
-                        "Assigned Reporter: ${task.assignedReporter ?? "Not Assigned"}"),
-                    Text(
-                        "Assigned Cameraman: ${task.assignedCameraman ?? "Not Assigned"}"),
-                    Text("Status: ${task.status}"),
+                    Text('${'created_by'.tr}: ${task.createdBy}'),
+                    Text('${'assigned_reporter'.tr}: ${task.assignedReporter ?? 'not_assigned'.tr}'),
+                    Text('${'assigned_cameraman'.tr}: ${task.assignedCameraman ?? 'not_assigned'.tr}'),
+                    Text('${'status'.tr}: ${task.status}'),
                   ],
                 ),
                 trailing: Row(

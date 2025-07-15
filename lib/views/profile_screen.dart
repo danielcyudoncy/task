@@ -162,7 +162,7 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       // Contact Information
                       Text(
-                        "CONTACT INFORMATION",
+                        'contact_information'.tr,
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
@@ -207,7 +207,7 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       // Profile Section
                       Text(
-                        "PROFILE",
+                        'profile'.tr,
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
@@ -221,7 +221,7 @@ class ProfileScreen extends StatelessWidget {
                           Icons.notifications_none,
                           color: colorScheme.onSurface,
                         ),
-                        title: Text("Push Notifications",
+                        title: Text("push_notifications".tr,
                             style: TextStyle(
                                 color: colorScheme.onSurface)),
                         trailing: Icon(
@@ -239,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
                           Icons.person_outline,
                           color: colorScheme.onSurface,
                         ),
-                        title: Text("Update Profile",
+                        title: Text("update_profile".tr,
                             style: TextStyle(
                                 color: colorScheme.onSurface)),
                         trailing: Icon(
@@ -274,8 +274,8 @@ class ProfileScreen extends StatelessWidget {
                             shadowColor: Colors.black26,
                           ),
                           icon: const Icon(Icons.logout, color: Colors.white),
-                          label: const Text("Log out",
-                              style: TextStyle(fontSize: 18, color: Colors.white)),
+                          label: Text("log_out".tr,
+                              style: const TextStyle(fontSize: 18, color: Colors.white)),
                           onPressed: () {
                             Get.find<SettingsController>().triggerFeedback();
                             authController.logout();
@@ -297,26 +297,26 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           icon: const Icon(Icons.delete_forever,
                               color: Colors.white),
-                          label: const Text("Delete Account",
-                              style: TextStyle(fontSize: 18, color: Colors.white)),
+                          label: Text("delete_account".tr,
+                              style: const TextStyle(fontSize: 18, color: Colors.white)),
                           onPressed: () async {
                             Get.find<SettingsController>().triggerFeedback();
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: const Text('Delete Account'),
-                                content: const Text(
-                                    'Are you sure you want to delete your account? This action cannot be undone.'),
+                                title: Text('delete_account'.tr),
+                                content: Text(
+                                    'are_you_sure_you_want_to_delete_your_account'.tr),
                                 actions: [
                                   TextButton(
                                     onPressed: () {Get.find<SettingsController>().triggerFeedback();
                                         Navigator.of(context).pop(false);},
-                                    child: const Text('Cancel'),
+                                    child: Text('cancel'.tr),
                                   ),
                                   TextButton(
                                     onPressed: () {Get.find<SettingsController>().triggerFeedback();
                                         Navigator.of(context).pop(true);},
-                                    child: const Text('Delete',
+                                    child: Text('delete'.tr,
                                         style: TextStyle(color: Colors.red)),
                                   ),
                                 ],
