@@ -9,7 +9,7 @@ import 'package:task/models/task_model.dart';
 
 
 class TaskCardWidget extends StatelessWidget {
-  final dynamic task;
+  final Task task;
   final bool isCompleted;
   final bool isDark;
 
@@ -33,8 +33,16 @@ class TaskCardWidget extends StatelessWidget {
     const Color subTextColor = Colors.white70;
     final Color borderColor = colorScheme.outline.withAlpha((0.3 * 255).toInt());
 
+    // Debug prints for diagnosis
+    print(
+      'TaskCardWidget: taskId= [32m${task.taskId} [0m, '
+      'dueDate= [32m${task.dueDate} [0m, '
+      'category= [32m${task.category} [0m, '
+      'tags= [32m${task.tags} [0m'
+    );
+
     return Dismissible(
-      key: ValueKey(task.taskId ?? task.hashCode),
+      key: ValueKey(task.taskId),
       background: !isCompleted ? _buildCompleteBackground() : Container(),
       secondaryBackground: _buildDeleteBackground(),
       confirmDismiss: (direction) => _handleDismiss(context, direction),
@@ -62,7 +70,7 @@ class TaskCardWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                task.title ?? task['title'] ?? "", 
+                task.title, 
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: textColor,
@@ -71,7 +79,7 @@ class TaskCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 7),
               Text(
-                task.description ?? task['description'] ?? 'task_details'.tr,
+                task.description,
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -82,17 +90,7 @@ class TaskCardWidget extends StatelessWidget {
               // Due Date
               Builder(
                 builder: (context) {
-                  DateTime? dueDate;
-                  if (task is Map && task['dueDate'] != null) {
-                    final val = task['dueDate'];
-                    if (val is DateTime) {
-                      dueDate = val;
-                    } else if (val is String) {
-                      dueDate = DateTime.tryParse(val);
-                    }
-                  } else if (task is Task && task.dueDate != null) {
-                    dueDate = task.dueDate;
-                  }
+                  final dueDate = task.dueDate;
                   final dueDateStr = dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(dueDate) : 'N/A';
                   debugPrint('TaskCardWidget: dueDate = $dueDateStr');
                   return Text(
@@ -109,10 +107,9 @@ class TaskCardWidget extends StatelessWidget {
               // Category
               Builder(
                 builder: (context) {
-                  final category = task is Map ? (task['category'] ?? 'N/A') : (task.category ?? 'N/A');
-                  debugPrint('TaskCardWidget: category = $category');
+                  final category = task.category ?? 'No category';
                   return Text(
-                    'category'.trParams({'category': category}),
+                    category,
                     style: TextStyle(
                       color: subTextColor,
                       fontSize: 13.sp,
@@ -125,19 +122,10 @@ class TaskCardWidget extends StatelessWidget {
               // Tags
               Builder(
                 builder: (context) {
-                  List<String>? tags;
-                  if (task is Map && task['tags'] != null) {
-                    final val = task['tags'];
-                    if (val is List) {
-                      tags = val.cast<String>();
-                    }
-                  } else if (task is Task && task.tags != null) {
-                    tags = task.tags;
-                  }
-                  final tagsStr = tags != null && tags.isNotEmpty ? tags.join(', ') : 'N/A';
-                  debugPrint('TaskCardWidget: tags = $tagsStr');
+                  final tags = task.tags ?? [];
+                  final tagsStr = tags.isNotEmpty ? tags.join(', ') : 'No tags';
                   return Text(
-                    'tags'.trParams({'tags': tagsStr}),
+                    tagsStr,
                     style: TextStyle(
                       color: subTextColor,
                       fontSize: 13.sp,

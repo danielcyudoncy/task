@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/task_controller.dart';
+import 'package:task/models/task_model.dart';
 import './task_list_tab.dart';
 
 class TasksSection extends StatelessWidget {
@@ -139,7 +140,7 @@ class TasksSection extends StatelessWidget {
           return TaskListTab(
             isCompleted: false,
             isDark: isDark,
-            tasks: notCompletedTasks,
+            tasks: List<Task>.from(notCompletedTasks),
           );
         }),
         Obx(() {
@@ -163,7 +164,7 @@ class TasksSection extends StatelessWidget {
           return TaskListTab(
             isCompleted: true,
             isDark: isDark,
-            tasks: completedTasks,
+            tasks: List<Task>.from(completedTasks),
           );
         }),
       ],

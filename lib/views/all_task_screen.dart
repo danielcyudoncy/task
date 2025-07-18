@@ -8,7 +8,7 @@ import 'package:task/widgets/app_bar.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/error_state_widget.dart';
-import 'package:task/widgets/task_card.dart';
+import 'package:task/widgets/task_card_widget.dart';
 import 'package:task/widgets/task_detail_sheet.dart';
 import 'package:task/widgets/task_skeleton_list.dart';
 import 'package:task/widgets/user_nav_bar.dart';
@@ -251,40 +251,10 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                             color: _selectedTasks.contains(task.taskId)
                                 ? colorScheme.surfaceVariant
                                 : Colors.transparent,
-                            child: TaskCard(
-                              data: task.toMapWithUserInfo(
-                                  taskController.userNameCache,
-                                  taskController.userAvatarCache),
-                              isLargeScreen: isLargeScreen,
-                              textScale: textScale,
-                              onTap: () {
-                                Get.find<SettingsController>()
-                                    .triggerFeedback();
-                                if (_selectedTasks.isNotEmpty) {
-                                  if (_selectedTasks.contains(task.taskId)) {
-                                    _selectedTasks.remove(task.taskId);
-                                  } else {
-                                    _selectedTasks.add(task.taskId);
-                                  }
-                                } else {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(24)),
-                                    ),
-                                    builder: (_) => TaskDetailSheet(
-                                      data: task.toMapWithUserInfo(
-                                          taskController.userNameCache,
-                                          taskController.userAvatarCache),
-                                      textScale: textScale,
-                                      isDark: isDark,
-                                    ),
-                                  );
-                                }
-                              },
-                              onAction:
-                                  (_) {}, // Empty function for view-only mode
+                            child: TaskCardWidget(
+                              task: task,
+                              isCompleted: task.status == 'Completed',
+                              isDark: isDark,
                             ),
                           ),
                         );
