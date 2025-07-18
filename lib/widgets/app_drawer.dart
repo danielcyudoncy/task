@@ -1,4 +1,5 @@
 // widgets/app_drawer.dart
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,8 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
-import 'package:auto_size_text/auto_size_text.dart';
-
 import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../models/task_model.dart';

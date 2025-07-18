@@ -129,6 +129,12 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       debugPrint('Form valid, calling createTask');
       try {
+        // Show loading dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(child: CircularProgressIndicator()),
+        );
         await taskController.createTask(
           _titleController.text.trim(),
           _descriptionController.text.trim(),
@@ -146,6 +152,12 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           tags: _tagsController.text.trim().split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
         );
         debugPrint('createTask completed successfully');
+        // Wait for taskController to finish loading
+        while (taskController.isLoading.value) {
+          await Future.delayed(const Duration(milliseconds: 100));
+        }
+        // Dismiss loading dialog
+        if (mounted) Navigator.of(context, rootNavigator: true).pop();
         // Clear form on success
         _titleController.clear();
         _descriptionController.clear();
@@ -166,8 +178,10 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           Get.offAllNamed('/home');
         }
       } catch (e) {
-        debugPrint('Error in _createTask: $e');
-        // Error is already shown by the controller
+        // Dismiss loading dialog if error
+        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+        debugPrint('Error creating task: $e');
+        Get.snackbar('Error', 'Failed to create task: $e');
       }
     } else {
       debugPrint('Form invalid');
