@@ -673,29 +673,22 @@ class TaskController extends GetxController {
         "assignedCameramanName": null,
         "status": "Pending",
         "priority": priority,
-        "dueDate": dueDate?.toIso8601String(),
+        "dueDate": dueDate != null ? dueDate.toIso8601String() : null,
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
         "category": category,
         "tags": tags ?? [],
       };
-
       debugPrint('createTask: taskData = $taskData');
       debugPrint('createTask: calling _firebaseService.createTask');
       await _firebaseService.createTask(taskData);
       debugPrint('createTask: Firebase call complete');
-
-      // Update local state
       debugPrint('createTask: refreshing tasks');
-      tasks.refresh();
+      // DO NOT add a Task to the list manually here!
+      await loadInitialTasks();
       debugPrint('createTask: calculating new task count');
-      calculateNewTaskCount();
-
-      // Show success message
       debugPrint('createTask: showing success snackbar');
       _safeSnackbar("Success", "Task created successfully");
-
-      // Return success
       debugPrint('createTask: finished successfully');
       return;
     } catch (e) {

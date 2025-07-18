@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:task/widgets/task_card_widget.dart';
+import 'package:task/models/task_model.dart';
 
 class TaskListTab extends StatelessWidget {
   final bool isCompleted;
   final bool isDark;
-  final List<dynamic> tasks;
+  final List<Task> tasks;
 
   const TaskListTab({
     super.key,
