@@ -64,7 +64,9 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   @override
   void initState() {
     super.initState();
-    taskController.isLoading.value = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      taskController.isLoading.value = false;
+    });
   }
 
   @override

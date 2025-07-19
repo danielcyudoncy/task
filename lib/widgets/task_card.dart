@@ -1,9 +1,11 @@
+// widgets/task_card.dart
 // DEPRECATED: Do not use this widget for displaying tasks. Use TaskCardWidget with Task objects instead.
 // widgets/task_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'status_chip.dart';
+import 'package:intl/intl.dart';
 
 class TaskCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -161,6 +163,54 @@ class TaskCard extends StatelessWidget {
                       color: mainText,
                     ),
                   ),
+                  // Category
+                  if (data['category'] != null && data['category'].toString().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6.0, bottom: 2.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.category, size: 16, color: subText),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Category: ',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: subText,
+                              fontSize: 12.sp * textScale,
+                            ),
+                          ),
+                          Text(
+                            data['category'].toString(),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: mainText,
+                              fontSize: 12.sp * textScale,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // Tags
+                  if (data['tags'] != null && data['tags'] is List && (data['tags'] as List).isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0, bottom: 2.0),
+                      child: Wrap(
+                        spacing: 4,
+                        children: [
+                          Text(
+                            'Tags:',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: subText,
+                              fontSize: 12.sp * textScale,
+                            ),
+                          ),
+                          ...List<Widget>.from((data['tags'] as List).map((tag) => Chip(
+                                label: Text(tag.toString()),
+                                backgroundColor: colorScheme.primaryContainer,
+                              ))),
+                        ],
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   if (formattedTimestamp.isNotEmpty)
                     Row(
@@ -176,6 +226,23 @@ class TaskCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                  // Due Date (prefer dueDate, fallback to timestamp)
+                  Text(
+                    "Due Date: " +
+                      (data['dueDate'] != null && data['dueDate'].toString().isNotEmpty
+                        ? DateFormat('yyyy-MM-dd').format(DateTime.tryParse(data['dueDate'].toString()) ?? DateTime.now())
+                        : (data['timestamp'] != null
+                            ? (data['timestamp'] is DateTime
+                                ? DateFormat('yyyy-MM-dd').format(data['timestamp'])
+                                : (data['timestamp'].toDate != null
+                                    ? DateFormat('yyyy-MM-dd').format(data['timestamp'].toDate())
+                                    : 'N/A'))
+                            : 'N/A')),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: subText,
+                      fontSize: 13.sp * textScale,
+                    ),
+                  ),
                 ],
               ),
             ),

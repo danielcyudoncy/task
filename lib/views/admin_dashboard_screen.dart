@@ -14,6 +14,8 @@ import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/admin_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/manage_users_controller.dart';
+import 'package:task/models/task_model.dart';
+import 'package:task/widgets/task_card_widget.dart';
 
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -770,7 +772,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             newsCount: adminController.statistics['news'] ?? 0,
                             tasksCount: adminController.statistics['pending'] ??
                                 0, // Showing pending tasks here
-                            onManageUsersTap: _showManageUsersDialog,
+                            onManageUsersTap: () => Get.toNamed('/manage-users'),
                             onTotalTasksTap: _showAllPendingTasksDialog,
                             onNewsFeedTap: () => Get.toNamed('/news'),
                             onOnlineUsersTap: _navigateToChatUsers,
@@ -942,100 +944,17 @@ class _TasksTabState extends State<_TasksTab> {
         final title = widget.tasks[index];
         final Map<String, dynamic> doc = widget.taskDocs.firstWhere(
           (d) => d['title'] == title,
-          orElse: () => <String, dynamic>{}, // Return an empty map if not found
+          orElse: () => <String, dynamic>{},
         );
-
-        final creatorId =
-            doc.isNotEmpty ? (doc['createdBy'] ?? 'Unknown') : 'Unknown';
-        final userInfo = widget.userCache[creatorId];
-        if (userInfo == null && creatorId != 'Unknown' && !_loadingUsers.contains(creatorId)) {
-          _loadingUsers.add(creatorId);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            widget.getUserNameAndRole(creatorId, () {
-              if (mounted) {
-                setState(() {});
-              }
-            });
-          });
+        if (doc.isEmpty) {
+          return const SizedBox.shrink();
         }
-        final creatorName = userInfo?["name"] ?? creatorId;
-        final creatorRole = userInfo?["role"] ?? "Unknown";
-
-        String dateStr = 'Unknown';
-        if (doc.isNotEmpty && doc['timestamp'] != null) {
-          final createdAt = doc['timestamp'];
-          DateTime dt;
-          if (createdAt is Timestamp) {
-            dt = createdAt.toDate();
-          } else if (createdAt is DateTime) {
-            dt = createdAt;
-          } else {
-            dt = DateTime.tryParse(createdAt.toString()) ?? DateTime.now();
-          }
-          dateStr =
-              "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
-        }
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: GestureDetector(
-            onTap: () => widget.onTaskTap(title),
-            child: Container(
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.isDark
-                        ? Colors.black38
-                        : const Color(0x22000000),
-                    blurRadius: 8,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    doc.isNotEmpty && doc.containsKey('description')
-                        ? doc['description']?.toString() ??
-                            "Task details not available."
-                        : "Task details not available.",
-                    style: const TextStyle(color: subTextColor, fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Assigned to: ${doc.isNotEmpty ? (doc['assignedName'] ?? 'Unassigned') : 'Unassigned'}",
-                    style: const TextStyle(color: subTextColor, fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Created by: $creatorName",
-                    style: const TextStyle(color: subTextColor, fontSize: 12),
-                  ),
-                  Text(
-                    "Role: $creatorRole",
-                    style: const TextStyle(color: subTextColor, fontSize: 12),
-                  ),
-                  Text(
-                    "Date: $dateStr",
-                    style: const TextStyle(color: subTextColor, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        // Map doc to Task object
+        final task = Task.fromMap(doc, doc['id'] ?? doc['taskId'] ?? '');
+        return TaskCardWidget(
+          task: task,
+          isCompleted: task.status == 'Completed',
+          isDark: widget.isDark,
         );
       },
     );
