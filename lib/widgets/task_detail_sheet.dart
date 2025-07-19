@@ -129,6 +129,159 @@ class TaskDetailSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            // Category
+            if (data['category'] != null && data['category'].toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.category, size: 18, color: subText),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Category: ',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: subText,
+                        fontSize: 13.sp * textScale,
+                      ),
+                    ),
+                    Text(
+                      data['category'].toString(),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: mainText,
+                        fontSize: 13.sp * textScale,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Priority
+            if (data['priority'] != null && data['priority'].toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.flag, size: 18, color: subText),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Priority: ',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: subText,
+                        fontSize: 13.sp * textScale,
+                      ),
+                    ),
+                    Text(
+                      data['priority'].toString(),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: mainText,
+                        fontSize: 13.sp * textScale,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Assigned Reporter
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Icon(Icons.person, size: 18, color: subText),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Reporter: ',
+                    style: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: subText,
+                      fontSize: 13.sp * textScale,
+                    ),
+                  ),
+                  Text(
+                    data['assignedReporterName'] ?? 'Not Assigned',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: mainText,
+                      fontSize: 13.sp * textScale,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Assigned Cameraman
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Icon(Icons.videocam, size: 18, color: subText),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Cameraman: ',
+                    style: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: subText,
+                      fontSize: 13.sp * textScale,
+                    ),
+                  ),
+                  Text(
+                    data['assignedCameramanName'] ?? 'Not Assigned',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: mainText,
+                      fontSize: 13.sp * textScale,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Tags
+            if (data['tags'] != null && data['tags'] is List && (data['tags'] as List).isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Wrap(
+                  spacing: 6,
+                  children: [
+                    Text(
+                      'Tags:',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: subText,
+                        fontSize: 13.sp * textScale,
+                      ),
+                    ),
+                    ...List<Widget>.from((data['tags'] as List).map((tag) => Chip(
+                          label: Text(tag.toString()),
+                          backgroundColor: colorScheme.primaryContainer,
+                        ))),
+                  ],
+                ),
+              ),
+            // Comments
+            if (data['comments'] != null && data['comments'] is List)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.comment, size: 18, color: subText),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Comments: ',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: subText,
+                        fontSize: 13.sp * textScale,
+                      ),
+                    ),
+                    Text(
+                      (data['comments'] as List).isNotEmpty
+                          ? (data['comments'] as List).length.toString()
+                          : '0',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: mainText,
+                        fontSize: 13.sp * textScale,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

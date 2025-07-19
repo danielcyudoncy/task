@@ -27,6 +27,7 @@ class Task {
   final String? category;
   final List<String>? tags;
   final DateTime? dueDate;
+  final String? priority;
 
   Task({
     required this.taskId,
@@ -47,47 +48,40 @@ class Task {
     this.category,
     this.tags,
     this.dueDate,
+    this.priority,
   });
 
   // Factory for Firestore maps
   factory Task.fromMap(Map<String, dynamic> map, String id) {
-    print('fromMap: dueDate raw =  [33m${map['dueDate']} [0m type =  [33m${map['dueDate']?.runtimeType} [0m');
-    print('fromMap: tags raw =  [33m${map['tags']} [0m type =  [33m${map['tags']?.runtimeType} [0m');
-    print('fromMap: category raw =  [33m${map['category']} [0m type =  [33m${map['category']?.runtimeType} [0m');
-    debugPrint('Task.fromMap: id=$id, category= [32m${map['category']} [0m, tags= [32m${map['tags']} [0m, dueDate= [32m${map['dueDate']} [0m');
+    debugPrint('fromMap: id=$id, category=${map['category']}, tags=${map['tags']}, dueDate=${map['dueDate']}, priority=${map['priority']}');
     return Task(
       taskId: id,
       title: map['title'] ?? '',
       description: map['description'] ?? '',
-      createdBy: map['createdByName'] ?? '', // Should be filled in controller
-      assignedReporter: map['assignedReporterName'], // Filled in controller
-      assignedCameraman: map['assignedCameramanName'], // Filled in controller
+      createdBy: map['createdByName'] ?? '',
+      assignedReporter: map['assignedReporterName'],
+      assignedCameraman: map['assignedCameramanName'],
       status: map['status'] ?? 'Pending',
-      comments: map['comments'] != null && map['comments'] is List
-          ? List<String>.from(map['comments'].whereType<String>())
-          : <String>[],
+      comments: List<String>.from(map['comments'] ?? []),
       timestamp: map['timestamp'] is Timestamp
           ? map['timestamp']
-          : (map['timestamp'] is String
-              ? Timestamp.fromDate(DateTime.tryParse(map['timestamp']) ?? DateTime.now())
-              : Timestamp.now()),
+          : (map['timestamp'] != null ? Timestamp.fromDate(DateTime.parse(map['timestamp'])) : Timestamp.now()),
       createdById: map['createdBy'] ?? '',
       assignedTo: map['assignedTo'],
-      assignedReporterId: map['assignedReporterId'],
-      assignedCameramanId: map['assignedCameramanId'],
-      assignmentTimestamp: map['assignmentTimestamp'] ?? map['assignedAt'],
-      creatorAvatar: map['creatorAvatar'], // Get avatar directly from task document
-      category: map['category']?.toString() ?? 'No category',
-      tags: map['tags'] != null && map['tags'] is List
-          ? List<String>.from(map['tags'].whereType<String>())
-          : <String>[],
-      dueDate: map['dueDate'] != null
-          ? (map['dueDate'] is Timestamp
-              ? (map['dueDate'] as Timestamp).toDate()
-              : (map['dueDate'] is String
-                  ? DateTime.tryParse(map['dueDate'])
+      assignedReporterId: map['assignedReporter'],
+      assignedCameramanId: map['assignedCameraman'],
+      assignmentTimestamp: map['assignmentTimestamp'],
+      creatorAvatar: map['creatorAvatar'],
+      category: map['category'] ?? '',
+      tags: map['tags'] is List ? List<String>.from(map['tags']) : [],
+      dueDate: map['dueDate'] != null && map['dueDate'] != ''
+          ? (map['dueDate'] is String
+              ? DateTime.tryParse(map['dueDate'])
+              : (map['dueDate'] is Timestamp
+                  ? (map['dueDate'] as Timestamp).toDate()
                   : null))
           : null,
+      priority: map['priority'] ?? 'Normal',
     );
   }
 
@@ -110,6 +104,7 @@ class Task {
     String? category,
     List<String>? tags,
     DateTime? dueDate,
+    String? priority,
   }) {
     return Task(
       taskId: taskId ?? this.taskId,
@@ -129,6 +124,7 @@ class Task {
       category: category ?? this.category,
       tags: tags ?? this.tags,
       dueDate: dueDate ?? this.dueDate,
+      priority: priority ?? this.priority,
     );
   }
 
@@ -170,6 +166,7 @@ class Task {
       'category': category,
       'tags': tags,
       'dueDate': dueDate?.toIso8601String(),
+      'priority': priority,
     };
   }
 }

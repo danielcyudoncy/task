@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
 import './task_action_utility.dart';
 import 'package:task/models/task_model.dart';
+import 'package:task/controllers/auth_controller.dart';
 
 
 class TaskCardWidget extends StatelessWidget {
@@ -24,6 +25,8 @@ class TaskCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final currentUserId = Get.find<AuthController>().auth.currentUser?.uid;
+    final isTaskOwner = task.createdById == currentUserId;
     
     // Use the same color scheme as admin dashboard
     final Color cardColor = isDark 
@@ -71,7 +74,7 @@ class TaskCardWidget extends StatelessWidget {
             children: [
               Text(
                 task.title, 
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: textColor,
                   fontSize: 16,
@@ -87,58 +90,80 @@ class TaskCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              // Due Date
-              Builder(
-                builder: (context) {
-                  final dueDate = task.dueDate;
-                  final dueDateStr = dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(dueDate) : 'N/A';
-                  debugPrint('TaskCardWidget: dueDate = $dueDateStr');
-                  return Text(
-                    'due_date'.trParams({'date': dueDateStr}),
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  );
-                },
+              // Assigned Reporter
+              Text(
+                'Assigned Reporter: ${task.assignedReporter ?? 'Not Assigned'}',
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
+              // Assigned Cameraman
+              Text(
+                'Assigned Cameraman: ${task.assignedCameraman ?? 'Not Assigned'}',
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Status
+              Text(
+                'Status: ${task.status}',
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
               // Category
-              Builder(
-                builder: (context) {
-                  final category = task.category ?? 'No category';
-                  return Text(
-                    category,
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  );
-                },
+              Text(
+                'Category: ' + ((task.category != null && task.category!.isNotEmpty) ? task.category! : 'No category'),
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               // Tags
-              Builder(
-                builder: (context) {
-                  final tags = task.tags ?? [];
-                  final tagsStr = tags.isNotEmpty ? tags.join(', ') : 'No tags';
-                  return Text(
-                    tagsStr,
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  );
-                },
+              Text(
+                'Tags: ' + ((task.tags != null && task.tags!.isNotEmpty) ? task.tags!.join(', ') : 'No tags'),
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Priority
+              Text(
+                'Priority: ' + ((task.priority != null && task.priority!.isNotEmpty) ? task.priority! : 'N/A'),
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Due Date
+              Text(
+                'Due Date: ' + (task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'),
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  if (!isCompleted) ...[
+                  if (!isCompleted && isTaskOwner) ...[
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green[600],
@@ -157,35 +182,37 @@ class TaskCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                   ],
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[600],
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(40, 36),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  if (isTaskOwner) ...[
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[600],
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(40, 36),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
+                      icon: const Icon(Icons.delete, size: 18),
+                      label: const Text("Delete", style: TextStyle(fontSize: 13)),
+                      onPressed: () async {
+                        final confirmed = await _showDeleteConfirmation(context);
+                        if (confirmed == true) {
+                          TaskActions.deleteTask(task);
+                        }
+                      },
                     ),
-                    icon: const Icon(Icons.delete, size: 18),
-                    label: const Text("Delete", style: TextStyle(fontSize: 13)),
-                    onPressed: () async {
-                      final confirmed = await _showDeleteConfirmation(context);
-                      if (confirmed == true) {
-                        TaskActions.deleteTask(task);
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(Icons.edit_note_rounded,
-                        color: textColor, size: 22.sp),
-                    onPressed: () {
-                      Get.find<SettingsController>().triggerFeedback();
-                      TaskActions.editTask(context, task);
-                    },
-                    tooltip: "Edit Task",
-                  ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(Icons.edit_note_rounded,
+                          color: textColor, size: 22.sp),
+                      onPressed: () {
+                        Get.find<SettingsController>().triggerFeedback();
+                        TaskActions.editTask(context, task);
+                      },
+                      tooltip: "Edit Task",
+                    ),
+                  ],
                 ],
               ),
             ],

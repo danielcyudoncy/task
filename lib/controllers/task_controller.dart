@@ -571,32 +571,10 @@ class TaskController extends GetxController {
           
           for (var doc in snapshot.docs) {
             var taskData = doc.data() as Map<String, dynamic>;
-            String createdByName = await _getUserName(taskData["createdBy"]);
-            String assignedReporterName = taskData["assignedReporterName"] ??
-                (taskData["assignedReporterId"] != null
-                    ? await _getUserName(taskData["assignedReporterId"])
-                    : "Not Assigned");
-            String assignedCameramanName = taskData["assignedCameramanName"] ??
-                (taskData["assignedCameramanId"] != null
-                    ? await _getUserName(taskData["assignedCameramanId"])
-                    : "Not Assigned");
-            String taskTitle = taskData["title"];
-            taskTitleCache[doc.id] = taskTitle;
-            updatedTasks.add(Task(
-              taskId: doc.id,
-              title: taskTitle,
-              description: taskData["description"],
-              createdBy: createdByName,
-              assignedReporter: assignedReporterName,
-              assignedCameraman: assignedCameramanName,
-              status: taskData["status"] ?? "Pending",
-              comments: List<String>.from(taskData["comments"] ?? []),
-              timestamp: taskData["timestamp"] ?? Timestamp.now(),
-              createdById: taskData["createdBy"] ?? "",
-              assignedTo: taskData["assignedTo"], // Add this field
-              assignedReporterId: taskData["assignedReporterId"],
-              assignedCameramanId: taskData["assignedCameramanId"],
-            ));
+            // Use Task.fromMap for robust mapping
+            final task = Task.fromMap(taskData, doc.id);
+            debugPrint('fetchTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}, priority=${task.priority}, assignedReporter=${task.assignedReporter}, assignedCameraman=${task.assignedCameraman}');
+            updatedTasks.add(task);
           }
           
           // Role-based filtering
@@ -684,8 +662,12 @@ class TaskController extends GetxController {
       await _firebaseService.createTask(taskData);
       debugPrint('createTask: Firebase call complete');
       debugPrint('createTask: refreshing tasks');
-      // DO NOT add a Task to the list manually here!
+      // Force a full refresh from Firestore after creation
       await loadInitialTasks();
+      // Add debug print for all tasks
+      for (final t in tasks) {
+        debugPrint('TaskController: after create, taskId=${t.taskId}, category=${t.category}, tags=${t.tags}, dueDate=${t.dueDate}');
+      }
       debugPrint('createTask: calculating new task count');
       debugPrint('createTask: showing success snackbar');
       _safeSnackbar("Success", "Task created successfully");

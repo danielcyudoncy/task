@@ -10,6 +10,11 @@ class TaskListScreen extends StatelessWidget {
   final TaskController taskController = Get.put(TaskController());
   final AuthController authController = Get.find<AuthController>();
 
+  // Add these controllers and variable at the top of the class
+  final TextEditingController categoryController = TextEditingController();
+  final TextEditingController tagsController = TextEditingController();
+  DateTime? selectedDueDate;
+
   TaskListScreen({super.key});
 
   @override
@@ -201,57 +206,108 @@ class TaskListScreen extends StatelessWidget {
   void _showAddTaskDialog(BuildContext context) {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
+    // Use the above categoryController, tagsController, selectedDueDate
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Add New Task'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    border: OutlineInputBorder(),
-                  ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Add New Task'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Title',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: categoryController,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags (comma separated)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(selectedDueDate == null
+                              ? 'No due date selected'
+                              : 'Due: ${selectedDueDate!.toString().split(' ')[0]}'),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.calendar_today),
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                selectedDueDate = picked;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (titleController.text.trim().isEmpty ||
+                        descriptionController.text.trim().isEmpty) {
+                      Get.snackbar("Error", "Please fill in all fields.");
+                      return;
+                    }
+                    taskController.createTask(
+                      titleController.text.trim(),
+                      descriptionController.text.trim(),
+                      category: categoryController.text.trim().isNotEmpty ? categoryController.text.trim() : null,
+                      tags: tagsController.text.trim().isNotEmpty
+                          ? tagsController.text.trim().split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
+                          : [],
+                      dueDate: selectedDueDate,
+                    );
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Add'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (titleController.text.trim().isEmpty ||
-                    descriptionController.text.trim().isEmpty) {
-                  Get.snackbar("Error", "Please fill in all fields.");
-                  return;
-                }
-
-                taskController.createTask(
-                  titleController.text.trim(),
-                  descriptionController.text.trim(),
-                );
-                Navigator.of(context).pop();
-              },
-              child: const Text('Add'),
-            ),
-          ],
+            );
+          },
         );
       },
     );

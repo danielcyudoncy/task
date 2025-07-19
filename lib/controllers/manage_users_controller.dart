@@ -20,6 +20,7 @@ class ManageUsersController extends GetxController {
   var isDeletingUser = false.obs; // Separate loading state for deletion
   var usersList = <Map<String, dynamic>>[].obs;
   var filteredUsersList = <Map<String, dynamic>>[].obs;
+  var selectedRole = 'All'.obs;
   var tasksList = <Map<String, dynamic>>[].obs;
   DocumentSnapshot? lastDocument;
   var hasMoreUsers = true.obs;
@@ -50,10 +51,25 @@ class ManageUsersController extends GetxController {
     if (!hasMoreUsers.value || isLoading.value) return;
     try {
       isLoading.value = true;
-
-      Query query = FirebaseFirestore.instance
-          .collection('users')
-          .orderBy('fullName');
+      Query query;
+      bool ordered = false;
+      // Try ordering by 'fullName', then 'fullname', then no order
+      try {
+        query = FirebaseFirestore.instance.collection('users').orderBy('fullName');
+        await query.limit(1).get(); // test if field exists
+        ordered = true;
+        print('fetchUsers: ordering by fullName');
+      } catch (_) {
+        try {
+          query = FirebaseFirestore.instance.collection('users').orderBy('fullname');
+          await query.limit(1).get();
+          ordered = true;
+          print('fetchUsers: ordering by fullname');
+        } catch (_) {
+          query = FirebaseFirestore.instance.collection('users');
+          print('fetchUsers: no ordering');
+        }
+      }
 
       // If fetching all users for dialog, don't use pagination
       if (!fetchAll) {
@@ -64,11 +80,14 @@ class ManageUsersController extends GetxController {
       }
 
       QuerySnapshot snapshot = await query.get();
+      print('fetchUsers: snapshot.docs.length =  [32m${snapshot.docs.length} [0m');
+      for (var doc in snapshot.docs) {
+        print('fetchUsers: user doc =  [32m${doc.data()} [0m');
+      }
 
       if (snapshot.docs.isNotEmpty) {
         final newUsers = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          
           // Try multiple possible field names for profile picture
           final photoUrl = data['photoUrl'] ?? 
                           data['photoURL'] ?? 
@@ -77,7 +96,6 @@ class ManageUsersController extends GetxController {
                           data['avatarUrl'] ?? 
                           data['avatar_url'] ?? 
                           '';
-          
           return {
             'uid': doc.id,
             'id': doc.id,
@@ -105,7 +123,6 @@ class ManageUsersController extends GetxController {
       } else {
         hasMoreUsers.value = false;
       }
-      
     } catch (e) {
       _safeSnackbar('Error', 'Failed to fetch users: $e');
     } finally {
@@ -292,6 +309,18 @@ class ManageUsersController extends GetxController {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       fetchUsers(isNextPage: true);
+    }
+  }
+
+  void filterByRole(String? role) {
+    if (role == null || role == 'All') {
+      filteredUsersList.assignAll(usersList);
+      selectedRole.value = 'All';
+    } else {
+      filteredUsersList.assignAll(
+        usersList.where((user) => user['role'] == role).toList(),
+      );
+      selectedRole.value = role;
     }
   }
 }
