@@ -462,12 +462,23 @@ class AdminController extends GetxController {
     required String taskId,
   }) async {
     try {
-      // Update the task assignment
-      await firestore.collection('tasks').doc(taskId).update({
+      // Fetch the user's role
+      final userDoc = await firestore.collection('users').doc(userId).get();
+      final userRole = userDoc.data()?['role'] ?? '';
+      final updateData = <String, dynamic>{
         'assignedTo': userId,
         'assignedName': assignedName,
         'assignedAt': FieldValue.serverTimestamp(),
-      });
+      };
+      // Set role-specific fields for robust UI updates
+      if (userRole == 'Reporter') {
+        updateData['assignedReporterId'] = userId;
+        updateData['assignedReporterName'] = assignedName;
+      } else if (userRole == 'Cameraman') {
+        updateData['assignedCameramanId'] = userId;
+        updateData['assignedCameramanName'] = assignedName;
+      }
+      await firestore.collection('tasks').doc(taskId).update(updateData);
 
       // Format the due date
       final String formattedDate =
@@ -488,6 +499,9 @@ class AdminController extends GetxController {
 
       // Send push notification via FCM
       await sendTaskNotification(userId, taskTitle);
+
+      // Refresh dashboard/task data so UI updates
+      await fetchDashboardData();
     } catch (e) {
       _safeSnackbar("Error", "Failed to assign task or notify user: $e");
     }

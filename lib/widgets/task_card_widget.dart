@@ -27,6 +27,10 @@ class TaskCardWidget extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final currentUserId = Get.find<AuthController>().auth.currentUser?.uid;
     final isTaskOwner = task.createdById == currentUserId;
+    final isAssignedUser =
+        task.assignedReporterId == currentUserId ||
+        task.assignedCameramanId == currentUserId ||
+        task.assignedTo == currentUserId;
     
     // Use the same color scheme as admin dashboard
     final Color cardColor = isDark 
@@ -163,7 +167,7 @@ class TaskCardWidget extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  if (!isCompleted && isTaskOwner) ...[
+                  if (!isCompleted && (isTaskOwner || isAssignedUser)) ...[
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green[600],
