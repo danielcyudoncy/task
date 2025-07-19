@@ -130,15 +130,10 @@ class FirebaseService {
   }
 }
 
-void useFirebaseEmulator() {
-  // Only use emulators in debug mode
+void useFirebaseEmulator([String? customHost]) {
   if (kDebugMode) {
-    // Use localhost for web, IP address for mobile
-    const String host = kIsWeb ? 'localhost' : '192.168.1.7';
-    
-    // Auth Emulator
+    final String host = customHost ?? (kIsWeb ? 'localhost' : '192.168.1.7');
     FirebaseAuth.instance.useAuthEmulator(host, 8002);
-    // Firestore Emulator
     FirebaseFirestore.instance.useFirestoreEmulator(host, 8003);
     FirebaseFunctions.instance.useFunctionsEmulator(host, 8001);
     FirebaseStorage.instance.useStorageEmulator(host, 8005);

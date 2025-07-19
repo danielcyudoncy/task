@@ -23,10 +23,16 @@ import 'package:task/controllers/wallpaper_controller.dart';
 import 'package:task/firebase_options.dart';
 import 'package:task/my_app.dart';
 import 'package:task/service/mock_user_deletion_service.dart';
+import 'package:task/service/user_deletion_service.dart';
+import 'package:task/service/cloud_function_user_deletion_service.dart';
 import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
-// import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
+import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
+
+// --- Emulator/Production Switch ---
+const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+const String emulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST', defaultValue: '192.168.1.7');
 
 // Global flag to track bootstrap state
 bool _isBootstrapComplete = false;
@@ -46,12 +52,10 @@ Future<void> bootstrapApp() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    // Use Firebase Emulator in debug mode
-    // Set this to true to use emulator, false to use production
-    // const bool useEmulator = false;
-    // if (kDebugMode && useEmulator) {
-    //   useFirebaseEmulator();
-    // }
+    // Automatically connect to emulator if flag is set
+    if (useEmulator) {
+      useFirebaseEmulator(emulatorHost);
+    }
     debugPrint("🚀 BOOTSTRAP: Firebase initialized");
     debugPrint("🚀 BOOTSTRAP: Verifying Firebase services");
     await _verifyFirebaseServices();
@@ -74,9 +78,12 @@ Future<void> bootstrapApp() async {
     // Step 3: Put all services that other controllers depend on FIRST.
     debugPrint("🚀 BOOTSTRAP: Putting FirebaseStorageService");
     Get.put(FirebaseStorageService(), permanent: true);
-    debugPrint("🚀 BOOTSTRAP: Putting MockUserDeletionService");
-    Get.put(MockUserDeletionService(),
-        permanent: true); // Assuming this is needed by others
+    debugPrint("🚀 BOOTSTRAP: Putting UserDeletionService (mock or real)");
+    if (kReleaseMode) {
+      Get.put<UserDeletionService>(CloudFunctionUserDeletionService(), permanent: true);
+    } else {
+      Get.put<UserDeletionService>(MockUserDeletionService(), permanent: true);
+    }
     debugPrint("🚀 BOOTSTRAP: Putting NewsService");
     Get.put(NewsService(), permanent: true); // News service for real-time news
     debugPrint("🚀 BOOTSTRAP: Services initialized");
@@ -91,8 +98,7 @@ Future<void> bootstrapApp() async {
     debugPrint('🚀 BOOTSTRAP: Putting AdminController');
     Get.put(AdminController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting UserController');
-    Get.put(UserController(Get.find<MockUserDeletionService>()),
-        permanent: true);
+    Get.put(UserController(Get.find<UserDeletionService>()), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting PresenceService');
     Get.put(PresenceService(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting ChatController');
@@ -100,9 +106,8 @@ Future<void> bootstrapApp() async {
     debugPrint('🚀 BOOTSTRAP: Putting TaskController');
     Get.put(TaskController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting ManageUsersController');
-    Get.put(ManageUsersController(Get.find<MockUserDeletionService>()),
-        permanent: true);
-    debugPrint('�� BOOTSTRAP: Putting NotificationController');
+    Get.put(ManageUsersController(Get.find<UserDeletionService>()), permanent: true);
+    debugPrint('🚀 BOOTSTRAP: Putting NotificationController');
     Get.put(NotificationController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
     Get.put(WallpaperController(), permanent: true);
