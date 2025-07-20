@@ -30,6 +30,8 @@ class TaskCardWidget extends StatelessWidget {
     final isAssignedUser =
         task.assignedReporterId == currentUserId ||
         task.assignedCameramanId == currentUserId ||
+        task.assignedDriverId == currentUserId ||
+        task.assignedLibrarianId == currentUserId ||
         task.assignedTo == currentUserId;
     
     // Use the same color scheme as admin dashboard

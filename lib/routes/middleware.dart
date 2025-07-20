@@ -49,7 +49,7 @@ class AuthMiddleware extends GetMiddleware {
       if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
         debugPrint("AuthMiddleware: Allowing access to admin dashboard");
         return null; // Allow access
-      } else if (["Reporter", "Cameraman"].contains(role)) {
+      } else if (["Reporter", "Cameraman", "Driver", "Librarian"].contains(role)) {
         debugPrint("AuthMiddleware: Redirecting non-admin to home");
         return const RouteSettings(name: '/home');
       } else {

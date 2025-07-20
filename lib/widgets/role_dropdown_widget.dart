@@ -1,9 +1,10 @@
+// widgets/role_dropdown_widget.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 
 Widget buildRoleDropdown(AuthController controller) {
-  const List<String> roles = ['Admin', 'Assignment Head', 'HODs', 'DOPs'];
+  const List<String> roles = ['Admin', 'Assignment Head', 'HODs', 'DOPs', 'Driver', 'Librarian'];
 
   final inputDecoration = InputDecoration(
     labelText: 'Role',

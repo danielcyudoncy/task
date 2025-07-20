@@ -48,7 +48,12 @@ class _HomeScreenState extends State<HomeScreen>
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
         try {
-          taskController.fetchTasks();
+          final isAdmin = authController.isAdmin.value;
+          if (isAdmin) {
+            taskController.fetchTasks();
+          } else {
+            taskController.fetchRelevantTasksForUser();
+          }
           taskController.fetchTaskCounts();
           notificationController.fetchNotifications();
         } catch (e) {
@@ -300,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           tasksCreatedCount: tasksCreatedCount,
                                           newsFeedCount: 0, // TODO: Replace with actual count
                                           onAssignedTasksTap: () {
-                                            _tabController.animateTo(1);
+                                            _tabController.animateTo(0); // Switch to the Not Completed tab
                                           },
                                           onOnlineUsersTap: () {
                                             Get.toNamed('/all-users-chat');

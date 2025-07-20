@@ -347,8 +347,8 @@ class TaskController extends GetxController {
     }
     
     newTaskCount.value = tasks.where((task) {
-      return (task.assignedReporterId == userId || task.assignedCameramanId == userId) &&
-          task.status != "Completed";
+          return (task.assignedReporterId == userId || task.assignedCameramanId == userId || task.assignedDriverId == userId || task.assignedLibrarianId == userId) &&
+        task.status != "Completed";
     }).length;
   }
 
@@ -376,13 +376,17 @@ class TaskController extends GetxController {
     }
   }
 
-  // Assign a task to a reporter and/or cameraman, saving both the UID and Name for each.
+  // Assign a task to a reporter, cameraman, driver, and/or librarian, saving both the UID and Name for each.
   Future<void> assignTaskWithNames({
     required String taskId,
     String? reporterId,
     String? reporterName,
     String? cameramanId,
     String? cameramanName,
+    String? driverId,
+    String? driverName,
+    String? librarianId,
+    String? librarianName,
   }) async {
     try {
           final updateData = <String, dynamic>{};
@@ -401,6 +405,22 @@ class TaskController extends GetxController {
       } else {
         updateData['assignedCameramanId'] = null;
         updateData['assignedCameramanName'] = null;
+      }
+
+      if (driverId != null && driverName != null) {
+        updateData['assignedDriverId'] = driverId;
+        updateData['assignedDriverName'] = driverName;
+      } else {
+        updateData['assignedDriverId'] = null;
+        updateData['assignedDriverName'] = null;
+      }
+
+      if (librarianId != null && librarianName != null) {
+        updateData['assignedLibrarianId'] = librarianId;
+        updateData['assignedLibrarianName'] = librarianName;
+      } else {
+        updateData['assignedLibrarianId'] = null;
+        updateData['assignedLibrarianName'] = null;
       }
 
       updateData['assignedAt'] = FieldValue.serverTimestamp();
@@ -437,7 +457,7 @@ class TaskController extends GetxController {
             DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
 
         // Send notifications and push notifications to all assigned users
-        final List<String?> assignedUserIds = [reporterId, cameramanId];
+        final List<String?> assignedUserIds = [reporterId, cameramanId, driverId, librarianId];
         for (final userId in assignedUserIds) {
           if (userId != null) {
             // In-app notification
@@ -515,11 +535,15 @@ class TaskController extends GetxController {
         bool assignedToUser = data["assignedTo"] == userId;
         bool assignedAsReporter = data["assignedReporterId"] == userId;
         bool assignedAsCameraman = data["assignedCameramanId"] == userId;
+        bool assignedAsDriver = data["assignedDriverId"] == userId;
+        bool assignedAsLibrarian = data["assignedLibrarianId"] == userId;
 
         if (createdByUser ||
             assignedToUser ||
             assignedAsReporter ||
-            assignedAsCameraman) {
+            assignedAsCameraman ||
+            assignedAsDriver ||
+            assignedAsLibrarian) {
         }
       }
 
@@ -536,7 +560,9 @@ class TaskController extends GetxController {
         final data = doc.data() as Map<String, dynamic>;
         return data["assignedTo"] == userId ||
             data["assignedReporterId"] == userId ||
-            data["assignedCameramanId"] == userId;
+            data["assignedCameramanId"] == userId ||
+            data["assignedDriverId"] == userId ||
+            data["assignedLibrarianId"] == userId;
       }).toList();
 
       taskAssigned.value = assignedTasks.length;
@@ -578,13 +604,15 @@ class TaskController extends GetxController {
           }
           
           // Role-based filtering
-          if (userRole == "Reporter" || userRole == "Cameraman") {
+          if (userRole == "Reporter" || userRole == "Cameraman" || userRole == "Driver" || userRole == "Librarian") {
             updatedTasks = updatedTasks
                 .where((task) =>
                     (task.createdById == userId) ||
                     (task.assignedTo == userId) ||
                     (task.assignedReporterId == userId) ||
-                    (task.assignedCameramanId == userId))
+                    (task.assignedCameramanId == userId) ||
+                    (task.assignedDriverId == userId) ||
+                    (task.assignedLibrarianId == userId))
                 .toList();
           }
           
@@ -885,7 +913,7 @@ class TaskController extends GetxController {
     }
   }
 
-  /// Get the count of all tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId)
+  /// Get the count of all tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId, assignedDriverId, assignedLibrarianId)
   Future<int> getAssignedTasksCountForUser(String userId) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('tasks')
@@ -908,7 +936,7 @@ class TaskController extends GetxController {
     return taskIds.length;
   }
 
-  /// Stream of all non-completed tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId)
+  /// Stream of all non-completed tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId, assignedDriverId, assignedLibrarianId)
   Stream<int> assignedTasksCountStream(String userId) {
     final assignedToStream = FirebaseFirestore.instance
         .collection('tasks')
@@ -944,5 +972,86 @@ class TaskController extends GetxController {
         .where('createdBy', isEqualTo: userId)
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
+  }
+
+  /// Fetch all tasks relevant to the current user (created or assigned)
+  Future<void> fetchRelevantTasksForUser() async {
+    isLoading.value = true;
+    try {
+      final userId = authController.auth.currentUser?.uid;
+      debugPrint('fetchRelevantTasksForUser: userId = $userId');
+      if (userId == null) {
+        debugPrint('fetchRelevantTasksForUser: No user ID, clearing tasks');
+        tasks.clear();
+        isLoading.value = false;
+        return;
+      }
+      
+      // First, let's get all tasks to debug the values
+      final allTasksSnap = await FirebaseFirestore.instance
+          .collection('tasks')
+          .get();
+      debugPrint('fetchRelevantTasksForUser: total tasks in collection = ${allTasksSnap.docs.length}');
+      
+      // Debug: Print assignment fields for all tasks
+      for (var doc in allTasksSnap.docs) {
+        final data = doc.data();
+        debugPrint('fetchRelevantTasksForUser: task ${doc.id} - assignedTo=${data['assignedTo']}, assignedReporterId=${data['assignedReporterId']}, assignedCameramanId=${data['assignedCameramanId']}, assignedDriverId=${data['assignedDriverId']}, assignedLibrarianId=${data['assignedLibrarianId']}');
+      }
+      
+      // Fetch tasks where user is creator
+      final createdSnap = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('createdBy', isEqualTo: userId)
+          .get();
+      debugPrint('fetchRelevantTasksForUser: created tasks count = ${createdSnap.docs.length}');
+      // Fetch tasks where user is assigned as reporter
+      final reporterSnap = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedReporterId', isEqualTo: userId)
+          .get();
+      debugPrint('fetchRelevantTasksForUser: reporter tasks count = ${reporterSnap.docs.length}');
+      // Fetch tasks where user is assigned as cameraman
+      final cameramanSnap = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedCameramanId', isEqualTo: userId)
+          .get();
+      debugPrint('fetchRelevantTasksForUser: cameraman tasks count = ${cameramanSnap.docs.length}');
+      // Fetch tasks where user is assignedTo (generic)
+      final assignedToSnap = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedTo', isEqualTo: userId)
+          .get();
+      debugPrint('fetchRelevantTasksForUser: assignedTo tasks count = ${assignedToSnap.docs.length}');
+      // Merge and deduplicate by taskId
+      final allDocs = <String, Map<String, dynamic>>{};
+      for (var doc in createdSnap.docs) {
+        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        debugPrint('fetchRelevantTasksForUser: added created task ${doc.id}');
+      }
+      for (var doc in reporterSnap.docs) {
+        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        debugPrint('fetchRelevantTasksForUser: added reporter task ${doc.id}');
+      }
+      for (var doc in cameramanSnap.docs) {
+        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        debugPrint('fetchRelevantTasksForUser: added cameraman task ${doc.id}');
+      }
+      for (var doc in assignedToSnap.docs) {
+        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        debugPrint('fetchRelevantTasksForUser: added assignedTo task ${doc.id}');
+      }
+      // Convert to Task objects
+      final relevantTasks = allDocs.entries.map((e) => Task.fromMap(e.value, e.key)).toList();
+      debugPrint('fetchRelevantTasksForUser: final merged tasks count = ${relevantTasks.length}');
+      tasks.assignAll(relevantTasks);
+      errorMessage.value = '';
+    } catch (e) {
+      debugPrint('fetchRelevantTasksForUser: error = $e');
+      errorMessage.value = 'Failed to fetch relevant tasks: $e';
+      tasks.clear();
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

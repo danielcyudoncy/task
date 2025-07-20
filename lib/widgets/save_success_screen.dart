@@ -122,7 +122,7 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                       final role = auth.userRole.value;
                       if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
                         Get.offAllNamed("/admin-dashboard");
-                      } else if (["Reporter", "Cameraman"].contains(role)) {
+                      } else if (["Reporter", "Cameraman", "Driver", "Librarian"].contains(role)) {
                         Get.offAllNamed("/home");
                       } else {
                         Get.offAllNamed("/login");

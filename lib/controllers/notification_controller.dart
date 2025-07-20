@@ -131,7 +131,7 @@ class NotificationController extends GetxController {
             debugPrint('_updateValidNotifications: assignedTo: ${data['assignedTo']}');
             debugPrint('_updateValidNotifications: Current user ID: $uid');
             
-            if (data['assignedReporterId'] == uid || data['assignedCameramanId'] == uid || data['assignedTo'] == uid) {
+            if (data['assignedReporterId'] == uid || data['assignedCameramanId'] == uid || data['assignedDriverId'] == uid || data['assignedLibrarianId'] == uid || data['assignedTo'] == uid) {
               debugPrint('_updateValidNotifications: Task assignment matches! Adding notification');
               valid.add(n);
             } else {
