@@ -8,8 +8,8 @@ import 'package:task/widgets/app_bar.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/error_state_widget.dart';
-import 'package:task/widgets/task_card_widget.dart';
-import 'package:task/widgets/task_detail_sheet.dart';
+import 'package:task/widgets/minimal_task_card.dart';
+import 'package:task/widgets/task_detail_modal.dart';
 import 'package:task/widgets/task_skeleton_list.dart';
 import 'package:task/widgets/user_nav_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -26,7 +26,6 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
   final TextEditingController _searchController = TextEditingController();
   final RxString _searchQuery = ''.obs;
   final RxString _selectedFilter = 'All'.obs;
-  final RxList<String> _selectedTasks = <String>[].obs;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final RxList<Task> _filteredTasks = <Task>[].obs;
   
@@ -35,7 +34,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
   void initState() {
     super.initState();
     debugPrint("AllTaskScreen: initState called");
-    debugPrint("AllTaskScreen: TaskController registered: "+Get.isRegistered<TaskController>().toString());
+    debugPrint("AllTaskScreen: TaskController registered: ${Get.isRegistered<TaskController>()}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       taskController.loadAllTasksForAllUsers();
     });
@@ -77,6 +76,17 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     _filteredTasks.assignAll(filteredTasks);
   }
 
+  void _showTaskDetail(Task task) {
+    Get.find<SettingsController>().triggerFeedback();
+    showDialog(
+      context: context,
+      builder: (context) => TaskDetailModal(
+        task: task,
+        isDark: Theme.of(context).brightness == Brightness.dark,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -91,7 +101,6 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     final basePadding = isLargeScreen ? 32.0.w : 16.0.w;
 
     final colorScheme = Theme.of(context).colorScheme;
-    final dividerColor = Theme.of(context).dividerColor;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -157,35 +166,6 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   ],
                 ),
               ),
-              // Batch Selection Indicator
-              Obx(() => _selectedTasks.isNotEmpty
-                  ? Container(
-                      padding: EdgeInsets.symmetric(
-                          vertical: 8, horizontal: basePadding),
-                      color: isDark ? Colors.blueGrey[900] : colorScheme.primary.withOpacity(0.1),
-                      child: Row(
-                        children: [
-                          Text(
-                            '${_selectedTasks.length} selected',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : colorScheme.primary,
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: Icon(Icons.close,
-                                color:
-                                    isDark ? Colors.white : colorScheme.primary),
-                            onPressed: () {
-                              Get.find<SettingsController>().triggerFeedback();
-                              _selectedTasks.clear();
-                            },
-                          ),
-                        ],
-                      ),
-                    )
-                  : const SizedBox.shrink()),
               // Main Content
               Expanded(
                 child: Obx(() {
@@ -214,21 +194,15 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   }
                   return RefreshIndicator(
                     onRefresh: () async {
-                      _selectedTasks.clear();
                       await taskController.loadAllTasksForAllUsers();
                       _filterTasks();
                     },
                     child: ListView.separated(
                       padding: EdgeInsets.symmetric(
-                          horizontal: isLargeScreen ? 32.w : 8.w, vertical: 20),
+                          horizontal: isLargeScreen ? 16.w : 8.w, vertical: 16),
                       itemCount: _filteredTasks.length +
                           (taskController.hasMore ? 1 : 0),
-                      separatorBuilder: (_, __) => Divider(
-                        color: dividerColor,
-                        thickness: 1,
-                        indent: 16.w,
-                        endIndent: 16.w,
-                      ),
+                      separatorBuilder: (context, index) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         if (index >= _filteredTasks.length) {
                           return const Center(
@@ -239,24 +213,23 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           );
                         }
                         final task = _filteredTasks[index];
-                        return GestureDetector(
-                          onLongPress: () {
-                            if (_selectedTasks.contains(task.taskId)) {
-                              _selectedTasks.remove(task.taskId);
-                            } else {
-                              _selectedTasks.add(task.taskId);
-                            }
+                        return MinimalTaskCard(
+                          task: task,
+                          isDark: isDark,
+                          onTap: () => _showTaskDetail(task),
+                          onDismiss: () {
+                            debugPrint('AllTaskScreen: Task dismissed - ${task.title}');
+                            // Remove the task from the filtered list
+                            _filteredTasks.remove(task);
+                            // You can also add logic to delete from database here
+                            Get.snackbar(
+                              'Task Deleted',
+                              'Task "${task.title}" has been deleted',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red.withValues(alpha: 0.1),
+                              colorText: Colors.red,
+                            );
                           },
-                          child: Container(
-                            color: _selectedTasks.contains(task.taskId)
-                                ? colorScheme.surfaceVariant
-                                : Colors.transparent,
-                            child: TaskCardWidget(
-                              task: task,
-                              isCompleted: task.status == 'Completed',
-                              isDark: isDark,
-                            ),
-                          ),
                         );
                       },
                     ),

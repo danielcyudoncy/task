@@ -477,6 +477,12 @@ class AdminController extends GetxController {
       } else if (userRole == 'Cameraman') {
         updateData['assignedCameramanId'] = userId;
         updateData['assignedCameramanName'] = assignedName;
+      } else if (userRole == 'Driver') {
+        updateData['assignedDriverId'] = userId;
+        updateData['assignedDriverName'] = assignedName;
+      } else if (userRole == 'Librarian') {
+        updateData['assignedLibrarianId'] = userId;
+        updateData['assignedLibrarianName'] = assignedName;
       }
       await firestore.collection('tasks').doc(taskId).update(updateData);
 

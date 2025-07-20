@@ -156,10 +156,14 @@ class TaskAssignmentScreen extends StatelessWidget {
                 
                 final unassignedTasks = taskController.tasks
                     .where((task) =>
-                        (task.assignedReporterId == null ||
-                            task.assignedReporterId!.isEmpty) &&
-                        (task.assignedCameramanId == null ||
-                            task.assignedCameramanId!.isEmpty))
+                                    (task.assignedReporterId == null ||
+            task.assignedReporterId!.isEmpty) &&
+            (task.assignedCameramanId == null ||
+            task.assignedCameramanId!.isEmpty) &&
+            (task.assignedDriverId == null ||
+            task.assignedDriverId!.isEmpty) &&
+            (task.assignedLibrarianId == null ||
+            task.assignedLibrarianId!.isEmpty))
                     .toList();
 
                 if (unassignedTasks.isEmpty) {

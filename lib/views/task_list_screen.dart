@@ -45,6 +45,12 @@ class TaskListScreen extends StatelessWidget {
           } else if (userRole == "Cameraman") {
             return task.assignedCameramanId == userId ||
                 task.createdById == userId;
+          } else if (userRole == "Driver") {
+            return task.assignedDriverId == userId ||
+                task.createdById == userId;
+          } else if (userRole == "Librarian") {
+            return task.assignedLibrarianId == userId ||
+                task.createdById == userId;
           }
           return true;
         }).toList();
