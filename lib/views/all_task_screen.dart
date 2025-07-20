@@ -217,19 +217,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           task: task,
                           isDark: isDark,
                           onTap: () => _showTaskDetail(task),
-                          onDismiss: () {
-                            debugPrint('AllTaskScreen: Task dismissed - ${task.title}');
-                            // Remove the task from the filtered list
-                            _filteredTasks.remove(task);
-                            // You can also add logic to delete from database here
-                            Get.snackbar(
-                              'Task Deleted',
-                              'Task "${task.title}" has been deleted',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.red.withValues(alpha: 0.1),
-                              colorText: Colors.red,
-                            );
-                          },
+                          enableSwipeToDelete: false, // Disable swipe-to-delete for view-only screen
                         );
                       },
                     ),
