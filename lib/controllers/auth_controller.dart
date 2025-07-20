@@ -56,6 +56,8 @@ class AuthController extends GetxController {
   final List<String> userRoles = [
     "Reporter",
     "Cameraman",
+    "Driver",
+    "Librarian",
     "Assignment Editor",
     "Head of Department",
     "Head of Unit",
@@ -149,7 +151,7 @@ class AuthController extends GetxController {
         role == "Assignment Editor" ||
         role == "Head of Department") {
       Get.offAllNamed('/admin-dashboard');
-    } else if (role == "Reporter" || role == "Cameraman") {
+    } else if (role == "Reporter" || role == "Cameraman" || role == "Driver" || role == "Librarian") {
       Get.offAllNamed('/home');
     } else {
       Get.offAllNamed('/login');
@@ -332,7 +334,7 @@ class AuthController extends GetxController {
         if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
           debugPrint("🚀 Navigating to admin-dashboard");
           Get.offAllNamed("/admin-dashboard");
-        } else if (["Reporter", "Cameraman"].contains(role)) {
+        } else if (["Reporter", "Cameraman", "Driver", "Librarian"].contains(role)) {
           debugPrint("🚀 Navigating to home");
           Get.offAllNamed("/home");
         } else {
@@ -649,7 +651,7 @@ class AuthController extends GetxController {
           if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
             debugPrint("AuthController: Navigating to admin-dashboard");
             Get.offAllNamed("/admin-dashboard");
-          } else if (["Reporter", "Cameraman"].contains(role)) {
+          } else if (["Reporter", "Cameraman", "Driver", "Librarian"].contains(role)) {
             debugPrint("AuthController: Navigating to home");
             Get.offAllNamed("/home");
           } else {

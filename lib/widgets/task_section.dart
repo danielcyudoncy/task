@@ -128,14 +128,21 @@ class TasksSection extends StatelessWidget {
           
           final userId = authController.auth.currentUser?.uid ?? "";
           final tasks = taskController.tasks;
+          debugPrint('TasksSection: userId = $userId');
+          debugPrint('TasksSection: total tasks in controller = ${tasks.length}');
           final taskMap = {for (var task in tasks) task.taskId: task};
           final notCompletedTasks = taskMap.values.where((t) {
-            return (t.status != "Completed") &&
-                (t.createdById == userId ||
-                    t.assignedTo == userId ||
-                    t.assignedReporterId == userId ||
-                    t.assignedCameramanId == userId);
+            final isRelevant = (t.createdById == userId ||
+                t.assignedTo == userId ||
+                t.assignedReporterId == userId ||
+                t.assignedCameramanId == userId ||
+                t.assignedDriverId == userId ||
+                t.assignedLibrarianId == userId);
+            final isNotCompleted = t.status != "Completed";
+            debugPrint('TasksSection: task ${t.taskId} - createdById=${t.createdById}, assignedTo=${t.assignedTo}, assignedReporterId=${t.assignedReporterId}, assignedCameramanId=${t.assignedCameramanId}, assignedDriverId=${t.assignedDriverId}, assignedLibrarianId=${t.assignedLibrarianId}, status=${t.status}, isRelevant=$isRelevant, isNotCompleted=$isNotCompleted');
+            return isNotCompleted && isRelevant;
           }).toList();
+          debugPrint('TasksSection: notCompletedTasks count = ${notCompletedTasks.length}');
 
           return TaskListTab(
             isCompleted: false,
@@ -158,7 +165,9 @@ class TasksSection extends StatelessWidget {
                   (t.createdById == userId ||
                       t.assignedTo == userId ||
                       t.assignedReporterId == userId ||
-                      t.assignedCameramanId == userId))
+                      t.assignedCameramanId == userId ||
+                      t.assignedDriverId == userId ||
+                      t.assignedLibrarianId == userId))
               .toList();
 
           return TaskListTab(
