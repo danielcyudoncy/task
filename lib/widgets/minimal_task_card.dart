@@ -11,6 +11,7 @@ class MinimalTaskCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isSelected;
   final VoidCallback? onDismiss;
+  final bool enableSwipeToDelete;
 
   const MinimalTaskCard({
     super.key,
@@ -19,6 +20,7 @@ class MinimalTaskCard extends StatelessWidget {
     this.onTap,
     this.isSelected = false,
     this.onDismiss,
+    this.enableSwipeToDelete = false,
   });
 
   @override
@@ -36,48 +38,7 @@ class MinimalTaskCard extends StatelessWidget {
     final Color borderColor = colorScheme.outline.withValues(alpha: 0.3);
     final Color selectedColor = colorScheme.primary.withValues(alpha: 0.1);
 
-    return Dismissible(
-      key: ValueKey(task.taskId),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (direction) async {
-        debugPrint('MinimalTaskCard: Swipe detected for task - ${task.title}');
-        return await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Task'),
-            content: Text('Are you sure you want to delete "${task.title}"?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-        ) ?? false;
-      },
-      onDismissed: (direction) {
-        debugPrint('MinimalTaskCard: Task dismissed - ${task.title}');
-        onDismiss?.call();
-      },
-      background: Container(
-        decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: 30,
-        ),
-      ),
-      child: Container(
+    Widget cardContent = Container(
         margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
         decoration: BoxDecoration(
           color: isSelected ? selectedColor : cardColor,
@@ -275,8 +236,56 @@ class MinimalTaskCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
+
+    // Conditionally wrap with Dismissible if swipe-to-delete is enabled
+    if (enableSwipeToDelete) {
+      return Dismissible(
+        key: ValueKey(task.taskId),
+        direction: DismissDirection.endToStart,
+        confirmDismiss: (direction) async {
+          debugPrint('MinimalTaskCard: Swipe detected for task - ${task.title}');
+          return await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Delete Task'),
+              content: Text('Are you sure you want to delete "${task.title}"?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          ) ?? false;
+        },
+        onDismissed: (direction) {
+          debugPrint('MinimalTaskCard: Task dismissed - ${task.title}');
+          onDismiss?.call();
+        },
+        background: Container(
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          child: const Icon(
+            Icons.delete,
+            color: Colors.white,
+            size: 30,
+          ),
+        ),
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 
   String _getAssignmentText() {
@@ -288,6 +297,14 @@ class MinimalTaskCard extends StatelessWidget {
     
     if (task.assignedCameraman != null && task.assignedCameraman!.isNotEmpty) {
       assignments.add('Cameraman: ${task.assignedCameraman}');
+    }
+    
+    if (task.assignedDriver != null && task.assignedDriver!.isNotEmpty) {
+      assignments.add('Driver: ${task.assignedDriver}');
+    }
+    
+    if (task.assignedLibrarian != null && task.assignedLibrarian!.isNotEmpty) {
+      assignments.add('Librarian: ${task.assignedLibrarian}');
     }
     
     if (assignments.isEmpty) {
