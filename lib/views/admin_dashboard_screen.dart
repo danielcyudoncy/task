@@ -951,7 +951,15 @@ class _TasksTabState extends State<_TasksTab> {
         }
         // Map doc to Task object
         final task = Task.fromMap(doc, doc['id'] ?? doc['taskId'] ?? '');
+        final taskId = task.taskId;
+        if (taskId == null || taskId.toString().isEmpty) {
+          debugPrint('Task with missing/null taskId: $task');
+          return const SizedBox.shrink();
+        }
+        // Optionally, check for duplicate keys (not strictly necessary, but helpful for debugging)
+        // You could keep a Set of seen ids if you want to debug further.
         return TaskCardWidget(
+          key: ValueKey(taskId),
           task: task,
           isCompleted: task.status == 'Completed',
           isDark: widget.isDark,

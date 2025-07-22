@@ -7,6 +7,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import '../models/task_model.dart';
+import 'package:get/get.dart';
+import '../routes/global_bindings.dart';
+import '../my_app.dart';
 // import 'package:supabase_flutter/supabase_flutter.dart';  // Removed - using Firebase Storage
 
 // --- Ensure all your controllers and services are imported ---
@@ -29,6 +35,7 @@ import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
+import 'package:task/service/isar_task_service.dart';
 
 // --- Emulator/Production Switch ---
 const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
@@ -63,7 +70,12 @@ Future<void> bootstrapApp() async {
 
     debugPrint("🚀 BOOTSTRAP: Skipping Supabase initialization - using Firebase Storage");
 
-    // Step 2: Initialize services and controllers with no dependencies
+    // Step 2: Open Isar and register IsarTaskService BEFORE any controller
+    final dir = await getApplicationDocumentsDirectory();
+    final isar = await Isar.open([TaskSchema], directory: dir.path);
+    Get.put(IsarTaskService(isar), permanent: true);
+
+    // Step 3: Initialize services and controllers with no dependencies
     debugPrint("🚀 BOOTSTRAP: Initializing audio player");
     final audioPlayer = await _initializeAudioPlayer();
     debugPrint("🚀 BOOTSTRAP: Audio player initialized");
@@ -130,7 +142,9 @@ Future<void> bootstrapApp() async {
     _isBootstrapComplete = true;
     debugPrint('🚀 BOOTSTRAP: Bootstrap marked as complete');
     
-    runApp(const MyApp());
+    runApp(
+      MyApp(isar: isar),
+    );
     debugPrint('🚀 BOOTSTRAP: App launched successfully');
   } catch (e, stackTrace) {
     debugPrint('DEBUG: CRASH CAUGHT!');

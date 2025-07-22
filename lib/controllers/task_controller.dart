@@ -11,10 +11,12 @@ import '../service/firebase_service.dart';
 import '../utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
 import 'package:task/service/fcm_service.dart';
+import '../service/isar_task_service.dart';
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
   final AuthController authController = Get.find<AuthController>();
+  late final IsarTaskService isarTaskService;
 
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
@@ -62,6 +64,7 @@ class TaskController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
+    isarTaskService = Get.find<IsarTaskService>();
     // Delay initialization to ensure proper setup
     Future.delayed(const Duration(milliseconds: 300), () async {
       if (Get.isRegistered<TaskController>()) {
@@ -150,7 +153,7 @@ class TaskController extends GetxController {
   }
 
   // --- PAGINATED, FILTERED, SEARCHABLE TASK LOADING ---
-  Future<void> loadInitialTasks(
+  Future<void> loadInitialTasksPaginated(
       {String? search, String? filter, String? sort}) async {
     tasks.clear();
     lastDocument = null;
@@ -634,7 +637,8 @@ class TaskController extends GetxController {
   }
 
   // --- TASK CRUD ---
- Future<void> createTask(
+  // --- OVERRIDE createTask to use local-first, then sync to Firebase ---
+  Future<void> createTask(
     String title,
     String description, {
     String priority = 'Normal',
@@ -664,9 +668,43 @@ class TaskController extends GetxController {
 
       isLoading(true);
       debugPrint('createTask: isLoading set to true');
-      debugPrint('createTask: creating task in Firebase');
 
-      // Create task data
+      // Create local Task object
+      final localTask = Task.full(
+        DateTime.now().millisecondsSinceEpoch.toString(), // temp local ID
+        title,
+        description,
+        authController.fullName.value,
+        null, // assignedReporter
+        null, // assignedCameraman
+        null, // assignedDriver
+        null, // assignedLibrarian
+        'Pending',
+        [],
+        DateTime.now(),
+        null, // assignedTo
+        null, // assignmentTimestamp
+        userId,
+        null, // assignedReporterId
+        null, // assignedCameramanId
+        null, // assignedDriverId
+        null, // assignedLibrarianId
+        authController.profilePic.value,
+        category,
+        tags ?? [],
+        dueDate,
+        priority,
+        lastModified: DateTime.now(),
+        syncStatus: 'pending',
+      );
+      // Save to Isar first for instant UX
+      await addTaskLocal(localTask);
+      // Update UI instantly
+      tasks.insert(0, localTask);
+      tasks.refresh();
+      _safeSnackbar("Success", "Task saved locally");
+
+      // Prepare data for Firebase
       final taskData = {
         "title": title,
         "description": description,
@@ -679,32 +717,25 @@ class TaskController extends GetxController {
         "assignedCameramanName": null,
         "status": "Pending",
         "priority": priority,
-        "dueDate": dueDate != null ? dueDate.toIso8601String() : null,
+        "dueDate": dueDate?.toIso8601String(),
         "comments": [],
         "timestamp": FieldValue.serverTimestamp(),
         "category": category,
         "tags": tags ?? [],
+        "lastModified": DateTime.now().toIso8601String(),
+        "syncStatus": "synced",
       };
-      debugPrint('createTask: taskData = $taskData');
-      debugPrint('createTask: calling _firebaseService.createTask');
+      // Sync to Firebase in background
       await _firebaseService.createTask(taskData);
       debugPrint('createTask: Firebase call complete');
-      debugPrint('createTask: refreshing tasks');
-      // Force a full refresh from Firestore after creation
+      // Optionally, update Isar with the real Firebase ID after sync
       await loadInitialTasks();
-      // Add debug print for all tasks
-      for (final t in tasks) {
-        debugPrint('TaskController: after create, taskId=${t.taskId}, category=${t.category}, tags=${t.tags}, dueDate=${t.dueDate}');
-      }
-      debugPrint('createTask: calculating new task count');
-      debugPrint('createTask: showing success snackbar');
-      _safeSnackbar("Success", "Task created successfully");
-      debugPrint('createTask: finished successfully');
+      _safeSnackbar("Success", "Task synced to cloud");
       return;
     } catch (e) {
       debugPrint('createTask: error: $e');
       _safeSnackbar("Error", "Failed to create task: $e");
-      rethrow; // Re-throw to let the UI know creation failed
+      rethrow;
     } finally {
       debugPrint('createTask: finally block - resetting loading state');
       isLoading(false);
@@ -715,11 +746,7 @@ class TaskController extends GetxController {
       String taskId, String title, String description, String status) async {
     try {
       isLoading(true);
-      await _firebaseService.updateTask(taskId, {
-        "title": title,
-        "description": description,
-        "status": status,
-      });
+      // Update local task first
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
         Task updatedTask = tasks[taskIndex].copyWith(
@@ -727,13 +754,26 @@ class TaskController extends GetxController {
           description: description,
           status: status,
         );
+        // Set lastModified and syncStatus
+        updatedTask.lastModified = DateTime.now();
+        updatedTask.syncStatus = 'pending';
+        await updateTaskLocal(updatedTask);
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
       }
-      _safeSnackbar("Success", "Task updated successfully");
+      _safeSnackbar("Success", "Task updated locally");
+      // Sync to Firebase
+      await _firebaseService.updateTask(taskId, {
+        "title": title,
+        "description": description,
+        "status": status,
+        "lastModified": DateTime.now().toIso8601String(),
+        "syncStatus": "synced",
+      });
+      _safeSnackbar("Success", "Task updated in cloud");
       calculateNewTaskCount(); // Calculate new task count after updating task
     } catch (e) {
-      _safeSnackbar("Error", "Failed to update task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to update task: "+e.toString());
     } finally {
       isLoading(false);
     }
@@ -742,13 +782,17 @@ class TaskController extends GetxController {
   Future<void> deleteTask(String taskId) async {
     try {
       isLoading(true);
-      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
+      // Delete from local storage first
+      await deleteTaskLocal(taskId);
       tasks.removeWhere((task) => task.taskId == taskId);
       tasks.refresh();
-      _safeSnackbar("Success", "Task deleted successfully");
+      _safeSnackbar("Success", "Task deleted locally");
+      // Sync to Firebase
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
+      _safeSnackbar("Success", "Task deleted in cloud");
       calculateNewTaskCount(); // Calculate new task count after deleting task
     } catch (e) {
-      _safeSnackbar("Error", "Failed to delete task: ${e.toString()}");
+      _safeSnackbar("Error", "Failed to delete task: "+e.toString());
     } finally {
       isLoading(false);
     }
@@ -1052,6 +1096,89 @@ class TaskController extends GetxController {
       tasks.clear();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // --- LOCAL CRUD METHODS (ISAR) ---
+  Future<void> addTaskLocal(Task task) async {
+    task.lastModified = DateTime.now();
+    task.syncStatus = 'pending';
+    await isarTaskService.addTask(task);
+  }
+
+  Future<List<Task>> getAllTasksLocal() async {
+    return await isarTaskService.getAllTasks();
+  }
+
+  Future<void> updateTaskLocal(Task task) async {
+    task.lastModified = DateTime.now();
+    task.syncStatus = 'pending';
+    await isarTaskService.updateTask(task);
+  }
+
+  Future<void> deleteTaskLocal(String taskId) async {
+    await isarTaskService.deleteTask(taskId);
+  }
+
+  // --- OVERRIDE loadInitialTasks to use Isar for instant load, then sync from Firebase ---
+  Future<void> loadInitialTasks() async {
+    isLoading(true);
+    try {
+      // Load from Isar first for instant UI
+      final localTasks = await getAllTasksLocal();
+      tasks.assignAll(localTasks);
+      tasks.refresh();
+      // Then sync from Firebase and update Isar
+      await loadTasksFromFirebaseAndUpdateIsar();
+    } catch (e) {
+      errorMessage.value = 'Failed to load tasks: $e';
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> loadTasksFromFirebaseAndUpdateIsar() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .orderBy('timestamp', descending: true)
+          .get();
+      final firebaseTasks = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return Task.fromMap(data, doc.id);
+      }).toList();
+      // Update Isar with latest from Firebase, with conflict resolution
+      for (final remoteTask in firebaseTasks) {
+        final localTask = await isarTaskService.getTaskById(remoteTask.taskId);
+        if (localTask == null) {
+          // Not in local DB, add it
+          remoteTask.syncStatus = 'synced';
+          await addTaskLocal(remoteTask);
+        } else {
+          // Conflict resolution: last-write-wins
+          final localModified = localTask.lastModified ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final remoteModified = remoteTask.lastModified ?? DateTime.fromMillisecondsSinceEpoch(0);
+          if (remoteModified.isAfter(localModified)) {
+            // Remote wins
+            remoteTask.syncStatus = 'synced';
+            await updateTaskLocal(remoteTask);
+          } else if (localModified.isAfter(remoteModified)) {
+            // Local wins, mark as conflict if not already synced
+            localTask.syncStatus = 'conflict';
+            await updateTaskLocal(localTask);
+          } else {
+            // Same, mark as synced
+            localTask.syncStatus = 'synced';
+            await updateTaskLocal(localTask);
+          }
+        }
+      }
+      // Update UI
+      final allLocalTasks = await getAllTasksLocal();
+      tasks.assignAll(allLocalTasks);
+      tasks.refresh();
+    } catch (e) {
+      errorMessage.value = 'Failed to sync tasks from cloud: $e';
     }
   }
 }
