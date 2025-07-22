@@ -58,7 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     final authenticated = await _biometricService.authenticate(reason: 'Please authenticate to login');
     if (authenticated) {
-      // You can customize this: auto-login, unlock, or pre-fill credentials
       _submit();
     } else {
       _safeSnackbar('Error', 'Biometric authentication failed.');
@@ -103,12 +102,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(16),
                             child: Image.asset(
                               AppIcons.logo,
-                              height: 200,
+                              height: 150,
                             ),
                           ),
                         ),
 
-                        const SizedBox(height: 2),
+                      
 
                         // Main box container
                         Container(
@@ -310,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             fontWeight: FontWeight.bold,
                                             fontFamily: 'Raleway',
                                             color: colorScheme.onPrimary),
-                                      ),
+                                    )
                                     );
                                   }
                                   
@@ -318,8 +317,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ? const Center(child: CircularProgressIndicator())
                                       : ElevatedButton(
                                           style: ElevatedButton.styleFrom(
-                                            foregroundColor: colorScheme.onPrimary,
-                                            backgroundColor: colorScheme.primary,
+                                            foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
+                                            backgroundColor: colorScheme.secondary,
                                             padding: const EdgeInsets.symmetric(vertical: 16),
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(12),
@@ -332,9 +331,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                           child: Text(
                                             'sign_in'.tr,
                                             style: textTheme.bodyLarge?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'Raleway',
-                                                color: colorScheme.onPrimary),
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Raleway',
+                                              color: isDark ? Colors.black : colorScheme.onSecondary,
+                                            ),
                                           ),
                                         );
                                 }),
@@ -371,20 +371,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                       onPressed: () {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        _safeSnackbar('coming_soon'.tr,
-                                            'google_signup_not_implemented'.tr);
+                                        Get.snackbar(
+                                          'coming_soon'.tr,
+                                          'google_signin_not_implemented'.tr,
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .surface,
+                                          colorText: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        );
                                       },
                                     ),
-                                    const SizedBox(width: 20),
+                                    SizedBox(width: 20.w),
                                     IconButton(
                                       icon: Image.asset(AppIcons.apple,
-                                          width: 48, height: 48),
+                                          width: 48.w, height: 48.h),
                                       onPressed: () {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        _safeSnackbar(
+                                        Get.snackbar(
                                           'coming_soon'.tr,
-                                          'apple_signup_not_implemented'.tr,
+                                          'apple_signin_not_implemented'.tr,
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .surface,
+                                          colorText: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
                                         );
                                       },
                                     ),
@@ -443,21 +457,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 40),
-                        const SizedBox(height: 16),
-                        // Biometric login button
+                        
+                       
+                        const SizedBox(height: 12),
+
                         ElevatedButton.icon(
                           icon: const Icon(Icons.fingerprint),
                           label: Text('login_with_fingerprint'.tr),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            foregroundColor: Colors.white,
+                            backgroundColor: colorScheme.secondary,
+                            foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: _biometricLogin,
+                          onPressed: () async {
+                            Get.find<SettingsController>().triggerFeedback();
+                            _biometricLogin();
+                          },
                         ),
                       ],
                     ),
@@ -467,19 +485,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // Back Button
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 16,
-            child: IconButton(
-              icon: Icon(Icons.arrow_back,
-                  color: colorScheme.onPrimary),
-              onPressed: () {
-                Get.find<SettingsController>().triggerFeedback();
-                Get.back();
-              },
-            ),
-          ),
+         
         ],
       ),
     );
