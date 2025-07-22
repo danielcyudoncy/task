@@ -10,10 +10,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/task_model.dart';
-import 'package:get/get.dart';
-import '../routes/global_bindings.dart';
 import '../my_app.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';  // Removed - using Firebase Storage
 
 // --- Ensure all your controllers and services are imported ---
 import 'package:task/controllers/admin_controller.dart';
@@ -27,7 +24,6 @@ import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/user_controller.dart';
 import 'package:task/controllers/wallpaper_controller.dart';
 import 'package:task/firebase_options.dart';
-import 'package:task/my_app.dart';
 import 'package:task/service/mock_user_deletion_service.dart';
 import 'package:task/service/user_deletion_service.dart';
 import 'package:task/service/cloud_function_user_deletion_service.dart';
