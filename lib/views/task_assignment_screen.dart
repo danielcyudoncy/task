@@ -8,7 +8,7 @@ import '../controllers/user_controller.dart';
 import '../controllers/auth_controller.dart';
 
 class TaskAssignmentScreen extends StatelessWidget {
-  final TaskController taskController = Get.put(TaskController());
+  final TaskController taskController = Get.find<TaskController>();
   final UserController userController = Get.find<UserController>();
   final AuthController authController = Get.find<AuthController>();
 

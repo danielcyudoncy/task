@@ -166,7 +166,7 @@ class TaskDetailModal extends StatelessWidget {
                               DateFormat('MMM dd, yyyy HH:mm').format(task.dueDate!), 
                               Icons.schedule_outlined),
                         _buildDetailRow(context, 'Created', 
-                            DateFormat('MMM dd, yyyy HH:mm').format(task.timestamp.toDate()), 
+                            DateFormat('MMM dd, yyyy HH:mm').format(task.timestamp), 
                             Icons.access_time_outlined),
                       ],
                     ),
