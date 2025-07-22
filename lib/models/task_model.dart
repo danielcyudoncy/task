@@ -1,100 +1,140 @@
 // models/task_model.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:isar/isar.dart';
+part 'task_model.g.dart';
 
+DateTime? parseDate(dynamic value) {
+  if (value == null) return null;
+  if (value is DateTime) return value;
+  if (value is Timestamp) return value.toDate();
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
+
+@Collection()
 class Task {
-  final String taskId;
-  final String title;
-  final String description;
-  final String createdBy; // Human-readable name
-  final String? assignedReporter; // Human-readable name (nullable)
-  final String? assignedCameraman; // Human-readable name (nullable)
-  final String? assignedDriver; // Human-readable name (nullable)
-  final String? assignedLibrarian; // Human-readable name (nullable)
-  final String status;
-  final List<String> comments;
-  final Timestamp timestamp;
-  final String? assignedTo;
+  Id isarId = Isar.autoIncrement; // Local Isar ID
+
+  late String taskId;
+  late String title;
+  late String description;
+  late String createdBy; // Human-readable name
+  String? assignedReporter; // Human-readable name (nullable)
+  String? assignedCameraman; // Human-readable name (nullable)
+  String? assignedDriver; // Human-readable name (nullable)
+  String? assignedLibrarian; // Human-readable name (nullable)
+  late String status;
+  List<String> comments = [];
+  late DateTime timestamp;
+  String? assignedTo;
 
   /// Timestamp for when the task was assigned to a user (for daily tracking)
-  final Timestamp? assignmentTimestamp;
+  DateTime? assignmentTimestamp;
 
   // New fields for robust filtering & permission checks
-  final String createdById;
-  final String? assignedReporterId;
-  final String? assignedCameramanId;
-  final String? assignedDriverId;
-  final String? assignedLibrarianId;
-  final String? creatorAvatar; // Avatar URL from task document
+  late String createdById;
+  String? assignedReporterId;
+  String? assignedCameramanId;
+  String? assignedDriverId;
+  String? assignedLibrarianId;
+  String? creatorAvatar; // Avatar URL from task document
 
   // --- New fields for category, tags, dueDate ---
-  final String? category;
-  final List<String>? tags;
-  final DateTime? dueDate;
-  final String? priority;
+  String? category;
+  List<String> tags = [];
+  DateTime? dueDate;
+  String? priority;
 
-  Task({
-    required this.taskId,
-    required this.title,
-    required this.description,
-    required this.createdBy,
+  DateTime? lastModified;
+  String? syncStatus; // 'pending', 'synced', 'conflict'
+
+  Task()
+      : taskId = '',
+        title = '',
+        description = '',
+        createdBy = '',
+        assignedReporter = null,
+        assignedCameraman = null,
+        assignedDriver = null,
+        assignedLibrarian = null,
+        status = '',
+        comments = const [],
+        timestamp = DateTime.now(),
+        assignedTo = null,
+        assignmentTimestamp = null,
+        createdById = '',
+        assignedReporterId = null,
+        assignedCameramanId = null,
+        assignedDriverId = null,
+        assignedLibrarianId = null,
+        creatorAvatar = null,
+        category = null,
+        tags = const [],
+        dueDate = null,
+        priority = null,
+        lastModified = DateTime.now(),
+        syncStatus = 'pending';
+  Task.full(
+    this.taskId,
+    this.title,
+    this.description,
+    this.createdBy,
     this.assignedReporter,
     this.assignedCameraman,
     this.assignedDriver,
     this.assignedLibrarian,
+    this.status,
+    this.comments,
+    this.timestamp,
     this.assignedTo,
-    required this.status,
-    required this.comments,
-    required this.timestamp,
-    required this.createdById,
+    this.assignmentTimestamp,
+    this.createdById,
     this.assignedReporterId,
     this.assignedCameramanId,
     this.assignedDriverId,
     this.assignedLibrarianId,
-    this.assignmentTimestamp,
     this.creatorAvatar,
     this.category,
     this.tags,
     this.dueDate,
     this.priority,
-  });
+    {this.lastModified, this.syncStatus}
+  );
 
   // Factory for Firestore maps
   factory Task.fromMap(Map<String, dynamic> map, String id) {
     debugPrint('fromMap: id=$id, category=${map['category']}, tags=${map['tags']}, dueDate=${map['dueDate']}, priority=${map['priority']}');
     debugPrint('fromMap: assignedReporterId=${map['assignedReporterId']}, assignedCameramanId=${map['assignedCameramanId']}, assignedDriverId=${map['assignedDriverId']}, assignedLibrarianId=${map['assignedLibrarianId']}');
-    return Task(
-      taskId: id,
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
-      createdBy: map['createdByName'] ?? '',
-      assignedReporter: map['assignedReporterName'],
-      assignedCameraman: map['assignedCameramanName'],
-      assignedDriver: map['assignedDriverName'],
-      assignedLibrarian: map['assignedLibrarianName'],
-      status: map['status'] ?? 'Pending',
-      comments: List<String>.from(map['comments'] ?? []),
-      timestamp: map['timestamp'] is Timestamp
-          ? map['timestamp']
-          : (map['timestamp'] != null ? Timestamp.fromDate(DateTime.parse(map['timestamp'])) : Timestamp.now()),
-      createdById: map['createdBy'] ?? '',
-      assignedTo: map['assignedTo'],
-      assignedReporterId: map['assignedReporterId'],  // ✅ Fixed field name
-      assignedCameramanId: map['assignedCameramanId'], // ✅ Fixed field name
-      assignedDriverId: map['assignedDriverId'],
-      assignedLibrarianId: map['assignedLibrarianId'],
-      assignmentTimestamp: map['assignmentTimestamp'],
-      creatorAvatar: map['creatorAvatar'],
-      category: map['category'] ?? '',
-      tags: map['tags'] is List ? List<String>.from(map['tags']) : [],
-      dueDate: map['dueDate'] != null && map['dueDate'] != ''
-          ? (map['dueDate'] is String
-              ? DateTime.tryParse(map['dueDate'])
-              : (map['dueDate'] is Timestamp
-                  ? (map['dueDate'] as Timestamp).toDate()
-                  : null))
-          : null,
-      priority: map['priority'] ?? 'Normal',
+    return Task.full(
+      map['taskId'] ?? id,
+      map['title'] ?? '',
+      map['description'] ?? '',
+      map['createdBy'] ?? '',
+      map['assignedReporter'],
+      map['assignedCameraman'],
+      map['assignedDriver'],
+      map['assignedLibrarian'],
+      map['status'] ?? '',
+      List<String>.from(map['comments'] ?? []),
+      // timestamp
+      parseDate(map['timestamp']) ?? DateTime.now(),
+      map['assignedTo'],
+      // assignmentTimestamp
+      parseDate(map['assignmentTimestamp']),
+      map['createdById'] ?? '',
+      map['assignedReporterId'],
+      map['assignedCameramanId'],
+      map['assignedDriverId'],
+      map['assignedLibrarianId'],
+      map['creatorAvatar'],
+      map['category'],
+      List<String>.from(map['tags'] ?? []),
+      // dueDate
+      parseDate(map['dueDate']),
+      map['priority'],
+      lastModified: parseDate(map['lastModified']),
+      syncStatus: map['syncStatus'],
     );
   }
 
@@ -110,42 +150,44 @@ class Task {
     String? assignedLibrarian,
     String? status,
     List<String>? comments,
-    Timestamp? timestamp,
+    DateTime? timestamp,
     String? createdById,
     String? assignedReporterId,
     String? assignedCameramanId,
     String? assignedDriverId,
     String? assignedLibrarianId,
-    Timestamp? assignmentTimestamp,
+    DateTime? assignmentTimestamp,
     String? creatorAvatar,
     String? category,
     List<String>? tags,
     DateTime? dueDate,
     String? priority,
+    String? assignedTo,
   }) {
-    return Task(
-      taskId: taskId ?? this.taskId,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      createdBy: createdBy ?? this.createdBy,
-      assignedReporter: assignedReporter ?? this.assignedReporter,
-      assignedCameraman: assignedCameraman ?? this.assignedCameraman,
-      assignedDriver: assignedDriver ?? this.assignedDriver,
-      assignedLibrarian: assignedLibrarian ?? this.assignedLibrarian,
-      status: status ?? this.status,
-      comments: comments ?? this.comments,
-      timestamp: timestamp ?? this.timestamp,
-      createdById: createdById ?? this.createdById,
-      assignedReporterId: assignedReporterId ?? this.assignedReporterId,
-      assignedCameramanId: assignedCameramanId ?? this.assignedCameramanId,
-      assignedDriverId: assignedDriverId ?? this.assignedDriverId,
-      assignedLibrarianId: assignedLibrarianId ?? this.assignedLibrarianId,
-      assignmentTimestamp: assignmentTimestamp ?? this.assignmentTimestamp,
-      creatorAvatar: creatorAvatar ?? this.creatorAvatar,
-      category: category ?? this.category,
-      tags: tags ?? this.tags,
-      dueDate: dueDate ?? this.dueDate,
-      priority: priority ?? this.priority,
+    return Task.full(
+      taskId ?? this.taskId,
+      title ?? this.title,
+      description ?? this.description,
+      createdBy ?? this.createdBy,
+      assignedReporter ?? this.assignedReporter,
+      assignedCameraman ?? this.assignedCameraman,
+      assignedDriver ?? this.assignedDriver,
+      assignedLibrarian ?? this.assignedLibrarian,
+      status ?? this.status,
+      comments ?? this.comments,
+      timestamp ?? this.timestamp,
+      assignedTo ?? this.assignedTo,
+      assignmentTimestamp ?? this.assignmentTimestamp,
+      createdById ?? this.createdById,
+      assignedReporterId ?? this.assignedReporterId,
+      assignedCameramanId ?? this.assignedCameramanId,
+      assignedDriverId ?? this.assignedDriverId,
+      assignedLibrarianId ?? this.assignedLibrarianId,
+      creatorAvatar ?? this.creatorAvatar,
+      category ?? this.category,
+      tags ?? this.tags,
+      dueDate ?? this.dueDate,
+      priority ?? this.priority,
     );
   }
 
@@ -195,7 +237,7 @@ class Task {
       'status': status,
       'comments': comments,
       'timestamp': timestamp,
-      'assignmentTimestamp': assignmentTimestamp,
+      'assignmentTimestamp': assignmentTimestamp?.toIso8601String(),
       'category': category,
       'tags': tags,
       'dueDate': dueDate?.toIso8601String(),
