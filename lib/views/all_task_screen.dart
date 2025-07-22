@@ -213,7 +213,13 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           );
                         }
                         final task = _filteredTasks[index];
+                        final taskId = task.taskId;
+                        if (taskId == null || taskId.toString().isEmpty) {
+                          debugPrint('MinimalTaskCard: Task with missing/null taskId: $task');
+                          return const SizedBox.shrink();
+                        }
                         return MinimalTaskCard(
+                          key: ValueKey(taskId),
                           task: task,
                           isDark: isDark,
                           onTap: () => _showTaskDetail(task),

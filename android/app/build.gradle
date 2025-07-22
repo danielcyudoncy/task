@@ -11,16 +11,16 @@ plugins {
 }
 
 android {
-    namespace = "com.example.task"
+    namespace 'com.example.task'
     compileSdk = 35
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "25.1.8937393"
 
     defaultConfig {
         applicationId = "com.example.task"
-        minSdk = 23
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
@@ -37,6 +37,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
     }
 }
 
@@ -60,5 +66,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:21.1.1'
 
     // Enable Java 8+ APIs
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }

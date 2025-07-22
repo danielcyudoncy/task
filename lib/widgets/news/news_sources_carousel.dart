@@ -32,14 +32,14 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
   int _currentIndex = 0;
   Timer? _timer;
 
-  final List<Widget> _cards = [
-    const BBCNewsCard(),
-    const CNNCard(),
-    const AlJazeeraCard(),
-    const ChannelsCard(),
-    const ReutersCard(),
-    const AfricaNewsCard(),
-    const TVCCard(),
+  final List<Widget Function()> _cardBuilders = [
+    () => const BBCNewsCard(),
+    () => const CNNCard(),
+    () => const AlJazeeraCard(),
+    () => const ChannelsCard(),
+    () => const ReutersCard(),
+    () => const AfricaNewsCard(),
+    () => const TVCCard(),
   ];
 
   @override
@@ -58,7 +58,7 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
   void _startAutoScroll() {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_pageController.hasClients) {
-        if (_currentIndex < _cards.length - 1) {
+        if (_currentIndex < _cardBuilders.length - 1) {
           _currentIndex++;
         } else {
           _currentIndex = 0;
