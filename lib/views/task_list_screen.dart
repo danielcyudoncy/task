@@ -15,7 +15,7 @@ class TaskListScreen extends StatelessWidget {
   final TextEditingController tagsController = TextEditingController();
   DateTime? selectedDueDate;
 
-  TaskListScreen({super.key});
+  TaskListScreen({super.key, this.selectedDueDate});
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +85,7 @@ class TaskListScreen extends StatelessWidget {
                     Text('${'status'.tr}: ${task.status}'),
                     Text('${'due_date'.tr}: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
                     Text('${'category'.tr}: ${task.category ?? 'N/A'}'),
-                    Text('${'tags'.tr}: ${task.tags != null && task.tags!.isNotEmpty ? task.tags!.join(', ') : 'N/A'}'),
+                    Text('${'tags'.tr}: ${task.tags.isNotEmpty ? task.tags.join(', ') : 'N/A'}'),
                   ],
                 ),
                 trailing: Row(

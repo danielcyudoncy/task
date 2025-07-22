@@ -180,7 +180,7 @@ class MinimalTaskCard extends StatelessWidget {
                   ],
                   
                   // Tags (if available)
-                  if (task.tags != null && task.tags!.isNotEmpty) ...[
+                  if (task.tags.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -192,7 +192,7 @@ class MinimalTaskCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            'Tags: ${task.tags!.join(', ')}',
+                            'Tags: ${task.tags.join(', ')}',
                             style: textTheme.bodySmall?.copyWith(
                               color: isDark ? Colors.white : subTextColor,
                               fontSize: 12.sp,

@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/models/task_model.dart';
-import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'status_chip.dart';
 
@@ -22,8 +21,8 @@ class TaskDetailModal extends StatelessWidget {
   Widget build(BuildContext context) {
     // Debug: Print tags for troubleshooting
     debugPrint('Task tags: ${task.tags}');
-    debugPrint('Task tags length: ${task.tags?.length}');
-    debugPrint('Task tags isNotEmpty: ${task.tags?.isNotEmpty}');
+    debugPrint('Task tags length: ${task.tags.length}');
+    debugPrint('Task tags isNotEmpty: ${task.tags.isNotEmpty}');
     
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -155,7 +154,7 @@ class TaskDetailModal extends StatelessWidget {
                       context,
                       'Task Information',
                       [
-                        _buildDetailRow(context, 'Created by', task.createdBy, Icons.person_outline),
+                        _buildDetailRow(context, 'Created by', task.createdById, Icons.person_outline),
                         if (task.category != null && task.category!.isNotEmpty)
                           _buildDetailRow(context, 'Category', task.category!, Icons.category_outlined),
                         if (task.priority != null && task.priority!.isNotEmpty)
@@ -202,11 +201,11 @@ class TaskDetailModal extends StatelessWidget {
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(12.w),
-                          child: task.tags != null && task.tags!.isNotEmpty
+                          child: task.tags.isNotEmpty
                               ? Wrap(
                                   spacing: 8.w,
                                   runSpacing: 8.h,
-                                  children: task.tags!.map((tag) => Container(
+                                  children: task.tags.map((tag) => Container(
                                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                                     decoration: BoxDecoration(
                                       color: isDark ? Colors.blue.withOpacity(0.2) : accent.withOpacity(0.1),

@@ -1,6 +1,5 @@
 // routes/app_routes.dart
 import 'package:get/get.dart';
-import 'package:task/routes/global_bindings.dart';
 import 'package:task/routes/middleware.dart';
 import 'package:task/routes/profile_complete_middleware.dart';
 import 'package:task/views/admin_dashboard_screen.dart';
