@@ -7,7 +7,7 @@ import '../controllers/auth_controller.dart';
 import 'package:intl/intl.dart';
 
 class TaskListScreen extends StatelessWidget {
-  final TaskController taskController = Get.put(TaskController());
+  final TaskController taskController = Get.find<TaskController>();
   final AuthController authController = Get.find<AuthController>();
 
   // Add these controllers and variable at the top of the class
