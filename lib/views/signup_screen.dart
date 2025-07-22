@@ -23,7 +23,7 @@ class SignUpScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -248,7 +248,8 @@ class SignUpScreen extends StatelessWidget {
                                     width: double.infinity,
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: colorScheme.primary,
+                                        backgroundColor: colorScheme.secondary,
+                                        foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
                                         padding: const EdgeInsets.symmetric(vertical: 16),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
@@ -259,21 +260,22 @@ class SignUpScreen extends StatelessWidget {
                                         'save_continue'.tr,
                                         style: textTheme.bodyLarge?.copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: colorScheme.onPrimary,
+                                          color: isDark ? Colors.black : colorScheme.onSecondary,
                                           fontFamily: 'raleway',
                                         ),
                                       ),
                                     ),
                                   );
                                 }
-                                
+
                                 return authController.isLoading.value
                                     ? const CircularProgressIndicator()
                                     : SizedBox(
                                         width: double.infinity,
                                         child: ElevatedButton(
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: colorScheme.primary,
+                                            backgroundColor: colorScheme.secondary,
+                                            foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
                                             padding: const EdgeInsets.symmetric(vertical: 16),
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(12),
@@ -284,7 +286,7 @@ class SignUpScreen extends StatelessWidget {
                                             'save_continue'.tr,
                                             style: textTheme.bodyLarge?.copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: colorScheme.onPrimary,
+                                              color: isDark ? Colors.black : colorScheme.onSecondary,
                                               fontFamily: 'raleway',
                                             ),
                                           ),
