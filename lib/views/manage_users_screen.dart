@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/assign_task_dialog.dart';
-import 'package:task/widgets/user_hover_card.dart';
 import 'package:task/widgets/user_skeleton_list.dart';
 import '../controllers/manage_users_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
@@ -24,7 +23,6 @@ class ManageUsersScreen extends StatelessWidget {
     final isLargeScreen = MediaQuery.of(context).size.width > 900;
     final currentUserId = Get.find<AuthController>().auth.currentUser?.uid;
     final theme = Theme.of(context);
-    final primaryColor = theme.primaryColor;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
@@ -126,14 +124,14 @@ class ManageUsersScreen extends StatelessWidget {
                               CircleAvatar(
                                 radius: 28,
                                 backgroundColor: theme.brightness == Brightness.dark
-                                    ? theme.colorScheme.onSurface.withOpacity(0.15)
-                                    : theme.colorScheme.onPrimary.withOpacity(0.18),
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onPrimary,
                                 backgroundImage: userPhoto.isNotEmpty ? NetworkImage(userPhoto) : null,
                                 child: userPhoto.isEmpty
                                     ? Icon(
                                         Icons.person,
                                         color: theme.brightness == Brightness.dark
-                                            ? theme.colorScheme.onSurface
+                                            ? theme.colorScheme.onPrimary
                                             : theme.colorScheme.primary,
                                         size: 28)
                                      : null,

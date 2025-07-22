@@ -128,7 +128,7 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 4),
               // Category
               Text(
-                'Category: ' + ((task.category != null && task.category!.isNotEmpty) ? task.category! : 'No category'),
+                'Category: ${(task.category != null && task.category!.isNotEmpty) ? task.category! : 'No category'}',
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -138,7 +138,7 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 4),
               // Tags
               Text(
-                'Tags: ' + ((task.tags != null && task.tags!.isNotEmpty) ? task.tags!.join(', ') : 'No tags'),
+                'Tags: ${(task.tags.isNotEmpty) ? task.tags.join(', ') : 'No tags'}',
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -148,7 +148,7 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 4),
               // Priority
               Text(
-                'Priority: ' + ((task.priority != null && task.priority!.isNotEmpty) ? task.priority! : 'N/A'),
+                'Priority: ${(task.priority != null && task.priority!.isNotEmpty) ? task.priority! : 'N/A'}',
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -158,7 +158,7 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 4),
               // Due Date
               Text(
-                'Due Date: ' + (task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'),
+                'Due Date: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}',
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
