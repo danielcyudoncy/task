@@ -68,6 +68,17 @@ class TaskListScreen extends StatelessWidget {
           itemCount: filteredTasks.length,
           itemBuilder: (context, index) {
             var task = filteredTasks[index];
+            // Debug print for userNameCache and relevant UIDs
+            debugPrint('userNameCache for createdById=${task.createdById}: ${taskController.userNameCache[task.createdById]}');
+            debugPrint('userNameCache for assignedReporterId=${task.assignedReporterId}: ${taskController.userNameCache[task.assignedReporterId ?? "null"]}');
+            debugPrint('userNameCache for assignedCameramanId=${task.assignedCameramanId}: ${taskController.userNameCache[task.assignedCameramanId ?? "null"]}');
+            final creatorName = taskController.userNameCache[task.createdById] ?? 'Unknown';
+            final assignedReporterName = task.assignedReporterId != null
+                ? (taskController.userNameCache[task.assignedReporterId] ?? 'Unknown')
+                : 'None';
+            final assignedCameramanName = task.assignedCameramanId != null
+                ? (taskController.userNameCache[task.assignedCameramanId] ?? 'Unknown')
+                : 'None';
             return Card(
               elevation: 3,
               margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -79,9 +90,9 @@ class TaskListScreen extends StatelessWidget {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${'created_by'.tr}: ${task.createdBy}'),
-                    Text('${'assigned_reporter'.tr}: ${task.assignedReporter ?? 'not_assigned'.tr}'),
-                    Text('${'assigned_cameraman'.tr}: ${task.assignedCameraman ?? 'not_assigned'.tr}'),
+                    Text('${'created_by'.tr}: $creatorName'),
+                    Text('${'assigned_reporter'.tr}: $assignedReporterName'),
+                    Text('${'assigned_cameraman'.tr}: $assignedCameramanName'),
                     Text('${'status'.tr}: ${task.status}'),
                     Text('${'due_date'.tr}: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
                     Text('${'category'.tr}: ${task.category ?? 'N/A'}'),
