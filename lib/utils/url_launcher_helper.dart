@@ -1,5 +1,4 @@
 // utils/url_launcher_helper.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,7 +11,7 @@ class UrlLauncherHelper {
         'Error',
         'No link available for this article',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withOpacity (0.1),
         colorText: Colors.red,
       );
       return;
