@@ -343,7 +343,23 @@ class _HomeScreenState extends State<HomeScreen>
                         Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
+                            gradient: isDark
+                                ? LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.grey[900]!,
+                                      Colors.grey[800]!
+                                    ],
+                                  )
+                                : LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.grey[50]!,
+                                      Colors.grey[100]!
+                                    ],
+                                  ),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(26),
                               topRight: Radius.circular(26),
