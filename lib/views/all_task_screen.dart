@@ -28,51 +28,42 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
   final RxString _selectedFilter = 'All'.obs;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final RxList<Task> _filteredTasks = <Task>[].obs;
-  
 
   @override
   void initState() {
     super.initState();
-    debugPrint("AllTaskScreen: initState called");
-    debugPrint("AllTaskScreen: TaskController registered: ${Get.isRegistered<TaskController>()}");
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      taskController.loadAllTasksForAllUsers();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await taskController.loadAllTasksForAllUsers();
+      // Debug print to verify creator names
+      for (var task in taskController.tasks) {
+        debugPrint(
+            'Task ${task.title} - Creator: ${task.createdBy} (ID: ${task.createdById})');
+      }
     });
-    _searchController.addListener(() {
-      _searchQuery.value = _searchController.text;
-      _filterTasks();
-    });
-    
-    // Listen to task changes and update filtered tasks
+    _searchController
+        .addListener(() => _searchQuery.value = _searchController.text);
+
     ever(taskController.tasks, (_) {
-      debugPrint("AllTaskScreen: tasks changed, calling _filterTasks");
       _filterTasks();
     });
   }
 
   void _filterTasks() {
-    debugPrint("AllTaskScreen: _filterTasks called");
-    debugPrint("AllTaskScreen: taskController.tasks.length = ${taskController.tasks.length}");
-    debugPrint("AllTaskScreen: searchQuery = '${_searchQuery.value}'");
-    debugPrint("AllTaskScreen: selectedFilter = '${_selectedFilter.value}'");
-    
     final filteredTasks = taskController.tasks.where((task) {
-      final matchesSearch =
+      final matchesSearch = _searchQuery.value.isEmpty ||
           task.title.toLowerCase().contains(_searchQuery.value.toLowerCase()) ||
-              task.description
-                  .toLowerCase()
-                  .contains(_searchQuery.value.toLowerCase());
+          task.description
+              .toLowerCase()
+              .contains(_searchQuery.value.toLowerCase());
 
       final matchesFilter = _selectedFilter.value == 'All' ||
           (_selectedFilter.value == 'Completed' &&
               task.status == 'Completed') ||
           (_selectedFilter.value == 'Pending' && task.status == 'Pending');
-      
 
       return matchesSearch && matchesFilter;
     }).toList();
 
-    debugPrint("AllTaskScreen: filteredTasks.length = ${filteredTasks.length}");
     _filteredTasks.assignAll(filteredTasks);
   }
 
@@ -95,12 +86,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final isLargeScreen = media.size.width > 600;
-    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final isLargeScreen = MediaQuery.of(context).size.width > 600;
     final basePadding = isLargeScreen ? 32.0.w : 16.0.w;
-
-    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -108,18 +95,14 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
       drawer: const AppDrawer(),
       body: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
+          color: isDark
               ? Theme.of(context).canvasColor
               : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: Column(
             children: [
-              AppBarWidget(
-                basePadding: basePadding,
-                scaffoldKey: _scaffoldKey,
-              ),
-              // Search and Filter Row
+              AppBarWidget(basePadding: basePadding, scaffoldKey: _scaffoldKey),
               Padding(
                 padding:
                     EdgeInsets.symmetric(horizontal: basePadding, vertical: 8),
@@ -130,8 +113,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                         controller: _searchController,
                         decoration: InputDecoration(
                           hintText: 'Search tasks...',
-                          prefixIcon:
-                              Icon(Icons.search, color: colorScheme.onSurface),
+                          prefixIcon: Icon(Icons.search,
+                              color: Theme.of(context).colorScheme.onSurface),
                           filled: true,
                           fillColor:
                               isDark ? Colors.grey[900] : Colors.grey[200],
@@ -139,52 +122,55 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Obx(() => DropdownButton<String>(
                           value: _selectedFilter.value,
-                          items:
-                              ['All', 'Completed', 'Pending']
-                                  .map((filter) => DropdownMenuItem(
-                                        value: filter,
-                                        child: Text(filter,
-                                            style: const TextStyle(
-                                                color: Colors.white)),
-                                      ))
-                                  .toList(),
+                          items: ['All', 'Completed', 'Pending']
+                              .map((filter) => DropdownMenuItem(
+                                    value: filter,
+                                    child: Text(filter,
+                                        style: const TextStyle(
+                                            color: Colors.white)),
+                                  ))
+                              .toList(),
                           onChanged: (value) {
                             _selectedFilter.value = value!;
                             _filterTasks();
                           },
-                          dropdownColor:
-                              isDark ? Colors.grey[900] : colorScheme.primary,
-                          style: TextStyle(color: colorScheme.onSurface),
+                          dropdownColor: isDark
+                              ? Colors.grey[900]
+                              : Theme.of(context).colorScheme.primary,
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface),
                         )),
                   ],
                 ),
               ),
-              // Main Content
               Expanded(
                 child: Obx(() {
-                  // Add safety check to ensure controller is registered
                   if (!Get.isRegistered<TaskController>()) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  
+
                   if (taskController.isLoading.value &&
                       _filteredTasks.isEmpty) {
                     return TaskSkeletonList(
-                        isLargeScreen: isLargeScreen, textScale: textScale);
+                        isLargeScreen: isLargeScreen,
+                        textScale: MediaQuery.textScalerOf(context).scale(1.0));
                   }
+
                   if (taskController.errorMessage.isNotEmpty) {
                     return ErrorStateWidget(
                       message: taskController.errorMessage.value,
                       onRetry: () => taskController.loadAllTasksForAllUsers(),
                     );
                   }
+
                   if (_filteredTasks.isEmpty) {
                     return EmptyStateWidget(
                       icon: Icons.list_alt_outlined,
@@ -192,6 +178,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                       message: "try_adjusting_your_filters_or_search".tr,
                     );
                   }
+
                   return RefreshIndicator(
                     onRefresh: () async {
                       await taskController.loadAllTasksForAllUsers();
@@ -202,7 +189,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           horizontal: isLargeScreen ? 16.w : 8.w, vertical: 16),
                       itemCount: _filteredTasks.length +
                           (taskController.hasMore ? 1 : 0),
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         if (index >= _filteredTasks.length) {
                           return const Center(
@@ -213,17 +201,12 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           );
                         }
                         final task = _filteredTasks[index];
-                        final taskId = task.taskId;
-                        if (taskId == null || taskId.toString().isEmpty) {
-                          debugPrint('MinimalTaskCard: Task with missing/null taskId: $task');
-                          return const SizedBox.shrink();
-                        }
                         return MinimalTaskCard(
-                          key: ValueKey(taskId),
+                          key: ValueKey(task.taskId),
                           task: task,
                           isDark: isDark,
                           onTap: () => _showTaskDetail(task),
-                          enableSwipeToDelete: false, // Disable swipe-to-delete for view-only screen
+                          enableSwipeToDelete: false,
                         );
                       },
                     ),
