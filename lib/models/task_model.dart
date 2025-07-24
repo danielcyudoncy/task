@@ -14,115 +14,93 @@ DateTime? parseDate(dynamic value) {
 
 @Collection()
 class Task {
-  Id isarId = Isar.autoIncrement; // Local Isar ID
+  Id isarId = Isar.autoIncrement;
 
   late String taskId;
   late String title;
   late String description;
-  late String createdBy; // Human-readable name
-  String? assignedReporter; // Human-readable name (nullable)
-  String? assignedCameraman; // Human-readable name (nullable)
-  String? assignedDriver; // Human-readable name (nullable)
-  String? assignedLibrarian; // Human-readable name (nullable)
+  late String createdBy;
+  String? assignedReporter;
+  String? assignedCameraman;
+  String? assignedDriver;
+  String? assignedLibrarian;
   late String status;
   List<String> comments = [];
   late DateTime timestamp;
   String? assignedTo;
-
-  /// Timestamp for when the task was assigned to a user (for daily tracking)
   DateTime? assignmentTimestamp;
-
-  // New fields for robust filtering & permission checks
   late String createdById;
   String? assignedReporterId;
   String? assignedCameramanId;
   String? assignedDriverId;
   String? assignedLibrarianId;
-  String? creatorAvatar; // Avatar URL from task document
-
-  // --- New fields for category, tags, dueDate ---
+  String? creatorAvatar;
   String? category;
   List<String> tags = [];
   DateTime? dueDate;
   String? priority;
-
   DateTime? lastModified;
-  String? syncStatus; // 'pending', 'synced', 'conflict'
+  String? syncStatus;
 
   Task()
       : taskId = '',
         title = '',
         description = '',
         createdBy = '',
-        assignedReporter = null,
-        assignedCameraman = null,
-        assignedDriver = null,
-        assignedLibrarian = null,
         status = '',
-        comments = const [],
         timestamp = DateTime.now(),
-        assignedTo = null,
-        assignmentTimestamp = null,
         createdById = '',
-        assignedReporterId = null,
-        assignedCameramanId = null,
-        assignedDriverId = null,
-        assignedLibrarianId = null,
-        creatorAvatar = null,
-        category = null,
-        tags = const [],
-        dueDate = null,
-        priority = null,
         lastModified = DateTime.now(),
         syncStatus = 'pending';
-  Task.full(
-    this.taskId,
-    this.title,
-    this.description,
-    this.createdBy,
-    this.assignedReporter,
-    this.assignedCameraman,
-    this.assignedDriver,
-    this.assignedLibrarian,
-    this.status,
-    this.comments,
-    this.timestamp,
-    this.assignedTo,
-    this.assignmentTimestamp,
-    this.createdById,
-    this.assignedReporterId,
-    this.assignedCameramanId,
-    this.assignedDriverId,
-    this.assignedLibrarianId,
-    this.creatorAvatar,
-    this.category,
-    this.tags,
-    this.dueDate,
-    this.priority,
-    {this.lastModified, this.syncStatus}
-  );
 
-  // Factory for Firestore maps
+  Task.full(
+      this.taskId,
+      this.title,
+      this.description,
+      this.createdBy,
+      this.assignedReporter,
+      this.assignedCameraman,
+      this.assignedDriver,
+      this.assignedLibrarian,
+      this.status,
+      this.comments,
+      this.timestamp,
+      this.assignedTo,
+      this.assignmentTimestamp,
+      this.createdById,
+      this.assignedReporterId,
+      this.assignedCameramanId,
+      this.assignedDriverId,
+      this.assignedLibrarianId,
+      this.creatorAvatar,
+      this.category,
+      this.tags,
+      this.dueDate,
+      this.priority,
+      {this.lastModified,
+      this.syncStatus});
+
   factory Task.fromMap(Map<String, dynamic> map, String id) {
-    debugPrint('fromMap: id=$id, category=${map['category']}, tags=${map['tags']}, dueDate=${map['dueDate']}, priority=${map['priority']}');
-    debugPrint('fromMap: assignedReporterId=${map['assignedReporterId']}, assignedCameramanId=${map['assignedCameramanId']}, assignedDriverId=${map['assignedDriverId']}, assignedLibrarianId=${map['assignedLibrarianId']}');
+    debugPrint(
+        'fromMap creator data: createdBy=${map['createdBy']}, createdByName=${map['createdByName']}');
+
     return Task.full(
       map['taskId'] ?? id,
       map['title'] ?? '',
       map['description'] ?? '',
-      map['createdBy'] ?? '',
+      map['createdByName'] ??
+          map['createdBy'] ??
+          'Unknown', // Prefer createdByName
       map['assignedReporter'],
       map['assignedCameraman'],
       map['assignedDriver'],
       map['assignedLibrarian'],
       map['status'] ?? '',
       List<String>.from(map['comments'] ?? []),
-      // timestamp
       parseDate(map['timestamp']) ?? DateTime.now(),
       map['assignedTo'],
-      // assignmentTimestamp
       parseDate(map['assignmentTimestamp']),
-      map['createdById'] ?? '',
+      map['createdBy'] ?? '', // This should be the user ID
       map['assignedReporterId'],
       map['assignedCameramanId'],
       map['assignedDriverId'],
@@ -130,7 +108,6 @@ class Task {
       map['creatorAvatar'],
       map['category'],
       List<String>.from(map['tags'] ?? []),
-      // dueDate
       parseDate(map['dueDate']),
       map['priority'],
       lastModified: parseDate(map['lastModified']),
@@ -138,7 +115,6 @@ class Task {
     );
   }
 
-  // copyWith for safe updates
   Task copyWith({
     String? taskId,
     String? title,
@@ -191,56 +167,21 @@ class Task {
     );
   }
 
-  /// Converts the Task to a Map for UI widgets, injecting human-readable names from cache if needed.
-  Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache, [Map<String, String>? userAvatarCache]) {
-    // Use creatorAvatar from task document first, fallback to cache
-    final avatarFromTask = creatorAvatar ?? '';
-    final avatarFromCache = userAvatarCache?[createdById] ?? '';
-    final finalCreatorAvatar = avatarFromTask.isNotEmpty ? avatarFromTask : avatarFromCache;
-    
-    debugPrint("TaskModel: createdById = $createdById");
-    debugPrint("TaskModel: creatorAvatar from task = $avatarFromTask");
-    debugPrint("TaskModel: creatorAvatar from cache = $avatarFromCache");
-    debugPrint("TaskModel: final creatorAvatar = $finalCreatorAvatar");
-    
+  Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache,
+      [Map<String, String>? userAvatarCache]) {
     return {
       'taskId': taskId,
       'title': title,
       'description': description,
-      'createdBy': createdById, // original user id
+      'createdBy': createdById,
       'creatorName': userNameCache[createdById] ?? createdBy,
-      'creatorAvatar': finalCreatorAvatar,
-      'assignedReporter': assignedReporterId,
-      'assignedReporterName': assignedReporterId != null
-          ? (userNameCache[assignedReporterId!] ??
-              assignedReporter ??
-              'Not Assigned')
-          : 'Not Assigned',
-      'assignedCameraman': assignedCameramanId,
-      'assignedCameramanName': assignedCameramanId != null
-          ? (userNameCache[assignedCameramanId!] ??
-              assignedCameraman ??
-              'Not Assigned')
-          : 'Not Assigned',
-      'assignedDriver': assignedDriverId,
-      'assignedDriverName': assignedDriverId != null
-          ? (userNameCache[assignedDriverId!] ??
-              assignedDriver ??
-              'Not Assigned')
-          : 'Not Assigned',
-      'assignedLibrarian': assignedLibrarianId,
-      'assignedLibrarianName': assignedLibrarianId != null
-          ? (userNameCache[assignedLibrarianId!] ??
-              assignedLibrarian ??
-              'Not Assigned')
-          : 'Not Assigned',
+      'creatorAvatar': creatorAvatar ?? userAvatarCache?[createdById] ?? '',
       'status': status,
       'comments': comments,
       'timestamp': timestamp,
-      'assignmentTimestamp': assignmentTimestamp?.toIso8601String(),
       'category': category,
       'tags': tags,
-      'dueDate': dueDate?.toIso8601String(),
+      'dueDate': dueDate,
       'priority': priority,
     };
   }

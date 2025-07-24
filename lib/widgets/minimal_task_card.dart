@@ -1,7 +1,9 @@
 // widgets/minimal_task_card.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'status_chip.dart';
 
@@ -26,292 +28,285 @@ class MinimalTaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    
-    // Use theme-aware colors
-    final Color cardColor = isDark 
-        ? const Color(0xFF292B3A) 
-        : colorScheme.surface;
-    final Color textColor = isDark ? Colors.white : colorScheme.onSurface;
-    final Color subTextColor = isDark ? Colors.white70 : colorScheme.onSurfaceVariant;
-    final Color borderColor = colorScheme.outline.withValues(alpha: 0.3);
-    final Color selectedColor = colorScheme.primary.withValues(alpha: 0.1);
+    final colorScheme = theme.colorScheme;
 
-    Widget cardContent = Container(
-        margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedColor : cardColor,
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? colorScheme.primary.withOpacity(0.1)
+            : isDark
+                ? const Color(0xFF292B3A)
+                : colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSelected
+              ? colorScheme.primary
+              : colorScheme.outline.withOpacity(0.3),
+          width: isSelected ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : const Color(0x15000000),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? colorScheme.primary : borderColor,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x15000000),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onTap,
-            child: Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header row with title and status
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          task.title,
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                            fontSize: 16.sp,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        task.title,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : colorScheme.onSurface,
+                          fontSize: 16.sp,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 8),
-                      StatusChip(
-                        status: task.status,
-                        textScale: 1.0,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Creator info
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        size: 16,
-                        color: subTextColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          'Created by: ${task.createdBy}',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: subTextColor,
-                            fontSize: 12.sp,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  
-                  // Assignment info
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.assignment_outlined,
-                        size: 16,
-                        color: subTextColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          _getAssignmentText(),
-                          style: textTheme.bodySmall?.copyWith(
-                            color: subTextColor,
-                            fontSize: 12.sp,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  // Category and priority (if available)
-                  if (task.category != null && task.category!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.category_outlined,
-                          size: 16,
-                          color: subTextColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            task.category!,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: subTextColor,
-                              fontSize: 12.sp,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (task.priority != null && task.priority!.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.flag_outlined,
-                            size: 16,
-                            color: _getPriorityColor(task.priority!),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            task.priority!,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: _getPriorityColor(task.priority!),
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ],
+                    ),
+                    const SizedBox(width: 8),
+                    StatusChip(
+                      status: task.status,
+                      textScale: 1.0,
                     ),
                   ],
-                  
-                  // Tags (if available)
-                  if (task.tags.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.label_outline,
-                          size: 16,
-                          color: isDark ? Colors.white : subTextColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'Tags: ${task.tags.join(', ')}',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: isDark ? Colors.white : subTextColor,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  
-                  // Due date (if available)
-                  if (task.dueDate != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.schedule_outlined,
-                          size: 16,
-                          color: subTextColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'Due: ${DateFormat('MMM dd').format(task.dueDate!)}',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: subTextColor,
-                              fontSize: 12.sp,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-    // Conditionally wrap with Dismissible if swipe-to-delete is enabled
-    if (enableSwipeToDelete) {
-      return Dismissible(
-        key: ValueKey(task.taskId),
-        direction: DismissDirection.endToStart,
-        confirmDismiss: (direction) async {
-          debugPrint('MinimalTaskCard: Swipe detected for task - ${task.title}');
-          return await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Delete Task'),
-              content: Text('Are you sure you want to delete "${task.title}"?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
                 ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Delete'),
-                ),
+                const SizedBox(height: 8),
+                _buildCreatorRow(context),
+                const SizedBox(height: 4),
+                _buildAssignmentRow(context),
+                if (task.category != null && task.category!.isNotEmpty)
+                  _buildCategoryRow(context),
+                if (task.tags.isNotEmpty) _buildTagsRow(context),
+                if (task.dueDate != null) _buildDueDateRow(context),
               ],
             ),
-          ) ?? false;
-        },
-        onDismissed: (direction) {
-          debugPrint('MinimalTaskCard: Task dismissed - ${task.title}');
-          onDismiss?.call();
-        },
-        background: Container(
-          decoration: BoxDecoration(
-            color: Colors.red,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-            size: 30,
           ),
         ),
-        child: cardContent,
-      );
-    }
+      ),
+    );
+  }
 
-    return cardContent;
+  Widget _buildCreatorRow(BuildContext context) {
+    final creatorName = _getCreatorName();
+    return Row(
+      children: [
+        Icon(
+          Icons.person_outline,
+          size: 16,
+          color: isDark
+              ? Colors.white70
+              : Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            'Created by: $creatorName',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDark
+                      ? Colors.white70
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12.sp,
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getCreatorName() {
+    try {
+      final taskController = Get.find<TaskController>();
+
+      // 1. Check if we have a cached name
+      if (task.createdById.isNotEmpty &&
+          taskController.userNameCache.containsKey(task.createdById)) {
+        return taskController.userNameCache[task.createdById]!;
+      }
+
+      // 2. Fallback to createdBy field
+      if (task.createdBy.isNotEmpty) {
+        return task.createdBy;
+      }
+
+      // 3. Final fallback
+      return 'Unknown';
+    } catch (e) {
+      debugPrint('Error getting creator name: $e');
+      return task.createdBy;
+    }
+  }
+
+  Widget _buildAssignmentRow(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          Icons.assignment_outlined,
+          size: 16,
+          color: isDark
+              ? Colors.white70
+              : Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            _getAssignmentText(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDark
+                      ? Colors.white70
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12.sp,
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
   }
 
   String _getAssignmentText() {
     final assignments = <String>[];
-    
+
     if (task.assignedReporter != null && task.assignedReporter!.isNotEmpty) {
       assignments.add('Reporter: ${task.assignedReporter}');
     }
-    
+
     if (task.assignedCameraman != null && task.assignedCameraman!.isNotEmpty) {
       assignments.add('Cameraman: ${task.assignedCameraman}');
     }
-    
-    if (task.assignedDriver != null && task.assignedDriver!.isNotEmpty) {
-      assignments.add('Driver: ${task.assignedDriver}');
-    }
-    
-    if (task.assignedLibrarian != null && task.assignedLibrarian!.isNotEmpty) {
-      assignments.add('Librarian: ${task.assignedLibrarian}');
-    }
-    
-    if (assignments.isEmpty) {
-      return 'Not assigned';
-    }
-    
+
+    if (assignments.isEmpty) return 'Not assigned';
     return assignments.join(', ');
+  }
+
+  Widget _buildCategoryRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.category_outlined,
+            size: 16,
+            color: isDark
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              task.category!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? Colors.white70
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12.sp,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (task.priority != null && task.priority!.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Icon(
+              Icons.flag_outlined,
+              size: 16,
+              color: _getPriorityColor(task.priority!),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              task.priority!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _getPriorityColor(task.priority!),
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagsRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.label_outlined,
+            size: 16,
+            color: isDark
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Tags: ${task.tags.join(', ')}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDueDateRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.schedule_outlined,
+            size: 16,
+            color: isDark
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Due: ${DateFormat('MMM dd').format(task.dueDate!)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? Colors.white70
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12.sp,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _getPriorityColor(String priority) {
@@ -326,4 +321,4 @@ class MinimalTaskCard extends StatelessWidget {
         return Colors.grey;
     }
   }
-} 
+}

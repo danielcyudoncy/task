@@ -19,21 +19,17 @@ class TaskDetailModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Debug: Print tags for troubleshooting
-    debugPrint('Task tags: ${task.tags}');
-    debugPrint('Task tags length: ${task.tags.length}');
-    debugPrint('Task tags isNotEmpty: ${task.tags.isNotEmpty}');
-    
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    
+
     // Theme-aware colors
     final Color bgColor = colorScheme.surface;
     final Color mainText = colorScheme.onSurface;
     final Color subText = colorScheme.onSurfaceVariant;
     final Color accent = colorScheme.primary;
-    final Color borderColor = colorScheme.outline.withAlpha((0.3 * 255).toInt());
+    final Color borderColor =
+        colorScheme.outline.withAlpha((0.3 * 255).toInt());
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -48,7 +44,9 @@ class TaskDetailModal extends StatelessWidget {
           border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black.withAlpha((0.5 * 255).round()) : const Color(0x30000000),
+              color: isDark
+                  ? Colors.black.withAlpha((0.5 * 255).round())
+                  : const Color(0x30000000),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -71,7 +69,7 @@ class TaskDetailModal extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.task_alt,
-                    color: accent,
+                    color: isDark ? Colors.white : accent,
                     size: 24.sp,
                   ),
                   const SizedBox(width: 12),
@@ -99,7 +97,7 @@ class TaskDetailModal extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Content
             Flexible(
               child: SingleChildScrollView(
@@ -111,24 +109,35 @@ class TaskDetailModal extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            task.title,
-                            style: textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: mainText,
-                              fontSize: 22.sp,
-                            ),
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start, // Align title to left
+                            children: [
+                              Text(
+                                task.title,
+                                style: textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: mainText,
+                                  fontSize: 22.sp,
+                                ),
+                              ),
+                              const SizedBox(
+                                  height: 8), // Add some vertical spacing
+                              Align(
+                                alignment: Alignment
+                                    .centerRight, // Align status to right
+                                child: StatusChip(
+                                  status: task.status,
+                                  textScale: 1.0,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        StatusChip(
-                          status: task.status,
-                          textScale: 1.0,
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Description
                     Container(
                       width: double.infinity,
@@ -148,50 +157,68 @@ class TaskDetailModal extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    
+
                     // Task Details Grid
                     _buildDetailSection(
                       context,
                       'Task Information',
                       [
-                        _buildDetailRow(context, 'Created by', task.createdById, Icons.person_outline),
+                        _buildDetailRow(
+                            context,
+                            'Created by',
+                            task.createdBy.isNotEmpty
+                                ? task.createdBy
+                                : 'Not assigned',
+                            Icons.person_outline),
                         if (task.category != null && task.category!.isNotEmpty)
-                          _buildDetailRow(context, 'Category', task.category!, Icons.category_outlined),
+                          _buildDetailRow(context, 'Category', task.category!,
+                              Icons.category_outlined),
                         if (task.priority != null && task.priority!.isNotEmpty)
-                          _buildDetailRow(context, 'Priority', task.priority!, Icons.flag_outlined, 
+                          _buildDetailRow(context, 'Priority', task.priority!,
+                              Icons.flag_outlined,
                               valueColor: _getPriorityColor(task.priority!)),
                         if (task.dueDate != null)
-                          _buildDetailRow(context, 'Due Date', 
-                              DateFormat('MMM dd, yyyy HH:mm').format(task.dueDate!), 
+                          _buildDetailRow(
+                              context,
+                              'Due Date',
+                              DateFormat('MMM dd, yyyy HH:mm')
+                                  .format(task.dueDate!),
                               Icons.schedule_outlined),
-                        _buildDetailRow(context, 'Created', 
-                            DateFormat('MMM dd, yyyy HH:mm').format(task.timestamp), 
+                        _buildDetailRow(
+                            context,
+                            'Created',
+                            DateFormat('MMM dd, yyyy HH:mm')
+                                .format(task.timestamp),
                             Icons.access_time_outlined),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Assignment Details
                     _buildDetailSection(
                       context,
                       'Assignment Details',
                       [
-                        _buildDetailRow(context, 'Reporter', 
-                            task.assignedReporter ?? 'Not assigned', 
+                        _buildDetailRow(
+                            context,
+                            'Reporter',
+                            task.assignedReporter ?? 'Not assigned',
                             Icons.person_outline),
-                        _buildDetailRow(context, 'Cameraman', 
-                            task.assignedCameraman ?? 'Not assigned', 
+                        _buildDetailRow(
+                            context,
+                            'Cameraman',
+                            task.assignedCameraman ?? 'Not assigned',
                             Icons.videocam_outlined),
-                        _buildDetailRow(context, 'Driver', 
-                            task.assignedDriver ?? 'Not assigned', 
+                        _buildDetailRow(
+                            context,
+                            'Driver',
+                            task.assignedDriver ?? 'Not assigned',
                             Icons.directions_car_outlined),
-                        _buildDetailRow(context, 'Librarian', 
-                            task.assignedLibrarian ?? 'Not assigned', 
-                            Icons.library_books_outlined),
+                        
                       ],
                     ),
-                    
+
                     // Tags Section
                     const SizedBox(height: 16),
                     _buildDetailSection(
@@ -205,24 +232,37 @@ class TaskDetailModal extends StatelessWidget {
                               ? Wrap(
                                   spacing: 8.w,
                                   runSpacing: 8.h,
-                                  children: task.tags.map((tag) => Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? Colors.blue.withOpacity(0.2) : accent.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: isDark ? Colors.blue.withOpacity(0.3) : accent.withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      tag,
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: isDark ? Colors.white : accent,
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  )).toList(),
+                                  children: task.tags
+                                      .map((tag) => Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 12.w,
+                                                vertical: 6.h),
+                                            decoration: BoxDecoration(
+                                              color: isDark
+                                                  ? Colors.blue.withOpacity(0.2)
+                                                  : accent.withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: isDark
+                                                    ? Colors.blue
+                                                        .withOpacity(0.3)
+                                                    : accent.withOpacity(0.3),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              tag,
+                                              style:
+                                                  textTheme.bodySmall?.copyWith(
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : accent,
+                                                fontSize: 12.sp,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ))
+                                      .toList(),
                                 )
                               : Text(
                                   'No tags assigned',
@@ -235,30 +275,33 @@ class TaskDetailModal extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
+
                     // Comments (if available)
                     if (task.comments.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       _buildDetailSection(
                         context,
                         'Comments (${task.comments.length})',
-                        task.comments.map((comment) => Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(12.w),
-                          margin: EdgeInsets.only(bottom: 8.h),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceVariant.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: borderColor),
-                          ),
-                          child: Text(
-                            comment,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: mainText,
-                              fontSize: 14.sp,
-                            ),
-                          ),
-                        )).toList(),
+                        task.comments
+                            .map((comment) => Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(12.w),
+                                  margin: EdgeInsets.only(bottom: 8.h),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceVariant
+                                        .withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: borderColor),
+                                  ),
+                                  child: Text(
+                                    comment,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: mainText,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
                       ),
                     ],
                   ],
@@ -271,18 +314,20 @@ class TaskDetailModal extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailSection(BuildContext context, String title, List<Widget> children) {
+  Widget _buildDetailSection(
+      BuildContext context, String title, List<Widget> children) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: colorScheme.surfaceVariant.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline.withAlpha((0.2 * 255).toInt())),
+        border: Border.all(
+            color: colorScheme.outline.withAlpha((0.2 * 255).toInt())),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,11 +347,13 @@ class TaskDetailModal extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(BuildContext context, String label, String value, IconData icon, {Color? valueColor}) {
+  Widget _buildDetailRow(
+      BuildContext context, String label, String value, IconData icon,
+      {Color? valueColor}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    
+
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
@@ -351,4 +398,4 @@ class TaskDetailModal extends StatelessWidget {
         return Colors.grey;
     }
   }
-} 
+}
