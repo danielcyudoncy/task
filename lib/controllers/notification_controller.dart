@@ -241,10 +241,12 @@ class NotificationController extends GetxController {
 
       // Remove from local state
       notifications.removeWhere((n) => n['id'] == notificationId);
+      validNotifications.removeWhere((n) => n['id'] == notificationId);
 
       // Update counts
       totalNotifications.value = notifications.length;
       updateUnreadCount(notifications);
+      validUnreadCount.value = validNotifications.where((n) => !(n['isRead'] as bool? ?? true)).length;
 
       _safeSnackbar('Success', 'Notification deleted');
     } catch (e) {

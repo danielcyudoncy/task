@@ -11,7 +11,8 @@ class NotificationBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final NotificationController notificationController = Get.find<NotificationController>();
     return Obx(() {
-      final hasUnread = notificationController.unreadCount.value > 0;
+      final unreadCount = notificationController.validUnreadCount.value;
+      final hasUnread = unreadCount > 0;
       return Stack(
         children: [
           const Icon(Icons.notifications),
@@ -20,11 +21,21 @@ class NotificationBadge extends StatelessWidget {
               right: 0,
               top: 0,
               child: Container(
-                width: 10.w,
-                height: 10.h,
+                width: 16.w,
+                height: 16.h,
                 decoration: const BoxDecoration(
                   color: Colors.red,
                   shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    unreadCount > 9 ? '9+' : unreadCount.toString(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ),

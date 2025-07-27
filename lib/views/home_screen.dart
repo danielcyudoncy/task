@@ -287,31 +287,35 @@ class _HomeScreenState extends State<HomeScreen>
                                   .where('isOnline', isEqualTo: true)
                                   .snapshots(),
                               builder: (context, snapshot) {
-                                int onlineUsersCount = 0;
-                                if (snapshot.hasData) {
-                                  onlineUsersCount = snapshot.data!.docs.length;
-                                }
-                                return StreamBuilder<int>(
-                                  stream: taskController.assignedTasksCountStream(userId),
-                                  builder: (context, assignedSnapshot) {
-                                    final assignedTasksToday = assignedSnapshot.data ?? 0;
+                                return StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('users')
+                                      .where('isOnline', isEqualTo: true)
+                                      .snapshots(),
+                                  builder: (context, onlineSnapshot) {
+                                    final onlineUsersCount = onlineSnapshot.data?.docs.length ?? 0;
                                     return StreamBuilder<int>(
-                                      stream: taskController.createdTasksCountStream(userId),
+                                      stream: taskController.assignedTasksCountStream(userId),
                                       builder: (context, createdSnapshot) {
-                                        final tasksCreatedCount = createdSnapshot.data ?? 0;
                                         return UserDashboardCardsWidget(
-                                          assignedTasksToday: assignedTasksToday,
-                                          onlineUsersCount: onlineUsersCount,
-                                          tasksCreatedCount: tasksCreatedCount,
-                                          newsFeedCount: 0, // TODO: Replace with actual count
+                                          assignedTasksStream: taskController.assignedTasksCountStream(userId),
+                                          onlineUsersStream: Stream.value(onlineUsersCount),
+                                          tasksCreatedStream: taskController.createdTasksCountStream(userId),
+                                          newsFeedStream: Stream.value(3), // Static for now, can be replaced with a real stream
                                           onAssignedTasksTap: () {
-                                            _tabController.animateTo(0); // Switch to the Not Completed tab
+                                            _tabController.animateTo(0);
+                                            setState(() {
+                                              _tabController.index = 0;
+                                            });
                                           },
                                           onOnlineUsersTap: () {
-                                            Get.toNamed('/all-users-chat');
+                                            Get.toNamed('/online-users');
                                           },
                                           onTasksCreatedTap: () {
-                                            _tabController.animateTo(0); // Switch to the Created Tasks tab
+                                            _tabController.animateTo(1);
+                                            setState(() {
+                                              _tabController.index = 1;
+                                            });
                                           },
                                           onNewsFeedTap: () {
                                             Get.toNamed('/news');

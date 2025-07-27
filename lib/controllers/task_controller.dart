@@ -1,4 +1,5 @@
 // controllers/task_controller.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -226,15 +227,6 @@ class TaskController extends GetxController {
 
       for (var doc in docs) {
         var taskData = doc.data() as Map<String, dynamic>;
-        String createdByName = await _getUserName(taskData["createdBy"]);
-        String assignedReporterName = taskData["assignedReporterName"] ??
-            (taskData["assignedReporterId"] != null
-                ? await _getUserName(taskData["assignedReporterId"])
-                : "Not Assigned");
-        String assignedCameramanName = taskData["assignedCameramanName"] ??
-            (taskData["assignedCameramanId"] != null
-                ? await _getUserName(taskData["assignedCameramanId"])
-                : "Not Assigned");
         String taskTitle = taskData["title"];
         taskTitleCache[doc.id] = taskTitle;
 
@@ -304,15 +296,6 @@ class TaskController extends GetxController {
 
       for (var doc in docs) {
         var taskData = doc.data() as Map<String, dynamic>;
-        String createdByName = await _getUserName(taskData["createdBy"]);
-        String assignedReporterName = taskData["assignedReporterName"] ??
-            (taskData["assignedReporterId"] != null
-                ? await _getUserName(taskData["assignedReporterId"])
-                : "Not Assigned");
-        String assignedCameramanName = taskData["assignedCameramanName"] ??
-            (taskData["assignedCameramanId"] != null
-                ? await _getUserName(taskData["assignedCameramanId"])
-                : "Not Assigned");
         String taskTitle = taskData["title"];
         taskTitleCache[doc.id] = taskTitle;
 
@@ -356,30 +339,9 @@ class TaskController extends GetxController {
   }
 
   // Fetch user's full name using UID with caching
-  Future<String> _getUserName(String? uid) async {
-    if (uid == null) return "Not Assigned";
-    try {
-      if (userNameCache.containsKey(uid)) {
-        return userNameCache[uid]!;
-      }
-      DocumentSnapshot userDoc =
-          await FirebaseFirestore.instance.collection("users").doc(uid).get();
-      if (userDoc.exists) {
-        String fullName = userDoc["fullName"] ?? "Unknown";
-        String photoUrl = _validateAvatarUrl(userDoc["photoUrl"]);
-        userNameCache[uid] = fullName;
-        userAvatarCache[uid] = photoUrl;
-        return fullName;
-      } else {
-        return "User not found";
-      }
-    } catch (e) {
-      // debugPrint("TaskController: Error fetching user $uid: $e");
-      return "Error fetching user";
-    }
-  }
 
   // Assign a task to a reporter, cameraman, driver, and/or librarian, saving both the UID and Name for each.
+  /// Updates task assignments and notifies all assigned users
   Future<void> assignTaskWithNames({
     required String taskId,
     String? reporterId,
@@ -392,47 +354,20 @@ class TaskController extends GetxController {
     String? librarianName,
   }) async {
     try {
-          final updateData = <String, dynamic>{};
-
-      if (reporterId != null && reporterName != null) {
-        updateData['assignedReporterId'] = reporterId;
-        updateData['assignedReporterName'] = reporterName;
-      } else {
-        updateData['assignedReporterId'] = null;
-        updateData['assignedReporterName'] = null;
-      }
-
-      if (cameramanId != null && cameramanName != null) {
-        updateData['assignedCameramanId'] = cameramanId;
-        updateData['assignedCameramanName'] = cameramanName;
-      } else {
-        updateData['assignedCameramanId'] = null;
-        updateData['assignedCameramanName'] = null;
-      }
-
-      if (driverId != null && driverName != null) {
-        updateData['assignedDriverId'] = driverId;
-        updateData['assignedDriverName'] = driverName;
-      } else {
-        updateData['assignedDriverId'] = null;
-        updateData['assignedDriverName'] = null;
-      }
-
-      if (librarianId != null && librarianName != null) {
-        updateData['assignedLibrarianId'] = librarianId;
-        updateData['assignedLibrarianName'] = librarianName;
-      } else {
-        updateData['assignedLibrarianId'] = null;
-        updateData['assignedLibrarianName'] = null;
-      }
-
-      updateData['assignedAt'] = FieldValue.serverTimestamp();
+      // Prepare the update data with proper null safety
+      final updateData = await _prepareAssignmentUpdates(
+        reporterId: reporterId,
+        reporterName: reporterName,
+        cameramanId: cameramanId,
+        cameramanName: cameramanName,
+        driverId: driverId,
+        driverName: driverName,
+        librarianId: librarianId,
+        librarianName: librarianName,
+      );
 
       // Update the task document
-      await FirebaseFirestore.instance
-          .collection('tasks')
-          .doc(taskId)
-          .update(updateData);
+      await _updateTaskAssignments(taskId, updateData);
 
       // Get task details for notification
       final taskDoc = await FirebaseFirestore.instance
@@ -441,61 +376,191 @@ class TaskController extends GetxController {
           .get();
 
       if (taskDoc.exists) {
-        final String taskTitle =
-            (taskDoc.data()?['title'] as String?) ?? 'A task';
-        final String taskDescription =
-            (taskDoc.data()?['description'] as String?) ?? '';
-
-        DateTime dueDate;
-        final dueDateRaw = taskDoc.data()?['dueDate'];
-        if (dueDateRaw is Timestamp) {
-          dueDate = dueDateRaw.toDate();
-        } else if (dueDateRaw is String) {
-          dueDate = DateTime.tryParse(dueDateRaw) ?? DateTime.now();
-        } else {
-          dueDate = DateTime.now();
-        }
-
-        final String formattedDate =
-            DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
-
-        // Send notifications and push notifications to all assigned users
-        final List<String?> assignedUserIds = [reporterId, cameramanId, driverId, librarianId];
-        for (final userId in assignedUserIds) {
-          if (userId != null) {
-            // In-app notification
-            FirebaseFirestore.instance
-                .collection('users')
-                .doc(userId)
-                .collection('notifications')
-                .add({
-                  'type': 'task_assigned',
-                  'taskId': taskId,
-                  'title': taskTitle,
-                  'message': 'Description: $taskDescription\nDue: $formattedDate',
-                  'isRead': false,
-                  'timestamp': FieldValue.serverTimestamp(),
-                })
-                .then((_) => debugPrint("✅ Notification sent to $userId"))
-                .catchError((e) => debugPrint("❌ Notification error for $userId: $e"));
-            // Push notification
-            await sendTaskNotification(userId, taskTitle);
-          }
-        }
+        await _notifyAssignedUsers(
+          taskDoc: taskDoc,
+          taskId: taskId,
+          reporterId: reporterId,
+          cameramanId: cameramanId,
+          driverId: driverId,
+          librarianId: librarianId,
+        );
       }
 
       // Use a delayed call to avoid setState after dispose
-      Future.delayed(const Duration(milliseconds: 100), () {
-        calculateNewTaskCount();
-      });
-    } catch (e) {
-        debugPrint("❌ Assignment error: $e");
-        debugPrint("Stack trace: ${StackTrace.current}");
+      Future.delayed(const Duration(milliseconds: 100), calculateNewTaskCount);
+    } catch (e, stackTrace) {
+      _logError('Error in assignTaskWithNames', e, stackTrace);
       // Don't show snackbar here since dialog might be closed
     }
   }
 
+  /// Prepares the assignment updates with proper null safety
+  Future<Map<String, dynamic>> _prepareAssignmentUpdates({
+    String? reporterId,
+    String? reporterName,
+    String? cameramanId,
+    String? cameramanName,
+    String? driverId,
+    String? driverName,
+    String? librarianId,
+    String? librarianName,
+  }) async {
+    final updateData = <String, dynamic>{
+      'assignedAt': FieldValue.serverTimestamp(),
+    };
 
+    // Helper function to add assignment if both ID and name are provided
+    void addAssignmentIfValid({
+      required String? id,
+      required String? name,
+      required String idField,
+      required String nameField,
+    }) {
+      if (id != null && name != null) {
+        updateData[idField] = id;
+        updateData[nameField] = name;
+      } else {
+        updateData[idField] = null;
+        updateData[nameField] = null;
+      }
+    }
+
+    // Add all assignments
+    addAssignmentIfValid(
+      id: reporterId,
+      name: reporterName,
+      idField: 'assignedReporterId',
+      nameField: 'assignedReporterName',
+    );
+
+    addAssignmentIfValid(
+      id: cameramanId,
+      name: cameramanName,
+      idField: 'assignedCameramanId',
+      nameField: 'assignedCameramanName',
+    );
+
+    addAssignmentIfValid(
+      id: driverId,
+      name: driverName,
+      idField: 'assignedDriverId',
+      nameField: 'assignedDriverName',
+    );
+
+    addAssignmentIfValid(
+      id: librarianId,
+      name: librarianName,
+      idField: 'assignedLibrarianId',
+      nameField: 'assignedLibrarianName',
+    );
+
+    return updateData;
+  }
+
+  /// Updates task assignments in Firestore
+  Future<void> _updateTaskAssignments(
+    String taskId,
+    Map<String, dynamic> updateData,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .update(updateData);
+    } catch (e, stackTrace) {
+      _logError('Failed to update task assignments', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Sends notifications to all assigned users
+  Future<void> _notifyAssignedUsers({
+    required DocumentSnapshot taskDoc,
+    required String taskId,
+    String? reporterId,
+    String? cameramanId,
+    String? driverId,
+    String? librarianId,
+  }) async {
+    try {
+      final taskData = taskDoc.data() as Map<String, dynamic>?;
+      if (taskData == null) return;
+
+      final taskTitle = taskData['title'] as String? ?? 'A task';
+      final taskDescription = taskData['description'] as String? ?? '';
+      final dueDate = _parseDueDate(taskData['dueDate']);
+      final formattedDate = DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
+
+      // Send notifications to all assigned users
+      final assignedUserIds = [reporterId, cameramanId, driverId, librarianId]
+          .whereType<String>()
+          .toList();
+
+      for (final userId in assignedUserIds) {
+        await _sendUserNotification(
+          userId: userId,
+          taskId: taskId,
+          taskTitle: taskTitle,
+          taskDescription: taskDescription,
+          formattedDate: formattedDate,
+        );
+      }
+    } catch (e, stackTrace) {
+      _logError('Error in _notifyAssignedUsers', e, stackTrace);
+    }
+  }
+
+  /// Parses the due date from various possible formats
+  DateTime _parseDueDate(dynamic dueDateRaw) {
+    if (dueDateRaw is Timestamp) {
+      return dueDateRaw.toDate();
+    } else if (dueDateRaw is String) {
+      return DateTime.tryParse(dueDateRaw) ?? DateTime.now();
+    }
+    return DateTime.now();
+  }
+
+  /// Sends a notification to a single user
+  Future<void> _sendUserNotification({
+    required String userId,
+    required String taskId,
+    required String taskTitle,
+    required String taskDescription,
+    required String formattedDate,
+  }) async {
+    try {
+      // In-app notification
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .add({
+            'type': 'task_assigned',
+            'taskId': taskId,
+            'title': taskTitle,
+            'message': 'Description: $taskDescription\nDue: $formattedDate',
+            'isRead': false,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+
+      // Push notification
+      await sendTaskNotification(userId, taskTitle);
+    } catch (e, stackTrace) {
+      _logError('Error sending notification to user $userId', e, stackTrace);
+    }
+  }
+
+  /// Helper method for consistent error logging
+  void _logError(String message, dynamic error, StackTrace stackTrace) {
+    // Use GetX's logging in production, or debugPrint in development
+    if (kReleaseMode) {
+      Get.log('$message: $error', isError: true);
+      Get.log('Stack trace: $stackTrace', isError: true);
+    } else {
+      debugPrint('❌ $message: $error');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
 
   // Fetch task counts using the new fields
   Future<void> fetchTaskCounts() async {
@@ -985,14 +1050,19 @@ class TaskController extends GetxController {
     final assignedToStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedTo', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
+      
     final reporterStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedReporterId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
+      
     final cameramanStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedCameramanId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
 
     return rx.CombineLatestStream.combine3<QuerySnapshot, QuerySnapshot, QuerySnapshot, int>(
@@ -1001,9 +1071,10 @@ class TaskController extends GetxController {
       cameramanStream,
       (a, b, c) {
         final taskIds = <String>{};
-        taskIds.addAll(a.docs.map((doc) => doc.id));
-        taskIds.addAll(b.docs.map((doc) => doc.id));
-        taskIds.addAll(c.docs.map((doc) => doc.id));
+        // Only include non-completed tasks in the count
+        taskIds.addAll(a.docs.where((doc) => doc['status'] != 'Completed').map((doc) => doc.id));
+        taskIds.addAll(b.docs.where((doc) => doc['status'] != 'Completed').map((doc) => doc.id));
+        taskIds.addAll(c.docs.where((doc) => doc['status'] != 'Completed').map((doc) => doc.id));
         return taskIds.length;
       },
     );
