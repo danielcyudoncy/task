@@ -470,7 +470,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                           ),
                           onPressed: () async {
                             Get.find<SettingsController>().triggerFeedback();

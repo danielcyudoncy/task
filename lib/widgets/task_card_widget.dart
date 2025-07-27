@@ -95,7 +95,27 @@ class TaskCardWidget extends StatelessWidget {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
+              // Creator info
+              Row(
+                children: [
+                  const Icon(
+                    Icons.person_outline,
+                    size: 14,
+                    color: subTextColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Created by: ${task.createdBy}',
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               // Assigned Reporter
               Text(
                 'Assigned Reporter: ${task.assignedReporter ?? 'Not Assigned'}',

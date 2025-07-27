@@ -4,10 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class UserDashboardCardsWidget extends StatelessWidget {
-  final int assignedTasksToday;
-  final int onlineUsersCount;
-  final int tasksCreatedCount;
-  final int newsFeedCount;
+  final Stream<int> assignedTasksStream;
+  final Stream<int> onlineUsersStream;
+  final Stream<int> tasksCreatedStream;
+  final Stream<int> newsFeedStream;
   final VoidCallback onAssignedTasksTap;
   final VoidCallback onOnlineUsersTap;
   final VoidCallback onTasksCreatedTap;
@@ -15,10 +15,10 @@ class UserDashboardCardsWidget extends StatelessWidget {
 
   const UserDashboardCardsWidget({
     super.key,
-    required this.assignedTasksToday,
-    required this.onlineUsersCount,
-    required this.tasksCreatedCount,
-    required this.newsFeedCount,
+    required this.assignedTasksStream,
+    required this.onlineUsersStream,
+    required this.tasksCreatedStream,
+    required this.newsFeedStream,
     required this.onAssignedTasksTap,
     required this.onOnlineUsersTap,
     required this.onTasksCreatedTap,
@@ -47,24 +47,36 @@ class UserDashboardCardsWidget extends StatelessWidget {
                 SizedBox(
                   width: 140.w,
                   height: assignedTaskHeight.h,
-                  child: _DashboardGridCard(
-                    icon: Icons.assignment_turned_in,
-                    value: assignedTasksToday,
-                    label: 'assigned_task'.tr,
-                    onTap: onAssignedTasksTap,
-                    color: cardColor,
+                  child: StreamBuilder<int>(
+                    stream: assignedTasksStream,
+                    builder: (context, snapshot) {
+                      final count = snapshot.data ?? 0;
+                      return _DashboardGridCard(
+                        icon: Icons.assignment_turned_in,
+                        value: count,
+                        label: 'assigned_task'.tr,
+                        onTap: onAssignedTasksTap,
+                        color: cardColor,
+                      );
+                    },
                   ),
                 ),
                 SizedBox(height: 14.h),
                 SizedBox(
                   width: 140.w,
                   height: taskCreatedHeight.h,
-                  child: _DashboardGridCard(
-                    icon: Icons.create,
-                    value: tasksCreatedCount,
-                    label: 'task_created'.tr,
-                    onTap: onTasksCreatedTap,
-                    color: cardColor,
+                  child: StreamBuilder<int>(
+                    stream: tasksCreatedStream,
+                    builder: (context, snapshot) {
+                      final count = snapshot.data ?? 0;
+                      return _DashboardGridCard(
+                        icon: Icons.create,
+                        value: count,
+                        label: 'task_created'.tr,
+                        onTap: onTasksCreatedTap,
+                        color: cardColor,
+                      );
+                    },
                   ),
                 ),
               ],
@@ -77,24 +89,36 @@ class UserDashboardCardsWidget extends StatelessWidget {
                 SizedBox(
                   width: 140.w,
                   height: onlineNowHeight.h,
-                  child: _DashboardGridCard(
-                    icon: Icons.wifi_tethering,
-                    value: onlineUsersCount,
-                    label: 'online_users_count'.tr,
-                    onTap: onOnlineUsersTap,
-                    color: cardColor,
+                  child: StreamBuilder<int>(
+                    stream: onlineUsersStream,
+                    builder: (context, snapshot) {
+                      final count = snapshot.data ?? 0;
+                      return _DashboardGridCard(
+                        icon: Icons.wifi_tethering,
+                        value: count,
+                        label: 'online_users_count'.tr,
+                        onTap: onOnlineUsersTap,
+                        color: cardColor,
+                      );
+                    },
                   ),
                 ),
                 SizedBox(height: 14.h),
                 SizedBox(
                   width: 140.w,
                   height: newsFeedHeight.h,
-                  child: _DashboardGridCard(
-                    icon: Icons.rss_feed,
-                    value: newsFeedCount,
-                    label: 'news_feed'.tr,
-                    onTap: onNewsFeedTap,
-                    color: cardColor,
+                  child: StreamBuilder<int>(
+                    stream: newsFeedStream,
+                    builder: (context, snapshot) {
+                      final count = snapshot.data ?? 0;
+                      return _DashboardGridCard(
+                        icon: Icons.rss_feed,
+                        value: count,
+                        label: 'news_feed'.tr,
+                        onTap: onNewsFeedTap,
+                        color: cardColor,
+                      );
+                    },
                   ),
                 ),
               ],
