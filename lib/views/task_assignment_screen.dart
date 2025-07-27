@@ -154,16 +154,13 @@ class TaskAssignmentScreen extends StatelessWidget {
                       style: TextStyle(color: colorScheme.onSurface));
                 }
                 
+                // Show tasks that don't have both reporter and cameraman assigned
                 final unassignedTasks = taskController.tasks
                     .where((task) =>
-                                    (task.assignedReporterId == null ||
-            task.assignedReporterId!.isEmpty) &&
-            (task.assignedCameramanId == null ||
-            task.assignedCameramanId!.isEmpty) &&
-            (task.assignedDriverId == null ||
-            task.assignedDriverId!.isEmpty) &&
-            (task.assignedLibrarianId == null ||
-            task.assignedLibrarianId!.isEmpty))
+                        task.assignedReporterId == null ||
+                        task.assignedReporterId!.isEmpty ||
+                        task.assignedCameramanId == null ||
+                        task.assignedCameramanId!.isEmpty)
                     .toList();
 
                 if (unassignedTasks.isEmpty) {
@@ -301,11 +298,17 @@ class TaskAssignmentScreen extends StatelessWidget {
                   onPressed: () async {
                     Get.find<SettingsController>().triggerFeedback();
 
-                    if (selectedTaskId == null ||
-                        (selectedReporterId == null &&
-                            selectedCameramanId == null)) {
-                      Get.snackbar("Error",
-                          "Please select a task and at least one assignee.");
+                    if (selectedTaskId == null) {
+                      Get.snackbar("Error", "Please select a task.");
+                      return;
+                    }
+                    
+                    if (selectedReporterId == null || selectedCameramanId == null) {
+                      Get.snackbar(
+                        "Incomplete Assignment",
+                        "Please assign both a reporter and a cameraman to this task.",
+                        duration: const Duration(seconds: 3),
+                      );
                       return;
                     }
 
@@ -313,16 +316,34 @@ class TaskAssignmentScreen extends StatelessWidget {
                       // Close the dialog BEFORE calling the assignment
                       Get.back();
 
-                      await taskController.assignTaskWithNames(
-                        taskId: selectedTaskId!,
-                        reporterId: selectedReporterId,
-                        reporterName: selectedReporterName,
-                        cameramanId: selectedCameramanId,
-                        cameramanName: selectedCameramanName,
-                      );
+                      try {
+                        await taskController.assignTaskWithNames(
+                          taskId: selectedTaskId!,
+                          reporterId: selectedReporterId,
+                          reporterName: selectedReporterName,
+                          cameramanId: selectedCameramanId,
+                          cameramanName: selectedCameramanName,
+                        );
 
-                      // Show success message
-                      Get.snackbar("Success", "Task assigned successfully!");
+                        // Show success message
+                        Get.snackbar(
+                          "Success", 
+                          "Task assigned successfully!",
+                          duration: const Duration(seconds: 2),
+                        );
+                        
+                        // Refresh the task list to reflect the changes
+                        taskController.fetchTasks();
+                      } catch (e) {
+                        // Reopen the dialog if there was an error
+                        _showAssignmentDialog(
+                          context, 
+                          selectedTaskId, 
+                          colorScheme, 
+                          scaffoldBg,
+                        );
+                        rethrow;
+                      }
                     } catch (e) {
                       Get.snackbar("Error", "Failed to assign task: $e");
                     }
