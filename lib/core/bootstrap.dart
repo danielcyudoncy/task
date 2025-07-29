@@ -1,6 +1,8 @@
 // core/bootstrap.dart
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,6 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:task/service/export_service.dart';
 import '../models/task_model.dart';
 import '../my_app.dart';
 
@@ -31,6 +34,7 @@ import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
+import 'package:task/service/archive_service.dart';
 import 'package:task/service/isar_task_service.dart';
 
 // --- Emulator/Production Switch ---
@@ -43,9 +47,31 @@ bool get isBootstrapComplete => _isBootstrapComplete;
 
 Future<void> bootstrapApp() async {
   debugPrint("🚀 BOOTSTRAP: Starting app initialization");
+  
+  // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
   debugPrint("🚀 BOOTSTRAP: WidgetsFlutterBinding initialized");
-
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
+  // Initialize error handling
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('🚨 FLUTTER ERROR: ${details.exception}');
+    debugPrint('🚨 STACK TRACE: ${details.stack}');
+  };
+  
+  // Set uncaught error handler
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('🚨 UNCAUGHT ERROR: $error');
+    debugPrint('🚨 STACK TRACE: $stack');
+    return true;
+  };
+  
   try {
     // Step 1: Initialize external libraries
     debugPrint("🚀 BOOTSTRAP: Loading environment variables");
@@ -68,6 +94,7 @@ Future<void> bootstrapApp() async {
 
     // Step 2: Open Isar and register IsarTaskService BEFORE any controller
     final dir = await getApplicationDocumentsDirectory();
+    // TaskSchema will be available after build_runner generates the files
     final isar = await Isar.open([TaskSchema], directory: dir.path);
     Get.put(IsarTaskService(isar), permanent: true);
 
@@ -85,7 +112,43 @@ Future<void> bootstrapApp() async {
 
     // Step 3: Put all services that other controllers depend on FIRST.
     debugPrint("🚀 BOOTSTRAP: Putting FirebaseStorageService");
-    Get.put(FirebaseStorageService(), permanent: true);
+    try {
+      await Get.putAsync<FirebaseStorageService>(() async {
+        final service = FirebaseStorageService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing FirebaseStorageService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
+    debugPrint("🚀 BOOTSTRAP: Putting ExportService");
+    try {
+      await Get.putAsync<ExportService>(() async {
+        final service = ExportService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing ExportService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
+    debugPrint("🚀 BOOTSTRAP: Putting ArchiveService");
+    try {
+      await Get.putAsync<ArchiveService>(() async {
+        final service = ArchiveService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing ArchiveService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
     debugPrint("🚀 BOOTSTRAP: Putting UserDeletionService (mock or real)");
     if (kReleaseMode) {
       Get.put<UserDeletionService>(CloudFunctionUserDeletionService(), permanent: true);
