@@ -2,9 +2,28 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 
-class FirebaseStorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+class FirebaseStorageService extends GetxService {
+  static FirebaseStorageService get to => Get.find();
+  
+  final FirebaseStorage _storage;
+  bool _isInitialized = false;
+  
+  FirebaseStorageService({FirebaseStorage? storage}) 
+      : _storage = storage ?? FirebaseStorage.instance;
+  
+  /// Initializes the FirebaseStorageService
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+    
+    try {
+      // Initialize any dependencies here
+      _isInitialized = true;
+    } catch (e) {
+      throw Exception('Failed to initialize FirebaseStorageService: $e');
+    }
+  }
 
   /// Upload a file to Firebase Storage
   Future<String?> uploadFile({

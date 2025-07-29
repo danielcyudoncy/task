@@ -1,4 +1,3 @@
-// models/task_model.g.dart
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'task_model.dart';
@@ -18,128 +17,153 @@ const TaskSchema = CollectionSchema(
   name: r'Task',
   id: 2998003626758701373,
   properties: {
-    r'assignedCameraman': PropertySchema(
+    r'archiveLocation': PropertySchema(
       id: 0,
+      name: r'archiveLocation',
+      type: IsarType.string,
+    ),
+    r'archiveReason': PropertySchema(
+      id: 1,
+      name: r'archiveReason',
+      type: IsarType.string,
+    ),
+    r'archivedAt': PropertySchema(
+      id: 2,
+      name: r'archivedAt',
+      type: IsarType.dateTime,
+    ),
+    r'archivedBy': PropertySchema(
+      id: 3,
+      name: r'archivedBy',
+      type: IsarType.string,
+    ),
+    r'assignedCameraman': PropertySchema(
+      id: 4,
       name: r'assignedCameraman',
       type: IsarType.string,
     ),
     r'assignedCameramanId': PropertySchema(
-      id: 1,
+      id: 5,
       name: r'assignedCameramanId',
       type: IsarType.string,
     ),
     r'assignedDriver': PropertySchema(
-      id: 2,
+      id: 6,
       name: r'assignedDriver',
       type: IsarType.string,
     ),
     r'assignedDriverId': PropertySchema(
-      id: 3,
+      id: 7,
       name: r'assignedDriverId',
       type: IsarType.string,
     ),
     r'assignedLibrarian': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'assignedLibrarian',
       type: IsarType.string,
     ),
     r'assignedLibrarianId': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'assignedLibrarianId',
       type: IsarType.string,
     ),
     r'assignedReporter': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'assignedReporter',
       type: IsarType.string,
     ),
     r'assignedReporterId': PropertySchema(
-      id: 7,
+      id: 11,
       name: r'assignedReporterId',
       type: IsarType.string,
     ),
     r'assignedTo': PropertySchema(
-      id: 8,
+      id: 12,
       name: r'assignedTo',
       type: IsarType.string,
     ),
     r'assignmentTimestamp': PropertySchema(
-      id: 9,
+      id: 13,
       name: r'assignmentTimestamp',
       type: IsarType.dateTime,
     ),
     r'category': PropertySchema(
-      id: 10,
+      id: 14,
       name: r'category',
       type: IsarType.string,
     ),
     r'comments': PropertySchema(
-      id: 11,
+      id: 15,
       name: r'comments',
       type: IsarType.stringList,
     ),
     r'createdBy': PropertySchema(
-      id: 12,
+      id: 16,
       name: r'createdBy',
       type: IsarType.string,
     ),
     r'createdById': PropertySchema(
-      id: 13,
+      id: 17,
       name: r'createdById',
       type: IsarType.string,
     ),
     r'creatorAvatar': PropertySchema(
-      id: 14,
+      id: 18,
       name: r'creatorAvatar',
       type: IsarType.string,
     ),
     r'description': PropertySchema(
-      id: 15,
+      id: 19,
       name: r'description',
       type: IsarType.string,
     ),
     r'dueDate': PropertySchema(
-      id: 16,
+      id: 20,
       name: r'dueDate',
       type: IsarType.dateTime,
     ),
+    r'isArchived': PropertySchema(
+      id: 21,
+      name: r'isArchived',
+      type: IsarType.bool,
+    ),
     r'lastModified': PropertySchema(
-      id: 17,
+      id: 22,
       name: r'lastModified',
       type: IsarType.dateTime,
     ),
     r'priority': PropertySchema(
-      id: 18,
+      id: 23,
       name: r'priority',
       type: IsarType.string,
     ),
     r'status': PropertySchema(
-      id: 19,
+      id: 24,
       name: r'status',
       type: IsarType.string,
     ),
     r'syncStatus': PropertySchema(
-      id: 20,
+      id: 25,
       name: r'syncStatus',
       type: IsarType.string,
     ),
     r'tags': PropertySchema(
-      id: 21,
+      id: 26,
       name: r'tags',
       type: IsarType.stringList,
     ),
     r'taskId': PropertySchema(
-      id: 22,
+      id: 27,
       name: r'taskId',
       type: IsarType.string,
     ),
     r'timestamp': PropertySchema(
-      id: 23,
+      id: 28,
       name: r'timestamp',
       type: IsarType.dateTime,
     ),
     r'title': PropertySchema(
-      id: 24,
+      id: 29,
       name: r'title',
       type: IsarType.string,
     )
@@ -164,6 +188,24 @@ int _taskEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.archiveLocation;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.archiveReason;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.archivedBy;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.assignedCameraman;
     if (value != null) {
@@ -271,31 +313,36 @@ void _taskSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.assignedCameraman);
-  writer.writeString(offsets[1], object.assignedCameramanId);
-  writer.writeString(offsets[2], object.assignedDriver);
-  writer.writeString(offsets[3], object.assignedDriverId);
-  writer.writeString(offsets[4], object.assignedLibrarian);
-  writer.writeString(offsets[5], object.assignedLibrarianId);
-  writer.writeString(offsets[6], object.assignedReporter);
-  writer.writeString(offsets[7], object.assignedReporterId);
-  writer.writeString(offsets[8], object.assignedTo);
-  writer.writeDateTime(offsets[9], object.assignmentTimestamp);
-  writer.writeString(offsets[10], object.category);
-  writer.writeStringList(offsets[11], object.comments);
-  writer.writeString(offsets[12], object.createdBy);
-  writer.writeString(offsets[13], object.createdById);
-  writer.writeString(offsets[14], object.creatorAvatar);
-  writer.writeString(offsets[15], object.description);
-  writer.writeDateTime(offsets[16], object.dueDate);
-  writer.writeDateTime(offsets[17], object.lastModified);
-  writer.writeString(offsets[18], object.priority);
-  writer.writeString(offsets[19], object.status);
-  writer.writeString(offsets[20], object.syncStatus);
-  writer.writeStringList(offsets[21], object.tags);
-  writer.writeString(offsets[22], object.taskId);
-  writer.writeDateTime(offsets[23], object.timestamp);
-  writer.writeString(offsets[24], object.title);
+  writer.writeString(offsets[0], object.archiveLocation);
+  writer.writeString(offsets[1], object.archiveReason);
+  writer.writeDateTime(offsets[2], object.archivedAt);
+  writer.writeString(offsets[3], object.archivedBy);
+  writer.writeString(offsets[4], object.assignedCameraman);
+  writer.writeString(offsets[5], object.assignedCameramanId);
+  writer.writeString(offsets[6], object.assignedDriver);
+  writer.writeString(offsets[7], object.assignedDriverId);
+  writer.writeString(offsets[8], object.assignedLibrarian);
+  writer.writeString(offsets[9], object.assignedLibrarianId);
+  writer.writeString(offsets[10], object.assignedReporter);
+  writer.writeString(offsets[11], object.assignedReporterId);
+  writer.writeString(offsets[12], object.assignedTo);
+  writer.writeDateTime(offsets[13], object.assignmentTimestamp);
+  writer.writeString(offsets[14], object.category);
+  writer.writeStringList(offsets[15], object.comments);
+  writer.writeString(offsets[16], object.createdBy);
+  writer.writeString(offsets[17], object.createdById);
+  writer.writeString(offsets[18], object.creatorAvatar);
+  writer.writeString(offsets[19], object.description);
+  writer.writeDateTime(offsets[20], object.dueDate);
+  writer.writeBool(offsets[21], object.isArchived);
+  writer.writeDateTime(offsets[22], object.lastModified);
+  writer.writeString(offsets[23], object.priority);
+  writer.writeString(offsets[24], object.status);
+  writer.writeString(offsets[25], object.syncStatus);
+  writer.writeStringList(offsets[26], object.tags);
+  writer.writeString(offsets[27], object.taskId);
+  writer.writeDateTime(offsets[28], object.timestamp);
+  writer.writeString(offsets[29], object.title);
 }
 
 Task _taskDeserialize(
@@ -305,32 +352,36 @@ Task _taskDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Task();
-  object.assignedCameraman = reader.readStringOrNull(offsets[0]);
-  object.assignedCameramanId = reader.readStringOrNull(offsets[1]);
-  object.assignedDriver = reader.readStringOrNull(offsets[2]);
-  object.assignedDriverId = reader.readStringOrNull(offsets[3]);
-  object.assignedLibrarian = reader.readStringOrNull(offsets[4]);
-  object.assignedLibrarianId = reader.readStringOrNull(offsets[5]);
-  object.assignedReporter = reader.readStringOrNull(offsets[6]);
-  object.assignedReporterId = reader.readStringOrNull(offsets[7]);
-  object.assignedTo = reader.readStringOrNull(offsets[8]);
-  object.assignmentTimestamp = reader.readDateTimeOrNull(offsets[9]);
-  object.category = reader.readStringOrNull(offsets[10]);
-  object.comments = reader.readStringList(offsets[11]) ?? [];
-  object.createdBy = reader.readString(offsets[12]);
-  object.createdById = reader.readString(offsets[13]);
-  object.creatorAvatar = reader.readStringOrNull(offsets[14]);
-  object.description = reader.readString(offsets[15]);
-  object.dueDate = reader.readDateTimeOrNull(offsets[16]);
+  object.archiveLocation = reader.readStringOrNull(offsets[0]);
+  object.archiveReason = reader.readStringOrNull(offsets[1]);
+  object.archivedAt = reader.readDateTimeOrNull(offsets[2]);
+  object.archivedBy = reader.readStringOrNull(offsets[3]);
+  object.assignedCameraman = reader.readStringOrNull(offsets[4]);
+  object.assignedCameramanId = reader.readStringOrNull(offsets[5]);
+  object.assignedDriver = reader.readStringOrNull(offsets[6]);
+  object.assignedDriverId = reader.readStringOrNull(offsets[7]);
+  object.assignedLibrarian = reader.readStringOrNull(offsets[8]);
+  object.assignedLibrarianId = reader.readStringOrNull(offsets[9]);
+  object.assignedReporter = reader.readStringOrNull(offsets[10]);
+  object.assignedReporterId = reader.readStringOrNull(offsets[11]);
+  object.assignedTo = reader.readStringOrNull(offsets[12]);
+  object.assignmentTimestamp = reader.readDateTimeOrNull(offsets[13]);
+  object.category = reader.readStringOrNull(offsets[14]);
+  object.comments = reader.readStringList(offsets[15]) ?? [];
+  object.createdBy = reader.readString(offsets[16]);
+  object.createdById = reader.readString(offsets[17]);
+  object.creatorAvatar = reader.readStringOrNull(offsets[18]);
+  object.description = reader.readString(offsets[19]);
+  object.dueDate = reader.readDateTimeOrNull(offsets[20]);
   object.isarId = id;
-  object.lastModified = reader.readDateTimeOrNull(offsets[17]);
-  object.priority = reader.readStringOrNull(offsets[18]);
-  object.status = reader.readString(offsets[19]);
-  object.syncStatus = reader.readStringOrNull(offsets[20]);
-  object.tags = reader.readStringList(offsets[21]) ?? [];
-  object.taskId = reader.readString(offsets[22]);
-  object.timestamp = reader.readDateTime(offsets[23]);
-  object.title = reader.readString(offsets[24]);
+  object.lastModified = reader.readDateTimeOrNull(offsets[22]);
+  object.priority = reader.readStringOrNull(offsets[23]);
+  object.status = reader.readString(offsets[24]);
+  object.syncStatus = reader.readStringOrNull(offsets[25]);
+  object.tags = reader.readStringList(offsets[26]) ?? [];
+  object.taskId = reader.readString(offsets[27]);
+  object.timestamp = reader.readDateTime(offsets[28]);
+  object.title = reader.readString(offsets[29]);
   return object;
 }
 
@@ -346,7 +397,7 @@ P _taskDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
@@ -360,36 +411,46 @@ P _taskDeserializeProp<P>(
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 13:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
       return (reader.readStringOrNull(offset)) as P;
     case 15:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 16:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 17:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 18:
       return (reader.readStringOrNull(offset)) as P;
     case 19:
       return (reader.readString(offset)) as P;
     case 20:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 21:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 22:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 23:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 24:
+      return (reader.readString(offset)) as P;
+    case 25:
+      return (reader.readStringOrNull(offset)) as P;
+    case 26:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 27:
+      return (reader.readString(offset)) as P;
+    case 28:
+      return (reader.readDateTime(offset)) as P;
+    case 29:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -484,6 +545,513 @@ extension TaskQueryWhere on QueryBuilder<Task, Task, QWhereClause> {
 }
 
 extension TaskQueryFilter on QueryBuilder<Task, Task, QFilterCondition> {
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'archiveLocation',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'archiveLocation',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'archiveLocation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'archiveLocation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'archiveLocation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'archiveLocation',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'archiveLocation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'archiveLocation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'archiveLocation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'archiveLocation',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'archiveLocation',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveLocationIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'archiveLocation',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'archiveReason',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'archiveReason',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'archiveReason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'archiveReason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'archiveReason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'archiveReason',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'archiveReason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'archiveReason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'archiveReason',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'archiveReason',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'archiveReason',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archiveReasonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'archiveReason',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'archivedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'archivedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedAtEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'archivedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'archivedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'archivedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'archivedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'archivedBy',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'archivedBy',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'archivedBy',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'archivedBy',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'archivedBy',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'archivedBy',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'archivedBy',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'archivedBy',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'archivedBy',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'archivedBy',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'archivedBy',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> archivedByIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'archivedBy',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Task, Task, QAfterFilterCondition> assignedCameramanIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2843,6 +3411,16 @@ extension TaskQueryFilter on QueryBuilder<Task, Task, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Task, Task, QAfterFilterCondition> isArchivedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isArchived',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Task, Task, QAfterFilterCondition> isarIdEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -3912,6 +4490,54 @@ extension TaskQueryObject on QueryBuilder<Task, Task, QFilterCondition> {}
 extension TaskQueryLinks on QueryBuilder<Task, Task, QFilterCondition> {}
 
 extension TaskQuerySortBy on QueryBuilder<Task, Task, QSortBy> {
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchiveLocation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveLocation', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchiveLocationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveLocation', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchiveReason() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveReason', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchiveReasonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveReason', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchivedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchivedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchivedBy() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedBy', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByArchivedByDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedBy', Sort.desc);
+    });
+  }
+
   QueryBuilder<Task, Task, QAfterSortBy> sortByAssignedCameraman() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'assignedCameraman', Sort.asc);
@@ -4104,6 +4730,18 @@ extension TaskQuerySortBy on QueryBuilder<Task, Task, QSortBy> {
     });
   }
 
+  QueryBuilder<Task, Task, QAfterSortBy> sortByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> sortByIsArchivedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.desc);
+    });
+  }
+
   QueryBuilder<Task, Task, QAfterSortBy> sortByLastModified() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastModified', Sort.asc);
@@ -4190,6 +4828,54 @@ extension TaskQuerySortBy on QueryBuilder<Task, Task, QSortBy> {
 }
 
 extension TaskQuerySortThenBy on QueryBuilder<Task, Task, QSortThenBy> {
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchiveLocation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveLocation', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchiveLocationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveLocation', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchiveReason() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveReason', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchiveReasonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archiveReason', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchivedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchivedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchivedBy() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedBy', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByArchivedByDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'archivedBy', Sort.desc);
+    });
+  }
+
   QueryBuilder<Task, Task, QAfterSortBy> thenByAssignedCameraman() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'assignedCameraman', Sort.asc);
@@ -4382,6 +5068,18 @@ extension TaskQuerySortThenBy on QueryBuilder<Task, Task, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Task, Task, QAfterSortBy> thenByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterSortBy> thenByIsArchivedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.desc);
+    });
+  }
+
   QueryBuilder<Task, Task, QAfterSortBy> thenByIsarId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isarId', Sort.asc);
@@ -4480,6 +5178,35 @@ extension TaskQuerySortThenBy on QueryBuilder<Task, Task, QSortThenBy> {
 }
 
 extension TaskQueryWhereDistinct on QueryBuilder<Task, Task, QDistinct> {
+  QueryBuilder<Task, Task, QDistinct> distinctByArchiveLocation(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'archiveLocation',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Task, Task, QDistinct> distinctByArchiveReason(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'archiveReason',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Task, Task, QDistinct> distinctByArchivedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'archivedAt');
+    });
+  }
+
+  QueryBuilder<Task, Task, QDistinct> distinctByArchivedBy(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'archivedBy', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Task, Task, QDistinct> distinctByAssignedCameraman(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -4605,6 +5332,12 @@ extension TaskQueryWhereDistinct on QueryBuilder<Task, Task, QDistinct> {
     });
   }
 
+  QueryBuilder<Task, Task, QDistinct> distinctByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isArchived');
+    });
+  }
+
   QueryBuilder<Task, Task, QDistinct> distinctByLastModified() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastModified');
@@ -4663,6 +5396,30 @@ extension TaskQueryProperty on QueryBuilder<Task, Task, QQueryProperty> {
   QueryBuilder<Task, int, QQueryOperations> isarIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarId');
+    });
+  }
+
+  QueryBuilder<Task, String?, QQueryOperations> archiveLocationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'archiveLocation');
+    });
+  }
+
+  QueryBuilder<Task, String?, QQueryOperations> archiveReasonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'archiveReason');
+    });
+  }
+
+  QueryBuilder<Task, DateTime?, QQueryOperations> archivedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'archivedAt');
+    });
+  }
+
+  QueryBuilder<Task, String?, QQueryOperations> archivedByProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'archivedBy');
     });
   }
 
@@ -4766,6 +5523,12 @@ extension TaskQueryProperty on QueryBuilder<Task, Task, QQueryProperty> {
   QueryBuilder<Task, DateTime?, QQueryOperations> dueDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'dueDate');
+    });
+  }
+
+  QueryBuilder<Task, bool, QQueryOperations> isArchivedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isArchived');
     });
   }
 

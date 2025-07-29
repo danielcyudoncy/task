@@ -78,6 +78,8 @@ dependencies:
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   infinite_scroll_pagination: ^5.1.0
+  share_plus: ^11.0.0
+  pdf: ^3.11.3
  
 
 
