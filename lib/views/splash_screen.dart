@@ -59,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> {
           
           if (authController.isLoggedIn) {
             // User is logged in, navigate based on role
-            await authController.navigateBasedOnRole();
+            authController.navigateBasedOnRole();
 
           } else {
             // User is not logged in, go to login screen
