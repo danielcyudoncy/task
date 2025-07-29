@@ -8,7 +8,6 @@ class BiometricService {
     try {
       return await _auth.canCheckBiometrics && await _auth.isDeviceSupported();
     } catch (e) {
-      print('BiometricService.canCheckBiometrics error: $e');
       return false;
     }
   }
@@ -24,7 +23,6 @@ class BiometricService {
       );
       return didAuthenticate;
     } catch (e) {
-      print('BiometricService.authenticate error: $e');
       return false;
     }
   }

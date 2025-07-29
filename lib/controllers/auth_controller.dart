@@ -321,34 +321,43 @@ class AuthController extends GetxController {
   }
 
   // Simplified navigateBasedOnRole method
-  void navigateBasedOnRole() {
+  Future<void> navigateBasedOnRole() async {
     debugPrint("🚀 navigateBasedOnRole called");
-    debugPrint("🚀 navigateBasedOnRole: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
-    
-    // Use post-frame callback to ensure safe navigation
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final role = userRole.value;
-      debugPrint("🚀 Navigating based on role: $role");
 
+    // Wait until role is loaded
+    int maxTries = 10;
+    while (userRole.value.isEmpty && maxTries > 0) {
+      debugPrint("⏳ Waiting for role to load...");
+      await Future.delayed(const Duration(milliseconds: 200));
+      maxTries--;
+    }
+
+    final role = userRole.value.trim();
+    debugPrint("🚀 Final role = '$role'");
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
-          debugPrint("🚀 Navigating to admin-dashboard");
+        if (role == "Librarian") {
+          Get.offAllNamed("/librarian-dashboard");
+        } else if ([
+          "Admin",
+          "Assignment Editor",
+          "Head of Department",
+          "Head of Unit"
+        ].contains(role)) {
           Get.offAllNamed("/admin-dashboard");
-        } else if (["Reporter", "Cameraman", "Driver", "Librarian"].contains(role)) {
-          debugPrint("🚀 Navigating to home");
+        } else if (["Reporter", "Cameraman", "Driver"].contains(role)) {
           Get.offAllNamed("/home");
         } else {
-          debugPrint("🚀 Navigating to login (fallback) - role was: '$role'");
           Get.offAllNamed("/login");
         }
-        debugPrint("🚀 Navigation call completed");
       } catch (e) {
-        debugPrint("🚀 Navigation error: $e");
-        // Fallback to login
+        debugPrint("Navigation error: $e");
         Get.offAllNamed("/login");
       }
     });
   }
+
 
   void setBuildPhase(bool inBuildPhase) {
     // _isInBuildPhase = inBuildPhase; // This line was removed

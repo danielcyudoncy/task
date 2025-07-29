@@ -41,6 +41,13 @@ class Task {
   String? priority;
   DateTime? lastModified;
   String? syncStatus;
+  
+  // Archive related fields
+  bool get isArchived => status.toLowerCase() == 'archived';
+  DateTime? archivedAt;
+  String? archivedBy;
+  String? archiveReason;
+  String? archiveLocation; // Physical or digital location where the task is archived
 
   Task()
       : taskId = '',
@@ -78,7 +85,11 @@ class Task {
       this.dueDate,
       this.priority,
       {this.lastModified,
-      this.syncStatus});
+      this.syncStatus,
+      this.archivedAt,
+      this.archivedBy,
+      this.archiveReason,
+      this.archiveLocation});
 
   factory Task.fromMap(Map<String, dynamic> map, String id) {
     debugPrint(
@@ -112,9 +123,14 @@ class Task {
       map['priority'],
       lastModified: parseDate(map['lastModified']),
       syncStatus: map['syncStatus'],
+      archivedAt: parseDate(map['archivedAt']),
+      archivedBy: map['archivedBy'],
+      archiveReason: map['archiveReason'],
+      archiveLocation: map['archiveLocation'],
     );
   }
-
+  
+  // Create a copy of the task with updated fields
   Task copyWith({
     String? taskId,
     String? title,
@@ -127,18 +143,24 @@ class Task {
     String? status,
     List<String>? comments,
     DateTime? timestamp,
+    String? assignedTo,
+    DateTime? assignmentTimestamp,
     String? createdById,
     String? assignedReporterId,
     String? assignedCameramanId,
     String? assignedDriverId,
     String? assignedLibrarianId,
-    DateTime? assignmentTimestamp,
     String? creatorAvatar,
     String? category,
     List<String>? tags,
     DateTime? dueDate,
     String? priority,
-    String? assignedTo,
+    DateTime? lastModified,
+    String? syncStatus,
+    DateTime? archivedAt,
+    String? archivedBy,
+    String? archiveReason,
+    String? archiveLocation,
   }) {
     return Task.full(
       taskId ?? this.taskId,
@@ -150,7 +172,7 @@ class Task {
       assignedDriver ?? this.assignedDriver,
       assignedLibrarian ?? this.assignedLibrarian,
       status ?? this.status,
-      comments ?? this.comments,
+      comments ?? List.from(this.comments),
       timestamp ?? this.timestamp,
       assignedTo ?? this.assignedTo,
       assignmentTimestamp ?? this.assignmentTimestamp,
@@ -161,10 +183,50 @@ class Task {
       assignedLibrarianId ?? this.assignedLibrarianId,
       creatorAvatar ?? this.creatorAvatar,
       category ?? this.category,
-      tags ?? this.tags,
+      tags ?? List.from(this.tags),
       dueDate ?? this.dueDate,
       priority ?? this.priority,
+      lastModified: lastModified ?? this.lastModified ?? DateTime.now(),
+      syncStatus: syncStatus ?? this.syncStatus ?? 'pending',
+      archivedAt: archivedAt ?? this.archivedAt,
+      archivedBy: archivedBy ?? this.archivedBy,
+      archiveReason: archiveReason ?? this.archiveReason,
+      archiveLocation: archiveLocation ?? this.archiveLocation,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'taskId': taskId,
+      'title': title,
+      'description': description,
+      'createdBy': createdBy,
+      'assignedReporter': assignedReporter,
+      'assignedCameraman': assignedCameraman,
+      'assignedDriver': assignedDriver,
+      'assignedLibrarian': assignedLibrarian,
+      'status': status,
+      'comments': comments,
+      'timestamp': timestamp,
+      'assignedTo': assignedTo,
+      'assignmentTimestamp': assignmentTimestamp,
+      'createdById': createdById,
+      'assignedReporterId': assignedReporterId,
+      'assignedCameramanId': assignedCameramanId,
+      'assignedDriverId': assignedDriverId,
+      'assignedLibrarianId': assignedLibrarianId,
+      'creatorAvatar': creatorAvatar,
+      'category': category,
+      'tags': tags,
+      'dueDate': dueDate,
+      'priority': priority,
+      'lastModified': lastModified ?? DateTime.now(),
+      'syncStatus': syncStatus,
+      'archivedAt': archivedAt,
+      'archivedBy': archivedBy,
+      'archiveReason': archiveReason,
+      'archiveLocation': archiveLocation,
+    }..removeWhere((key, value) => value == null);
   }
 
   Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache,

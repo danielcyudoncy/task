@@ -1,6 +1,5 @@
 // controllers/task_controller.dart
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -838,7 +837,7 @@ class TaskController extends GetxController {
       _safeSnackbar("Success", "Task updated in cloud");
       calculateNewTaskCount(); // Calculate new task count after updating task
     } catch (e) {
-      _safeSnackbar("Error", "Failed to update task: "+e.toString());
+      _safeSnackbar("Error", "Failed to update task: $e");
     } finally {
       isLoading(false);
     }
@@ -857,7 +856,7 @@ class TaskController extends GetxController {
       _safeSnackbar("Success", "Task deleted in cloud");
       calculateNewTaskCount(); // Calculate new task count after deleting task
     } catch (e) {
-      _safeSnackbar("Error", "Failed to delete task: "+e.toString());
+      _safeSnackbar("Error", "Failed to delete task: $e");
     } finally {
       isLoading(false);
     }
@@ -1141,19 +1140,19 @@ class TaskController extends GetxController {
       // Merge and deduplicate by taskId
       final allDocs = <String, Map<String, dynamic>>{};
       for (var doc in createdSnap.docs) {
-        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        allDocs[doc.id] = doc.data();
         debugPrint('fetchRelevantTasksForUser: added created task ${doc.id}');
       }
       for (var doc in reporterSnap.docs) {
-        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        allDocs[doc.id] = doc.data();
         debugPrint('fetchRelevantTasksForUser: added reporter task ${doc.id}');
       }
       for (var doc in cameramanSnap.docs) {
-        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        allDocs[doc.id] = doc.data();
         debugPrint('fetchRelevantTasksForUser: added cameraman task ${doc.id}');
       }
       for (var doc in assignedToSnap.docs) {
-        allDocs[doc.id] = doc.data() as Map<String, dynamic>;
+        allDocs[doc.id] = doc.data();
         debugPrint('fetchRelevantTasksForUser: added assignedTo task ${doc.id}');
       }
       // Convert to Task objects
