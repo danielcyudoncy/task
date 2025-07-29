@@ -10,14 +10,12 @@ class ManageUsersController extends GetxController {
 
   ManageUsersController(this.userDeletionService);
 
-  // Safe snackbar method
   void _safeSnackbar(String title, String message) {
     SnackbarUtils.showSnackbar(title, message);
   }
 
-  // Observables
   var isLoading = false.obs;
-  var isDeletingUser = false.obs; // Separate loading state for deletion
+  var isDeletingUser = false.obs;
   var usersList = <Map<String, dynamic>>[].obs;
   var filteredUsersList = <Map<String, dynamic>>[].obs;
   var selectedRole = 'All'.obs;
@@ -26,6 +24,7 @@ class ManageUsersController extends GetxController {
   var hasMoreUsers = true.obs;
   var isHovered = <bool>[].obs;
   final int usersLimit = 15;
+  var isOrdered = false.obs;
 
   late ScrollController _scrollController;
   ScrollController get scrollController => _scrollController;
@@ -46,56 +45,53 @@ class ManageUsersController extends GetxController {
     super.onClose();
   }
 
-  /// Fetch users with pagination.
-  Future<void> fetchUsers({bool isNextPage = false, bool fetchAll = false}) async {
-    if (!hasMoreUsers.value || isLoading.value) return;
+  Future<bool> fetchUsers(
+      {bool isNextPage = false, bool fetchAll = false}) async {
+    if (!hasMoreUsers.value || isLoading.value) return false;
+    bool ordered = false;
+
     try {
       isLoading.value = true;
       Query query;
-      bool ordered = false;
-      // Try ordering by 'fullName', then 'fullname', then no order
+
       try {
-        query = FirebaseFirestore.instance.collection('users').orderBy('fullName');
-        await query.limit(1).get(); // test if field exists
+        query =
+            FirebaseFirestore.instance.collection('users').orderBy('fullName');
+        await query.limit(1).get();
         ordered = true;
-        print('fetchUsers: ordering by fullName');
       } catch (_) {
         try {
-          query = FirebaseFirestore.instance.collection('users').orderBy('fullname');
+          query = FirebaseFirestore.instance
+              .collection('users')
+              .orderBy('fullname');
           await query.limit(1).get();
           ordered = true;
-          print('fetchUsers: ordering by fullname');
         } catch (_) {
           query = FirebaseFirestore.instance.collection('users');
-          print('fetchUsers: no ordering');
         }
       }
 
-      // If fetching all users for dialog, don't use pagination
+      isOrdered.value = ordered;
+
       if (!fetchAll) {
         query = query.limit(usersLimit);
         if (isNextPage && lastDocument != null) {
-          query = query.startAfterDocument(lastDocument as DocumentSnapshot);
+          query = query.startAfterDocument(lastDocument!);
         }
       }
 
       QuerySnapshot snapshot = await query.get();
-      print('fetchUsers: snapshot.docs.length =  [32m${snapshot.docs.length} [0m');
-      for (var doc in snapshot.docs) {
-        print('fetchUsers: user doc =  [32m${doc.data()} [0m');
-      }
 
       if (snapshot.docs.isNotEmpty) {
         final newUsers = snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          // Try multiple possible field names for profile picture
-          final photoUrl = data['photoUrl'] ?? 
-                          data['photoURL'] ?? 
-                          data['profilePic'] ?? 
-                          data['profile_pic'] ?? 
-                          data['avatarUrl'] ?? 
-                          data['avatar_url'] ?? 
-                          '';
+          final photoUrl = data['photoUrl'] ??
+              data['photoURL'] ??
+              data['profilePic'] ??
+              data['profile_pic'] ??
+              data['avatarUrl'] ??
+              data['avatar_url'] ??
+              '';
           return {
             'uid': doc.id,
             'id': doc.id,
@@ -128,9 +124,10 @@ class ManageUsersController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+
+    return ordered;
   }
 
-  /// Fetch all tasks for assignment
   Future<void> fetchTasks() async {
     try {
       QuerySnapshot snapshot =
@@ -151,7 +148,6 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Assign a task to a user
   Future<void> assignTaskToUser(String userId, String taskId) async {
     try {
       await FirebaseFirestore.instance
@@ -166,15 +162,12 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Enhanced delete user method with better error handling
   Future<bool> deleteUser(String userId) async {
-    // Prevent multiple simultaneous deletions
     if (isDeletingUser.value) {
       _safeSnackbar('Warning', 'Another deletion is in progress');
       return false;
     }
 
-    // Find user to delete
     final userToDelete =
         usersList.firstWhereOrNull((user) => user['uid'] == userId);
     if (userToDelete == null) {
@@ -182,7 +175,6 @@ class ManageUsersController extends GetxController {
       return false;
     }
 
-    // Confirm deletion
     bool? confirmed = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Confirm Deletion'),
@@ -204,7 +196,6 @@ class ManageUsersController extends GetxController {
 
     if (confirmed != true) return false;
 
-    // Create backups
     final backupUsersList = List<Map<String, dynamic>>.from(usersList);
     final backupFilteredList =
         List<Map<String, dynamic>>.from(filteredUsersList);
@@ -212,12 +203,10 @@ class ManageUsersController extends GetxController {
     try {
       isDeletingUser.value = true;
 
-      // Optimistic UI update
       usersList.removeWhere((user) => user['uid'] == userId);
       filteredUsersList.removeWhere((user) => user['uid'] == userId);
       isHovered.assignAll(List.filled(usersList.length, false));
 
-      // Perform actual deletion
       await userDeletionService.deleteUserByAdmin(userId);
 
       _safeSnackbar(
@@ -226,7 +215,6 @@ class ManageUsersController extends GetxController {
       );
       return true;
     } catch (e) {
-      // Restore from backup if deletion failed
       usersList.assignAll(backupUsersList);
       filteredUsersList.assignAll(backupFilteredList);
       isHovered.assignAll(List.filled(usersList.length, false));
@@ -240,17 +228,13 @@ class ManageUsersController extends GetxController {
         errorMessage = 'Network error: Please check your connection';
       }
 
-      _safeSnackbar(
-        'Error',
-        errorMessage,
-      );
+      _safeSnackbar('Error', errorMessage);
       return false;
     } finally {
       isDeletingUser.value = false;
     }
   }
 
-  /// Promote user to admin
   Future<void> promoteToAdmin(String userId) async {
     try {
       await FirebaseFirestore.instance
@@ -269,7 +253,6 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Search by name or email
   void searchUsers(String query) {
     if (query.isEmpty) {
       filteredUsersList.assignAll(usersList);
@@ -284,27 +267,22 @@ class ManageUsersController extends GetxController {
     }
   }
 
-  /// Update hover state
   void updateHoverState(int index, bool value) {
     if (index >= 0 && index < isHovered.length) {
       isHovered[index] = value;
     }
   }
 
-  /// Get total user count for dashboard
   Future<int> getTotalUserCount() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .count()
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').count().get();
       return snapshot.count ?? usersList.length;
     } catch (e) {
-      return usersList.length; // Fallback to current list length
+      return usersList.length;
     }
   }
 
-  /// Infinite scroll listener
   void _scrollListener() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
