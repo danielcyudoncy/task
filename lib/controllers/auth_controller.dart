@@ -151,7 +151,9 @@ class AuthController extends GetxController {
         role == "Assignment Editor" ||
         role == "Head of Department") {
       Get.offAllNamed('/admin-dashboard');
-    } else if (role == "Reporter" || role == "Cameraman" || role == "Driver" || role == "Librarian") {
+    } else if (role == "Librarian") {
+      Get.offAllNamed('/librarian-dashboard');
+    } else if (role == "Reporter" || role == "Cameraman" || role == "Driver") {
       Get.offAllNamed('/home');
     } else {
       Get.offAllNamed('/login');
@@ -321,43 +323,24 @@ class AuthController extends GetxController {
   }
 
   // Simplified navigateBasedOnRole method
-  Future<void> navigateBasedOnRole() async {
-    debugPrint("🚀 navigateBasedOnRole called");
-
-    // Wait until role is loaded
-    int maxTries = 10;
-    while (userRole.value.isEmpty && maxTries > 0) {
-      debugPrint("⏳ Waiting for role to load...");
-      await Future.delayed(const Duration(milliseconds: 200));
-      maxTries--;
+  void navigateBasedOnRole() {
+    final role = userRole.value;
+    debugPrint("Navigating based on role: $role");
+    
+    if (role == "Admin" || 
+        role == "Assignment Editor" || 
+        role == "Head of Department") {
+      Get.offAllNamed('/admin-dashboard');
+    } else if (role == "Librarian") {
+      Get.offAllNamed('/librarian-dashboard');
+    } else if (role == "Reporter" || 
+               role == "Cameraman" || 
+               role == "Driver") {
+      Get.offAllNamed('/home');
+    } else {
+      Get.offAllNamed('/login');
     }
-
-    final role = userRole.value.trim();
-    debugPrint("🚀 Final role = '$role'");
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        if (role == "Librarian") {
-          Get.offAllNamed("/librarian-dashboard");
-        } else if ([
-          "Admin",
-          "Assignment Editor",
-          "Head of Department",
-          "Head of Unit"
-        ].contains(role)) {
-          Get.offAllNamed("/admin-dashboard");
-        } else if (["Reporter", "Cameraman", "Driver"].contains(role)) {
-          Get.offAllNamed("/home");
-        } else {
-          Get.offAllNamed("/login");
-        }
-      } catch (e) {
-        debugPrint("Navigation error: $e");
-        Get.offAllNamed("/login");
-      }
-    });
   }
-
 
   void setBuildPhase(bool inBuildPhase) {
     // _isInBuildPhase = inBuildPhase; // This line was removed
@@ -373,33 +356,43 @@ class AuthController extends GetxController {
       String userFullName, String email, String password, String role) async {
     try {
       isLoading(true);
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      User? user = userCredential.user;
-
+      
+      // Try to create the user directly
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      // If we get here, user was created successfully
+      final user = userCredential.user;
       if (user != null) {
-        String? fcmToken =
-            !kIsWeb ? await FirebaseMessaging.instance.getToken() : null;
-
+        // Update user profile with display name
+        await user.updateDisplayName(userFullName);
+        await user.reload();
+        
+        // Save additional user data to Firestore
         await _firestore.collection('users').doc(user.uid).set({
-          "uid": user.uid,
-          "fullName": userFullName,
-          "email": email,
-          "role": role,
-          "photoUrl": "",
-          "fcmToken": fcmToken ?? "",
-          "profileComplete": false,
-          "createdAt": FieldValue.serverTimestamp(),
+          'uid': user.uid,
+          'email': email,
+          'fullName': userFullName,
+          'role': role,
+          'createdAt': FieldValue.serverTimestamp(),
         });
-
-        fullName.value = userFullName;
+        
+        // Update the local user role
         userRole.value = role;
-        Get.offNamed("/profile-update", arguments: {'role': role});
+        
+        // Navigate based on the user's role
+        navigateBasedOnRole();
       }
     } on FirebaseAuthException catch (e) {
-      _safeSnackbar("Error", _handleAuthError(e));
-      rethrow;
+      if (e.code == 'email-already-in-use') {
+        _safeSnackbar('Error', 'The email address is already in use by another account.');
+      } else {
+        _safeSnackbar('Error', e.message ?? 'An error occurred during sign up');
+      }
+    } catch (e) {
+      _safeSnackbar('Error', 'An unexpected error occurred');
     } finally {
       isLoading(false);
     }
@@ -660,7 +653,10 @@ class AuthController extends GetxController {
           if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
             debugPrint("AuthController: Navigating to admin-dashboard");
             Get.offAllNamed("/admin-dashboard");
-          } else if (["Reporter", "Cameraman", "Driver", "Librarian"].contains(role)) {
+          } else if (role == "Librarian") {
+            debugPrint("AuthController: Navigating to librarian-dashboard");
+            Get.offAllNamed("/librarian-dashboard");
+          } else if (["Reporter", "Cameraman", "Driver"].contains(role)) {
             debugPrint("AuthController: Navigating to home");
             Get.offAllNamed("/home");
           } else {
