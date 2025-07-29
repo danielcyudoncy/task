@@ -48,14 +48,16 @@ class AuthMiddleware extends GetMiddleware {
     if (route == '/admin-dashboard') {
       if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
         debugPrint("AuthMiddleware: Allowing access to admin dashboard");
-        return null; // Allow access
-      } else if (["Reporter", "Cameraman", "Driver", "Librarian"].contains(role)) {
-        debugPrint("AuthMiddleware: Redirecting non-admin to home");
-        return const RouteSettings(name: '/home');
-      } else {
-        debugPrint("AuthMiddleware: Redirecting to login - invalid role");
-        return const RouteSettings(name: '/login');
+        return null;
       }
+      debugPrint("AuthMiddleware: Redirecting non-admin from admin dashboard");
+      return const RouteSettings(name: '/home');
+    }
+
+    // Handle librarian dashboard access
+    if (route == '/librarian-dashboard' && role != 'Librarian') {
+      debugPrint("AuthMiddleware: Redirecting non-librarian from librarian dashboard");
+      return const RouteSettings(name: '/home');
     }
 
     // Now role is loaded—allow normal routing
