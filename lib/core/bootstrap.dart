@@ -35,7 +35,15 @@ import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
 import 'package:task/service/archive_service.dart';
+import 'package:task/service/task_attachment_service.dart';
+import 'package:task/service/bulk_operations_service.dart';
+import 'package:task/service/version_control_service.dart';
+import 'package:task/service/pdf_export_service.dart';
+import 'package:task/service/duplicate_detection_service.dart';
+import 'package:task/service/access_control_service.dart';
 import 'package:task/service/isar_task_service.dart';
+import 'package:task/service/firebase_messaging_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 // --- Emulator/Production Switch ---
 const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
@@ -89,13 +97,28 @@ Future<void> bootstrapApp() async {
     debugPrint("🚀 BOOTSTRAP: Verifying Firebase services");
     await _verifyFirebaseServices();
     debugPrint("🚀 BOOTSTRAP: Firebase services verified");
+    
+    // Initialize Firebase Messaging Service
+    debugPrint("🚀 BOOTSTRAP: Initializing Firebase Messaging Service");
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    final firebaseMessagingService = FirebaseMessagingService();
+    firebaseMessagingService.initialize();
+    Get.put(firebaseMessagingService, permanent: true);
+    debugPrint("🚀 BOOTSTRAP: Firebase Messaging Service initialized");
 
     debugPrint("🚀 BOOTSTRAP: Skipping Supabase initialization - using Firebase Storage");
 
     // Step 2: Open Isar and register IsarTaskService BEFORE any controller
-    final dir = await getApplicationDocumentsDirectory();
-    // TaskSchema will be available after build_runner generates the files
-    final isar = await Isar.open([TaskSchema], directory: dir.path);
+    // Use different initialization for web vs native platforms
+    late final Isar isar;
+    if (kIsWeb) {
+      // Web doesn't need a directory path
+      isar = await Isar.open([TaskSchema], directory: '');
+    } else {
+      // Native platforms need a directory path
+      final dir = await getApplicationDocumentsDirectory();
+      isar = await Isar.open([TaskSchema], directory: dir.path);
+    }
     Get.put(IsarTaskService(isar), permanent: true);
 
     // Step 3: Initialize services and controllers with no dependencies
@@ -149,6 +172,59 @@ Future<void> bootstrapApp() async {
       debugPrint('$st');
       rethrow;
     }
+    
+    debugPrint("🚀 BOOTSTRAP: Putting TaskAttachmentService");
+    try {
+      await Get.putAsync<TaskAttachmentService>(() async {
+        final service = TaskAttachmentService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing TaskAttachmentService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
+    debugPrint("🚀 BOOTSTRAP: Putting PdfExportService");
+    try {
+      await Get.putAsync<PdfExportService>(() async {
+        final service = PdfExportService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing PdfExportService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
+    debugPrint("🚀 BOOTSTRAP: Putting VersionControlService");
+    try {
+      await Get.putAsync<VersionControlService>(() async {
+        final service = VersionControlService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing VersionControlService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
+    debugPrint("🚀 BOOTSTRAP: Putting DuplicateDetectionService");
+    try {
+      await Get.putAsync<DuplicateDetectionService>(() async {
+        final service = DuplicateDetectionService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing DuplicateDetectionService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
     debugPrint("🚀 BOOTSTRAP: Putting UserDeletionService (mock or real)");
     if (kReleaseMode) {
       Get.put<UserDeletionService>(CloudFunctionUserDeletionService(), permanent: true);
@@ -182,7 +258,35 @@ Future<void> bootstrapApp() async {
     Get.put(NotificationController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
     Get.put(WallpaperController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: All controllers put successfully');
+    
+    // Step 6: Put services that depend on controllers AFTER controllers are registered
+    debugPrint("🚀 BOOTSTRAP: Putting AccessControlService");
+    try {
+      await Get.putAsync<AccessControlService>(() async {
+        final service = AccessControlService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing AccessControlService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
+    debugPrint("🚀 BOOTSTRAP: Putting BulkOperationsService");
+    try {
+      await Get.putAsync<BulkOperationsService>(() async {
+        final service = BulkOperationsService();
+        await service.initialize();
+        return service;
+      }, permanent: true);
+    } catch (e, st) {
+      debugPrint('Error initializing BulkOperationsService: $e');
+      debugPrint('$st');
+      rethrow;
+    }
+    
+    debugPrint('🚀 BOOTSTRAP: All controllers and services put successfully');
 
     // Step 6: Perform post-initialization actions (simplified to prevent issues)
     debugPrint('🚀 BOOTSTRAP: Performing post-initialization actions...');
@@ -265,4 +369,17 @@ Future<void> _verifyFirebaseServices() async {
       'Firebase service verification failed: $e\nPlease check your internet connection or Firebase configuration.',
     );
   }
+}
+
+// Background Message Handler for Firebase Messaging
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase if it hasn't been initialized yet
+  if (!Firebase.apps.isNotEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+  
+  debugPrint("Handling background message: ${message.messageId}");
 }
