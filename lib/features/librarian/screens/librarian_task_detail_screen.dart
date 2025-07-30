@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/features/librarian/widgets/task_actions.dart';
+import 'package:task/features/librarian/widgets/task_attachments_widget.dart';
 import 'package:task/theme/app_durations.dart';
 
 
@@ -384,6 +385,18 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
                   ],
                 ],
               ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Attachments section
+            TaskAttachmentsWidget(
+              task: _task,
+              onTaskUpdated: (updatedTask) {
+                setState(() {
+                  _task = updatedTask;
+                });
+              },
             ),
             
             const SizedBox(height: 24),

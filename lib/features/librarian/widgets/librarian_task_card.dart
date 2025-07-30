@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/features/librarian/screens/librarian_task_detail_screen.dart';
 import 'package:task/features/librarian/widgets/task_actions.dart';
 import 'package:task/theme/app_durations.dart';
+import 'package:task/controllers/task_controller.dart';
 
 
 class LibrarianTaskCard extends StatefulWidget {
@@ -182,8 +184,8 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                  ),
-                  const SizedBox(width: 8),
+                    ),
+                    const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -222,6 +224,10 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                 ),
                 const SizedBox(height: 12),
               ],
+              
+              // Creator information
+              _buildCreatorRow(context, theme),
+              const SizedBox(height: 12),
               
               // Metadata row
               Wrap(
@@ -322,8 +328,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
           ),
         ),
       ),
-    ),);
-  }
+    ),);  }
   
   Widget _buildMetadataChip(
     BuildContext context, {
@@ -514,6 +519,97 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
       return name.substring(0, name.length > 2 ? 2 : 1).toUpperCase();
     }
     return '??';
+  }
+  
+  Widget _buildCreatorRow(BuildContext context, ThemeData theme) {
+    final creatorName = _getCreatorName();
+    
+    return Row(
+      children: [
+        Icon(
+          Icons.person_outline,
+          size: 16,
+          color: theme.textTheme.bodySmall?.color,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'Created by: ',
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            creatorName,
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getCreatorName() {
+    try {
+      final taskController = Get.find<TaskController>();
+      
+      // Try to get the name from the user cache first
+      if (widget.task.createdById.isNotEmpty) {
+        final cachedName = taskController.userNameCache[widget.task.createdById];
+        if (cachedName != null && cachedName.isNotEmpty) {
+          return cachedName;
+        }
+      }
+      
+      // Fall back to the createdBy field
+      if (widget.task.createdBy.isNotEmpty) {
+        return widget.task.createdBy;
+      }
+      
+      // If both are empty, try to fetch the name directly from Firestore
+      if (widget.task.createdById.isNotEmpty) {
+        _fetchAndCacheUserName(widget.task.createdById);
+        return 'Loading...';
+      }
+      
+      // Default fallback
+      return 'Unknown';
+    } catch (e) {
+      debugPrint('Error getting creator name: $e');
+      return widget.task.createdBy.isNotEmpty ? widget.task.createdBy : 'Unknown';
+    }
+  }
+  
+  Future<void> _fetchAndCacheUserName(String userId) async {
+    try {
+      final taskController = Get.find<TaskController>();
+      
+      // Check if we already have this user in cache
+      if (taskController.userNameCache.containsKey(userId)) {
+        return;
+      }
+      
+      // Fetch user data from Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        final fullName = userData['fullName'] ?? 'Unknown';
+        
+        // Cache the name
+        taskController.userNameCache[userId] = fullName;
+        
+        // Trigger a rebuild to show the updated name
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching user name for $userId: $e');
+    }
   }
   
   Color _getStatusColor(String status) {

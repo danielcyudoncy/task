@@ -2,6 +2,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseMessagingService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -68,7 +69,13 @@ class FirebaseMessagingService {
 }
 
 // ✅ Background Message Handler (Needs to be a top-level function)
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase if it hasn't been initialized yet
+  if (!Firebase.apps.isNotEmpty) {
+    await Firebase.initializeApp();
+  }
+  
   if (kDebugMode) {
     debugPrint("Handling background message: ${message.messageId}");
   }

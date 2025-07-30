@@ -376,4 +376,18 @@ class ExportService extends GetxService {
   String formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
+
+  /// Export tasks to CSV format (wrapper method)
+  Future<String> exportTasksToCSV(
+    List<Map<String, dynamic>> tasks, {
+    String? fileName,
+    bool shareAfterExport = false,
+  }) async {
+    return await exportTasks(
+      tasks: tasks,
+      format: ExportFormat.csv,
+      fileName: fileName,
+      shareAfterExport: shareAfterExport,
+    );
+  }
 }
