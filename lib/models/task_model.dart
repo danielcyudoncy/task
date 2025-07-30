@@ -42,6 +42,13 @@ class Task {
   DateTime? lastModified;
   String? syncStatus;
   
+  // Media & Document Attachments
+  List<String> attachmentUrls = []; // URLs of uploaded files
+  List<String> attachmentNames = []; // Original file names
+  List<String> attachmentTypes = []; // File types (image, document, video, etc.)
+  List<int> attachmentSizes = []; // File sizes in bytes
+  DateTime? lastAttachmentAdded;
+  
   // Archive related fields
   bool get isArchived => status.toLowerCase() == 'archived';
   DateTime? archivedAt;
@@ -58,7 +65,11 @@ class Task {
         timestamp = DateTime.now(),
         createdById = '',
         lastModified = DateTime.now(),
-        syncStatus = 'pending';
+        syncStatus = 'pending',
+        attachmentUrls = [],
+        attachmentNames = [],
+        attachmentTypes = [],
+        attachmentSizes = [];
 
   Task.full(
       this.taskId,
@@ -89,7 +100,12 @@ class Task {
       this.archivedAt,
       this.archivedBy,
       this.archiveReason,
-      this.archiveLocation});
+      this.archiveLocation,
+      this.attachmentUrls = const [],
+      this.attachmentNames = const [],
+      this.attachmentTypes = const [],
+      this.attachmentSizes = const [],
+      this.lastAttachmentAdded});
 
   factory Task.fromMap(Map<String, dynamic> map, String id) {
     debugPrint(
@@ -127,6 +143,11 @@ class Task {
       archivedBy: map['archivedBy'],
       archiveReason: map['archiveReason'],
       archiveLocation: map['archiveLocation'],
+      attachmentUrls: List<String>.from(map['attachmentUrls'] ?? []),
+      attachmentNames: List<String>.from(map['attachmentNames'] ?? []),
+      attachmentTypes: List<String>.from(map['attachmentTypes'] ?? []),
+      attachmentSizes: List<int>.from(map['attachmentSizes'] ?? []),
+      lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
     );
   }
   
@@ -161,6 +182,11 @@ class Task {
     String? archivedBy,
     String? archiveReason,
     String? archiveLocation,
+    List<String>? attachmentUrls,
+    List<String>? attachmentNames,
+    List<String>? attachmentTypes,
+    List<int>? attachmentSizes,
+    DateTime? lastAttachmentAdded,
   }) {
     return Task.full(
       taskId ?? this.taskId,
@@ -192,6 +218,11 @@ class Task {
       archivedBy: archivedBy ?? this.archivedBy,
       archiveReason: archiveReason ?? this.archiveReason,
       archiveLocation: archiveLocation ?? this.archiveLocation,
+      attachmentUrls: attachmentUrls ?? List.from(this.attachmentUrls),
+      attachmentNames: attachmentNames ?? List.from(this.attachmentNames),
+      attachmentTypes: attachmentTypes ?? List.from(this.attachmentTypes),
+      attachmentSizes: attachmentSizes ?? List.from(this.attachmentSizes),
+      lastAttachmentAdded: lastAttachmentAdded ?? this.lastAttachmentAdded,
     );
   }
 
@@ -226,6 +257,11 @@ class Task {
       'archivedBy': archivedBy,
       'archiveReason': archiveReason,
       'archiveLocation': archiveLocation,
+      'attachmentUrls': attachmentUrls,
+      'attachmentNames': attachmentNames,
+      'attachmentTypes': attachmentTypes,
+      'attachmentSizes': attachmentSizes,
+      'lastAttachmentAdded': lastAttachmentAdded,
     }..removeWhere((key, value) => value == null);
   }
 

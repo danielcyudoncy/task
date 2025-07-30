@@ -367,4 +367,17 @@ class ExportService extends GetxService {
   String formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
+
+  /// Export tasks to CSV format
+  Future<String> exportTasksToCSV(List<Task> tasks, {
+    Function(double)? onProgress,
+  }) async {
+    // Convert Task objects to Map<String, dynamic>
+    final taskMaps = tasks.map((task) => task.toMap()).toList();
+    return await exportTasks(
+      tasks: taskMaps,
+      format: ExportFormat.csv,
+      onProgress: onProgress != null ? (progress) => onProgress(progress.progress) : null,
+    );
+  }
 }

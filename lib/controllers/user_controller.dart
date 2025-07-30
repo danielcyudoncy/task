@@ -144,6 +144,27 @@ class UserController extends GetxController {
     return _availableChatUsers.firstWhereOrNull((user) => user.uid == uid);
   }
 
+  /// Get user by ID from Firestore
+  Future<Map<String, dynamic>?> getUserById(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return {
+          'id': doc.id,
+          'fullName': data['fullName'] ?? 'Unknown',
+          'role': data['role'] ?? 'Unknown',
+          'email': data['email'] ?? '',
+          ...data,
+        };
+      }
+      return null;
+    } catch (e) {
+      Get.log('Error fetching user by ID: $e', isError: true);
+      return null;
+    }
+  }
+
   Future<void> updateFcmToken(String token) async {
     try {
       await _firestore
