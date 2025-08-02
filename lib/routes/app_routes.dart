@@ -7,7 +7,7 @@ import 'package:task/views/all_task_screen.dart';
 import 'package:task/views/chat_list_screen.dart';
 import 'package:task/views/forget_password_screen.dart';
 import 'package:task/views/home_screen.dart';
-import 'package:task/views/librarian/librarian_dashboard_screen.dart';
+import 'package:task/features/librarian/screens/librarian_dashboard_screen.dart';
 import 'package:task/views/login_screen.dart';
 import 'package:task/views/manage_users_screen.dart';
 import 'package:task/views/notification_screen.dart';
@@ -89,13 +89,7 @@ class AppRoutes {
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
-    GetPage(
-      name: "/librarian-dashboard",
-      page: () => LibrarianDashboardScreen(),
-      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
-      transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 200),
-    ),
+
     GetPage(
       name: "/privacy",
       page: () => const PrivacyScreen(),

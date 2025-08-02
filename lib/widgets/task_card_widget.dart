@@ -7,6 +7,7 @@ import 'package:task/controllers/settings_controller.dart';
 import './task_action_utility.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/controllers/task_controller.dart';
 
 
 class TaskCardWidget extends StatelessWidget {
@@ -106,7 +107,7 @@ class TaskCardWidget extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Created by: ${task.createdBy}',
+                    'Created by: ${_getCreatorName()}',
                     style: TextStyle(
                       color: subTextColor,
                       fontSize: 12.sp,
@@ -340,5 +341,28 @@ class TaskCardWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getCreatorName() {
+    try {
+      final taskController = Get.find<TaskController>();
+
+      // 1. Check if we have a cached name
+      if (task.createdById.isNotEmpty &&
+          taskController.userNameCache.containsKey(task.createdById)) {
+        return taskController.userNameCache[task.createdById]!;
+      }
+
+      // 2. Fallback to createdBy field
+      if (task.createdBy.isNotEmpty) {
+        return task.createdBy;
+      }
+
+      // 3. Final fallback
+      return 'Unknown';
+    } catch (e) {
+      debugPrint('Error getting creator name: $e');
+      return task.createdBy;
+    }
   }
 }

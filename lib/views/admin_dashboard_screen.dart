@@ -133,7 +133,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 getUserNameAndRole(creatorId, () => setState(() {}));
               });
             }
-            final creatorName = userInfo?["name"] ?? creatorId;
+            final creatorName = userInfo?["name"] ?? 'Unknown';
             final creatorRole = userInfo?["role"] ?? "Unknown";
             return Column(
               mainAxisSize: MainAxisSize.min,
@@ -212,7 +212,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   getUserNameAndRole(creatorId, () => setState(() {}));
                 });
               }
-              final creatorName = userInfo?["name"] ?? creatorId;
+              final creatorName = userInfo?["name"] ?? 'Unknown';
               final creatorRole = userInfo?["role"] ?? "Unknown";
 
               String dateStr = 'Unknown';

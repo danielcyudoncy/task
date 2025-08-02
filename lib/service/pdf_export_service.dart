@@ -1,6 +1,5 @@
 // service/pdf_export_service.dart
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
@@ -9,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:task/models/task_model.dart';
+import 'package:task/controllers/task_controller.dart';
 
 class PdfExportService extends GetxService {
   static PdfExportService get to => Get.find();
@@ -308,7 +308,7 @@ class PdfExportService extends GetxService {
           _buildDetailRow('Category', task.category ?? 'Uncategorized'),
           _buildDetailRow('Priority', task.priority ?? 'Not specified'),
           _buildDetailRow('Tags', task.tags.isNotEmpty ? task.tags.join(', ') : 'No tags'),
-          _buildDetailRow('Created By', task.createdBy),
+          _buildDetailRow('Created By', _getCreatorName(task)),
         ],
       ),
     );
@@ -656,6 +656,30 @@ class PdfExportService extends GetxService {
     } catch (e) {
       Get.log('Error exporting and sharing tasks: $e');
       rethrow;
+    }
+  }
+
+  /// Gets the creator name for a task, preferring cached names over IDs
+  String _getCreatorName(Task task) {
+    try {
+      final taskController = Get.find<TaskController>();
+      
+      // 1. Check if we have a cached name
+      if (task.createdById.isNotEmpty &&
+          taskController.userNameCache.containsKey(task.createdById)) {
+        return taskController.userNameCache[task.createdById]!;
+      }
+
+      // 2. Fallback to createdBy field
+      if (task.createdBy.isNotEmpty) {
+        return task.createdBy;
+      }
+
+      // 3. Final fallback
+      return 'Unknown';
+    } catch (e) {
+      Get.log('Error getting creator name: $e');
+      return task.createdBy.isNotEmpty ? task.createdBy : 'Unknown';
     }
   }
 }

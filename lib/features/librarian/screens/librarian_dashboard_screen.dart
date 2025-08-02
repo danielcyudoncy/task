@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/task_controller.dart';
+import 'package:task/controllers/auth_controller.dart';
 import 'package:task/features/librarian/widgets/task_list_view.dart';
 import 'package:task/features/librarian/widgets/task_filters_sheet.dart';
 import 'package:task/models/task_filters.dart';
@@ -336,7 +337,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Librarian Dashboard'),
+        title: const Text('Welcome'),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -436,6 +437,15 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
                   tooltip: 'Export tasks',
                   onPressed: _exportTasks,
                 ),
+          ),
+          
+          // Logout button
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () {
+              Get.find<AuthController>().logout();
+            },
           ),
           
           const SizedBox(width: 8),
