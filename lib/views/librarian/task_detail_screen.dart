@@ -284,7 +284,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             'Due Date',
             DateFormat('MMM d, y').format(widget.task.dueDate!),
           ),
-        _buildMetadataItem('Created By', widget.task.createdBy),
+        _buildMetadataItem('Created By', _getCreatorName()),
         if (widget.task.status.toLowerCase() == 'completed' && widget.task.lastModified != null)
           _buildMetadataItem(
             'Completed On',
@@ -514,5 +514,26 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         ],
       ),
     );
+  }
+
+  String _getCreatorName() {
+    try {
+      // 1. Check if we have a cached name
+      if (widget.task.createdById.isNotEmpty &&
+          _taskController.userNameCache.containsKey(widget.task.createdById)) {
+        return _taskController.userNameCache[widget.task.createdById]!;
+      }
+
+      // 2. Fallback to createdBy field
+      if (widget.task.createdBy.isNotEmpty) {
+        return widget.task.createdBy;
+      }
+
+      // 3. Final fallback
+      return 'Unknown';
+    } catch (e) {
+      debugPrint('Error getting creator name: $e');
+      return widget.task.createdBy;
+    }
   }
 }
