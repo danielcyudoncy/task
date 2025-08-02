@@ -1,8 +1,25 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if true;
+    // Profile pictures - only authenticated users can upload/read
+    match /user-profiles/profile_pictures/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        request.auth.uid != null && 
+        resource == null; // Only allow new uploads, not overwrites
     }
+    
+    // Task attachments - only authenticated users
+    match /task-attachments/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Public assets (if any) - read only
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Firebase denies by default - no explicit deny rule needed
   }
-} 
+}
