@@ -1,6 +1,7 @@
 // widgets/save_success_screen.dart
 // views/save_success_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
@@ -56,10 +57,10 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
               // App logo
               Image.asset(
                 AppIcons.logo,
-                width: 80,
-                height: 80,
+                width: 150,
+                height: 150,
               ),
-              const SizedBox(height: 24),
+              
               // Success card
               Expanded(
                 child: Center(
@@ -94,7 +95,7 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                           textAlign: TextAlign.center,
                           style: textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 18.sp,
                             fontFamily: 'Raleway',
                             color: textTheme.headlineMedium?.color,
                           ),
