@@ -291,6 +291,26 @@ class _TaskListScreenState extends State<TaskListScreen> {
                             initialDate: DateTime.now(),
                             firstDate: DateTime(2020),
                             lastDate: DateTime(2100),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: Theme.of(context).colorScheme.copyWith(
+                                    primary: Theme.of(context).colorScheme.primary,
+                                    onPrimary: Theme.of(context).colorScheme.onPrimary,
+                                    surface: Theme.of(context).colorScheme.surface,
+                                    onSurface: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                  textButtonTheme: TextButtonThemeData(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Theme.of(context).brightness == Brightness.dark 
+                                          ? Colors.white 
+                                          : Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
                           );
                           if (picked != null) {
                             setState(() {
