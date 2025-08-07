@@ -118,9 +118,9 @@ class Task {
       map['createdByName'] ??
           map['createdBy'] ??
           'Unknown', // Prefer createdByName
-      map['assignedReporter'],
-      map['assignedCameraman'],
-      map['assignedDriver'],
+      map['assignedReporterName'] ?? map['assignedReporter'],
+      map['assignedCameramanName'] ?? map['assignedCameraman'],
+      map['assignedDriverName'] ?? map['assignedDriver'],
       map['assignedLibrarian'],
       map['status'] ?? '',
       List<String>.from(map['comments'] ?? []),

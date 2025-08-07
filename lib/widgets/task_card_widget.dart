@@ -119,7 +119,7 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 10),
               // Assigned Reporter
               Text(
-                'Assigned Reporter: ${task.assignedReporter ?? 'Not Assigned'}',
+                'Assigned Reporter: ${_getAssignedReporterName()}',
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -129,7 +129,17 @@ class TaskCardWidget extends StatelessWidget {
               const SizedBox(height: 4),
               // Assigned Cameraman
               Text(
-                'Assigned Cameraman: ${task.assignedCameraman ?? 'Not Assigned'}',
+                'Assigned Cameraman: ${_getAssignedCameramanName()}',
+                style: TextStyle(
+                  color: subTextColor,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              // Assigned Driver
+              Text(
+                'Assigned Driver: ${_getAssignedDriverName()}',
                 style: TextStyle(
                   color: subTextColor,
                   fontSize: 13.sp,
@@ -364,5 +374,20 @@ class TaskCardWidget extends StatelessWidget {
       debugPrint('Error getting creator name: $e');
       return task.createdBy;
     }
+  }
+
+  String _getAssignedReporterName() {
+    // Get the task document data to access assignedReporterName field
+    return task.assignedReporter ?? 'Not Assigned';
+  }
+
+  String _getAssignedCameramanName() {
+    // Get the task document data to access assignedCameramanName field
+    return task.assignedCameraman ?? 'Not Assigned';
+  }
+
+  String _getAssignedDriverName() {
+    // Get the task document data to access assignedDriverName field
+    return task.assignedDriver ?? 'Not Assigned';
   }
 }
