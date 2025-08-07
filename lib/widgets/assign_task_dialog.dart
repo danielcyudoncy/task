@@ -30,9 +30,15 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.colorScheme.primary;
     final assignableTasks = widget.adminController.taskSnapshotDocs.where((task) {
-      final assigned = task['assignedTo'] != null && task['assignedTo'].isNotEmpty;
       final completed = (task['status'] ?? '').toString().toLowerCase() == 'completed';
-      return !assigned && !completed;
+      
+      // Check if both reporter and cameraman are assigned
+      final hasReporter = task['assignedReporterId'] != null && task['assignedReporterId'].toString().isNotEmpty;
+      final hasCameraman = task['assignedCameramanId'] != null && task['assignedCameramanId'].toString().isNotEmpty;
+      final fullyAssigned = hasReporter && hasCameraman;
+      
+      // Task is available if it's not completed and not fully assigned (missing reporter or cameraman)
+      return !completed && !fullyAssigned;
     }).toList();
 
     return Dialog(

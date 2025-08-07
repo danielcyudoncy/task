@@ -12,6 +12,7 @@ class NotificationController extends GetxController {
       <Map<String, dynamic>>[].obs;
   final RxInt unreadCount = 0.obs;
   final RxInt validUnreadCount = 0.obs;
+  final RxInt taskAssignmentUnreadCount = 0.obs;
   final RxInt totalNotifications = 0.obs;
   final RxBool isLoading = false.obs;
 
@@ -152,6 +153,14 @@ class NotificationController extends GetxController {
     debugPrint('_updateValidNotifications: Final valid notifications: ${valid.length}');
     validNotifications.value = valid;
     validUnreadCount.value = valid.where((n) => !(n['isRead'] as bool? ?? true)).length;
+    
+    // Calculate task assignment unread count specifically
+    final taskAssignmentNotifications = valid.where((n) {
+      final type = n['type']?.toString();
+      return type == 'task_assigned' || type == 'task_assignment';
+    }).toList();
+    taskAssignmentUnreadCount.value = taskAssignmentNotifications.where((n) => !(n['isRead'] as bool? ?? true)).length;
+    debugPrint('_updateValidNotifications: Task assignment unread count: ${taskAssignmentUnreadCount.value}');
   }
 
   void updateUnreadCount(List<Map<String, dynamic>>? currentNotifications) {
@@ -184,6 +193,8 @@ class NotificationController extends GetxController {
       if (index != -1) {
         notifications[index]['isRead'] = true;
         updateUnreadCount(notifications);
+        // Recalculate task assignment unread count
+        await _updateValidNotifications(notifications);
       }
     } catch (e) {
       debugPrint('Mark as Read Error: $e');
@@ -219,6 +230,7 @@ class NotificationController extends GetxController {
         notification['isRead'] = true;
       }
       unreadCount.value = 0;
+      taskAssignmentUnreadCount.value = 0;
     } catch (e) {
       debugPrint('Mark All as Read Error: $e');
       _safeSnackbar('Error', 'Failed to mark all notifications as read');

@@ -279,6 +279,12 @@ class _AppDrawerState extends State<AppDrawer> {
                     Get.toNamed('/settings');
                   }),
 
+                  _drawerTile(Icons.build_outlined, 'Fix Notifications', () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    Get.back();
+                    Get.toNamed('/notification-fix');
+                  }),
+
                   _myTasksCard(),
                   _buildDarkModeCard(isDark),
                 ],

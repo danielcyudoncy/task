@@ -1,4 +1,5 @@
 // views/home_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -11,6 +12,7 @@ import '../controllers/task_controller.dart';
 import '../controllers/notification_controller.dart';
 import 'package:task/widgets/user_dashboard_cards_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 import '../utils/constants/app_styles.dart';
 
@@ -55,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen>
             taskController.fetchRelevantTasksForUser();
           }
           taskController.fetchTaskCounts();
+          
           notificationController.fetchNotifications();
         } catch (e) {
           // debugPrint("HomeScreen: Error initializing data: $e");
@@ -64,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
   }
+
 
   @override
   void dispose() {
@@ -77,6 +81,8 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Calculate the number of tasks assigned to the user (matches notification logic)
     final String userId = authController.currentUser?.uid ?? '';
+    print('DEBUG: HomeScreen userId: $userId');
+    print('DEBUG: AuthController currentUser: ${authController.currentUser}');
 
     return Scaffold(
       key: _scaffoldKey,
@@ -294,11 +300,12 @@ class _HomeScreenState extends State<HomeScreen>
                                       .snapshots(),
                                   builder: (context, onlineSnapshot) {
                                     final onlineUsersCount = onlineSnapshot.data?.docs.length ?? 0;
+                                    print('DEBUG: About to call assignedTasksCountStream with userId: $userId');
                                     return StreamBuilder<int>(
                                       stream: taskController.assignedTasksCountStream(userId),
                                       builder: (context, createdSnapshot) {
                                         return UserDashboardCardsWidget(
-                                          assignedTasksStream: taskController.assignedTasksCountStream(userId),
+                                          assignedTasksCount: notificationController.taskAssignmentUnreadCount,
                                           onlineUsersStream: Stream.value(onlineUsersCount),
                                           tasksCreatedStream: taskController.createdTasksCountStream(userId),
                                           newsFeedStream: Stream.value(3), // Static for now, can be replaced with a real stream

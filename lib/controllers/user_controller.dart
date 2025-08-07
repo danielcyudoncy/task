@@ -16,6 +16,7 @@ class UserController extends GetxController {
   // Existing observables
   var reporters = <Map<String, dynamic>>[].obs;
   var cameramen = <Map<String, dynamic>>[].obs;
+  var drivers = <Map<String, dynamic>>[].obs;
   var allUsers = <Map<String, dynamic>>[].obs;
   var isDeleting = false.obs;
 
@@ -37,6 +38,7 @@ class UserController extends GetxController {
     super.onInit();
     fetchReporters();
     fetchCameramen();
+    fetchDrivers();
     fetchAllUsers();
     _initChatUsers();
   }
@@ -70,6 +72,17 @@ class UserController extends GetxController {
           .where("role", isEqualTo: "Cameraman")
           .snapshots()
           .handleError((error) => Get.log("Cameraman fetch error: $error"))
+          .map((snapshot) => snapshot.docs.map(_mapUser).toList()),
+    );
+  }
+
+  void fetchDrivers() {
+    drivers.bindStream(
+      _firestore
+          .collection("users")
+          .where("role", isEqualTo: "Driver")
+          .snapshots()
+          .handleError((error) => Get.log("Driver fetch error: $error"))
           .map((snapshot) => snapshot.docs.map(_mapUser).toList()),
     );
   }
