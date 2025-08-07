@@ -1,6 +1,8 @@
 // my_app.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:task/routes/app_routes.dart';
@@ -16,6 +18,26 @@ class MyApp extends StatelessWidget {
   final Isar isar;
   const MyApp({super.key, required this.isar});
 
+  Future<bool> _showExitConfirmationDialog() async {
+    return await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Exit App'),
+        content: const Text('Are you sure you want to exit the app?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    ) ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -28,24 +50,46 @@ class MyApp extends StatelessWidget {
           final currentThemeMode = themeController.isDarkMode.value
               ? ThemeMode.dark
               : ThemeMode.light;
-          return GetMaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Assignment Logging App',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: currentThemeMode,
-            initialBinding: GlobalBindings(isar),
-            initialRoute: "/",
-            getPages: AppRoutes.routes,
-            translations: AppTranslations(),
-            locale: AppLocalizations.instance.currentLocale,
-            fallbackLocale: AppLocalizations.defaultLocale,
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
+          return PopScope(
+            canPop: false,
+            onPopInvoked: (didPop) async {
+              print('PopScope onPopInvoked called: didPop=$didPop');
+              if (didPop) return;
+              
+              // Show confirmation dialog before minimizing/closing
+              final shouldExit = await _showExitConfirmationDialog();
+              print('Exit confirmation result: $shouldExit');
+              if (shouldExit) {
+                // On Android, minimize the app instead of closing
+                if (Platform.isAndroid) {
+                  print('Calling SystemNavigator.pop() on Android');
+                  SystemNavigator.pop();
+                } else {
+                  // On other platforms, close the app
+                  print('Calling SystemNavigator.pop() on other platform');
+                  SystemNavigator.pop();
+                }
+              }
+            },
+            child: GetMaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'Assignment Logging App',
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: currentThemeMode,
+              initialBinding: GlobalBindings(isar),
+              initialRoute: "/",
+              getPages: AppRoutes.routes,
+              translations: AppTranslations(),
+              locale: AppLocalizations.instance.currentLocale,
+              fallbackLocale: AppLocalizations.defaultLocale,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+            ),
           );
         });
       },
