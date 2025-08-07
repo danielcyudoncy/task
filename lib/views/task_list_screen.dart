@@ -82,6 +82,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 ? (taskController.userNameCache[task.assignedCameramanId] ??
                     'Unknown')
                 : 'None';
+            final assignedDriverName = task.assignedDriverId != null
+                ? (taskController.userNameCache[task.assignedDriverId] ??
+                    'Unknown')
+                : 'None';
 
             return Card(
               elevation: 3,
@@ -95,6 +99,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     Text('${'created_by'.tr}: $creatorName'),
                     Text('${'assigned_reporter'.tr}: $assignedReporterName'),
                     Text('${'assigned_cameraman'.tr}: $assignedCameramanName'),
+                    Text('${'assigned_driver'.tr}: $assignedDriverName'),
                     Text('${'status'.tr}: ${task.status}'),
                     Text(
                         '${'due_date'.tr}: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
