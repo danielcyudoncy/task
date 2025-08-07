@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class UserDashboardCardsWidget extends StatelessWidget {
-  final Stream<int> assignedTasksStream;
+  final RxInt assignedTasksCount;
   final Stream<int> onlineUsersStream;
   final Stream<int> tasksCreatedStream;
   final Stream<int> newsFeedStream;
@@ -15,7 +15,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
 
   const UserDashboardCardsWidget({
     super.key,
-    required this.assignedTasksStream,
+    required this.assignedTasksCount,
     required this.onlineUsersStream,
     required this.tasksCreatedStream,
     required this.newsFeedStream,
@@ -47,19 +47,16 @@ class UserDashboardCardsWidget extends StatelessWidget {
                 SizedBox(
                   width: 140.w,
                   height: assignedTaskHeight.h,
-                  child: StreamBuilder<int>(
-                    stream: assignedTasksStream,
-                    builder: (context, snapshot) {
-                      final count = snapshot.data ?? 0;
-                      return _DashboardGridCard(
-                        icon: Icons.assignment_turned_in,
-                        value: count,
-                        label: 'assigned_task'.tr,
-                        onTap: onAssignedTasksTap,
-                        color: cardColor,
-                      );
-                    },
-                  ),
+                  child: Obx(() {
+                    final count = assignedTasksCount.value;
+                    return _DashboardGridCard(
+                      icon: Icons.assignment_turned_in,
+                      value: count,
+                      label: 'assigned_task'.tr,
+                      onTap: onAssignedTasksTap,
+                      color: cardColor,
+                    );
+                  }),
                 ),
                 SizedBox(height: 14.h),
                 SizedBox(
@@ -190,4 +187,4 @@ class _DashboardGridCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

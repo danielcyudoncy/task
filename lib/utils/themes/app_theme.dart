@@ -165,7 +165,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: const WidgetStatePropertyAll(Color(0xFF08169D)),
+          backgroundColor: const WidgetStatePropertyAll(Color(0xFF2F46A3)),
           foregroundColor: WidgetStatePropertyAll(colorScheme.onPrimary),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -175,8 +175,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          foregroundColor: const WidgetStatePropertyAll(Color(0xFF08169D)),
-          side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFF08169D))),
+          foregroundColor: const WidgetStatePropertyAll(Color(0xFF2F46A3)),
+          side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFF2F46A3))),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),

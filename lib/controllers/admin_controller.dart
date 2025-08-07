@@ -497,10 +497,11 @@ class AdminController extends GetxController {
           .collection('notifications')
           .add({
         'type': 'task_assignment',
+        'taskId': taskId,
         'title': taskTitle,
         'message': 'Description: $taskDescription\nDue: $formattedDate',
         'timestamp': FieldValue.serverTimestamp(),
-        'read': false,
+        'isRead': false,
       });
 
       // Send push notification via FCM
