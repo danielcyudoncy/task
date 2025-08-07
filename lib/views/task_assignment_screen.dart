@@ -123,11 +123,13 @@ class TaskAssignmentScreen extends StatelessWidget {
     String? selectedReporterName;
     String? selectedCameramanId;
     String? selectedCameramanName;
+    String? selectedDriverId;
+    String? selectedDriverName;
 
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
-        height: 480,
+        height: 550,
         decoration: BoxDecoration(
           color: scaffoldBg,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -154,13 +156,12 @@ class TaskAssignmentScreen extends StatelessWidget {
                       style: TextStyle(color: colorScheme.onSurface));
                 }
                 
-                // Show tasks that don't have both reporter and cameraman assigned
+                // Show tasks that don't have all three roles assigned (reporter, cameraman, and driver)
                 final unassignedTasks = taskController.tasks
                     .where((task) =>
-                        task.assignedReporterId == null ||
-                        task.assignedReporterId!.isEmpty ||
-                        task.assignedCameramanId == null ||
-                        task.assignedCameramanId!.isEmpty)
+                        (task.assignedReporterId == null || task.assignedReporterId!.isEmpty) ||
+                        (task.assignedCameramanId == null || task.assignedCameramanId!.isEmpty) ||
+                        (task.assignedDriverId == null || task.assignedDriverId!.isEmpty))
                     .toList();
 
                 if (unassignedTasks.isEmpty) {
@@ -271,6 +272,47 @@ class TaskAssignmentScreen extends StatelessWidget {
               );
             }),
 
+            const SizedBox(height: 10),
+
+            // Assign to Driver Dropdown
+            Obx(() {
+              // Add safety check to ensure controller is registered
+              if (!Get.isRegistered<UserController>()) {
+                return Text("Loading drivers...",
+                    style: TextStyle(color: colorScheme.onSurface));
+              }
+              
+              if (userController.drivers.isEmpty) {
+                return Text("No drivers available",
+                    style: TextStyle(color: colorScheme.onSurface));
+              }
+              return DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: "Assign to Driver",
+                  labelStyle: TextStyle(color: colorScheme.primary),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colorScheme.primary),
+                  ),
+                ),
+                dropdownColor: scaffoldBg,
+                items: userController.drivers
+                    .map<DropdownMenuItem<String>>((driver) {
+                  return DropdownMenuItem<String>(
+                    value: driver["id"],
+                    child: Text(driver["name"],
+                        style: TextStyle(color: colorScheme.onSurface)),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  final driver = userController.drivers
+                      .firstWhere((d) => d["id"] == value, orElse: () => {});
+                  selectedDriverId = value;
+                  selectedDriverName =
+                      driver.isNotEmpty ? driver["name"] : null;
+                },
+              );
+            }),
+
             const SizedBox(height: 20),
 
             // Assign button
@@ -303,16 +345,19 @@ class TaskAssignmentScreen extends StatelessWidget {
                       return;
                     }
                     
-                    if (selectedReporterId == null || selectedCameramanId == null) {
+                    if (selectedReporterId == null || selectedCameramanId == null || selectedDriverId == null) {
                       Get.snackbar(
                         "Incomplete Assignment",
-                        "Please assign both a reporter and a cameraman to this task.",
+                        "Please assign a reporter, cameraman, and driver to this task.",
                         duration: const Duration(seconds: 3),
                       );
                       return;
                     }
 
                     try {
+                      // Store context before async operation
+                      final currentContext = context;
+                      
                       // Close the dialog BEFORE calling the assignment
                       Get.back();
 
@@ -323,6 +368,8 @@ class TaskAssignmentScreen extends StatelessWidget {
                           reporterName: selectedReporterName,
                           cameramanId: selectedCameramanId,
                           cameramanName: selectedCameramanName,
+                          driverId: selectedDriverId,
+                          driverName: selectedDriverName,
                         );
 
                         // Show success message
@@ -336,12 +383,14 @@ class TaskAssignmentScreen extends StatelessWidget {
                         taskController.fetchTasks();
                       } catch (e) {
                         // Reopen the dialog if there was an error
-                        _showAssignmentDialog(
-                          context, 
-                          selectedTaskId, 
-                          colorScheme, 
-                          scaffoldBg,
-                        );
+                        if (currentContext.mounted) {
+                          _showAssignmentDialog(
+                            currentContext, 
+                            selectedTaskId, 
+                            colorScheme, 
+                            scaffoldBg,
+                          );
+                        }
                         rethrow;
                       }
                     } catch (e) {

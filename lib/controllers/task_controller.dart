@@ -1063,17 +1063,52 @@ class TaskController extends GetxController {
         .where('assignedCameramanId', isEqualTo: userId)
         .where('status', isNotEqualTo: 'Completed')
         .snapshots();
+        
+    final driverStream = FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedDriverId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
+        .snapshots();
+        
+    final librarianStream = FirebaseFirestore.instance
+        .collection('tasks')
+        .where('assignedLibrarianId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
+        .snapshots();
 
-    return rx.CombineLatestStream.combine3<QuerySnapshot, QuerySnapshot, QuerySnapshot, int>(
+    return rx.CombineLatestStream.combine5<QuerySnapshot, QuerySnapshot, QuerySnapshot, QuerySnapshot, QuerySnapshot, int>(
       assignedToStream,
       reporterStream,
       cameramanStream,
-      (a, b, c) {
+      driverStream,
+      librarianStream,
+      (a, b, c, d, e) {
         final taskIds = <String>{};
+        
+        // Debug logging
+        print('DEBUG: assignedTasksCountStream for userId: $userId');
+        print('DEBUG: assignedTo docs: ${a.docs.length}');
+        print('DEBUG: reporter docs: ${b.docs.length}');
+        print('DEBUG: cameraman docs: ${c.docs.length}');
+        print('DEBUG: driver docs: ${d.docs.length}');
+        print('DEBUG: librarian docs: ${e.docs.length}');
+        
         // Only include non-completed tasks in the count
-        taskIds.addAll(a.docs.where((doc) => doc['status'] != 'Completed').map((doc) => doc.id));
-        taskIds.addAll(b.docs.where((doc) => doc['status'] != 'Completed').map((doc) => doc.id));
-        taskIds.addAll(c.docs.where((doc) => doc['status'] != 'Completed').map((doc) => doc.id));
+        final assignedToDocs = a.docs.where((doc) => doc['status'] != 'Completed');
+        final reporterDocs = b.docs.where((doc) => doc['status'] != 'Completed');
+        final cameramanDocs = c.docs.where((doc) => doc['status'] != 'Completed');
+        final driverDocs = d.docs.where((doc) => doc['status'] != 'Completed');
+        final librarianDocs = e.docs.where((doc) => doc['status'] != 'Completed');
+        
+        taskIds.addAll(assignedToDocs.map((doc) => doc.id));
+        taskIds.addAll(reporterDocs.map((doc) => doc.id));
+        taskIds.addAll(cameramanDocs.map((doc) => doc.id));
+        taskIds.addAll(driverDocs.map((doc) => doc.id));
+        taskIds.addAll(librarianDocs.map((doc) => doc.id));
+        
+        print('DEBUG: Total unique task IDs: ${taskIds.length}');
+        print('DEBUG: Task IDs: $taskIds');
+        
         return taskIds.length;
       },
     );

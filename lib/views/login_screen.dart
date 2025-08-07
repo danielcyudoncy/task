@@ -291,49 +291,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Obx(() {
                                   if (!Get.isRegistered<AuthController>()) {
                                     return ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        foregroundColor: colorScheme.onPrimary,
-                                        backgroundColor: colorScheme.primary,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        Get.find<SettingsController>().triggerFeedback();
-                                        _submit();
-                                      },
-                                      child: Text(
-                                        'sign_in'.tr,
-                                        style: textTheme.bodyLarge?.copyWith(
+                                        // Using theme's default button styling
+                                        onPressed: () {
+                                          Get.find<SettingsController>().triggerFeedback();
+                                          _submit();
+                                        },
+                                        child: Text(
+                                          'sign_in'.tr,
+                                          style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontFamily: 'Raleway',
-                                            color: colorScheme.onPrimary),
-                                    )
-                                    );
+                                          ),
+                                        )
+                                      );
                                   }
                                   
                                   return _auth.isLoading.value
                                       ? const Center(child: CircularProgressIndicator())
                                       : ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
-                                            backgroundColor: colorScheme.secondary,
-                                            padding: const EdgeInsets.symmetric(vertical: 16),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                          ),
+                                          // Using theme's default button styling
                                           onPressed: () {
                                             Get.find<SettingsController>().triggerFeedback();
                                             _submit();
                                           },
                                           child: Text(
                                             'sign_in'.tr,
-                                            style: textTheme.bodyLarge?.copyWith(
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontFamily: 'Raleway',
-                                              color: isDark ? Colors.black : colorScheme.onSecondary,
                                             ),
                                           ),
                                         );

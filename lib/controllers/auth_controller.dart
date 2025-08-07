@@ -370,12 +370,38 @@ class AuthController extends GetxController {
         await user.updateDisplayName(userFullName);
         await user.reload();
         
+        // Get FCM token for notifications
+        String? fcmToken;
+        if (!kIsWeb) {
+          try {
+            // Request permissions first
+            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+            
+            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+                settings.authorizationStatus == AuthorizationStatus.provisional) {
+              fcmToken = await FirebaseMessaging.instance.getToken();
+              debugPrint("✅ FCM Token obtained during signup: ${fcmToken?.substring(0, 20)}...");
+            } else {
+              debugPrint("⚠️ Notification permissions not granted during signup: ${settings.authorizationStatus}");
+            }
+          } catch (e) {
+            debugPrint("❌ Error getting FCM Token during signup: $e");
+          }
+        }
+        
         // Save additional user data to Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': email,
           'fullName': userFullName,
           'role': role,
+          'fcmToken': fcmToken ?? "",
+          'profileComplete': false,
+          'photoUrl': "",
           'createdAt': FieldValue.serverTimestamp(),
         });
         
@@ -408,8 +434,27 @@ class AuthController extends GetxController {
       User? user = userCredential.user;
 
       if (user != null) {
-        String? fcmToken =
-            !kIsWeb ? await FirebaseMessaging.instance.getToken() : null;
+        String? fcmToken;
+        if (!kIsWeb) {
+          try {
+            // Request permissions first
+            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+            
+            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+                settings.authorizationStatus == AuthorizationStatus.provisional) {
+              fcmToken = await FirebaseMessaging.instance.getToken();
+              debugPrint("✅ FCM Token obtained during admin signup: ${fcmToken?.substring(0, 20)}...");
+            } else {
+              debugPrint("⚠️ Notification permissions not granted during admin signup: ${settings.authorizationStatus}");
+            }
+          } catch (e) {
+            debugPrint("❌ Error getting FCM Token during admin signup: $e");
+          }
+        }
 
         await _firestore.collection('users').doc(user.uid).set({
           "uid": user.uid,
@@ -452,6 +497,29 @@ class AuthController extends GetxController {
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
+      // Get FCM token for notifications
+       String? fcmToken;
+       if (!kIsWeb) {
+         try {
+           // Request permissions first
+           NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+             alert: true,
+             badge: true,
+             sound: true,
+           );
+           
+           if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+               settings.authorizationStatus == AuthorizationStatus.provisional) {
+             fcmToken = await FirebaseMessaging.instance.getToken();
+             debugPrint("✅ FCM Token obtained during createAdminUser: ${fcmToken?.substring(0, 20)}...");
+           } else {
+             debugPrint("⚠️ Notification permissions not granted during createAdminUser: ${settings.authorizationStatus}");
+           }
+         } catch (e) {
+           debugPrint("❌ Error getting FCM Token during createAdminUser: $e");
+         }
+       }
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
@@ -460,6 +528,9 @@ class AuthController extends GetxController {
         'email': email,
         'fullName': fullName,
         'role': 'admin',
+        'fcmToken': fcmToken ?? "",
+        'profileComplete': false,
+        'photoUrl': "",
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -602,15 +673,31 @@ class AuthController extends GetxController {
     if (kIsWeb) return;
 
     try {
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null && _auth.currentUser != null) {
-        await _firestore
-            .collection('users')
-            .doc(_auth.currentUser!.uid)
-            .update({"fcmToken": token});
+      // Request permissions first
+      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        String? token = await FirebaseMessaging.instance.getToken();
+        if (token != null && _auth.currentUser != null) {
+          debugPrint("✅ FCM Token obtained: ${token.substring(0, 20)}...");
+          await _firestore
+              .collection('users')
+              .doc(_auth.currentUser!.uid)
+              .update({"fcmToken": token});
+          debugPrint("✅ FCM Token saved to Firestore for user: ${_auth.currentUser!.uid}");
+        } else {
+          debugPrint("⚠️ FCM Token is null or user not authenticated");
+        }
+      } else {
+        debugPrint("⚠️ Notification permissions not granted: ${settings.authorizationStatus}");
       }
     } catch (e) {
-      debugPrint("Error saving FCM Token: $e");
+      debugPrint("❌ Error saving FCM Token: $e");
     }
   }
 
