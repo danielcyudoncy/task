@@ -1,16 +1,12 @@
 // widgets/app_drawer.dart
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import '../controllers/auth_controller.dart';
-import '../controllers/task_controller.dart';
-import '../models/task_model.dart';
 import 'package:task/controllers/theme_controller.dart';
 
 class AppDrawer extends StatefulWidget {
@@ -22,26 +18,9 @@ class AppDrawer extends StatefulWidget {
 
 class _AppDrawerState extends State<AppDrawer> {
   final authController = Get.find<AuthController>();
-  final taskController = Get.find<TaskController>();
   bool _logoutHovered = false, _showCalendar = false;
   DateTime _focusedDay = DateTime.now();
-  List<Task> _userTasks = [];
   bool _isNavigating = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserTasks();
-  }
-
-  Future<void> _loadUserTasks() async {
-    final assigned = await taskController.getAssignedTasks();
-    final created = await taskController.getMyCreatedTasks();
-    final all = [...assigned, ...created];
-    final unique = {for (var t in all) t.taskId: t}.values.toList();
-    if (!mounted) return;
-    setState(() => _userTasks = unique);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -285,7 +264,6 @@ class _AppDrawerState extends State<AppDrawer> {
                     Get.toNamed('/notification-fix');
                   }),
 
-                  _myTasksCard(),
                   _buildDarkModeCard(isDark),
                 ],
               ),
@@ -331,29 +309,7 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
-  Widget _myTasksCard() {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      child: ExpansionTile(
-        leading: const Icon(Icons.task),
-        title: Text('my_tasks'.tr),
-        children: _userTasks.isEmpty
-            ? [
-                Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Text('no_tasks_assigned'.tr),
-                )
-              ]
-            : _userTasks
-                .map((t) => ListTile(
-                      title: Text(t.title),
-                      subtitle: Text('due'.trParams({'date': _formatDate(t.timestamp)})),
-                    ))
-                .toList(),
-      ),
-    );
-  }
+
 
   Widget _buildDarkModeCard(bool isDark) {
     final ThemeController themeController = Get.find<ThemeController>();
@@ -373,10 +329,7 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
-  String _formatDate(dynamic d) {
-    if (d is Timestamp) return DateFormat('MMM dd, yyyy').format(d.toDate());
-    return 'no_deadline'.tr;
-  }
+
 
   Future<void> _confirmLogout() async {
     final confirm = await Get.dialog<bool>(
