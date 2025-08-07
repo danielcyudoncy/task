@@ -267,6 +267,26 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               initialDate: _filters.startDate ?? DateTime.now(),
               firstDate: DateTime(2020),
               lastDate: DateTime(2030),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: Theme.of(context).colorScheme.copyWith(
+                      primary: Theme.of(context).colorScheme.primary,
+                      onPrimary: Theme.of(context).colorScheme.onPrimary,
+                      surface: Theme.of(context).colorScheme.surface,
+                      onSurface: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    textButtonTheme: TextButtonThemeData(
+                       style: TextButton.styleFrom(
+                         foregroundColor: Theme.of(context).brightness == Brightness.dark 
+                             ? Colors.white 
+                             : Theme.of(context).colorScheme.primary,
+                       ),
+                     ),
+                  ),
+                  child: child!,
+                );
+              },
             );
             if (date != null) {
               setState(() {
@@ -293,6 +313,26 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               initialDate: _filters.endDate ?? DateTime.now(),
               firstDate: _filters.startDate ?? DateTime(2020),
               lastDate: DateTime(2030),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: Theme.of(context).colorScheme.copyWith(
+                      primary: Theme.of(context).colorScheme.primary,
+                      onPrimary: Theme.of(context).colorScheme.onPrimary,
+                      surface: Theme.of(context).colorScheme.surface,
+                      onSurface: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    textButtonTheme: TextButtonThemeData(
+                       style: TextButton.styleFrom(
+                         foregroundColor: Theme.of(context).brightness == Brightness.dark 
+                             ? Colors.white 
+                             : Theme.of(context).colorScheme.primary,
+                       ),
+                     ),
+                  ),
+                  child: child!,
+                );
+              },
             );
             if (date != null) {
               setState(() {
