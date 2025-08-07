@@ -102,7 +102,39 @@ class AdminController extends GetxController {
         final title = doc['title'] ?? '';
         final status = (doc['status'] ?? '').toString().toLowerCase();
 
+        bool isTaskCompleted = false;
         if (status == 'completed') {
+          // Check if all assigned users have completed the task
+          final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+          final assignedUserIds = <String>[];
+          
+          // Collect all assigned user IDs
+          if (doc['assignedReporterId'] != null && doc['assignedReporterId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedReporterId'].toString());
+          }
+          if (doc['assignedCameramanId'] != null && doc['assignedCameramanId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedCameramanId'].toString());
+          }
+          if (doc['assignedDriverId'] != null && doc['assignedDriverId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedDriverId'].toString());
+          }
+          if (doc['assignedLibrarianId'] != null && doc['assignedLibrarianId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedLibrarianId'].toString());
+          }
+          
+          // If no users are assigned, treat as completed (backward compatibility)
+          if (assignedUserIds.isEmpty) {
+            isTaskCompleted = true;
+          } else if (completedByUserIds.isEmpty) {
+            // If completedByUserIds is empty, it's using old logic, so count as completed
+            isTaskCompleted = true;
+          } else {
+            // Check if all assigned users have completed the task
+            isTaskCompleted = assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+          }
+        }
+
+        if (isTaskCompleted) {
           completedTaskTitles.add(title);
         } else {
           pendingTaskTitles.add(title);
@@ -223,10 +255,41 @@ class AdminController extends GetxController {
       newsCount.value = newsSnapshot.count ?? 0;
 
       totalTasks.value = taskDocs.length;
-      completedTasks.value = taskDocs
-          .where((doc) =>
-              (doc['status'] ?? '').toString().toLowerCase() == 'completed')
-          .length;
+      
+      // Updated logic: Only count tasks as completed if ALL assigned users have completed them
+      completedTasks.value = taskDocs.where((doc) {
+        final status = (doc['status'] ?? '').toString().toLowerCase();
+        if (status == 'completed') {
+          // For backward compatibility, if it's marked as completed, check if it uses new logic
+          final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+          final assignedUserIds = <String>[];
+          
+          // Collect all assigned user IDs
+          if (doc['assignedReporterId'] != null && doc['assignedReporterId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedReporterId'].toString());
+          }
+          if (doc['assignedCameramanId'] != null && doc['assignedCameramanId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedCameramanId'].toString());
+          }
+          if (doc['assignedDriverId'] != null && doc['assignedDriverId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedDriverId'].toString());
+          }
+          if (doc['assignedLibrarianId'] != null && doc['assignedLibrarianId'].toString().isNotEmpty) {
+            assignedUserIds.add(doc['assignedLibrarianId'].toString());
+          }
+          
+          // If no users are assigned, treat as completed (backward compatibility)
+          if (assignedUserIds.isEmpty) return true;
+          
+          // If completedByUserIds is empty, it's using old logic, so count as completed
+          if (completedByUserIds.isEmpty) return true;
+          
+          // Check if all assigned users have completed the task
+          return assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+        }
+        return false;
+      }).length;
+      
       pendingTasks.value = taskDocs
           .where((doc) =>
               (doc['status'] ?? '').toString().toLowerCase() != 'completed')
@@ -274,8 +337,38 @@ class AdminController extends GetxController {
     final now = DateTime.now();
 
     completedTaskTitles.value = userTasks
-        .where((doc) =>
-            (doc['status'] ?? '').toString().toLowerCase() == 'completed')
+        .where((doc) {
+          final status = (doc['status'] ?? '').toString().toLowerCase();
+          if (status == 'completed') {
+            // Check if all assigned users have completed the task
+            final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+            final assignedUserIds = <String>[];
+            
+            // Collect all assigned user IDs
+            if (doc['assignedReporterId'] != null && doc['assignedReporterId'].toString().isNotEmpty) {
+              assignedUserIds.add(doc['assignedReporterId'].toString());
+            }
+            if (doc['assignedCameramanId'] != null && doc['assignedCameramanId'].toString().isNotEmpty) {
+              assignedUserIds.add(doc['assignedCameramanId'].toString());
+            }
+            if (doc['assignedDriverId'] != null && doc['assignedDriverId'].toString().isNotEmpty) {
+              assignedUserIds.add(doc['assignedDriverId'].toString());
+            }
+            if (doc['assignedLibrarianId'] != null && doc['assignedLibrarianId'].toString().isNotEmpty) {
+              assignedUserIds.add(doc['assignedLibrarianId'].toString());
+            }
+            
+            // If no users are assigned, treat as completed (backward compatibility)
+            if (assignedUserIds.isEmpty) return true;
+            
+            // If completedByUserIds is empty, it's using old logic, so count as completed
+            if (completedByUserIds.isEmpty) return true;
+            
+            // Check if all assigned users have completed the task
+            return assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+          }
+          return false;
+        })
         .map((doc) => doc['title'] ?? '')
         .cast<String>()
         .toList();

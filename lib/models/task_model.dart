@@ -51,10 +51,41 @@ class Task {
   
   // Archive related fields
   bool get isArchived => status.toLowerCase() == 'archived';
+  
+  // Helper method to get all assigned user IDs
+  List<String> get assignedUserIds {
+    List<String> userIds = [];
+    if (assignedReporterId != null && assignedReporterId!.isNotEmpty) {
+      userIds.add(assignedReporterId!);
+    }
+    if (assignedCameramanId != null && assignedCameramanId!.isNotEmpty) {
+      userIds.add(assignedCameramanId!);
+    }
+    if (assignedDriverId != null && assignedDriverId!.isNotEmpty) {
+      userIds.add(assignedDriverId!);
+    }
+    if (assignedLibrarianId != null && assignedLibrarianId!.isNotEmpty) {
+      userIds.add(assignedLibrarianId!);
+    }
+    return userIds;
+  }
+  
+  // Helper method to check if all assigned users have completed the task
+  bool get isCompletedByAllAssignedUsers {
+    final assignedUsers = assignedUserIds;
+    if (assignedUsers.isEmpty) return false;
+    
+    // Check if all assigned users have marked the task as complete
+    return assignedUsers.every((userId) => completedByUserIds.contains(userId));
+  }
   DateTime? archivedAt;
   String? archivedBy;
   String? archiveReason;
   String? archiveLocation; // Physical or digital location where the task is archived
+  
+  // Individual user completion tracking
+  List<String> completedByUserIds = []; // List of user IDs who have marked this task as complete
+  Map<String, DateTime> userCompletionTimestamps = {}; // Track when each user completed the task
 
   Task()
       : taskId = '',
@@ -69,7 +100,9 @@ class Task {
         attachmentUrls = [],
         attachmentNames = [],
         attachmentTypes = [],
-        attachmentSizes = [];
+        attachmentSizes = [],
+        completedByUserIds = [],
+        userCompletionTimestamps = {};
 
   Task.full(
       this.taskId,
@@ -105,7 +138,9 @@ class Task {
       this.attachmentNames = const [],
       this.attachmentTypes = const [],
       this.attachmentSizes = const [],
-      this.lastAttachmentAdded});
+      this.lastAttachmentAdded,
+      this.completedByUserIds = const [],
+      this.userCompletionTimestamps = const {}});
 
   factory Task.fromMap(Map<String, dynamic> map, String id) {
     debugPrint(
@@ -148,6 +183,11 @@ class Task {
       attachmentTypes: List<String>.from(map['attachmentTypes'] ?? []),
       attachmentSizes: List<int>.from(map['attachmentSizes'] ?? []),
       lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
+      completedByUserIds: List<String>.from(map['completedByUserIds'] ?? []),
+      userCompletionTimestamps: Map<String, DateTime>.from(
+        (map['userCompletionTimestamps'] as Map<String, dynamic>? ?? {})
+            .map((key, value) => MapEntry(key, parseDate(value) ?? DateTime.now())),
+      ),
     );
   }
   
@@ -187,6 +227,8 @@ class Task {
     List<String>? attachmentTypes,
     List<int>? attachmentSizes,
     DateTime? lastAttachmentAdded,
+    List<String>? completedByUserIds,
+    Map<String, DateTime>? userCompletionTimestamps,
   }) {
     return Task.full(
       taskId ?? this.taskId,
@@ -223,6 +265,8 @@ class Task {
       attachmentTypes: attachmentTypes ?? List.from(this.attachmentTypes),
       attachmentSizes: attachmentSizes ?? List.from(this.attachmentSizes),
       lastAttachmentAdded: lastAttachmentAdded ?? this.lastAttachmentAdded,
+      completedByUserIds: completedByUserIds ?? List.from(this.completedByUserIds),
+      userCompletionTimestamps: userCompletionTimestamps ?? Map.from(this.userCompletionTimestamps),
     );
   }
 
@@ -262,6 +306,8 @@ class Task {
       'attachmentTypes': attachmentTypes,
       'attachmentSizes': attachmentSizes,
       'lastAttachmentAdded': lastAttachmentAdded,
+      'completedByUserIds': completedByUserIds,
+      'userCompletionTimestamps': userCompletionTimestamps.map((key, value) => MapEntry(key, value)),
     }..removeWhere((key, value) => value == null);
   }
 

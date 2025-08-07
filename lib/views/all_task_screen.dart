@@ -58,7 +58,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
 
       final matchesFilter = _selectedFilter.value == 'All' ||
           (_selectedFilter.value == 'Completed' &&
-              task.status == 'Completed') ||
+              task.status == 'Completed' && task.isCompletedByAllAssignedUsers) ||
           (_selectedFilter.value == 'Pending' && task.status == 'Pending');
 
       return matchesSearch && matchesFilter;

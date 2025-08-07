@@ -885,6 +885,93 @@ class TaskController extends GetxController {
       isLoading(false);
     }
   }
+
+  // New method for individual user task completion
+  Future<void> markTaskCompletedByUser(String taskId, String userId) async {
+    try {
+      isLoading(true);
+      
+      // Get the current task data
+      final taskDoc = await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .get();
+      
+      if (!taskDoc.exists) {
+        _safeSnackbar("Error", "Task not found");
+        return;
+      }
+      
+      final taskData = taskDoc.data()!;
+      final task = Task.fromMap(taskData, taskId);
+      
+      // Check if user is assigned to this task
+      if (!task.assignedUserIds.contains(userId)) {
+        _safeSnackbar("Error", "You are not assigned to this task");
+        return;
+      }
+      
+      // Check if user has already completed the task
+      if (task.completedByUserIds.contains(userId)) {
+        _safeSnackbar("Info", "You have already marked this task as completed");
+        return;
+      }
+      
+      // Add user to completed list
+      List<String> updatedCompletedByUserIds = List.from(task.completedByUserIds);
+      updatedCompletedByUserIds.add(userId);
+      
+      // Add completion timestamp
+      Map<String, dynamic> updatedTimestamps = Map.from(task.userCompletionTimestamps.map((key, value) => MapEntry(key, value)));
+      updatedTimestamps[userId] = DateTime.now();
+      
+      // Check if all assigned users have now completed the task
+      final allAssignedUsers = task.assignedUserIds;
+      final allCompleted = allAssignedUsers.every((assignedUserId) => updatedCompletedByUserIds.contains(assignedUserId));
+      
+      // Prepare update data
+      Map<String, dynamic> updateData = {
+        'completedByUserIds': updatedCompletedByUserIds,
+        'userCompletionTimestamps': updatedTimestamps,
+      };
+      
+      // Only update the overall task status to "Completed" if ALL assigned users have completed it
+      if (allCompleted) {
+        updateData['status'] = 'Completed';
+      }
+      
+      // Update Firestore
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .update(updateData);
+      
+      // Update local task list
+      int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      if (taskIndex != -1) {
+        Task updatedTask = tasks[taskIndex].copyWith(
+          completedByUserIds: updatedCompletedByUserIds,
+          userCompletionTimestamps: Map<String, DateTime>.from(updatedTimestamps.map((key, value) => MapEntry(key, value is DateTime ? value : DateTime.now()))),
+          status: allCompleted ? 'Completed' : tasks[taskIndex].status,
+        );
+        tasks[taskIndex] = updatedTask;
+        tasks.refresh();
+      }
+      
+      if (allCompleted) {
+        _safeSnackbar("Success", "Task completed by all assigned users!");
+      } else {
+        final remainingUsers = allAssignedUsers.where((id) => !updatedCompletedByUserIds.contains(id)).length;
+        _safeSnackbar("Success", "Your completion recorded. Waiting for $remainingUsers more user(s) to complete.");
+      }
+      
+      calculateNewTaskCount();
+    } catch (e) {
+      _safeSnackbar("Error", "Failed to mark task as completed: ${e.toString()}");
+    } finally {
+      isLoading(false);
+    }
+  }
   // --- LEGACY (optional) ---
   Future<void> assignTaskToReporter(String taskId, String reporterId) async {
     try {
