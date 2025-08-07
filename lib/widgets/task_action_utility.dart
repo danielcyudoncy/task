@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/task_controller.dart';
+import '../../controllers/auth_controller.dart';
 
 class TaskActions {
   static void editTask(BuildContext context, dynamic task) {
@@ -84,8 +85,15 @@ class TaskActions {
 
   static void completeTask(dynamic task) async {
     final taskController = Get.find<TaskController>();
-    await taskController.updateTaskStatus(task.taskId, "Completed");
-    Get.snackbar("Success", "Task marked as completed",
-        snackPosition: SnackPosition.BOTTOM);
+    final authController = Get.find<AuthController>();
+    final currentUserId = authController.auth.currentUser?.uid;
+    
+    if (currentUserId == null) {
+      Get.snackbar("Error", "User not authenticated",
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    
+    await taskController.markTaskCompletedByUser(task.taskId, currentUserId);
   }
 }
