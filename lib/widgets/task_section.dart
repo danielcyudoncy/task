@@ -160,14 +160,25 @@ class TasksSection extends StatelessWidget {
           final taskMap = {for (var task in tasks) task.taskId: task};
 
           final completedTasks = taskMap.values
-              .where((t) =>
-                  t.status == "Completed" &&
-                  (t.createdById == userId ||
-                      t.assignedTo == userId ||
-                      t.assignedReporterId == userId ||
-                      t.assignedCameramanId == userId ||
-                      t.assignedDriverId == userId ||
-                      t.assignedLibrarianId == userId))
+              .where((t) {
+                // Check if user is related to this task
+                final isUserRelated = t.createdById == userId ||
+                    t.assignedTo == userId ||
+                    t.assignedReporterId == userId ||
+                    t.assignedCameramanId == userId ||
+                    t.assignedDriverId == userId ||
+                    t.assignedLibrarianId == userId;
+                
+                if (!isUserRelated) return false;
+                
+                // Check if task is truly completed using new multi-user logic
+                 if (t.status == "Completed") {
+                   // Use the helper property from Task model to check if all assigned users completed
+                   return t.isCompletedByAllAssignedUsers;
+                 }
+                
+                return false;
+              })
               .toList();
 
           return TaskListTab(
