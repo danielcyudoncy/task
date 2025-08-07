@@ -1166,6 +1166,18 @@ class TaskController extends GetxController {
           .where('assignedCameramanId', isEqualTo: userId)
           .get();
       debugPrint('fetchRelevantTasksForUser: cameraman tasks count = ${cameramanSnap.docs.length}');
+      // Fetch tasks where user is assigned as driver
+      final driverSnap = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedDriverId', isEqualTo: userId)
+          .get();
+      debugPrint('fetchRelevantTasksForUser: driver tasks count = ${driverSnap.docs.length}');
+      // Fetch tasks where user is assigned as librarian
+      final librarianSnap = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedLibrarianId', isEqualTo: userId)
+          .get();
+      debugPrint('fetchRelevantTasksForUser: librarian tasks count = ${librarianSnap.docs.length}');
       // Fetch tasks where user is assignedTo (generic)
       final assignedToSnap = await FirebaseFirestore.instance
           .collection('tasks')
@@ -1185,6 +1197,14 @@ class TaskController extends GetxController {
       for (var doc in cameramanSnap.docs) {
         allDocs[doc.id] = doc.data();
         debugPrint('fetchRelevantTasksForUser: added cameraman task ${doc.id}');
+      }
+      for (var doc in driverSnap.docs) {
+        allDocs[doc.id] = doc.data();
+        debugPrint('fetchRelevantTasksForUser: added driver task ${doc.id}');
+      }
+      for (var doc in librarianSnap.docs) {
+        allDocs[doc.id] = doc.data();
+        debugPrint('fetchRelevantTasksForUser: added librarian task ${doc.id}');
       }
       for (var doc in assignedToSnap.docs) {
         allDocs[doc.id] = doc.data();
