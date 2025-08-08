@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:task/controllers/settings_controller.dart';
 
 class PrivacyScreen extends StatefulWidget {
@@ -18,15 +19,14 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color sectionTitleColor = Colors.white;
-    const Color textColor = Colors.white70;
-    const Color dividerColor = Colors.white54;
-    const Color saveButtonColor = Colors.white;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? Theme.of(context).canvasColor
-          : Theme.of(context).colorScheme.primary,
+      backgroundColor: isDark
+          ? colorScheme.background
+          : colorScheme.primary,
       body: SafeArea(
         child: Column(
           children: [
@@ -37,7 +37,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
+                    icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
                     onPressed: () {
                       Get.find<SettingsController>().triggerFeedback();
                       Get.back();
@@ -45,18 +45,17 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   ),
                   const Spacer(),
                    Text(
-                    "Settings",
-                    style: TextStyle(
-                        fontSize: 30.sp,
+                    "Privacy",
+                    style: GoogleFonts.raleway(
+                        fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'raleway',
-                        color: Theme.of(context).colorScheme.onPrimary),
+                        color: colorScheme.onPrimary),
                   ),
                   const Spacer(flex: 2),
                 ],
               ),
             ),
-            const Divider(height: 1, color: dividerColor, thickness: 2),
+            Divider(height: 1, color: colorScheme.onPrimary.withOpacity(0.3), thickness: 1),
             Expanded(
               child: SingleChildScrollView(
                 padding:
@@ -84,46 +83,46 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     ),
 
                     // Privacy Settings Title
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Privacy Settings",
-                        style: TextStyle(
+                        style: GoogleFonts.raleway(
                           fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                          color: sectionTitleColor,
+                          fontSize: 20.sp,
+                          color: colorScheme.onPrimary,
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
 
                     // Third Party Services
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Third Party Services",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: sectionTitleColor,
+                        style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          color: colorScheme.onPrimary,
                         ),
                       ),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             "Get alerts of new assignments",
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
+                            style: GoogleFonts.raleway(
+                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              fontSize: 14.sp,
                             ),
                           ),
                         ),
                         Switch(
                           value: thirdPartyAlerts,
-                          activeColor: saveButtonColor,
+                          activeColor: colorScheme.secondary,
                           onChanged: (val) =>
                               setState(() => thirdPartyAlerts = val),
                         ),
@@ -132,32 +131,32 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     const SizedBox(height: 14),
 
                     // Location Services
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Location Services",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: sectionTitleColor,
+                        style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          color: colorScheme.onPrimary,
                         ),
                       ),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             "Enable/Disable Location",
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
+                            style: GoogleFonts.raleway(
+                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              fontSize: 14.sp,
                             ),
                           ),
                         ),
                         Switch(
                           value: locationServices,
-                          activeColor: saveButtonColor,
+                          activeColor: colorScheme.secondary,
                           onChanged: (val) =>
                               setState(() => locationServices = val),
                         ),
@@ -166,32 +165,32 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     const SizedBox(height: 14),
 
                     // Ad's Preference
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "Ad's Prference",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: sectionTitleColor,
+                        "Ad's Preference",
+                        style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          color: colorScheme.onPrimary,
                         ),
                       ),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             "Targeted Ads",
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
+                            style: GoogleFonts.raleway(
+                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              fontSize: 14.sp,
                             ),
                           ),
                         ),
                         Switch(
                           value: targetedAds,
-                          activeColor: saveButtonColor,
+                          activeColor: colorScheme.secondary,
                           onChanged: (val) => setState(() => targetedAds = val),
                         ),
                       ],
@@ -199,56 +198,56 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     const SizedBox(height: 14),
 
                     // Privacy Policy
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Privacy Policy",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: sectionTitleColor,
+                        style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          color: colorScheme.onPrimary,
                         ),
                       ),
                     ),
                     ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: const Text(
+                      title: Text(
                         "View Privacy Policy",
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 15,
+                        style: GoogleFonts.raleway(
+                          color: colorScheme.onPrimary.withOpacity(0.8),
+                          fontSize: 14.sp,
                         ),
                       ),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                      trailing: Icon(Icons.chevron_right, color: colorScheme.onPrimary),
                       onTap: () {
                         // Navigate to privacy policy
                       },
                     ),
 
                     // Security
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         "Security",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: sectionTitleColor,
+                        style: GoogleFonts.raleway(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          color: colorScheme.onPrimary,
                         ),
                       ),
                     ),
                     ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: const Text(
+                      title: Text(
                         "Set up two - factor authentication",
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 15,
+                        style: GoogleFonts.raleway(
+                          color: colorScheme.onPrimary.withOpacity(0.8),
+                          fontSize: 14.sp,
                         ),
                       ),
-                      trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                      trailing: Icon(Icons.chevron_right, color: colorScheme.onPrimary),
                       onTap: () {
                         // Navigate to security setup
                       },
@@ -257,22 +256,22 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     // Save button
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 48.h,
                       child: ElevatedButton(
                         onPressed: () {
                           // Save action
+                          Get.snackbar(
+                            'Success',
+                            'Privacy settings saved successfully',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: const Color(0xFF2E7D32),
+                            colorText: Colors.white,
+                          );
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: saveButtonColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: const Text(
+                        child: Text(
                           "Save",
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.raleway(
+                              fontSize: 16.sp, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
