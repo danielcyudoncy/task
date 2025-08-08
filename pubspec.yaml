@@ -59,6 +59,7 @@ dependencies:
   intl: ^0.20.2
   lucide_icons: ^0.257.0
   path_provider: ^2.1.2
+  permission_handler: ^11.3.1
   persistent_bottom_nav_bar: ^6.2.1
   pull_to_refresh: ^2.0.0
   responsive_framework: ^1.5.1
