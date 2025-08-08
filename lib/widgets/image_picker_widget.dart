@@ -1,6 +1,7 @@
 // widgets/image_picker_widget.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controllers/auth_controller.dart';
@@ -62,11 +63,11 @@ class ImagePickerWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: const Text(
+          child:  Text(
             'Change Photo',
             style: TextStyle(
               color: AppColors.black,
-              fontSize: 16,
+              fontSize: 16.sp,
             ),
           ),
         ),
@@ -111,7 +112,8 @@ class ImagePickerWidget extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Pick an image'),
+          title: Center(child: Text('Pick an image')),
+          actionsAlignment: MainAxisAlignment.center,
           actions: [
             TextButton(
               onPressed: () async {
@@ -127,7 +129,13 @@ class ImagePickerWidget extends StatelessWidget {
                   if (context.mounted) Navigator.of(context).pop();
                 }
               },
-              child: const Text('Gallery'),
+              child: Text(
+                'Gallery',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             if (!kIsWeb) TextButton(
               onPressed: () async {
@@ -143,7 +151,13 @@ class ImagePickerWidget extends StatelessWidget {
                   if (context.mounted) Navigator.of(context).pop();
                 }
               },
-              child: const Text('Camera'),
+              child: Text(
+                'Camera',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         );
