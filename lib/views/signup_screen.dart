@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/utils/devices/app_devices.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_icons.dart';
 
@@ -247,7 +248,7 @@ class SignUpScreen extends StatelessWidget {
                                     width: double.infinity,
                                     child: ElevatedButton(
                                       // Using theme's default button styling
-                                      onPressed: _signUp,
+                                      onPressed: () => _signUp(context),
                                       child: Text(
                                         'save_continue'.tr,
                                         style: const TextStyle(
@@ -265,7 +266,7 @@ class SignUpScreen extends StatelessWidget {
                                         width: double.infinity,
                                         child: ElevatedButton(
                                           // Using theme's default button styling
-                                          onPressed: _signUp,
+                                          onPressed: () => _signUp(context),
                                           child: Text(
                                             'save_continue'.tr,
                                             style: const TextStyle(
@@ -412,7 +413,8 @@ class SignUpScreen extends StatelessWidget {
     );
   }
 
-  void _signUp() {
+  void _signUp(BuildContext context) {
+    AppDevices.hideKeyboard(context);
     if (_formKey.currentState!.validate()) {
       authController.signUp(
         fullNameController.text.trim(),

@@ -153,7 +153,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     }
   }
 
-  Future<void> _createTask() async {
+  Future<void> _createTask(BuildContext context) async {
     debugPrint('Save button pressed');
     AppDevices.hideKeyboard(context);
     if (_formKey.currentState?.validate() ?? false) {
@@ -556,7 +556,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                         ),
                                         elevation: 2,
                                       ),
-                                      onPressed: _createTask,
+                                      onPressed: () => _createTask(context),
                                       child: Text(
                                         "Save",
                                         style: TextStyle(

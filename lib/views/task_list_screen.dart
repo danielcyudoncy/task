@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/auth_controller.dart';
+
 import '../widgets/user_nav_bar.dart';
 
 class TaskListScreen extends StatefulWidget {
@@ -23,6 +24,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    
     return Scaffold(
       appBar: AppBar(title: Text('all_tasks'.tr)),
       body: Obx(() {
