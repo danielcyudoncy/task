@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               SizedBox(height: 6.h),
               Text(
-                'your_home_for_news'.tr,
+                'your_friendly_companion'.tr,
                 style: textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onPrimary,
                   fontFamily: 'Raleway',
