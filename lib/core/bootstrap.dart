@@ -22,6 +22,7 @@ import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/chat_controller.dart';
 import 'package:task/controllers/manage_users_controller.dart';
 import 'package:task/controllers/notification_controller.dart';
+import 'package:task/controllers/privacy_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
@@ -259,6 +260,8 @@ Future<void> bootstrapApp() async {
     Get.put(ManageUsersController(Get.find<UserDeletionService>()), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting NotificationController');
     Get.put(NotificationController(), permanent: true);
+    debugPrint('🚀 BOOTSTRAP: Putting PrivacyController');
+    Get.put(PrivacyController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
     Get.put(WallpaperController(), permanent: true);
     

@@ -25,6 +25,9 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   // Lock timeout (in seconds) - app locks after 30 seconds in background
   static const int lockTimeoutSeconds = 30;
   
+  // Getter for current lifecycle state (useful for debugging and monitoring)
+  AppLifecycleState? get currentLifecycleState => _lastLifecycleState;
+  
   @override
   void onInit() {
     super.onInit();
@@ -40,32 +43,43 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    debugPrint('App lifecycle state changed: $state');
+    debugPrint('App lifecycle state changed from $_lastLifecycleState to $state');
     
-    switch (state) {
-      case AppLifecycleState.paused:
-      case AppLifecycleState.inactive:
-        _handleAppPaused();
-        break;
-      case AppLifecycleState.resumed:
-        _handleAppResumed();
-        break;
-      case AppLifecycleState.detached:
-        // App is being terminated
-        break;
-      case AppLifecycleState.hidden:
-        // App is hidden but still running
-        _handleAppPaused();
-        break;
+    // Only process state changes if this is a meaningful transition
+    if (_lastLifecycleState != state) {
+      switch (state) {
+        case AppLifecycleState.paused:
+        case AppLifecycleState.inactive:
+          _handleAppPaused(state);
+          break;
+        case AppLifecycleState.resumed:
+          _handleAppResumed();
+          break;
+        case AppLifecycleState.detached:
+          // App is being terminated - ensure any cleanup
+          _handleAppDetached();
+          break;
+        case AppLifecycleState.hidden:
+          // App is hidden but still running
+          _handleAppPaused(state);
+          break;
+      }
+      
+      _lastLifecycleState = state;
     }
-    
-    _lastLifecycleState = state;
   }
   
-  void _handleAppPaused() {
+  void _handleAppPaused(AppLifecycleState currentState) {
     if (isAppLockEnabled.value && _authController.currentUser != null) {
       _backgroundTime = DateTime.now();
-      debugPrint('App went to background at: $_backgroundTime');
+      debugPrint('App went to background (state: $currentState) at: $_backgroundTime');
+      
+      // Different behavior based on previous state
+      if (_lastLifecycleState == AppLifecycleState.resumed) {
+        debugPrint('App transitioned from active to background - starting lock timer');
+      } else if (_lastLifecycleState == AppLifecycleState.inactive) {
+        debugPrint('App moved from inactive to paused/hidden');
+      }
     }
   }
   
@@ -75,13 +89,47 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
         _backgroundTime != null) {
       
       final timeInBackground = DateTime.now().difference(_backgroundTime!);
-      debugPrint('App resumed after: ${timeInBackground.inSeconds} seconds');
+      debugPrint('App resumed from $_lastLifecycleState after: ${timeInBackground.inSeconds} seconds');
       
-      if (timeInBackground.inSeconds >= lockTimeoutSeconds) {
+      // Enhanced logic based on previous state
+      bool shouldLock = false;
+      
+      if (_lastLifecycleState == AppLifecycleState.paused || 
+          _lastLifecycleState == AppLifecycleState.hidden) {
+        // App was fully backgrounded - apply full timeout
+        shouldLock = timeInBackground.inSeconds >= lockTimeoutSeconds;
+      } else if (_lastLifecycleState == AppLifecycleState.inactive) {
+        // App was briefly inactive (e.g., notification overlay) - shorter timeout
+        shouldLock = timeInBackground.inSeconds >= (lockTimeoutSeconds ~/ 2);
+      }
+      
+      if (shouldLock) {
+        debugPrint('Locking app due to timeout from state: $_lastLifecycleState');
         _lockApp();
+      } else {
+        debugPrint('App resumed within timeout period - no lock required');
       }
       
       _backgroundTime = null;
+    } else if (_lastLifecycleState == AppLifecycleState.paused || 
+               _lastLifecycleState == AppLifecycleState.hidden) {
+      // App was backgrounded but no background time recorded (edge case)
+      debugPrint('App resumed from background but no timestamp - applying precautionary lock');
+      if (isAppLockEnabled.value && _authController.currentUser != null) {
+        _lockApp();
+      }
+    }
+  }
+  
+  void _handleAppDetached() {
+    debugPrint('App is being terminated - performing cleanup');
+    
+    // Clear sensitive data when app is being terminated
+    _backgroundTime = null;
+    
+    // If app lock is enabled, ensure the app will be locked on next startup
+    if (isAppLockEnabled.value && _authController.currentUser != null) {
+      debugPrint('App terminated while locked - will require unlock on restart');
     }
   }
   

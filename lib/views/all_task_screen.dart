@@ -44,18 +44,38 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     _searchController
         .addListener(() => _searchQuery.value = _searchController.text);
 
+    // Listen to task list changes
     ever(taskController.tasks, (_) {
+      _filterTasks();
+    });
+    
+    // Listen to search query changes for real-time filtering
+    ever(_searchQuery, (_) {
+      _filterTasks();
+    });
+    
+    // Listen to filter changes
+    ever(_selectedFilter, (_) {
       _filterTasks();
     });
   }
 
   void _filterTasks() {
     final filteredTasks = taskController.tasks.where((task) {
+      final searchLower = _searchQuery.value.toLowerCase();
       final matchesSearch = _searchQuery.value.isEmpty ||
-          task.title.toLowerCase().contains(_searchQuery.value.toLowerCase()) ||
-          task.description
-              .toLowerCase()
-              .contains(_searchQuery.value.toLowerCase());
+          task.title.toLowerCase().contains(searchLower) ||
+          task.description.toLowerCase().contains(searchLower) ||
+          task.createdBy.toLowerCase().contains(searchLower) ||
+          task.status.toLowerCase().contains(searchLower) ||
+          (task.assignedReporter?.toLowerCase().contains(searchLower) ?? false) ||
+          (task.assignedCameraman?.toLowerCase().contains(searchLower) ?? false) ||
+          (task.assignedDriver?.toLowerCase().contains(searchLower) ?? false) ||
+          (task.assignedLibrarian?.toLowerCase().contains(searchLower) ?? false) ||
+          (task.category?.toLowerCase().contains(searchLower) ?? false) ||
+          (task.priority?.toLowerCase().contains(searchLower) ?? false) ||
+          task.tags.any((tag) => tag.toLowerCase().contains(searchLower)) ||
+          task.comments.any((comment) => comment.toLowerCase().contains(searchLower));
 
       final matchesFilter = _selectedFilter.value == 'All' ||
           (_selectedFilter.value == 'Completed' &&
@@ -113,7 +133,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   children: [
                     Expanded(
                       flex: isTablet ? 3 : 1,
-                      child: Container(
+                      child: SizedBox(
                         width: isTablet ? screenWidth * 0.6 : screenWidth * 0.7,
                         child: TextField(
                           controller: _searchController,
@@ -154,7 +174,6 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                               .toList(),
                           onChanged: (value) {
                             _selectedFilter.value = value!;
-                            _filterTasks();
                           },
                           dropdownColor: isDark
                               ? Colors.grey[900]
@@ -196,7 +215,6 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                   return RefreshIndicator(
                     onRefresh: () async {
                       await taskController.loadAllTasksForAllUsers();
-                      _filterTasks();
                     },
                     child: ListView.separated(
                       padding: EdgeInsets.symmetric(
