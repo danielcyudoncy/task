@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:task/controllers/privacy_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 
 class PrivacyScreen extends StatefulWidget {
@@ -13,9 +14,13 @@ class PrivacyScreen extends StatefulWidget {
 }
 
 class _PrivacyScreenState extends State<PrivacyScreen> {
-  bool thirdPartyAlerts = false;
-  bool locationServices = false;
-  bool targetedAds = true;
+  late final PrivacyController privacyController;
+
+  @override
+  void initState() {
+    super.initState();
+    privacyController = Get.find<PrivacyController>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +113,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                       ),
                     ),
-                    Row(
+                    Obx(() => Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
@@ -121,13 +126,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           ),
                         ),
                         Switch(
-                          value: thirdPartyAlerts,
+                          value: privacyController.thirdPartyServices.value,
                           activeColor: colorScheme.secondary,
-                          onChanged: (val) =>
-                              setState(() => thirdPartyAlerts = val),
+                          onChanged: privacyController.toggleThirdPartyServices,
                         ),
                       ],
-                    ),
+                    )),
                     const SizedBox(height: 14),
 
                     // Location Services
@@ -142,7 +146,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                       ),
                     ),
-                    Row(
+                    Obx(() => Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
@@ -155,13 +159,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           ),
                         ),
                         Switch(
-                          value: locationServices,
+                          value: privacyController.locationServices.value,
                           activeColor: colorScheme.secondary,
-                          onChanged: (val) =>
-                              setState(() => locationServices = val),
+                          onChanged: privacyController.toggleLocationServices,
                         ),
                       ],
-                    ),
+                    )),
                     const SizedBox(height: 14),
 
                     // Ad's Preference
@@ -176,7 +179,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                       ),
                     ),
-                    Row(
+                    Obx(() => Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
@@ -189,12 +192,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           ),
                         ),
                         Switch(
-                          value: targetedAds,
+                          value: privacyController.adPreferences.value,
                           activeColor: colorScheme.secondary,
-                          onChanged: (val) => setState(() => targetedAds = val),
+                          onChanged: privacyController.toggleAdPreferences,
                         ),
                       ],
-                    ),
+                    )),
                     const SizedBox(height: 14),
 
                     // Privacy Policy
@@ -220,9 +223,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                       ),
                       trailing: Icon(Icons.chevron_right, color: colorScheme.onPrimary),
-                      onTap: () {
-                        // Navigate to privacy policy
-                      },
+                      onTap: privacyController.openPrivacyPolicy,
                     ),
 
                     // Security
@@ -237,43 +238,134 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                       ),
                     ),
-                    ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        "Set up two - factor authentication",
-                        style: GoogleFonts.raleway(
-                          color: colorScheme.onPrimary.withOpacity(0.8),
-                          fontSize: 14.sp,
+                    Obx(() => Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Enable two-factor authentication",
+                            style: GoogleFonts.raleway(
+                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              fontSize: 14.sp,
+                            ),
+                          ),
                         ),
-                      ),
-                      trailing: Icon(Icons.chevron_right, color: colorScheme.onPrimary),
-                      onTap: () {
-                        // Navigate to security setup
-                      },
-                    ),
-                    const SizedBox(height: 30),
-                    // Save button
+                        Switch(
+                          value: privacyController.twoFactorAuth.value,
+                          activeColor: colorScheme.secondary,
+                          onChanged: privacyController.toggleTwoFactorAuth,
+                        ),
+                      ],
+                    )),
+                     const SizedBox(height: 20),
+
+                     // Data Management Section
+                     Align(
+                       alignment: Alignment.centerLeft,
+                       child: Text(
+                         "Data Management",
+                         style: GoogleFonts.raleway(
+                           fontWeight: FontWeight.w600,
+                           fontSize: 16.sp,
+                           color: colorScheme.onPrimary,
+                         ),
+                       ),
+                     ),
+                     const SizedBox(height: 10),
+                     
+                     // Export Data
+                     ListTile(
+                       leading: Icon(
+                         Icons.download,
+                         color: colorScheme.onPrimary,
+                         size: 24.sp,
+                       ),
+                       title: Text(
+                         "Export My Data",
+                         style: GoogleFonts.raleway(
+                           color: colorScheme.onPrimary,
+                           fontSize: 16.sp,
+                           fontWeight: FontWeight.w500,
+                         ),
+                       ),
+                       subtitle: Text(
+                         "Download a copy of your data",
+                         style: GoogleFonts.raleway(
+                           color: colorScheme.onPrimary.withOpacity(0.7),
+                           fontSize: 12.sp,
+                         ),
+                       ),
+                       trailing: Icon(
+                         Icons.arrow_forward_ios,
+                         color: colorScheme.onPrimary.withOpacity(0.6),
+                         size: 16.sp,
+                       ),
+                       onTap: privacyController.exportUserData,
+                     ),
+                     
+                     Divider(
+                       color: colorScheme.onPrimary.withOpacity(0.2),
+                       thickness: 1,
+                     ),
+                     
+                     // Delete Account
+                     ListTile(
+                       leading: Icon(
+                         Icons.delete_forever,
+                         color: Colors.red,
+                         size: 24.sp,
+                       ),
+                       title: Text(
+                         "Delete Account",
+                         style: GoogleFonts.raleway(
+                           color: Colors.red,
+                           fontSize: 16.sp,
+                           fontWeight: FontWeight.w500,
+                         ),
+                       ),
+                       subtitle: Text(
+                         "Permanently delete your account and data",
+                         style: GoogleFonts.raleway(
+                           color: colorScheme.onPrimary.withOpacity(0.7),
+                           fontSize: 12.sp,
+                         ),
+                       ),
+                       trailing: Icon(
+                         Icons.arrow_forward_ios,
+                         color: colorScheme.onPrimary.withOpacity(0.6),
+                         size: 16.sp,
+                       ),
+                       onTap: privacyController.deleteUserAccount,
+                     ),
+                     
+                     const SizedBox(height: 30),
+                     // Save button
                     SizedBox(
                       width: double.infinity,
-                      height: 48.h,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Save action
-                          Get.snackbar(
-                            'Success',
-                            'Privacy settings saved successfully',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: const Color(0xFF2E7D32),
-                            colorText: Colors.white,
-                          );
-                        },
-                        child: Text(
-                          "Save",
-                          style: GoogleFonts.raleway(
-                              fontSize: 16.sp, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      height: 50.h,
+                      child: Obx(() => ElevatedButton(
+                        onPressed: privacyController.isSaving.value 
+                            ? null 
+                            : privacyController.savePrivacySettings,
+                        child: privacyController.isSaving.value
+                            ? SizedBox(
+                                height: 20.h,
+                                width: 20.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    colorScheme.onPrimary,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                "Save",
+                                style: GoogleFonts.raleway(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      )),
                     ),
                   ],
                 ),

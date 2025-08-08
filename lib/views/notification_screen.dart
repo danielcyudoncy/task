@@ -99,35 +99,42 @@ class NotificationScreen extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "recent_notifications".tr,
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          "recent_notifications".tr,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Obx(() {
-                        if (!Get.isRegistered<NotificationController>()) {
+                      SizedBox(width: 8.w),
+                      Flexible(
+                        child: Obx(() {
+                          if (!Get.isRegistered<NotificationController>()) {
+                            return Text(
+                              "0 unread".tr,
+                              style: TextStyle(
+                                color: theme.colorScheme.secondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            );
+                          }
                           return Text(
-                            "0 unread".tr,
+                            "${notificationController.unreadCount.value} unread".tr,
                             style: TextStyle(
-                              color: theme.colorScheme.secondary,
+                              color: isDark ? Colors.blue.shade300 : Colors.blue.shade600,
                               fontWeight: FontWeight.bold,
+                              fontSize: 14.sp,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           );
-                        }
-                        return Text(
-                          "${notificationController.unreadCount.value} unread".tr,
-                          style: TextStyle(
-                            color: isDark ? Colors.blue.shade300 : Colors.blue.shade600,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14.sp,
-                          ),
-                        );
-                      }),
+                        }),
+                      ),
                     ],
                   ),
                 ),
@@ -178,8 +185,7 @@ class NotificationScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Text(
@@ -195,32 +201,38 @@ class NotificationScreen extends StatelessWidget {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
+                                      SizedBox(width: 8.w),
                                       Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           if (!isRead)
-                                            Icon(Icons.circle,
-                                                size: 12.r,
-                                                color: theme.colorScheme.primary),
-                                          SizedBox(width: 8.w),
+                                            Padding(
+                                              padding: EdgeInsets.only(right: 8.w),
+                                              child: Icon(Icons.circle,
+                                                  size: 12.r,
+                                                  color: theme.colorScheme.primary),
+                                            ),
                                           IconButton(
-                                            icon: Icon(
-                                              Icons.delete_outline,
-                                              size: 18.r,
-                                              color: isDark ? Colors.red.shade300 : Colors.red.shade600,
-                                            ),
-                                            onPressed: () async {
-                                              final shouldDelete = await _showDeleteDialog(context, n['id']);
-                                              if (shouldDelete) {
-                                                notificationController.deleteNotification(n['id']);
-                                              }
-                                            },
-                                            tooltip: "delete_notification".tr,
-                                            padding: EdgeInsets.zero,
-                                            constraints: BoxConstraints(
-                                              minWidth: 24.w,
-                                              minHeight: 24.h,
-                                            ),
-                                          ),
+                                             icon: Icon(
+                                               Icons.delete_outline,
+                                               size: 16.r,
+                                               color: isDark ? Colors.red.shade300 : Colors.red.shade600,
+                                             ),
+                                             onPressed: () async {
+                                               final shouldDelete = await _showDeleteDialog(context, n['id']);
+                                               if (shouldDelete) {
+                                                 notificationController.deleteNotification(n['id']);
+                                               }
+                                             },
+                                             tooltip: "delete_notification".tr,
+                                             padding: EdgeInsets.all(2.w),
+                                             constraints: BoxConstraints(
+                                               minWidth: 20.w,
+                                               minHeight: 20.h,
+                                               maxWidth: 28.w,
+                                               maxHeight: 28.h,
+                                             ),
+                                           ),
                                         ],
                                       ),
                                     ],
@@ -235,33 +247,39 @@ class NotificationScreen extends StatelessWidget {
                                   ),
                                   SizedBox(height: 8.h),
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        timeText,
-                                        style: TextStyle(
-                                          color: isDark ? Colors.white54 : Colors.grey.shade500,
-                                          fontSize: 12.sp,
+                                      Expanded(
+                                        child: Text(
+                                          timeText,
+                                          style: TextStyle(
+                                            color: isDark ? Colors.white54 : Colors.grey.shade500,
+                                            fontSize: 12.sp,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      if (n['type'] != null)
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 8.w, vertical: 4.h),
-                                          decoration: BoxDecoration(
-                                            color: _getTypeColor(n['type'], isDark),
-                                            borderRadius:
-                                                BorderRadius.circular(8.r),
-                                          ),
-                                          child: Text(
-                                            n['type'].toString().toUpperCase(),
-                                            style: theme.textTheme.labelSmall
-                                                ?.copyWith(
-                                              color: Colors.white,
+                                      if (n['type'] != null) ...[
+                                        SizedBox(width: 8.w),
+                                        Flexible(
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.w, vertical: 4.h),
+                                            decoration: BoxDecoration(
+                                              color: _getTypeColor(n['type'], isDark),
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                            ),
+                                            child: Text(
+                                              n['type'].toString().toUpperCase(),
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
+                                                color: Colors.white,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ),
+                                      ],
                                     ],
                                   ),
                                 ],
@@ -314,11 +332,14 @@ class NotificationScreen extends StatelessWidget {
               size: 24.r,
             ),
             SizedBox(width: 8.w),
-            Text(
-              "delete_notification".tr,
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.w600,
+            Expanded(
+              child: Text(
+                "delete_notification".tr,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
