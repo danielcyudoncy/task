@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/utils/constants/app_sizes.dart';
+import 'package:task/utils/devices/app_devices.dart';
 
 
 class TaskDetailScreen extends StatefulWidget {
@@ -84,6 +85,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final isTablet = AppDevices.isTablet(context);
+    final screenWidth = AppDevices.getScreenWidth(context);
 
     if (_errorMessage != null) {
       return Scaffold(
@@ -186,10 +189,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.defaultPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        padding: EdgeInsets.all(
+          isTablet ? AppSizes.defaultPadding * 1.5 : AppSizes.defaultPadding,
+        ),
+        child: Container(
+          width: isTablet ? screenWidth * 0.8 : screenWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Header with status and dates
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -217,6 +224,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               widget.task.title,
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                fontSize: isTablet ? 28 : null,
               ),
             ),
             const SizedBox(height: AppSizes.sm),
@@ -256,7 +264,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               const SizedBox(height: AppSizes.spaceBtwSections),
               _buildTagsSection(),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
+import 'package:task/utils/devices/app_devices.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/snackbar_utils.dart';
 import 'package:task/service/biometric_service.dart';
@@ -41,7 +42,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  void _submit(BuildContext context) {
+    AppDevices.hideKeyboard(context);
     if (_formKey.currentState!.validate()) {
       _auth.signIn(
         _emailController.text.trim(),
@@ -50,15 +52,14 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _biometricLogin() async {
-    final canCheck = await _biometricService.canCheckBiometrics();
-    if (!canCheck) {
-      _safeSnackbar('Error', 'Biometric authentication not available on this device.');
+  void _biometricLogin(BuildContext context) async {
+    if (!await _biometricService.canCheckBiometrics()) {
+      _safeSnackbar('Error', 'Biometric authentication is not available on this device.');
       return;
     }
     final authenticated = await _biometricService.authenticate(reason: 'Please authenticate to login');
-    if (authenticated) {
-      _submit();
+    if (authenticated && mounted) {
+      _submit(context);
     } else {
       _safeSnackbar('Error', 'Biometric authentication failed.');
     }
@@ -295,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         // Using theme's default button styling
                                         onPressed: () {
                                           Get.find<SettingsController>().triggerFeedback();
-                                          _submit();
+                                          _submit(context);
                                         },
                                         child: Text(
                                           'sign_in'.tr,
@@ -313,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           // Using theme's default button styling
                                           onPressed: () {
                                             Get.find<SettingsController>().triggerFeedback();
-                                            _submit();
+                                            _submit(context);
                                           },
                                           child: Text(
                                             'sign_in'.tr,
@@ -460,7 +461,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           onPressed: () async {
                             Get.find<SettingsController>().triggerFeedback();
-                            _biometricLogin();
+                            _biometricLogin(context);
                           },
                         ),
                       ],

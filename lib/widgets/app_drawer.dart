@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
+
 import '../controllers/auth_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
 
@@ -26,6 +27,7 @@ class _AppDrawerState extends State<AppDrawer> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenHeight = MediaQuery.of(context).size.height;
+
 
     return Drawer(
       child: SafeArea(
@@ -111,7 +113,7 @@ class _AppDrawerState extends State<AppDrawer> {
                               Text(
                                 authController.currentUser?.email ?? '',
                                 style: TextStyle(
-                                    fontSize: 11.sp, color: Colors.white70),
+                                    fontSize: 14.sp, color: Colors.white70),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 2,
                               ),

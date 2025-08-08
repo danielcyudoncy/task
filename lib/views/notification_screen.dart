@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../controllers/notification_controller.dart';
 
 
+
 class NotificationScreen extends StatelessWidget {
   final NotificationController notificationController =
       Get.find<NotificationController>();
@@ -17,6 +18,7 @@ class NotificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
+
 
     // Get colors from theme instead of hardcoding
     final backgroundColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
