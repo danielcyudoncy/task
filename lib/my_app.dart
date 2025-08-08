@@ -8,6 +8,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:task/routes/app_routes.dart';
 import 'package:task/utils/themes/app_theme.dart';
 import 'package:task/controllers/theme_controller.dart';
+import 'package:task/controllers/app_lock_controller.dart';
+import 'package:task/views/app_lock_screen.dart';
 import 'utils/localization/app_localizations.dart';
 import 'utils/localization/translations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -50,6 +52,19 @@ class MyApp extends StatelessWidget {
           final currentThemeMode = themeController.isDarkMode.value
               ? ThemeMode.dark
               : ThemeMode.light;
+          
+          // Check if app is locked
+          final AppLockController appLockController = Get.find<AppLockController>();
+          if (appLockController.isAppLocked.value) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: currentThemeMode,
+              home: const AppLockScreen(),
+            );
+          }
+          
           return PopScope(
             canPop: false,
             onPopInvoked: (didPop) async {

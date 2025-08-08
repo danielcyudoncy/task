@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../controllers/settings_controller.dart';
 import '../controllers/theme_controller.dart';
+import '../controllers/app_lock_controller.dart';
+import '../controllers/auth_controller.dart';
 import '../utils/localization/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -105,6 +107,8 @@ class SettingsScreen extends StatelessWidget {
                       settingsController.toggleBiometric(value);
                     },
                   ),
+                  sectionTitle(context, 'App Security'),
+                  _buildAppLockSettings(context),
                   settingsSwitchTile(
                     context,
                     'vibration'.tr,
@@ -138,9 +142,9 @@ class SettingsScreen extends StatelessWidget {
                       margin: const EdgeInsets.only(top: 8, bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
+                        color: Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
@@ -249,8 +253,8 @@ class SettingsScreen extends StatelessWidget {
           onChanged: onChanged,
           activeColor: Colors.white,
           activeTrackColor: Theme.of(context).colorScheme.secondary,
-          inactiveThumbColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
-          inactiveTrackColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.24),
+          inactiveThumbColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+          inactiveTrackColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.24),
         ),
       ),
     );
@@ -352,6 +356,402 @@ class SettingsScreen extends StatelessWidget {
         },
         child: Text('next_privacy_settings'.tr,
             style: const TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+
+  Widget _buildAppLockSettings(BuildContext context) {
+    final AppLockController appLockController = Get.find<AppLockController>();
+    
+    return Obx(() => Column(
+      children: [
+        settingsSwitchTile(
+          context,
+          'Enable App Lock',
+          'Require PIN or biometric to unlock app',
+          appLockController.isAppLockEnabled.value,
+          (value) async {
+            if (value) {
+              await _showSetPinDialog(context, appLockController);
+            } else {
+              await appLockController.toggleAppLock(false);
+            }
+          },
+        ),
+        if (appLockController.isAppLockEnabled.value) ...[
+          ListTile(
+            contentPadding: const EdgeInsets.only(left: 0, right: 0),
+            title: Text(
+              'Change PIN',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            subtitle: Text(
+              'Update your app lock PIN',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontSize: 13,
+              ),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 16,
+            ),
+            onTap: () => _showSetPinDialog(context, appLockController),
+          ),
+        ],
+      ],
+    ));
+  }
+
+  Future<void> _showSetPinDialog(BuildContext context, AppLockController appLockController) async {
+    final TextEditingController pinController = TextEditingController();
+    final TextEditingController confirmPinController = TextEditingController();
+    final RxString errorMessage = ''.obs;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    await Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      const Color(0xFF23243A),
+                      const Color(0xFF181B2A),
+                    ]
+                  : [
+                      Colors.white,
+                      const Color(0xFFF8F9FA),
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with gradient
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF4A90E2),
+                      const Color(0xFF357088),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(24),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.lock_outline,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Text(
+                        'Set App Lock PIN',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Obx(() => Column(
+                  children: [
+                    // PIN Input Field
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF2A2B3D),
+                                  const Color(0xFF1E1F2E),
+                                ]
+                              : [
+                                  const Color(0xFFF8F9FA),
+                                  const Color(0xFFE9ECEF),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: pinController,
+                        decoration: InputDecoration(
+                          labelText: 'Enter 4-digit PIN',
+                          labelStyle: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.all(16),
+                          counterText: '',
+                          prefixIcon: Icon(
+                            Icons.pin,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        obscureText: true,
+                        onChanged: (value) {
+                          errorMessage.value = '';
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Confirm PIN Input Field
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF2A2B3D),
+                                  const Color(0xFF1E1F2E),
+                                ]
+                              : [
+                                  const Color(0xFFF8F9FA),
+                                  const Color(0xFFE9ECEF),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: confirmPinController,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm PIN',
+                          labelStyle: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.all(16),
+                          counterText: '',
+                          prefixIcon: Icon(
+                            Icons.verified_user,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        obscureText: true,
+                        onChanged: (value) {
+                          errorMessage.value = '';
+                        },
+                      ),
+                    ),
+                    // Error Message
+                    if (errorMessage.value.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(top: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.red.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage.value,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.grey.withOpacity(0.2),
+                                  Colors.grey.withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.grey.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: TextButton(
+                              onPressed: () => Get.back(),
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.onSurface,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF4A90E2),
+                                  Color(0xFF357088),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF4A90E2).withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: TextButton(
+                              onPressed: () async {
+                                final pin = pinController.text;
+                                final confirmPin = confirmPinController.text;
+                                
+                                if (pin.length != 4) {
+                                  errorMessage.value = 'PIN must be 4 digits';
+                                  return;
+                                }
+                                
+                                if (pin != confirmPin) {
+                                  errorMessage.value = 'PINs do not match';
+                                  return;
+                                }
+                                
+                                await appLockController.setPin(pin);
+                                await appLockController.toggleAppLock(true);
+                                
+                                // Always close the dialog first
+                                Get.back();
+                                
+                                // If the app is currently locked, unlock it after setting PIN
+                                if (appLockController.isAppLocked.value) {
+                                  appLockController.isAppLocked.value = false;
+                                  // Navigate back to appropriate screen based on user role
+                                  Get.find<AuthController>().navigateBasedOnRole();
+                                }
+                                
+                                Get.snackbar(
+                                  'Success',
+                                  'App lock enabled successfully',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: const Color(0xFF2E7D32),
+                                  colorText: Colors.white,
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Text(
+                                'Set PIN',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

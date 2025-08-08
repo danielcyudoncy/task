@@ -17,6 +17,7 @@ import '../my_app.dart';
 
 // --- Ensure all your controllers and services are imported ---
 import 'package:task/controllers/admin_controller.dart';
+import 'package:task/controllers/app_lock_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/chat_controller.dart';
 import 'package:task/controllers/manage_users_controller.dart';
@@ -242,6 +243,8 @@ Future<void> bootstrapApp() async {
 
     // Step 5: Put all remaining controllers. They can now safely find their dependencies.
     debugPrint('🚀 BOOTSTRAP: Putting remaining controllers...');
+    debugPrint('🚀 BOOTSTRAP: Putting AppLockController');
+    Get.put(AppLockController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting AdminController');
     Get.put(AdminController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting UserController');
