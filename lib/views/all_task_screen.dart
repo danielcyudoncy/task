@@ -13,6 +13,7 @@ import 'package:task/widgets/task_detail_modal.dart';
 import 'package:task/widgets/task_skeleton_list.dart';
 import 'package:task/widgets/user_nav_bar.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:task/utils/devices/app_devices.dart';
 
 class AllTaskScreen extends StatefulWidget {
   const AllTaskScreen({super.key});
@@ -89,6 +90,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
     final basePadding = isLargeScreen ? 32.0.w : 16.0.w;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTablet = AppDevices.isTablet(context);
+    final screenWidth = AppDevices.getScreenWidth(context);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -109,25 +112,36 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search tasks...',
-                          prefixIcon: Icon(Icons.search,
-                              color: Theme.of(context).colorScheme.onSurface),
-                          filled: true,
-                          fillColor:
-                              isDark ? Colors.grey[900] : Colors.grey[200],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
+                      flex: isTablet ? 3 : 1,
+                      child: Container(
+                        width: isTablet ? screenWidth * 0.6 : screenWidth * 0.7,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search tasks...',
+                            prefixIcon: Icon(Icons.search,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                size: isTablet ? 24 : 20),
+                            filled: true,
+                            fillColor:
+                                isDark ? Colors.grey[900] : Colors.grey[200],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding:
+                                EdgeInsets.symmetric(
+                                  vertical: isTablet ? 16 : 12,
+                                  horizontal: isTablet ? 16 : 12,
+                                ),
                           ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 12),
+                          style: TextStyle(
+                            fontSize: isTablet ? 16 : 14,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: isTablet ? 12 : 8),
                     Obx(() => DropdownButton<String>(
                           value: _selectedFilter.value,
                           items: ['All', 'Completed', 'Pending']
@@ -186,7 +200,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                     },
                     child: ListView.separated(
                       padding: EdgeInsets.symmetric(
-                          horizontal: isLargeScreen ? 16.w : 8.w, vertical: 16),
+                          horizontal: isTablet ? 24.w : (isLargeScreen ? 16.w : 8.w),
+                          vertical: isTablet ? 20 : 16),
                       itemCount: _filteredTasks.length +
                           (taskController.hasMore ? 1 : 0),
                       separatorBuilder: (context, index) =>

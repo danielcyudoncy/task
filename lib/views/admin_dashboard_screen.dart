@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:task/controllers/notification_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_strings.dart';
+import 'package:task/utils/devices/app_devices.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/dashboard_cards_widget.dart';
 import 'package:task/widgets/user_header.dart';
@@ -920,6 +921,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTablet = AppDevices.isTablet(context);
+    AppDevices.getScreenWidth(context);
 
     return Obx(() {
       // Add safety check for build phase
@@ -960,7 +963,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       children: [
                         const SizedBox(height: 5),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 32.0 : 16.0,
+                          ),
                           // --- DashboardCardsWidget ---
                           child: DashboardCardsWidget(
                             usersCount:
@@ -978,13 +983,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         ),
                         const SizedBox(height: 24),
                         Padding(
-                          padding: const EdgeInsets.only(left: 24, bottom: 8),
+                          padding: EdgeInsets.only(
+                            left: isTablet ? 32.0 : 24.0,
+                            bottom: 8,
+                          ),
                           child: Text(
                             "TASK",
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontFamily: 'raleway',
-                              fontSize: 16.sp,
+                              fontSize: isTablet ? 18.sp : 16.sp,
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
@@ -1017,8 +1025,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           child: Column(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 10),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: isTablet ? 32.0 : 16.0,
+                                    vertical: 10),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [

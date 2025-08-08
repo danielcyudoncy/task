@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
+import 'package:task/utils/devices/app_devices.dart';
 import 'package:task/widgets/app_drawer.dart';
 import '../controllers/auth_controller.dart';
 
@@ -171,38 +172,66 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.phone,
-                            size: 19,
-                            color: colorScheme.onSurface,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            phone,
-                            style: TextStyle(
-                                fontSize: 15.sp,
-                                color: colorScheme.onSurface),
-                          ),
-                        ],
+                      GestureDetector(
+                        onTap: () {
+                          AppDevices.copyToClipboard(phone);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Phone number copied to clipboard')),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.phone,
+                              size: 19,
+                              color: colorScheme.onSurface,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              phone,
+                              style: TextStyle(
+                                  fontSize: 15.sp,
+                                  color: colorScheme.onSurface),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.copy,
+                              size: 16,
+                              color: colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.email,
-                            size: 19,
-                            color: colorScheme.onSurface,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            email,
-                            style: TextStyle(
-                                fontSize: 15.sp,
-                                color: colorScheme.onSurface),
-                          ),
-                        ],
+                      GestureDetector(
+                        onTap: () {
+                          AppDevices.copyToClipboard(email);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Email copied to clipboard')),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.email,
+                              size: 19,
+                              color: colorScheme.onSurface,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              email,
+                              style: TextStyle(
+                                  fontSize: 15.sp,
+                                  color: colorScheme.onSurface),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.copy,
+                              size: 16,
+                              color: colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 24),
                       // Profile Section
