@@ -316,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen>
                                             });
                                           },
                                           onOnlineUsersTap: () {
-                                            Get.toNamed('/online-users');
+                                            Get.toNamed('/all-users-chat');
                                           },
                                           onTasksCreatedTap: () {
                                             _tabController.animateTo(1);
