@@ -45,6 +45,7 @@ import 'package:task/service/duplicate_detection_service.dart';
 import 'package:task/service/access_control_service.dart';
 import 'package:task/service/isar_task_service.dart';
 import 'package:task/service/firebase_messaging_service.dart';
+import 'package:task/service/daily_task_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 // --- Emulator/Production Switch ---
@@ -235,6 +236,9 @@ Future<void> bootstrapApp() async {
     }
     debugPrint("🚀 BOOTSTRAP: Putting NewsService");
     Get.put(NewsService(), permanent: true); // News service for real-time news
+    
+    debugPrint("🚀 BOOTSTRAP: Putting DailyTaskNotificationService");
+    Get.put(DailyTaskNotificationService(), permanent: true); // Daily task notification service
     debugPrint("🚀 BOOTSTRAP: Services initialized");
 
     // Step 4: Put the AuthController (no need to await onReady)

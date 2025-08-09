@@ -13,6 +13,7 @@ import 'package:task/features/librarian/widgets/task_filters_sheet.dart';
 import 'package:task/models/task_filters.dart';
 import 'package:task/models/task_status_filter.dart';
 import 'package:task/features/librarian/widgets/archive_stats_card.dart';
+import 'package:task/features/librarian/widgets/daily_task_stats_card.dart';
 import 'package:task/theme/app_durations.dart';
 import 'package:task/features/librarian/widgets/task_search_delegate.dart';
 import 'package:task/service/export_service.dart';
@@ -336,14 +337,23 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
     final colorScheme = theme.colorScheme;
     
     return Scaffold(
+      backgroundColor: theme.brightness == Brightness.dark
+          ? theme.canvasColor
+          : colorScheme.primary,
       appBar: AppBar(
         title: const Text('Welcome'),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          labelColor: colorScheme.primary,
-          unselectedLabelColor: colorScheme.onSurface.withOpacity(0.6),
-          indicatorColor: colorScheme.primary,
+          labelColor: theme.brightness == Brightness.dark
+              ? colorScheme.primary
+              : colorScheme.onPrimary,
+          unselectedLabelColor: theme.brightness == Brightness.dark
+              ? colorScheme.onSurface.withOpacity(0.6)
+              : colorScheme.onPrimary.withOpacity(0.7),
+          indicatorColor: theme.brightness == Brightness.dark
+              ? colorScheme.primary
+              : colorScheme.onPrimary,
           indicatorWeight: 3,
           labelStyle: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
@@ -368,6 +378,20 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
           },
         ),
         actions: [
+          // Clear search button (only show when search is active)
+          Obx(() => _searchQuery.value.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  tooltip: 'Clear search',
+                  onPressed: () {
+                    _searchQuery.value = '';
+                    // Haptic feedback
+                    HapticFeedback.lightImpact();
+                  },
+                )
+              : const SizedBox.shrink(),
+          ),
+          
           // Search button with loading state
           Obx(() => _isLoading.value
               ? const Padding(
@@ -462,6 +486,11 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            // Daily task stats card
+            const SliverToBoxAdapter(
+              child: DailyTaskStatsCard(),
+            ),
+            
             // Archive stats card
             SliverToBoxAdapter(
               child: Obx(() {
@@ -536,7 +565,6 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
             
             // Task list
             SliverFillRemaining(
-              hasScrollBody: false,
               child: TabBarView(
                 controller: _tabController,
                 physics: const NeverScrollableScrollPhysics(),

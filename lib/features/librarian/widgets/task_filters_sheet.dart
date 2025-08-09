@@ -184,16 +184,20 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
         ? '${_filters.startDate != null ? DateFormat('MMM d, y').format(_filters.startDate!) : 'Start'} - ${_filters.endDate != null ? DateFormat('MMM d, y').format(_filters.endDate!) : 'End'}'
         : 'Any date';
     
-    return Container(
-      padding: const EdgeInsets.only(top: 20),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.75,
+      expand: false,
+      builder: (context, scrollController) => Container(
+        padding: const EdgeInsets.only(top: 20),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -224,6 +228,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               }
               
               return SingleChildScrollView(
+                controller: scrollController,
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,8 +344,8 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                         initialItems: _filters.tags?.toList() ?? [],
                         availableSuggestions: _availableTags
                             .where((tag) =>
-                                !_filters.tags!.any((selectedTag) =>
-                                    selectedTag.toLowerCase() == tag.toLowerCase()))
+                                !(_filters.tags?.any((selectedTag) =>
+                                    selectedTag.toLowerCase() == tag.toLowerCase()) ?? false))
                             .toList(),
                         itemBuilder: (context, tag) {
                           return Chip(
@@ -425,7 +430,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
           
           // Footer with apply button
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             decoration: BoxDecoration(
               color: theme.cardColor,
               boxShadow: [
@@ -464,7 +469,8 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
   
   Widget _buildSectionTitle(String title) {

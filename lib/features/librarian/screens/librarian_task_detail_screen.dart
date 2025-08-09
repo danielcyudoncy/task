@@ -101,52 +101,99 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
     final colorScheme = theme.colorScheme;
     final dateFormat = DateFormat('MMM d, y HH:mm');
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Task Details'),
-        actions: [
-          // Refresh button
-          IconButton(
-            icon: _isLoading
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.onPrimary,
-                    ),
-                  )
-                : const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _refreshTask,
-            tooltip: 'Refresh',
-          ),
-          // Task actions
-          TaskActions(
-            task: _task,
-            onActionComplete: () {
-              // Refresh the task after an action is completed
-              _refreshTask();
-              // Notify parent if needed
-              if (mounted) {
-                Get.back(result: true);
-              }
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshTask,
-        color: colorScheme.primary,
-        backgroundColor: colorScheme.surface,
-        strokeWidth: 2.5,
-        edgeOffset: 0,
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
           children: [
+            // Header with drag handle and actions
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Column(
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Header row with title and actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Task Details',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      // Refresh button
+                      IconButton(
+                        icon: _isLoading
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.primary,
+                                ),
+                              )
+                            : const Icon(Icons.refresh),
+                        onPressed: _isLoading ? null : _refreshTask,
+                        tooltip: 'Refresh',
+                      ),
+                      // Task actions
+                      TaskActions(
+                        task: _task,
+                        onActionComplete: () {
+                          // Refresh the task after an action is completed
+                          _refreshTask();
+                          // Notify parent if needed
+                          if (mounted) {
+                            Get.back(result: true);
+                          }
+                        },
+                      ),
+                      // Close button
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Get.back(),
+                        tooltip: 'Close',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Content
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refreshTask,
+                color: colorScheme.primary,
+                backgroundColor: colorScheme.surface,
+                strokeWidth: 2.5,
+                edgeOffset: 0,
+                triggerMode: RefreshIndicatorTriggerMode.anywhere,
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
             // Task title and status with animation
             FadeTransition(
               opacity: _fadeAnimation,
@@ -180,7 +227,7 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
                         Icon(
                           Icons.content_copy,
                           size: 18,
-                          color: theme.hintColor,
+                          color: colorScheme.primary,
                         ),
                       ],
                     ),
@@ -421,8 +468,12 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
               ),
             
             const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
-        ),
         ),
       ),
     );
