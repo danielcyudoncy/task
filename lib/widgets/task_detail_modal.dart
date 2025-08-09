@@ -69,7 +69,7 @@ class TaskDetailModal extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.task_alt,
-                    color: isDark ? Colors.white : accent,
+                    color: colorScheme.primary,
                     size: 24.sp,
                   ),
                   const SizedBox(width: 12),
@@ -238,25 +238,18 @@ class TaskDetailModal extends StatelessWidget {
                                                 horizontal: 12.w,
                                                 vertical: 6.h),
                                             decoration: BoxDecoration(
-                                              color: isDark
-                                                  ? Colors.blue.withOpacity(0.2)
-                                                  : accent.withOpacity(0.1),
+                                              color: colorScheme.primaryContainer,
                                               borderRadius:
                                                   BorderRadius.circular(16),
                                               border: Border.all(
-                                                color: isDark
-                                                    ? Colors.blue
-                                                        .withOpacity(0.3)
-                                                    : accent.withOpacity(0.3),
+                                                color: colorScheme.primary.withOpacity(0.3),
                                               ),
                                             ),
                                             child: Text(
                                               tag,
                                               style:
                                                   textTheme.bodySmall?.copyWith(
-                                                color: isDark
-                                                    ? Colors.white
-                                                    : accent,
+                                                color: colorScheme.onPrimaryContainer,
                                                 fontSize: 12.sp,
                                                 fontWeight: FontWeight.w500,
                                               ),

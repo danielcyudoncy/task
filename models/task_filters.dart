@@ -31,13 +31,15 @@ class TaskFilters {
     DateTime? startDate,
     DateTime? endDate,
     List<String>? assignedToUserIds,
+    bool clearStartDate = false,
+    bool clearEndDate = false,
   }) {
     return TaskFilters(
       statuses: statuses ?? this.statuses?.toList(),
       categories: categories ?? this.categories?.toList(),
       tags: tags ?? this.tags?.toList(),
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
+      startDate: clearStartDate ? null : (startDate ?? this.startDate),
+      endDate: clearEndDate ? null : (endDate ?? this.endDate),
       assignedToUserIds: assignedToUserIds ?? this.assignedToUserIds?.toList(),
     );
   }

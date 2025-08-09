@@ -189,9 +189,9 @@ try {
 
       // Tags filter
       if (filters.tags?.isNotEmpty == true) {
-        if (!filters.tags!.any((tag) =>
+        if (task.tags.isEmpty || !filters.tags!.any((tag) =>
             task.tags.any((taskTag) =>
-                taskTag.toLowerCase() == tag.toLowerCase()))) {
+                taskTag.toLowerCase().trim() == tag.toLowerCase().trim()))) {
           return false;
         }
       }
@@ -203,7 +203,7 @@ try {
           return false;
         }
         if (filters.endDate != null &&
-            task.timestamp.isAfter(filters.endDate!)) {
+            task.timestamp.isAfter(filters.endDate!.add(const Duration(days: 1)))) {
           return false;
         }
       }

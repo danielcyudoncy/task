@@ -136,6 +136,7 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
                           'Task Details',
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -461,7 +462,9 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
                   itemBuilder: (context, index) {
                     return Text(
                       _task.comments[index],
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
                     );
                   },
                 ),
@@ -485,6 +488,8 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
     required Widget child,
   }) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,7 +498,7 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
           title,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: theme.primaryColor,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -501,11 +506,15 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: theme.cardColor,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: isDark ? null : [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: colorScheme.shadow.withOpacity(0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -524,6 +533,7 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
     required String value,
   }) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,7 +541,7 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
         Icon(
           icon,
           size: 20,
-          color: theme.hintColor,
+          color: colorScheme.onSurfaceVariant,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -541,13 +551,15 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
               Text(
                 label,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.hintColor,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: theme.textTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface,
+                ),
               ),
             ],
           ),
@@ -563,28 +575,30 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
     required IconData icon,
   }) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        color: colorScheme.surfaceVariant.withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: theme.primaryColor),
+          Icon(icon, size: 16, color: colorScheme.onSurface),
           const SizedBox(width: 6),
           Text(
             '$label: ',
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.hintColor,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           Text(
             name,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
             ),
           ),
         ],
@@ -593,17 +607,18 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
   }
   
   Color _getStatusColor(String status) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (status.toLowerCase()) {
       case 'completed':
-        return Colors.green;
+        return colorScheme.secondary;
       case 'in progress':
-        return Colors.blue;
+        return colorScheme.primary;
       case 'pending':
-        return Colors.orange;
+        return colorScheme.tertiary;
       case 'archived':
-        return Colors.purple;
+        return colorScheme.outline;
       default:
-        return Colors.grey;
+        return colorScheme.onSurfaceVariant;
     }
   }
 }
