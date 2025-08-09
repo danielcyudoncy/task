@@ -12,17 +12,19 @@ class DailyTaskNotificationService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // Observables for real-time updates
-  final RxInt todayAssignedCount = 0.obs;
-  final RxInt todayCompletedCount = 0.obs;
-  final RxBool hasNewAssignments = false.obs;
+  final RxInt todayAssignedCount = 0.obs; // Tracks tasks assigned today
+  final RxInt todayCompletedCount = 0.obs; // Tracks tasks completed today
+  final RxInt todayPendingCount = 0.obs; // Tracks tasks assigned to users today but not yet completed
+  final RxBool hasNewAssignments = false.obs; // Tracks new task assignments
   final RxBool hasNewCompletions = false.obs;
   
   // Stream subscriptions
   StreamSubscription<QuerySnapshot>? _assignedTasksSubscription;
   StreamSubscription<QuerySnapshot>? _completedTasksSubscription;
+  StreamSubscription<QuerySnapshot>? _pendingTasksSubscription;
   
   // Cache for previous counts to detect changes
-  int _previousAssignedCount = 0;
+  int _previousAssignedCount = 0; // Actually tracks tasks created today
   int _previousCompletedCount = 0;
   
   @override
@@ -35,6 +37,7 @@ class DailyTaskNotificationService extends GetxService {
   void onClose() {
     _assignedTasksSubscription?.cancel();
     _completedTasksSubscription?.cancel();
+    _pendingTasksSubscription?.cancel();
     super.onClose();
   }
   
@@ -43,24 +46,43 @@ class DailyTaskNotificationService extends GetxService {
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
     
-    // Listen to tasks assigned today
+    // Listen to all tasks and filter for those assigned today
     _assignedTasksSubscription = _firestore
         .collection('tasks')
-        .where('assignmentTimestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-        .where('assignmentTimestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
         .snapshots()
         .listen(
       (snapshot) {
-        final newCount = snapshot.docs.length;
+        int assignedTodayCount = 0;
         
-        // Check if there are new assignments
-        if (newCount > _previousAssignedCount && _previousAssignedCount > 0) {
-          hasNewAssignments.value = true;
-          _showNewAssignmentNotification(newCount - _previousAssignedCount);
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final assignedAt = data['assignedAt'];
+          
+          // Check if task was assigned today
+          if (assignedAt != null) {
+            DateTime? assignmentDate;
+            if (assignedAt is Timestamp) {
+              assignmentDate = assignedAt.toDate();
+            } else if (assignedAt is String) {
+              assignmentDate = DateTime.tryParse(assignedAt);
+            }
+            
+            if (assignmentDate != null &&
+                assignmentDate.isAfter(startOfDay) &&
+                assignmentDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
+              assignedTodayCount++;
+            }
+          }
         }
         
-        todayAssignedCount.value = newCount;
-        _previousAssignedCount = newCount;
+        // Check if there are new task assignments
+        if (assignedTodayCount > _previousAssignedCount && _previousAssignedCount > 0) {
+          hasNewAssignments.value = true;
+          _showNewAssignmentNotification(assignedTodayCount - _previousAssignedCount);
+        }
+        
+        todayAssignedCount.value = assignedTodayCount;
+        _previousAssignedCount = assignedTodayCount;
       },
       onError: (error) {
         if (kDebugMode) {
@@ -69,29 +91,116 @@ class DailyTaskNotificationService extends GetxService {
       },
     );
     
-    // Listen to tasks completed today
+    // Listen to all tasks and filter for those completed today by checking userCompletionTimestamps
     _completedTasksSubscription = _firestore
         .collection('tasks')
-        .where('status', isEqualTo: 'completed')
-        .where('lastModified', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-        .where('lastModified', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
         .snapshots()
         .listen(
       (snapshot) {
-        final newCount = snapshot.docs.length;
+        int completedTodayCount = 0;
         
-        // Check if there are new completions
-        if (newCount > _previousCompletedCount && _previousCompletedCount > 0) {
-          hasNewCompletions.value = true;
-          _showNewCompletionNotification(newCount - _previousCompletedCount);
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final userCompletionTimestamps = data['userCompletionTimestamps'] as Map<String, dynamic>? ?? {};
+          
+          // Check if any user completed this task today
+          for (final timestampValue in userCompletionTimestamps.values) {
+            DateTime? completionDate;
+            if (timestampValue is Timestamp) {
+              completionDate = timestampValue.toDate();
+            } else if (timestampValue is String) {
+              completionDate = DateTime.tryParse(timestampValue);
+            }
+            
+            if (completionDate != null &&
+                completionDate.isAfter(startOfDay) &&
+                completionDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
+              completedTodayCount++;
+              break; // Count each task only once even if multiple users completed it today
+            }
+          }
         }
         
-        todayCompletedCount.value = newCount;
-        _previousCompletedCount = newCount;
+        // Check if there are new completions
+        if (completedTodayCount > _previousCompletedCount && _previousCompletedCount > 0) {
+          hasNewCompletions.value = true;
+          _showNewCompletionNotification(completedTodayCount - _previousCompletedCount);
+        }
+        
+        todayCompletedCount.value = completedTodayCount;
+        _previousCompletedCount = completedTodayCount;
       },
       onError: (error) {
         if (kDebugMode) {
           print('Error listening to completed tasks: $error');
+        }
+      },
+    );
+    
+    // Listen to all tasks and filter for pending tasks that have been assigned to users today
+    _pendingTasksSubscription = _firestore
+        .collection('tasks')
+        .snapshots()
+        .listen(
+      (snapshot) {
+        int pendingTodayCount = 0;
+        
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final assignedAt = data['assignedAt'];
+          
+          // Check if task was assigned today
+          bool assignedToday = false;
+          if (assignedAt != null) {
+            DateTime? assignmentDate;
+            if (assignedAt is Timestamp) {
+              assignmentDate = assignedAt.toDate();
+            } else if (assignedAt is String) {
+              assignmentDate = DateTime.tryParse(assignedAt);
+            }
+            
+            if (assignmentDate != null &&
+                assignmentDate.isAfter(startOfDay) &&
+                assignmentDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
+              assignedToday = true;
+            }
+          }
+          
+          // Get all assigned user IDs first
+          final assignedUserIds = <String>[];
+          if (data['assignedReporterId'] != null && data['assignedReporterId'].toString().isNotEmpty) {
+            assignedUserIds.add(data['assignedReporterId'].toString());
+          }
+          if (data['assignedCameramanId'] != null && data['assignedCameramanId'].toString().isNotEmpty) {
+            assignedUserIds.add(data['assignedCameramanId'].toString());
+          }
+          if (data['assignedDriverId'] != null && data['assignedDriverId'].toString().isNotEmpty) {
+            assignedUserIds.add(data['assignedDriverId'].toString());
+          }
+          if (data['assignedLibrarianId'] != null && data['assignedLibrarianId'].toString().isNotEmpty) {
+            assignedUserIds.add(data['assignedLibrarianId'].toString());
+          }
+          
+          // Only consider tasks that have been assigned to users and were assigned today
+          if (assignedUserIds.isNotEmpty && assignedToday) {
+            final status = data['status'] as String? ?? '';
+            final completedByUserIds = List<String>.from(data['completedByUserIds'] ?? []);
+            
+            // Check if task is pending (not completed by all assigned users)
+            bool isCompleted = status.toLowerCase() == 'completed' || 
+                             assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+            
+            if (!isCompleted) {
+              pendingTodayCount++;
+            }
+          }
+        }
+        
+        todayPendingCount.value = pendingTodayCount;
+      },
+      onError: (error) {
+        if (kDebugMode) {
+          print('Error listening to pending tasks: $error');
         }
       },
     );
@@ -137,9 +246,9 @@ class DailyTaskNotificationService extends GetxService {
   
   /// Get daily task statistics
   Map<String, int> get dailyStats => {
-    'assigned': todayAssignedCount.value,
-    'completed': todayCompletedCount.value,
-    'pending': todayAssignedCount.value - todayCompletedCount.value,
+    'assigned': todayAssignedCount.value, // Tasks assigned today
+    'completed': todayCompletedCount.value, // Tasks completed today
+    'pending': todayPendingCount.value, // Tasks assigned today but not yet completed
   };
   
   /// Get completion rate as percentage
@@ -161,6 +270,7 @@ class DailyTaskNotificationService extends GetxService {
   void refreshListeners() {
     _assignedTasksSubscription?.cancel();
     _completedTasksSubscription?.cancel();
+    _pendingTasksSubscription?.cancel();
     _previousAssignedCount = 0;
     _previousCompletedCount = 0;
     _initializeListeners();
@@ -175,16 +285,36 @@ class DailyTaskNotificationService extends GetxService {
       
       final snapshot = await _firestore
           .collection('tasks')
-          .where('assignmentTimestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('assignmentTimestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
           .get();
       
       final tasks = <Task>[];
       for (final doc in snapshot.docs) {
-        final task = Task.fromMap(doc.data(), doc.id);
-        // Check if user is assigned to this task
-        if (task.assignedUserIds.contains(userId)) {
-          tasks.add(task);
+        final data = doc.data();
+        final assignedAt = data['assignedAt'];
+        
+        // Check if task was assigned today
+        bool assignedToday = false;
+        if (assignedAt != null) {
+          DateTime? assignmentDate;
+          if (assignedAt is Timestamp) {
+            assignmentDate = assignedAt.toDate();
+          } else if (assignedAt is String) {
+            assignmentDate = DateTime.tryParse(assignedAt);
+          }
+          
+          if (assignmentDate != null &&
+              assignmentDate.isAfter(startOfDay) &&
+              assignmentDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
+            assignedToday = true;
+          }
+        }
+        
+        if (assignedToday) {
+          final task = Task.fromMap(data, doc.id);
+          // Check if user is assigned to this task
+          if (task.assignedUserIds.contains(userId)) {
+            tasks.add(task);
+          }
         }
       }
       
