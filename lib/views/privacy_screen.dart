@@ -60,7 +60,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 ],
               ),
             ),
-            Divider(height: 1, color: colorScheme.onPrimary.withOpacity(0.3), thickness: 1),
+            Divider(height: 1, color: colorScheme.onPrimary.withValues(alpha: 0.3), thickness: 1),
             Expanded(
               child: SingleChildScrollView(
                 padding:
@@ -120,7 +120,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           child: Text(
                             "Get alerts of new assignments",
                             style: GoogleFonts.raleway(
-                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              color: colorScheme.onPrimary.withValues(alpha: 0.8),
                               fontSize: 14.sp,
                             ),
                           ),
@@ -153,7 +153,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           child: Text(
                             "Enable/Disable Location",
                             style: GoogleFonts.raleway(
-                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              color: colorScheme.onPrimary.withValues(alpha: 0.8),
                               fontSize: 14.sp,
                             ),
                           ),
@@ -186,7 +186,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           child: Text(
                             "Targeted Ads",
                             style: GoogleFonts.raleway(
-                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              color: colorScheme.onPrimary.withValues(alpha: 0.8),
                               fontSize: 14.sp,
                             ),
                           ),
@@ -218,7 +218,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       title: Text(
                         "View Privacy Policy",
                         style: GoogleFonts.raleway(
-                          color: colorScheme.onPrimary.withOpacity(0.8),
+                          color: colorScheme.onPrimary.withValues(alpha: 0.8),
                           fontSize: 14.sp,
                         ),
                       ),
@@ -245,7 +245,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                           child: Text(
                             "Enable two-factor authentication",
                             style: GoogleFonts.raleway(
-                              color: colorScheme.onPrimary.withOpacity(0.8),
+                              color: colorScheme.onPrimary.withValues(alpha: 0.8),
                               fontSize: 14.sp,
                             ),
                           ),
@@ -291,20 +291,20 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                        subtitle: Text(
                          "Download a copy of your data",
                          style: GoogleFonts.raleway(
-                           color: colorScheme.onPrimary.withOpacity(0.7),
+                           color: colorScheme.onPrimary.withValues(alpha: 0.7),
                            fontSize: 12.sp,
                          ),
                        ),
                        trailing: Icon(
                          Icons.arrow_forward_ios,
-                         color: colorScheme.onPrimary.withOpacity(0.6),
+                         color: colorScheme.onPrimary.withValues(alpha: 0.6),
                          size: 16.sp,
                        ),
                        onTap: privacyController.exportUserData,
                      ),
                      
                      Divider(
-                       color: colorScheme.onPrimary.withOpacity(0.2),
+                       color: colorScheme.onPrimary.withValues(alpha: 0.2),
                        thickness: 1,
                      ),
                      
@@ -326,13 +326,13 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                        subtitle: Text(
                          "Permanently delete your account and data",
                          style: GoogleFonts.raleway(
-                           color: colorScheme.onPrimary.withOpacity(0.7),
+                           color: colorScheme.onPrimary.withValues(alpha: 0.7),
                            fontSize: 12.sp,
                          ),
                        ),
                        trailing: Icon(
                          Icons.arrow_forward_ios,
-                         color: colorScheme.onPrimary.withOpacity(0.6),
+                         color: colorScheme.onPrimary.withValues(alpha: 0.6),
                          size: 16.sp,
                        ),
                        onTap: privacyController.deleteUserAccount,

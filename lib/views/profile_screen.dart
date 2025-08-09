@@ -197,7 +197,7 @@ class ProfileScreen extends StatelessWidget {
                             Icon(
                               Icons.copy,
                               size: 16,
-                              color: colorScheme.onSurface.withOpacity(0.6),
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ],
                         ),
@@ -228,7 +228,7 @@ class ProfileScreen extends StatelessWidget {
                             Icon(
                               Icons.copy,
                               size: 16,
-                              color: colorScheme.onSurface.withOpacity(0.6),
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ],
                         ),

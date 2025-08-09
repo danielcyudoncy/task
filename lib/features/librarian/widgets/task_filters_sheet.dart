@@ -291,7 +291,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                         ),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: theme.dividerColor.withOpacity(0.5),
+                            color: theme.dividerColor.withValues(alpha: 0.5),
                             width: 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
@@ -394,19 +394,19 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                         decoration: InputDecoration(
                           hintText: 'Add tags...',
                           hintStyle: TextStyle(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: theme.dividerColor.withOpacity(0.5),
+                              color: theme.dividerColor.withValues(alpha: 0.5),
                               width: 1,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: theme.dividerColor.withOpacity(0.5),
+                              color: theme.dividerColor.withValues(alpha: 0.5),
                               width: 1,
                             ),
                           ),
@@ -460,7 +460,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               color: theme.cardColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
@@ -523,7 +523,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
             ? Theme.of(context).primaryColor
             : Theme.of(context).dividerColor,
       ),
-      selectedColor: Theme.of(context).primaryColor.withOpacity(0.1),
+      selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
       labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: selected
                 ? Theme.of(context).primaryColor
@@ -573,13 +573,13 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
         side: BorderSide(
           color: selected ? getRoleColor() : theme.dividerColor,
         ),
-        selectedColor: getRoleColor().withOpacity(0.1),
+        selectedColor: getRoleColor().withValues(alpha: 0.1),
         labelStyle: theme.textTheme.bodySmall?.copyWith(
           color: selected ? getRoleColor() : theme.textTheme.bodySmall?.color,
           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
         ),
         avatar: CircleAvatar(
-          backgroundColor: getRoleColor().withOpacity(0.2),
+          backgroundColor: getRoleColor().withValues(alpha: 0.2),
           radius: 12,
           child: Text(
             name.isNotEmpty ? name[0].toUpperCase() : '?',

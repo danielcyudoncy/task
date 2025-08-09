@@ -498,7 +498,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
                                   Text(
                                     _taskError.value,
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onErrorContainer.withOpacity(0.8),
+                                      color: colorScheme.onErrorContainer.withValues(alpha: 0.8),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

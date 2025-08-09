@@ -164,7 +164,7 @@ class ManageUsersScreen extends StatelessWidget {
                                               label: const Text('You'),
                                               backgroundColor: theme.brightness == Brightness.dark
                                                   ? theme.colorScheme.secondary
-                                                  : theme.colorScheme.onPrimary.withOpacity(0.18),
+                                                  : theme.colorScheme.onPrimary.withValues(alpha: 0.18),
                                               labelStyle: TextStyle(
                                                 color: theme.brightness == Brightness.dark
                                                     ? theme.colorScheme.onSecondary
@@ -181,8 +181,8 @@ class ManageUsersScreen extends StatelessWidget {
                                       userEmail,
                                       style: TextStyle(
                                         color: theme.brightness == Brightness.dark
-                                            ? theme.colorScheme.onSurface.withOpacity(0.7)
-                                            : theme.colorScheme.onPrimary.withOpacity(0.85),
+                                            ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
+                                            : theme.colorScheme.onPrimary.withValues(alpha: 0.85),
                                         fontSize: 13.sp * textScale,
                                       ),
                                     ),

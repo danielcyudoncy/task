@@ -483,7 +483,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           onDismissed: (direction) =>
                               _startReply(messageData, messageDoc.id),
                           background: Container(
-                            color: colorScheme.secondary.withOpacity(0.5),
+                            color: colorScheme.secondary.withValues(alpha: 0.5),
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             alignment: Alignment.centerLeft,
                             child: const Icon(Icons.reply, color: Colors.white),

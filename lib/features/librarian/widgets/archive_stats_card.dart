@@ -34,18 +34,18 @@ class ArchiveStatsCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark 
-            ? colorScheme.surfaceVariant.withOpacity(0.3)
-            : colorScheme.surfaceVariant.withOpacity(0.5),
+            ? colorScheme.surfaceVariant.withValues(alpha: 0.3)
+            : colorScheme.surfaceVariant.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: isDark 
             ? Border.all(
-                color: colorScheme.outline.withOpacity(0.2),
+                color: colorScheme.outline.withValues(alpha: 0.2),
                 width: 1,
               )
             : null,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(isDark ? 0.2 : 0.1),
+            color: colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -196,13 +196,13 @@ class ArchiveStatsCard extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: colorScheme.outline.withOpacity(0.2),
+            color: colorScheme.outline.withValues(alpha: 0.2),
             width: 1,
           ),
           boxShadow: [
             if (!isDark) ...[
               BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.05),
+                color: colorScheme.shadow.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -220,7 +220,7 @@ class ArchiveStatsCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(isDark ? 0.2 : 0.1),
+                    color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -275,7 +275,7 @@ class ArchiveStatsCard extends StatelessWidget {
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: isDark 
                             ? colorScheme.onSurfaceVariant
-                            : colorScheme.onSurfaceVariant.withOpacity(0.8),
+                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                         fontSize: 10,
                       ),
                     ),

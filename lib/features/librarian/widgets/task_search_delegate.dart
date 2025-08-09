@@ -113,7 +113,7 @@ class TaskSearchDelegate extends SearchDelegate<String> {
         spans.add(TextSpan(
           text: text.substring(start, start + query.length),
           style: TextStyle(
-            backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+            backgroundColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
             fontWeight: FontWeight.bold,
           ),
         ));

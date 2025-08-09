@@ -178,10 +178,12 @@ class ExportService extends GetxService {
 
       // Share the file if requested
       if (shareAfterExport) {
-        await Share.shareXFiles(
-          [XFile(exportFile.path)],
-          subject: 'Tasks Export',
-          text: 'Here is the exported tasks file.',
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(exportFile.path)],
+            subject: 'Tasks Export',
+            text: 'Here is the exported tasks file.',
+          ),
         );
       }
 
@@ -269,7 +271,7 @@ class ExportService extends GetxService {
         str.contains('"') ||
         str.contains('\n') ||
         str.contains('\r')) {
-      return '"' + str.replaceAll('"', '""') + '"';
+      return '"${str.replaceAll('"', '""')}"';
     }
     return str;
   }
@@ -348,10 +350,12 @@ class ExportService extends GetxService {
   /// Share file using share_plus package (legacy method)
   Future<void> shareFile(File file, {String? subject, String? text}) async {
     try {
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: subject,
-        text: text,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: subject,
+          text: text,
+        ),
       );
     } catch (e) {
       debugPrint('Error sharing file: $e');
@@ -362,9 +366,11 @@ class ExportService extends GetxService {
   /// Share text directly (legacy method)
   Future<void> shareText(String text, {String? subject}) async {
     try {
-      await Share.share(
-        text,
-        subject: subject,
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          subject: subject,
+        ),
       );
     } catch (e) {
       debugPrint('Error sharing text: $e');

@@ -49,7 +49,7 @@ class NewsCategoryFilter extends StatelessWidget {
               },
               backgroundColor: isSelected 
                 ? colorScheme.primary
-                : colorScheme.surfaceVariant,
+                : colorScheme.surfaceContainerHighest,
               selectedColor: colorScheme.primary,
               labelStyle: TextStyle(
                 color: isSelected 
@@ -65,4 +65,4 @@ class NewsCategoryFilter extends StatelessWidget {
       ),
     );
   }
-} 
+}

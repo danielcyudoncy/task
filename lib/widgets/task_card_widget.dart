@@ -44,7 +44,7 @@ class TaskCardWidget extends StatelessWidget {
     final Color borderColor = colorScheme.outline.withAlpha((0.3 * 255).toInt());
 
     // Debug prints for diagnosis
-    print(
+    debugPrint(
       'TaskCardWidget: taskId= [32m${task.taskId} [0m, '
       'dueDate= [32m${task.dueDate} [0m, '
       'category= [32m${task.category} [0m, '

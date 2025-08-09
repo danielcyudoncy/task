@@ -216,7 +216,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
+          color: colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -225,7 +225,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _getTypeColor(type).withOpacity(0.1),
+              color: _getTypeColor(type).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(

@@ -35,7 +35,7 @@ class TasksSection extends StatelessWidget {
           topRight: Radius.circular(26),
         ),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.3),
+          color: colorScheme.outline.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -73,7 +73,7 @@ class TasksSection extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -101,7 +101,7 @@ class TasksSection extends StatelessWidget {
       indicatorColor: isDark ? colorScheme.onPrimary : colorScheme.primary,
       indicatorWeight: 2.5,
       labelColor: isDark ? colorScheme.onPrimary : colorScheme.primary,
-      unselectedLabelColor: isDark ? colorScheme.onPrimary.withOpacity(0.7) : Colors.black54,
+      unselectedLabelColor: isDark ? colorScheme.onPrimary.withValues(alpha: 0.7) : Colors.black54,
       labelStyle: const TextStyle(
         fontWeight: FontWeight.w500,
         fontSize: 15,

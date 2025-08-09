@@ -425,7 +425,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     Icon(
                       Icons.source,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -433,7 +433,7 @@ class _NewsScreenState extends State<NewsScreen> {
                         article['source'] ?? 'unknown_source'.tr,
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -441,14 +441,14 @@ class _NewsScreenState extends State<NewsScreen> {
                     Icon(
                       Icons.access_time,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _formatDate(article['date'] ?? ''),
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -466,4 +466,4 @@ class _NewsScreenState extends State<NewsScreen> {
     _searchController.dispose();
     super.dispose();
   }
-} 
+}
