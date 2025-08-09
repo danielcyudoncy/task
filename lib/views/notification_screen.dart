@@ -21,9 +21,9 @@ class NotificationScreen extends StatelessWidget {
 
 
     // Get colors from theme instead of hardcoding
-    final backgroundColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
-    final cardColor = isDark ? const Color(0xFF2A2A3E) : Colors.grey.shade50;
-    final subtitleColor = isDark ? Colors.white70 : Colors.grey.shade600;
+    final backgroundColor = theme.colorScheme.background;
+    final cardColor = theme.colorScheme.surfaceVariant;
+    final subtitleColor = theme.colorScheme.onSurfaceVariant;
 
     return Scaffold(
       appBar: AppBar(

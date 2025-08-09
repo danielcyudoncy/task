@@ -275,9 +275,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         style: TextStyle(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w600,
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Colors.white70
-                                              : Colors.grey[600],
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
@@ -288,9 +286,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                     style: TextStyle(
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w600,
-                                      color: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.white
-                                          : const Color(0xFF2C3E50),
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                 ],
@@ -783,9 +779,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
-                                                color: Theme.of(context).brightness == Brightness.dark
-                                                    ? Colors.white
-                                                    : const Color(0xFF2C3E50),
+                                                color: Theme.of(context).colorScheme.onSurface,
                                               ),
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
@@ -794,9 +788,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                           Icon(
                                             Icons.arrow_forward_ios,
                                             size: 14,
-                                            color: Theme.of(context).brightness == Brightness.dark
-                                                ? Colors.white54
-                                                : Colors.grey,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                                           ),
                                         ],
                                       ),

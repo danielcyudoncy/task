@@ -43,7 +43,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
               children: [
                 Icon(
                   Icons.attach_file,
-                  color: colorScheme.primary,
+                  color: colorScheme.onSurface,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -51,7 +51,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
                   'Attachments',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const Spacer(),
@@ -305,17 +305,19 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
   }
 
   Color _getTypeColor(String type) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     switch (type.toLowerCase()) {
       case 'image':
-        return Colors.green;
+        return colorScheme.secondary;
       case 'video':
-        return Colors.purple;
+        return colorScheme.tertiary;
       case 'audio':
-        return Colors.orange;
+        return colorScheme.primary;
       case 'document':
-        return Colors.blue;
+        return colorScheme.outline;
       default:
-        return Colors.grey;
+        return colorScheme.onSurfaceVariant;
     }
   }
 
@@ -374,7 +376,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Attachment "${result['name']}" uploaded successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
         }
@@ -384,7 +386,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to upload attachment: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -413,7 +415,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              foregroundColor: Theme.of(context).colorScheme.error,
             ),
             child: const Text('Remove'),
           ),
@@ -452,9 +454,9 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Attachment removed successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Attachment removed successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -463,7 +465,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to remove attachment: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -483,7 +485,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to open attachment: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }

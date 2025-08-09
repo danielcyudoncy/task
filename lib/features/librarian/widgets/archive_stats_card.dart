@@ -27,15 +27,25 @@ class ArchiveStatsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.5),
+        color: isDark 
+            ? colorScheme.surfaceVariant.withOpacity(0.3)
+            : colorScheme.surfaceVariant.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
+        border: isDark 
+            ? Border.all(
+                color: colorScheme.outline.withOpacity(0.2),
+                width: 1,
+              )
+            : null,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
+            color: colorScheme.shadow.withOpacity(isDark ? 0.2 : 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -52,7 +62,7 @@ class ArchiveStatsCard extends StatelessWidget {
                 'Archive Stats',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
+                  color: isDark ? colorScheme.onSurface : colorScheme.primary,
                 ),
               ),
               if (!isLoading && error == null) _buildToggleButton(theme, colorScheme),
@@ -74,12 +84,14 @@ class ArchiveStatsCard extends StatelessWidget {
   }
   
   Widget _buildToggleButton(ThemeData theme, ColorScheme colorScheme) {
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Row(
       children: [
         Text(
           showArchived ? 'Hide Archived' : 'Show Archived',
           style: theme.textTheme.labelSmall?.copyWith(
-            color: colorScheme.primary,
+            color: isDark ? colorScheme.onSurface : colorScheme.primary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -88,7 +100,7 @@ class ArchiveStatsCard extends StatelessWidget {
           icon: Icon(
             showArchived ? Icons.visibility_off_outlined : Icons.visibility_outlined,
             size: 18,
-            color: colorScheme.primary,
+            color: isDark ? colorScheme.onSurface : colorScheme.primary,
           ),
           onPressed: onToggleArchive,
           padding: EdgeInsets.zero,
@@ -214,7 +226,7 @@ class ArchiveStatsCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 16,
-                    color: color,
+                    color: isDark ? colorScheme.onSurface : color,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -255,13 +267,15 @@ class ArchiveStatsCard extends StatelessWidget {
                     Icon(
                       Icons.arrow_upward_rounded,
                       size: 12,
-                      color: Colors.green,
+                      color: isDark ? Colors.green.shade300 : Colors.green,
                     ),
                     const SizedBox(width: 2),
                     Text(
                       '${(value / 10).ceil() * 10}% from last month',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+                        color: isDark 
+                            ? colorScheme.onSurfaceVariant
+                            : colorScheme.onSurfaceVariant.withOpacity(0.8),
                         fontSize: 10,
                       ),
                     ),
