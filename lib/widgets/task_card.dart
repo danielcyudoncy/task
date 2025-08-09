@@ -102,7 +102,7 @@ class TaskCard extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -228,8 +228,7 @@ class TaskCard extends StatelessWidget {
                     ),
                   // Due Date (prefer dueDate, fallback to timestamp)
                   Text(
-                    "Due Date: " +
-                      (data['dueDate'] != null && data['dueDate'].toString().isNotEmpty
+                    "Due Date: ${data['dueDate'] != null && data['dueDate'].toString().isNotEmpty
                         ? DateFormat('yyyy-MM-dd').format(DateTime.tryParse(data['dueDate'].toString()) ?? DateTime.now())
                         : (data['timestamp'] != null
                             ? (data['timestamp'] is DateTime
@@ -237,7 +236,7 @@ class TaskCard extends StatelessWidget {
                                 : (data['timestamp'].toDate != null
                                     ? DateFormat('yyyy-MM-dd').format(data['timestamp'].toDate())
                                     : 'N/A'))
-                            : 'N/A')),
+                            : 'N/A')}",
                     style: textTheme.bodySmall?.copyWith(
                       color: subText,
                       fontSize: 13.sp * textScale,

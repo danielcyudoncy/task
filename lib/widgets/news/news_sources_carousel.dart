@@ -127,8 +127,8 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
         if (response.statusCode == 200) {
           final document = XmlDocument.parse(response.body);
           final item = document.findAllElements('item').first;
-          final title = item.findElements('title').first.text;
-          final link = item.findElements('link').first.text;
+          final title = item.findElements('title').first.innerText;
+          final link = item.findElements('link').first.innerText;
           return {'title': title, 'url': link};
         }
       } catch (e) {
@@ -250,7 +250,7 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                 shape: BoxShape.circle,
                 color: index == _currentIndex
                     ? AppColors.primaryColor
-                    : Colors.grey.withOpacity(0.3),
+                    : Colors.grey.withValues(alpha: 0.3),
               ),
             ),
           ),

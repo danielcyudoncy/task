@@ -627,9 +627,11 @@ class PdfExportService extends GetxService {
   /// Shares a PDF file
   Future<void> sharePdf(String filePath, {String? subject}) async {
     try {
-      await Share.shareXFiles(
-        [XFile(filePath)],
-        subject: subject ?? 'Task Report',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(filePath)],
+          subject: subject ?? 'Task Report',
+        ),
       );
     } catch (e) {
       Get.log('Error sharing PDF: $e');

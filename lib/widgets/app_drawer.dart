@@ -372,7 +372,7 @@ class ConcentricCirclePainter extends CustomPainter {
     final radii = [60.0.w, 100.0.w, 140.0.w];
     final alphas = [0.4, 0.25, 0.12];
     for (int i = 0; i < radii.length; i++) {
-      paint.color = ringColor.withOpacity(alphas[i]);
+      paint.color = ringColor.withValues(alpha: alphas[i]);
       c.drawCircle(centerOffset, radii[i], paint);
     }
   }

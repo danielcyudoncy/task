@@ -11,7 +11,7 @@ class UrlLauncherHelper {
         'Error',
         'No link available for this article',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity (0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         colorText: Colors.red,
       );
       return;
@@ -107,7 +107,7 @@ class UrlLauncherHelper {
             'Error',
             'Could not open the link. Please try copying the URL and opening it manually in your browser.',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.orange.withOpacity(0.1),
+            backgroundColor: Colors.orange.withValues(alpha: 0.1),
             colorText: Colors.orange[700],
             duration: const Duration(seconds: 5),
             mainButton: TextButton(
@@ -128,10 +128,10 @@ class UrlLauncherHelper {
         'Error',
         'Invalid link format: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         colorText: Colors.red,
         duration: const Duration(seconds: 4),
       );
     }
   }
-} 
+}

@@ -436,15 +436,15 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Color _getStatusBackgroundColor(String status, ColorScheme colorScheme) {
     switch (status.toLowerCase()) {
       case 'completed':
-        return colorScheme.primary.withOpacity(0.1);
+        return colorScheme.primary.withValues(alpha: 0.1);
       case 'in progress':
-        return colorScheme.secondary.withOpacity(0.1);
+        return colorScheme.secondary.withValues(alpha: 0.1);
       case 'pending':
-        return colorScheme.tertiary.withOpacity(0.1);
+        return colorScheme.tertiary.withValues(alpha: 0.1);
       case 'archived':
-        return Colors.grey.withOpacity(0.2);
+        return Colors.grey.withValues(alpha: 0.2);
       default:
-        return Colors.grey.withOpacity(0.1);
+        return Colors.grey.withValues(alpha: 0.1);
     }
   }
 

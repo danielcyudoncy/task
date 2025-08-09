@@ -42,7 +42,7 @@ class TaskSkeletonList extends StatelessWidget {
                 color: skeletonColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.3),
+                  color: colorScheme.outline.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
