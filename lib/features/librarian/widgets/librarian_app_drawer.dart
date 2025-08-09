@@ -20,7 +20,6 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
   final authController = Get.find<AuthController>();
   bool _logoutHovered = false, _showCalendar = false;
   DateTime _focusedDay = DateTime.now();
-  bool _isNavigating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -198,33 +197,6 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 children: [
-                  // Home Tile
-                  _drawerTile(Icons.home_outlined, 'Home', () async {
-                    if (_isNavigating) return; // Prevent multiple navigation calls
-                    
-                    Get.find<SettingsController>().triggerFeedback();
-                    setState(() => _isNavigating = true);
-                    
-                    Navigator.of(context).pop();
-                    await Future.delayed(const Duration(milliseconds: 300));
-                    
-                    // Use safer navigation approach to avoid route conflicts
-                    try {
-                      // Check current route to avoid unnecessary navigation
-                      final currentRoute = Get.currentRoute;
-                      if (currentRoute != '/librarian-dashboard') {
-                        // Use replace instead of offAllNamed to avoid route removal conflicts
-                        await Get.offNamed('/librarian-dashboard');
-                      }
-                    } catch (e) {
-                      // Fallback navigation
-                      Get.offAllNamed('/login');
-                    } finally {
-                      if (mounted) {
-                        setState(() => _isNavigating = false);
-                      }
-                    }
-                  }),
 
                   _drawerTile(Icons.person_outline, 'Profile', () {
                     Get.find<SettingsController>().triggerFeedback();

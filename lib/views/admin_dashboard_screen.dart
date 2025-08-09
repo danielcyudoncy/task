@@ -90,22 +90,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
 
 
-  void _navigateToChatUsers() async {
-    Get.find<SettingsController>().triggerFeedback();
-    
-    Get.dialog(
-      const Center(child: CircularProgressIndicator()),
-      barrierDismissible: false,
-    );
-
-    try {
-      Get.back();
-      Get.toNamed('/all-users-chat');
-    } catch (e) {
-      Get.back();
-      Get.snackbar("Error", "Could not open chat: $e");
-    }
-  }
 
 
   void _showTaskDetailDialog(String title) {
