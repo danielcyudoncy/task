@@ -83,10 +83,10 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             )
-          : Icon(Icons.archive_outlined, color: Theme.of(context).colorScheme.primary),
+          : Icon(Icons.archive_outlined, color: Theme.of(context).colorScheme.onPrimary),
       tooltip: 'Archive Task',
       onPressed: _isArchiving
           ? null
@@ -106,10 +106,10 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             )
-          : Icon(Icons.unarchive_outlined, color: Theme.of(context).colorScheme.primary),
+          : Icon(Icons.unarchive_outlined, color: Theme.of(context).colorScheme.onPrimary),
       tooltip: 'Unarchive Task',
       onPressed: _isArchiving
           ? null
@@ -125,10 +125,10 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: colorScheme.primary,
+                color: colorScheme.onPrimary,
               ),
             )
-          : Icon(Icons.ios_share, color: Theme.of(context).colorScheme.primary),
+          : Icon(Icons.ios_share, color: Theme.of(context).colorScheme.onPrimary),
       onCanceled: () {
         if (_isExporting) {
           // Prevent menu from closing when exporting

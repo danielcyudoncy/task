@@ -69,7 +69,6 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
       // Navigate to task detail
       final result = await Get.to<bool>(
         () => LibrarianTaskDetailScreen(task: widget.task),
-        fullscreenDialog: true,
         duration: AppDurations.mediumAnimation,
         transition: Transition.downToUp,
       );
