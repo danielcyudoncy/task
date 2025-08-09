@@ -121,7 +121,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: theme.dividerColor.withOpacity(0.1),
+          color: theme.dividerColor.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -154,7 +154,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: theme.dividerColor.withOpacity(0.1),
+          color: theme.dividerColor.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -163,8 +163,8 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: _handleTap,
-          splashColor: theme.colorScheme.primary.withOpacity(0.1),
-          highlightColor: theme.colorScheme.primary.withOpacity(0.05),
+          splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+          highlightColor: theme.colorScheme.primary.withValues(alpha: 0.05),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -191,10 +191,10 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(widget.task.status).withOpacity(0.1),
+                      color: _getStatusColor(widget.task.status).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _getStatusColor(widget.task.status).withOpacity(0.3),
+                        color: _getStatusColor(widget.task.status).withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -253,7 +253,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                       icon: Icons.archive_outlined,
                       label: 'Archived ${dateFormat.format(widget.task.archivedAt!.toLocal())}',
                       color: theme.brightness == Brightness.dark 
-                          ? Theme.of(context).colorScheme.tertiary.withOpacity(0.7)
+                          ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.7)
                 : Theme.of(context).colorScheme.tertiary,
                     ),
                   ],
@@ -346,10 +346,10 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: (color ?? colorScheme.surfaceVariant).withOpacity(0.3),
+          color: (color ?? colorScheme.surfaceVariant).withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: (color ?? colorScheme.outlineVariant).withOpacity(0.5),
+            color: (color ?? colorScheme.outlineVariant).withValues(alpha: 0.5),
             width: 0.5,
           ),
         ),
@@ -390,15 +390,15 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: colorScheme.primaryContainer.withOpacity(0.6),
+          color: colorScheme.primaryContainer.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: colorScheme.primary.withOpacity(0.3),
+            color: colorScheme.primary.withValues(alpha: 0.3),
             width: 0.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.05),
+              color: colorScheme.shadow.withValues(alpha: 0.05),
               blurRadius: 2,
               offset: const Offset(0, 1),
             ),
@@ -442,7 +442,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
     if (isCameraman) {
       icon = Icons.videocam_rounded;
       backgroundColor = theme.brightness == Brightness.dark 
-          ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
             : Theme.of(context).colorScheme.primaryContainer;
       textColor = theme.brightness == Brightness.dark 
           ? Theme.of(context).colorScheme.onSurface
@@ -450,7 +450,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
     } else if (isDriver) {
       icon = Icons.directions_car_rounded;
       backgroundColor = theme.brightness == Brightness.dark 
-          ? Theme.of(context).colorScheme.secondary.withOpacity(0.3)
+          ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3)
             : Theme.of(context).colorScheme.secondaryContainer;
       textColor = theme.brightness == Brightness.dark 
           ? Theme.of(context).colorScheme.onSurface
@@ -480,7 +480,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
           ),
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.1),
+              color: colorScheme.shadow.withValues(alpha: 0.1),
               blurRadius: 2,
               offset: const Offset(0, 1),
             ),
@@ -494,7 +494,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                   color: textColor,
                   shadows: [
                     Shadow(
-                      color: colorScheme.shadow.withOpacity(0.2),
+                      color: colorScheme.shadow.withValues(alpha: 0.2),
                       blurRadius: 1,
                       offset: const Offset(0, 1),
                     ),
@@ -508,7 +508,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                     letterSpacing: 0.5,
                     shadows: [
                       Shadow(
-                        color: colorScheme.shadow.withOpacity(0.1),
+                        color: colorScheme.shadow.withValues(alpha: 0.1),
                         blurRadius: 1,
                         offset: const Offset(0, 1),
                       ),

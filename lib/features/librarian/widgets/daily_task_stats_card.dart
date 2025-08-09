@@ -120,7 +120,7 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
           'Error',
           'Failed to load weekly summary: $e',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.1),
+          backgroundColor: Colors.red.withValues(alpha: 0.1),
           colorText: Colors.red,
         );
       }
@@ -244,7 +244,7 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
           'Error',
           'Failed to load user tasks: $e',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.1),
+          backgroundColor: Colors.red.withValues(alpha: 0.1),
           colorText: Colors.red,
         );
       }
@@ -277,12 +277,12 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                       gradient: LinearGradient(
                         colors: hasNotifications
                             ? [
-                                Colors.blue.withOpacity(0.2),
-                                Colors.purple.withOpacity(0.1),
+                                Colors.blue.withValues(alpha: 0.2),
+                                Colors.purple.withValues(alpha: 0.1),
                               ]
                             : [
-                                Colors.blue.withOpacity(0.1),
-                                Colors.purple.withOpacity(0.05),
+                                Colors.blue.withValues(alpha: 0.1),
+                                Colors.purple.withValues(alpha: 0.05),
                               ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -290,13 +290,13 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: hasNotifications
-                            ? Colors.blue.withOpacity(0.4)
-                            : Colors.blue.withOpacity(0.2),
+                            ? Colors.blue.withValues(alpha: 0.4)
+                            : Colors.blue.withValues(alpha: 0.2),
                         width: hasNotifications ? 2 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blue.withOpacity(hasNotifications ? 0.2 : 0.1),
+                          color: Colors.blue.withValues(alpha: hasNotifications ? 0.2 : 0.1),
                           blurRadius: hasNotifications ? 15 : 10,
                           offset: const Offset(0, 4),
                         ),
@@ -522,16 +522,16 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(hasNewData ? 0.2 : 0.1),
+        color: color.withValues(alpha: hasNewData ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withOpacity(hasNewData ? 0.5 : 0.3),
+          color: color.withValues(alpha: hasNewData ? 0.5 : 0.3),
           width: hasNewData ? 2 : 1,
         ),
         boxShadow: hasNewData
             ? [
                 BoxShadow(
-                  color: color.withOpacity(0.3),
+                  color: color.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

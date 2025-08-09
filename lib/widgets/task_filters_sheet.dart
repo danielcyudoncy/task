@@ -176,7 +176,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               );
             });
           },
-          selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           checkmarkColor: Theme.of(context).colorScheme.primary,
         );
       }).toList(),
@@ -207,7 +207,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               );
             });
           },
-          selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           checkmarkColor: Theme.of(context).colorScheme.primary,
         );
       }).toList(),
@@ -238,7 +238,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               );
             });
           },
-          selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           checkmarkColor: Theme.of(context).colorScheme.primary,
         );
       }).toList(),

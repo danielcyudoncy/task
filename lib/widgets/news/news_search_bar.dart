@@ -47,7 +47,7 @@ class NewsSearchBar extends StatelessWidget {
             borderSide: BorderSide(color: colorScheme.primary),
           ),
           filled: true,
-          fillColor: colorScheme.surfaceVariant,
+          fillColor: colorScheme.surfaceContainerHighest,
           contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         ),
         onChanged: onChanged,
@@ -58,4 +58,4 @@ class NewsSearchBar extends StatelessWidget {
       ),
     );
   }
-} 
+}

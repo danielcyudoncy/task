@@ -54,7 +54,7 @@ class NewsSearchSuggestions extends StatelessWidget {
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
@@ -72,4 +72,4 @@ class NewsSearchSuggestions extends StatelessWidget {
       ),
     );
   }
-} 
+}

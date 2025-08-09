@@ -167,7 +167,7 @@ class NotificationScreen extends StatelessWidget {
                           return false;
                         },
                         child: Card(
-                          color: isRead ? cardColor : cardColor.withOpacity(0.8),
+                          color: isRead ? cardColor : cardColor.withValues(alpha: 0.8),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),

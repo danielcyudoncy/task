@@ -35,7 +35,7 @@ class MinimalTaskCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: isSelected
-            ? colorScheme.primary.withOpacity(0.1)
+            ? colorScheme.primary.withValues(alpha: 0.1)
             : isDark
                 ? const Color(0xFF292B3A)
                 : colorScheme.surface,
@@ -43,13 +43,13 @@ class MinimalTaskCard extends StatelessWidget {
         border: Border.all(
           color: isSelected
               ? colorScheme.primary
-              : colorScheme.outline.withOpacity(0.3),
+              : colorScheme.outline.withValues(alpha: 0.3),
           width: isSelected ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.2)
+                ? Colors.black.withValues(alpha: 0.2)
                 : const Color(0x15000000),
             blurRadius: 8,
             offset: const Offset(0, 2),

@@ -70,7 +70,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -91,7 +91,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                           end: Alignment.bottomRight,
                           colors: [
                             primaryColor,
-                            primaryColor.withOpacity(0.8),
+                            primaryColor.withValues(alpha: 0.8),
                           ],
                         ),
                         borderRadius: const BorderRadius.only(
@@ -104,7 +104,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -131,7 +131,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                 Text(
                                   "to ${widget.user?['fullName'] ?? widget.user?['fullname'] ?? ''}",
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -167,15 +167,15 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: selectedTaskTitle != null 
-                                  ? primaryColor.withOpacity(0.3)
-                                  : (isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2)),
+                                  ? primaryColor.withValues(alpha: 0.3)
+                                  : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2)),
                               width: selectedTaskTitle != null ? 2 : 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: selectedTaskTitle != null 
-                                    ? primaryColor.withOpacity(0.1)
-                                    : Colors.black.withOpacity(0.05),
+                                    ? primaryColor.withValues(alpha: 0.1)
+                                    : Colors.black.withValues(alpha: 0.05),
                                 blurRadius: selectedTaskTitle != null ? 15 : 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -214,7 +214,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                               icon: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: primaryColor.withOpacity(0.1),
+                                  color: primaryColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -316,7 +316,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -375,7 +375,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
         color: isDark ? const Color(0xFF2A2A3E) : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
         ),
       ),
       child: Row(

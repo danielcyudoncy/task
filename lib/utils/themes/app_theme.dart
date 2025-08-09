@@ -119,9 +119,7 @@ class AppTheme {
       onError: isDark ? Colors.black : const Color(0xFFDBDBDB),
       surface: surface,
       onSurface: onSurface,
-      background: background,
-      onBackground: onBackground,
-      surfaceVariant: surfaceVariant,
+      surfaceContainerHighest: surfaceVariant,
       onSurfaceVariant: onSurfaceVariant,
       primaryContainer: primaryContainer,
       onPrimaryContainer: onPrimaryContainer,
@@ -132,12 +130,12 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.background,
+      scaffoldBackgroundColor: colorScheme.surface,
       textTheme: GoogleFonts.ralewayTextTheme(
         isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
       ).apply(
-        bodyColor: colorScheme.onBackground,
-        displayColor: colorScheme.onBackground,
+        bodyColor: colorScheme.onSurface,
+        displayColor: colorScheme.onSurface,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBackgroundColor,

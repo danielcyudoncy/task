@@ -41,7 +41,7 @@ class NewsCard extends StatelessWidget {
                       vertical: 4.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -258,7 +258,7 @@ class NewsCarouselCard extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.95),
+                        Colors.black.withValues(alpha: 0.95),
                       ],
                     ),
                   ),
@@ -321,4 +321,4 @@ class NewsCarouselCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

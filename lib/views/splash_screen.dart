@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               SizedBox(height: 6.h),
               Text(
-                'your_friendly_companion'.tr,
+                'Its Your Time'.tr,
                 style: textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onPrimary,
                   fontFamily: 'Raleway',
