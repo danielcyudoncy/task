@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 
 import 'package:task/widgets/app_drawer.dart';
+import 'package:task/features/librarian/widgets/librarian_app_drawer.dart';
 import 'package:task/widgets/task_section.dart';
 import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/auth_controller.dart';
@@ -87,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const AppDrawer(),
+      drawer: authController.userRole.value == 'Librarian' ? const LibrarianAppDrawer() : const AppDrawer(),
       body: SizedBox.expand(
         child: Container(
           width: double.infinity,
