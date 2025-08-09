@@ -1,4 +1,5 @@
 // views/admin_dashboard_screen.dart
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,7 +9,9 @@ import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/devices/app_devices.dart';
 import 'package:task/widgets/app_drawer.dart';
-import 'package:task/widgets/dashboard_cards_widget.dart';
+import 'package:task/widgets/enhanced_dashboard_cards.dart';
+import 'package:task/widgets/user_performance_tab.dart';
+import '../controllers/performance_controller.dart';
 import 'package:task/widgets/user_header.dart';
 import 'package:task/widgets/user_nav_bar.dart';
 import '../controllers/admin_controller.dart';
@@ -32,6 +35,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   final NotificationController notificationController = Get.find();
   final ManageUsersController manageUsersController =
       Get.find<ManageUsersController>();
+  late final PerformanceController performanceController;
 
   late TabController _tabController;
   String? selectedTaskTitle;
@@ -41,7 +45,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    
+    // Initialize performance controller
+    performanceController = Get.put(PerformanceController());
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       adminController.fetchDashboardData();
       adminController.fetchStatistics();
@@ -449,41 +457,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   Row(
                                     children: [
                                       Container(
-                                        padding: const EdgeInsets.all(6),
+                                        padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF357088).withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(
                                           Icons.person_outline,
                                           color: const Color(0xFF357088),
-                                          size: 16,
+                                          size: 14,
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'Created By',
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.w600,
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Colors.white70
-                                              : Colors.grey[600],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF357088).withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          creatorRole,
-                                          style: TextStyle(
-                                            fontSize: 12.sp,
-                                            color: const Color(0xFF357088),
-                                            fontWeight: FontWeight.w600,
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF357088).withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            creatorRole,
+                                            style: TextStyle(
+                                              fontSize: 11.sp,
+                                              color: const Color(0xFF357088),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
                                           ),
                                         ),
                                       ),
@@ -577,10 +578,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   void _showAllPendingTasksDialog() {
     final tasks = adminController.pendingTaskTitles;
     final docs = adminController.taskSnapshotDocs;
-    if (tasks.isEmpty) {
-      Get.snackbar("No Tasks", "There are no tasks to display.");
-      return;
-    }
 
     showDialog(
       context: context,
@@ -589,7 +586,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
+            width: math.max(MediaQuery.of(context).size.width * 0.9, 400),
             height: MediaQuery.of(context).size.height * 0.7,
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -662,7 +659,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               ),
                             ),
                             Text(
-                              '${tasks.length} task${tasks.length != 1 ? 's' : ''} awaiting completion',
+                              tasks.isEmpty 
+                                  ? 'All tasks completed! 🎉'
+                                  : '${tasks.length} task${tasks.length != 1 ? 's' : ''} awaiting completion',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 14,
@@ -693,10 +692,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: StatefulBuilder(
-                      builder: (ctx, setState) => ListView.builder(
-                        itemCount: tasks.length,
-                        itemBuilder: (context, index) {
+                    child: tasks.isEmpty
+                        ? _buildEmptyState()
+                        : StatefulBuilder(
+                            builder: (ctx, setState) => ListView.builder(
+                              itemCount: tasks.length,
+                              itemBuilder: (context, index) {
                           final title = tasks[index];
                           final doc = docs.firstWhereOrNull((d) => d['title'] == title);
 
@@ -803,35 +804,46 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                                 : Colors.grey[600],
                                           ),
                                           const SizedBox(width: 6),
-                                          Text(
-                                            creatorName,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: Theme.of(context).brightness == Brightness.dark
-                                                  ? Colors.white70
-                                                  : Colors.grey[600],
-                                              fontWeight: FontWeight.w500,
+                                          Flexible(
+                                            flex: 2,
+                                            child: Text(
+                                              creatorName,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Theme.of(context).brightness == Brightness.dark
+                                                    ? Colors.white70
+                                                    : Colors.grey[600],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          const SizedBox(width: 16),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF357088).withValues(alpha: 0.1),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              creatorRole,
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: const Color(0xFF357088),
-                                                fontWeight: FontWeight.w600,
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            flex: 1,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF357088).withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                creatorRole,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: const Color(0xFF357088),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
                                               ),
                                             ),
                                           ),
                                         ],
-                                      ),
-                                      const SizedBox(height: 8),
+                                       ),
+                                       const SizedBox(height: 8),
                                       Row(
                                         children: [
                                           Icon(
@@ -842,13 +854,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                                 : Colors.grey[600],
                                           ),
                                           const SizedBox(width: 6),
-                                          Text(
-                                            dateStr,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Theme.of(context).brightness == Brightness.dark
-                                                  ? Colors.white70
-                                                  : Colors.grey[600],
+                                          Flexible(
+                                            child: Text(
+                                              dateStr,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Theme.of(context).brightness == Brightness.dark
+                                                    ? Colors.white70
+                                                    : Colors.grey[600],
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
@@ -910,6 +926,105 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Animated Icon
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 800),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF4CAF50).withValues(alpha: 0.2),
+                        const Color(0xFF8BC34A).withValues(alpha: 0.1),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_outline,
+                    size: 60,
+                    color: Color(0xFF4CAF50),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          // Title
+          Text(
+            'All Caught Up!',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Subtitle
+          Text(
+            'Great job! There are no pending tasks at the moment.\nEverything is up to date.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.grey[600],
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 40),
+          // Decorative elements
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildEmptyStateIcon(Icons.task_alt, const Color(0xFF4CAF50)),
+              const SizedBox(width: 20),
+              _buildEmptyStateIcon(Icons.done_all, const Color(0xFF2196F3)),
+              const SizedBox(width: 20),
+              _buildEmptyStateIcon(Icons.celebration, const Color(0xFFFF9800)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateIcon(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Icon(
+        icon,
+        color: color,
+        size: 24,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -958,19 +1073,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           padding: EdgeInsets.symmetric(
                             horizontal: isTablet ? 32.0 : 16.0,
                           ),
-                          // --- DashboardCardsWidget ---
-                          child: DashboardCardsWidget(
-                            usersCount:
-                                adminController.statistics['users'] ?? 0,
-                            onlineUsersCount:
-                                adminController.statistics['online'] ?? 0,
-                            newsCount: adminController.statistics['news'] ?? 0,
-                            tasksCount: adminController.statistics['pending'] ??
-                                0, // Showing pending tasks here
-                            onManageUsersTap: () => Get.toNamed('/manage-users'),
-                            onTotalTasksTap: _showAllPendingTasksDialog,
-                            onNewsFeedTap: () => Get.toNamed('/news'),
-                            onOnlineUsersTap: _navigateToChatUsers,
+                          // --- Enhanced Dashboard Cards ---
+                          child: EnhancedDashboardCardsWidget(
+                            onManageUsersTap: () {
+                              Get.find<SettingsController>().triggerFeedback();
+                              Get.toNamed('/manage-users');
+                            },
+                            onTotalTasksTap: () {
+                              Get.find<SettingsController>().triggerFeedback();
+                              _showAllPendingTasksDialog();
+                            },
+                            onNewsFeedTap: () {
+                              Get.find<SettingsController>().triggerFeedback();
+                              Get.toNamed('/news');
+                            },
+                            onOnlineUsersTap: () {
+                              Get.find<SettingsController>().triggerFeedback();
+                              Get.toNamed('/all-users-chat');
+                            },
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -1058,9 +1178,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                     isDark ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7) : Colors.black54,
                                 labelStyle: const TextStyle(
                                     fontWeight: FontWeight.w500, fontSize: 15),
+                                isScrollable: true,
                                 tabs: const [
                                   Tab(text: "Not Completed"),
                                   Tab(text: "Completed"),
+                                  Tab(text: "User Performance"),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -1089,6 +1211,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                       userCache: userCache,
                                       getUserNameAndRole: getUserNameAndRole,
                                     ),
+                                    const UserPerformanceTab(),
                                   ],
                                 ),
                               ),

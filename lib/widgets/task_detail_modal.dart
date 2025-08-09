@@ -357,21 +357,29 @@ class TaskDetailModal extends StatelessWidget {
             color: colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurfaceVariant,
-              fontSize: 14.sp,
+          Flexible(
+            flex: 2,
+            child: Text(
+              '$label: ',
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 14.sp,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Expanded(
+            flex: 3,
             child: Text(
               value,
               style: textTheme.bodyMedium?.copyWith(
                 color: valueColor ?? colorScheme.onSurface,
                 fontSize: 14.sp,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
