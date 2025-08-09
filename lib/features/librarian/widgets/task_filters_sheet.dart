@@ -108,6 +108,16 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
     );
     
     if (picked != null) {
+      // Validate date range
+      if (picked.start.isAfter(picked.end)) {
+        Get.snackbar(
+          'Invalid Date Range',
+          'Start date cannot be after end date',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+      
       setState(() {
         _filters = _filters.copyWith(
           startDate: picked.start,
@@ -142,10 +152,13 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
   }
   
   void _addTag(String tag) {
+    final trimmedTag = tag.trim();
+    if (trimmedTag.isEmpty) return;
+    
     setState(() {
       final tags = _filters.tags?.toList() ?? [];
-      if (!tags.contains(tag)) {
-        tags.add(tag);
+      if (!tags.any((existingTag) => existingTag.toLowerCase() == trimmedTag.toLowerCase())) {
+        tags.add(trimmedTag);
         _filters = _filters.copyWith(tags: tags);
       }
     });
@@ -285,21 +298,27 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today_outlined, size: 20),
+                            Icon(Icons.calendar_today_outlined, 
+                                 size: 20, 
+                                 color: theme.colorScheme.onSurface),
                             const SizedBox(width: 12),
                             Text(
                               dateRangeText,
-                              style: theme.textTheme.bodyMedium,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                              ),
                             ),
                             const Spacer(),
                             if (_filters.startDate != null || _filters.endDate != null)
                               IconButton(
-                                icon: const Icon(Icons.close, size: 18),
+                                icon: Icon(Icons.close, 
+                                          size: 18, 
+                                          color: theme.colorScheme.onSurface),
                                 onPressed: () {
                                   setState(() {
                                     _filters = _filters.copyWith(
-                                      startDate: null,
-                                      endDate: null,
+                                      clearStartDate: true,
+                                      clearEndDate: true,
                                     );
                                   });
                                 },
@@ -360,7 +379,10 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                         },
                         suggestionBuilder: (context, tag) {
                           return ListTile(
-                            title: Text(tag),
+                            title: Text(tag, 
+                                        style: TextStyle(
+                                          color: theme.colorScheme.onSurface,
+                                        )),
                             onTap: () => _addTag(tag),
                           );
                         },
@@ -371,6 +393,9 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                         },
                         decoration: InputDecoration(
                           hintText: 'Add tags...',
+                          hintStyle: TextStyle(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
@@ -478,7 +503,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       title,
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
     );
   }

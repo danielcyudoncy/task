@@ -138,7 +138,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
             Expanded(
               child: Text(
                 'Loading task details...',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style:  TextStyle(fontSize: 14),
               ),
             ),
           ],
@@ -252,7 +252,9 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                       context,
                       icon: Icons.archive_outlined,
                       label: 'Archived ${dateFormat.format(widget.task.archivedAt!.toLocal())}',
-                      color: Colors.purple,
+                      color: theme.brightness == Brightness.dark 
+                          ? Theme.of(context).colorScheme.tertiary.withOpacity(0.7)
+                : Theme.of(context).colorScheme.tertiary,
                     ),
                   ],
                 ],
@@ -337,7 +339,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final textColor = color ?? colorScheme.onSurfaceVariant;
+    final textColor = color ?? colorScheme.onSurface;
     
     return Tooltip(
       message: label,
@@ -439,12 +441,20 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
     
     if (isCameraman) {
       icon = Icons.videocam_rounded;
-      backgroundColor = Colors.blue.shade100;
-      textColor = Colors.blue.shade800;
+      backgroundColor = theme.brightness == Brightness.dark 
+          ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+            : Theme.of(context).colorScheme.primaryContainer;
+      textColor = theme.brightness == Brightness.dark 
+          ? Theme.of(context).colorScheme.onSurface
+            : Theme.of(context).colorScheme.primary;
     } else if (isDriver) {
       icon = Icons.directions_car_rounded;
-      backgroundColor = Colors.orange.shade100;
-      textColor = Colors.orange.shade800;
+      backgroundColor = theme.brightness == Brightness.dark 
+          ? Theme.of(context).colorScheme.secondary.withOpacity(0.3)
+            : Theme.of(context).colorScheme.secondaryContainer;
+      textColor = theme.brightness == Brightness.dark 
+          ? Theme.of(context).colorScheme.onSurface
+            : Theme.of(context).colorScheme.secondary;
     } else if (isLibrarian) {
       icon = Icons.library_books_rounded;
       backgroundColor = colorScheme.primaryContainer;
@@ -528,7 +538,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
         Icon(
           Icons.person_outline,
           size: 16,
-          color: theme.textTheme.bodySmall?.color,
+          color: theme.colorScheme.onSurface,
         ),
         const SizedBox(width: 6),
         Text(
@@ -612,17 +622,18 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
   }
   
   Color _getStatusColor(String status) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (status.toLowerCase()) {
       case 'completed':
-        return Colors.green;
+        return colorScheme.secondary;
       case 'in progress':
-        return Colors.blue;
+        return colorScheme.primary;
       case 'pending':
-        return Colors.orange;
+        return colorScheme.tertiary;
       case 'archived':
-        return Colors.purple;
+        return colorScheme.outline;
       default:
-        return Colors.grey;
+        return colorScheme.onSurfaceVariant;
     }
   }
 }

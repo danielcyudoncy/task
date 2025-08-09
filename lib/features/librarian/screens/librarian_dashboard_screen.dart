@@ -7,13 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/task_controller.dart';
-import 'package:task/controllers/auth_controller.dart';
 import 'package:task/features/librarian/widgets/task_list_view.dart';
 import 'package:task/features/librarian/widgets/task_filters_sheet.dart';
 import 'package:task/models/task_filters.dart';
 import 'package:task/models/task_status_filter.dart';
 import 'package:task/features/librarian/widgets/archive_stats_card.dart';
 import 'package:task/features/librarian/widgets/daily_task_stats_card.dart';
+import 'package:task/features/librarian/widgets/librarian_navbar.dart';
+import 'package:task/features/librarian/widgets/librarian_app_drawer.dart';
 import 'package:task/theme/app_durations.dart';
 import 'package:task/features/librarian/widgets/task_search_delegate.dart';
 import 'package:task/service/export_service.dart';
@@ -226,13 +227,13 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                leading: Icon(Icons.picture_as_pdf, color: Theme.of(context).colorScheme.error),
                 title: const Text('Export as PDF'),
                 onTap: () => Navigator.of(context).pop('pdf'),
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.table_chart, color: Colors.green),
+                leading: Icon(Icons.table_chart, color: Theme.of(context).colorScheme.secondary),
                 title: const Text('Export as CSV'),
                 onTap: () => Navigator.of(context).pop('csv'),
               ),
@@ -292,9 +293,9 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
       
       // Tags filter
       if (filters.tags?.isNotEmpty == true) {
-        if (!filters.tags!.any((tag) => 
+        if (task.tags.isEmpty || !filters.tags!.any((tag) => 
             task.tags.any((taskTag) => 
-                taskTag.toLowerCase() == tag.toLowerCase()))) {
+                taskTag.toLowerCase().trim() == tag.toLowerCase().trim()))) {
           return false;
         }
       }
@@ -307,7 +308,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
         }
         
         if (filters.endDate != null && 
-            task.timestamp.isAfter(filters.endDate!)) {
+            task.timestamp.isAfter(filters.endDate!.add(const Duration(days: 1)))) {
           return false;
         }
       }
@@ -340,43 +341,9 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
       backgroundColor: theme.brightness == Brightness.dark
           ? theme.canvasColor
           : colorScheme.primary,
+      drawer: const LibrarianAppDrawer(),
       appBar: AppBar(
         title: const Text('Welcome'),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: theme.brightness == Brightness.dark
-              ? colorScheme.primary
-              : colorScheme.onPrimary,
-          unselectedLabelColor: theme.brightness == Brightness.dark
-              ? colorScheme.onSurface.withOpacity(0.6)
-              : colorScheme.onPrimary.withOpacity(0.7),
-          indicatorColor: theme.brightness == Brightness.dark
-              ? colorScheme.primary
-              : colorScheme.onPrimary,
-          indicatorWeight: 3,
-          labelStyle: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-          tabs: const [
-            Tab(text: 'All Tasks'),
-            Tab(text: 'Completed'),
-            Tab(text: 'Pending'),
-          ],
-          onTap: (index) {
-            // Reset scroll position when changing tabs
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                0,
-                duration: AppDurations.mediumAnimation,
-                curve: Curves.easeOutCubic,
-              );
-            }
-            
-            // Haptic feedback
-            HapticFeedback.lightImpact();
-          },
-        ),
         actions: [
           // Clear search button (only show when search is active)
           Obx(() => _searchQuery.value.isNotEmpty
@@ -463,149 +430,162 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
                 ),
           ),
           
-          // Logout button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () {
-              Get.find<AuthController>().logout();
-            },
-          ),
-          
           const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        color: colorScheme.primary,
-        backgroundColor: colorScheme.surface,
-        strokeWidth: 2.5,
-        edgeOffset: 0,
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // Daily task stats card
-            const SliverToBoxAdapter(
-              child: DailyTaskStatsCard(),
-            ),
-            
-            // Archive stats card
-            SliverToBoxAdapter(
-              child: Obx(() {
-                final hasError = _archiveStatsError.value.isNotEmpty;
-                final hasData = _archiveStats.isNotEmpty && !_isLoading.value && !hasError;
-                
-                return AnimatedSwitcher(
-                  duration: AppDurations.mediumAnimation,
-                  child: ArchiveStatsCard(
-                    key: ValueKey(_showArchived.value),
-                    totalArchived: hasData ? _archiveStats['totalArchived'] ?? 0 : 0,
-                    archivedThisMonth: hasData ? _archiveStats['archivedThisMonth'] ?? 0 : 0,
-                    onToggleArchive: () => _showArchived.toggle(),
-                    showArchived: _showArchived.value,
-                    isLoading: _isLoading.value,
-                    error: hasError ? _archiveStatsError.value : null,
+      body: Column(
+        children: [
+          // Content area
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refreshData,
+              color: colorScheme.primary,
+              backgroundColor: colorScheme.surface,
+              strokeWidth: 2.5,
+              edgeOffset: 0,
+              triggerMode: RefreshIndicatorTriggerMode.anywhere,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // Daily task stats card
+                  const SliverToBoxAdapter(
+                    child: DailyTaskStatsCard(),
                   ),
-                );
-              }),
-            ),
-            
-            // Error message if any
-            Obx(() => _taskError.value.isNotEmpty
-                ? SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(12),
+                  
+                  // Archive stats card
+                  SliverToBoxAdapter(
+                    child: Obx(() {
+                      final hasError = _archiveStatsError.value.isNotEmpty;
+                      final hasData = _archiveStats.isNotEmpty && !_isLoading.value && !hasError;
+                      
+                      return AnimatedSwitcher(
+                        duration: AppDurations.mediumAnimation,
+                        child: ArchiveStatsCard(
+                          key: ValueKey(_showArchived.value),
+                          totalArchived: hasData ? _archiveStats['totalArchived'] ?? 0 : 0,
+                          archivedThisMonth: hasData ? _archiveStats['archivedThisMonth'] ?? 0 : 0,
+                          onToggleArchive: () => _showArchived.toggle(),
+                          showArchived: _showArchived.value,
+                          isLoading: _isLoading.value,
+                          error: hasError ? _archiveStatsError.value : null,
                         ),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Failed to load tasks',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: colorScheme.onErrorContainer,
-                                fontWeight: FontWeight.bold,
+                      );
+                    }),
+                  ),
+                  
+                  // Error message if any
+                  Obx(() => _taskError.value.isNotEmpty
+                      ? SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: colorScheme.errorContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Failed to load tasks',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      color: colorScheme.onErrorContainer,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _taskError.value,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onErrorContainer.withOpacity(0.8),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton.icon(
+                                    onPressed: _refreshData,
+                                    icon: const Icon(Icons.refresh, size: 16),
+                                    label: const Text('Retry'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: colorScheme.error,
+                                      foregroundColor: colorScheme.onError,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      textStyle: theme.textTheme.labelLarge,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _taskError.value,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onErrorContainer.withOpacity(0.8),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            ElevatedButton.icon(
-                              onPressed: _refreshData,
-                              icon: const Icon(Icons.refresh, size: 16),
-                              label: const Text('Retry'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colorScheme.error,
-                                foregroundColor: colorScheme.onError,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                textStyle: theme.textTheme.labelLarge,
-                              ),
-                            ),
-                          ],
+                          ),
+                        )
+                      : const SliverToBoxAdapter(),
+                  ),
+                  
+                  // Task list
+                  SliverFillRemaining(
+                    child: TabBarView(
+                      controller: _tabController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        // All tasks
+                        TaskListView(
+                          key: const ValueKey('all_tasks'),
+                          statusFilter: TaskStatusFilter.all,
+                          filters: _filters.value,
+                          searchQuery: _searchQuery.value,
+                          showArchived: _showArchived.value,
+                          scrollController: _scrollController,
+                          onError: (error) => _taskError.value = error,
                         ),
-                      ),
+                        
+                        // Completed tasks
+                        TaskListView(
+                          key: const ValueKey('completed_tasks'),
+                          statusFilter: TaskStatusFilter.completed,
+                          filters: _filters.value,
+                          searchQuery: _searchQuery.value,
+                          showArchived: _showArchived.value,
+                          scrollController: _scrollController,
+                          onError: (error) => _taskError.value = error,
+                        ),
+                        
+                        // Pending tasks
+                        TaskListView(
+                          key: const ValueKey('pending_tasks'),
+                          statusFilter: TaskStatusFilter.pending,
+                          filters: _filters.value,
+                          searchQuery: _searchQuery.value,
+                          showArchived: _showArchived.value,
+                          scrollController: _scrollController,
+                          onError: (error) => _taskError.value = error,
+                        ),
+                      ],
                     ),
-                  )
-                : const SliverToBoxAdapter(),
-            ),
-            
-            // Task list
-            SliverFillRemaining(
-              child: TabBarView(
-                controller: _tabController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  // All tasks
-                  TaskListView(
-                    key: const ValueKey('all_tasks'),
-                    statusFilter: TaskStatusFilter.all,
-                    filters: _filters.value,
-                    searchQuery: _searchQuery.value,
-                    showArchived: _showArchived.value,
-                    scrollController: _scrollController,
-                    onError: (error) => _taskError.value = error,
-                  ),
-                  
-                  // Completed tasks
-                  TaskListView(
-                    key: const ValueKey('completed_tasks'),
-                    statusFilter: TaskStatusFilter.completed,
-                    filters: _filters.value,
-                    searchQuery: _searchQuery.value,
-                    showArchived: _showArchived.value,
-                    scrollController: _scrollController,
-                    onError: (error) => _taskError.value = error,
-                  ),
-                  
-                  // Pending tasks
-                  TaskListView(
-                    key: const ValueKey('pending_tasks'),
-                    statusFilter: TaskStatusFilter.pending,
-                    filters: _filters.value,
-                    searchQuery: _searchQuery.value,
-                    showArchived: _showArchived.value,
-                    scrollController: _scrollController,
-                    onError: (error) => _taskError.value = error,
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          
+          // Bottom navigation bar
+          LibrarianNavbar(
+            tabController: _tabController,
+            onTabChanged: () {
+              // Reset scroll position when changing tabs
+              if (_scrollController.hasClients) {
+                _scrollController.animateTo(
+                  0,
+                  duration: AppDurations.mediumAnimation,
+                  curve: Curves.easeOutCubic,
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }
