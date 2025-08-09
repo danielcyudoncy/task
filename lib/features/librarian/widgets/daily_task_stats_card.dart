@@ -262,7 +262,7 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
             final hasNotifications = _notificationService.hasNotifications;
             final assignedCount = _notificationService.todayAssignedCount.value;
             final completedCount = _notificationService.todayCompletedCount.value;
-            final pendingCount = assignedCount - completedCount;
+            final pendingCount = _notificationService.todayPendingCount.value;
             final completionRate = _notificationService.completionRate;
             
             return AnimatedBuilder(
