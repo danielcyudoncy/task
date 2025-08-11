@@ -101,7 +101,7 @@ class ManageUsersScreen extends StatelessWidget {
                       crossAxisCount: crossAxisCount,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: isLargeScreen ? 2.2 : 1.7,
+                      childAspectRatio: isLargeScreen ? 2.5 : 1.8,
                     ),
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: users.length,
@@ -120,11 +120,11 @@ class ManageUsersScreen extends StatelessWidget {
                             ? theme.colorScheme.surface
                             : AppColors.primaryColor,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           child: Row(
                             children: [
                               CircleAvatar(
-                                radius: 28,
+                                radius: 24,
                                 backgroundColor: theme.brightness == Brightness.dark
                                     ? theme.colorScheme.primary
                                     : theme.colorScheme.onPrimary,
@@ -147,19 +147,23 @@ class ManageUsersScreen extends StatelessWidget {
                                   children: [
                                     Row(
                                       children: [
-                                        Text(
-                                          userName,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16.sp * textScale,
-                                            color: theme.brightness == Brightness.dark
-                                                ? theme.colorScheme.onSurface
-                                                : theme.colorScheme.onPrimary,
+                                        Flexible(
+                                          child: Text(
+                                            userName,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16.sp * textScale,
+                                              color: theme.brightness == Brightness.dark
+                                                  ? theme.colorScheme.onSurface
+                                                  : theme.colorScheme.onPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
                                           ),
                                         ),
                                         if (isCurrentUser)
                                           Padding(
-                                            padding: const EdgeInsets.only(left: 8.0),
+                                            padding: const EdgeInsets.only(left: 6.0),
                                             child: Chip(
                                               label: const Text('You'),
                                               backgroundColor: theme.brightness == Brightness.dark
@@ -176,29 +180,36 @@ class ManageUsersScreen extends StatelessWidget {
                                           ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
                                     Text(
                                       userEmail,
                                       style: TextStyle(
                                         color: theme.brightness == Brightness.dark
                                             ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
                                             : theme.colorScheme.onPrimary.withValues(alpha: 0.85),
-                                        fontSize: 13.sp * textScale,
+                                        fontSize: 11.sp * textScale,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
-                                        Chip(
-                                          label: Text(userRole),
-                                          backgroundColor: theme.colorScheme.primary,
-                                          labelStyle: TextStyle(
-                                            color: theme.brightness == Brightness.dark
-                                                ? theme.colorScheme.onPrimary
-                                                : theme.colorScheme.onPrimary,
-                                            fontWeight: FontWeight.bold,
+                                        Flexible(
+                                          child: Chip(
+                                            label: Text(
+                                              userRole,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            backgroundColor: theme.colorScheme.primary,
+                                            labelStyle: TextStyle(
+                                              color: theme.brightness == Brightness.dark
+                                                  ? theme.colorScheme.onPrimary
+                                                  : theme.colorScheme.onPrimary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            visualDensity: VisualDensity.compact,
                                           ),
-                                          visualDensity: VisualDensity.compact,
                                         ),
                                       ],
                                     ),

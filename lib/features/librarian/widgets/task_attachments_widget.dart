@@ -475,9 +475,10 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
   Future<void> _openAttachment(String url) async {
     try {
       final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
+      if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView,
+        browserConfiguration: const BrowserConfiguration(
+          showTitle: true,
+        ))) {
         throw Exception('Could not launch URL');
       }
     } catch (e) {

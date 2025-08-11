@@ -8,7 +8,10 @@ class TVCCard extends StatelessWidget {
 
   void _launchURL() async {
     final uri = Uri.parse('https://www.tvcnews.tv');
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView,
+        browserConfiguration: const BrowserConfiguration(
+          showTitle: true,
+        ))) {
       throw 'Could not launch TVC News';
     }
   }

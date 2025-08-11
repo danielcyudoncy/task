@@ -8,7 +8,10 @@ class CNNCard extends StatelessWidget {
 
   void _launchURL() async {
     final uri = Uri.parse('https://www.cnn.com');
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView,
+        browserConfiguration: const BrowserConfiguration(
+          showTitle: true,
+        ))) {
       throw 'Could not launch CNN News';
     }
   }

@@ -472,6 +472,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     value: _selectedCategory,
+                                    isExpanded: true,
                                     decoration: InputDecoration(
                                       labelText: "Category",
                                       prefixIcon: const Icon(Icons.category_rounded),
@@ -488,13 +489,24 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                         color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
+                                    menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
                                     items: _categories
                                         .map((category) => DropdownMenuItem<String>(
                                               value: category,
-                                              child: Text(
-                                                category,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(fontSize: 14.sp),
+                                              child: Container(
+                                                width: double.infinity,
+                                                constraints: BoxConstraints(
+                                                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                                ),
+                                                child: Text(
+                                                  category,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: isTablet ? 2 : 1,
+                                                  style: TextStyle(
+                                                    fontSize: isTablet ? 14.sp : 13.sp,
+                                                    fontFamily: 'Raleway',
+                                                  ),
+                                                ),
                                               ),
                                             ))
                                         .toList(),
