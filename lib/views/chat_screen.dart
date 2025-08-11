@@ -338,79 +338,84 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
         title: Row(
           children: [
-            GestureDetector(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => DraggableScrollableSheet(
-                    initialChildSize: 0.55,
-                    minChildSize: 0.4,
-                    maxChildSize: 0.85,
-                    expand: false,
-                    builder: (context, scrollController) => SingleChildScrollView(
-                      controller: scrollController,
-                      child: UserDetailsSheet(user: widget.otherUser),
-                    ),
-                  ),
-                );
-              },
-              child: Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDarkMode ? colorScheme.onPrimary : colorScheme.primary,
-                        width: 2,
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => DraggableScrollableSheet(
+                      initialChildSize: 0.55,
+                      minChildSize: 0.4,
+                      maxChildSize: 0.85,
+                      expand: false,
+                      builder: (context, scrollController) => SingleChildScrollView(
+                        controller: scrollController,
+                        child: UserDetailsSheet(user: widget.otherUser),
                       ),
                     ),
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.white,
-                      backgroundImage: widget.receiverAvatar.isNotEmpty
-                          ? NetworkImage(widget.receiverAvatar)
-                          : null,
-                      child: widget.receiverAvatar.isEmpty
-                          ? Text(
-                              widget.receiverName.isNotEmpty
-                                  ? widget.receiverName[0].toUpperCase()
-                                  : '?',
-                              style: TextStyle(
-                                color: colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.receiverName,
-                        style: textTheme.titleMedium?.copyWith(
-                          color: isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
+                  );
+                },
+                child: Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDarkMode ? colorScheme.onPrimary : colorScheme.primary,
+                          width: 2,
                         ),
                       ),
-                      if (_isOtherUserTyping)
-                        Text(
-                          'typing'.tr,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: (isDarkMode
-                                    ? colorScheme.onSurface
-                                    : colorScheme.onPrimary)
-                                .withAlpha((0.7 * 255).round()),
-                            fontStyle: FontStyle.italic,
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.white,
+                        backgroundImage: widget.receiverAvatar.isNotEmpty
+                            ? NetworkImage(widget.receiverAvatar)
+                            : null,
+                        child: widget.receiverAvatar.isEmpty
+                            ? Text(
+                                widget.receiverName.isNotEmpty
+                                    ? widget.receiverName[0].toUpperCase()
+                                    : '?',
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.receiverName,
+                            style: textTheme.titleMedium?.copyWith(
+                              color: isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                    ],
-                  ),
-                ],
+                          if (_isOtherUserTyping)
+                            Text(
+                              'typing'.tr,
+                              style: textTheme.labelSmall?.copyWith(
+                                color: (isDarkMode
+                                        ? colorScheme.onSurface
+                                        : colorScheme.onPrimary)
+                                    .withAlpha((0.7 * 255).round()),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

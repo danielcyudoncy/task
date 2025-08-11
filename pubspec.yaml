@@ -76,8 +76,8 @@ dependencies:
   auto_size_text: ^3.0.0
   local_auth: ^2.1.7
   rxdart: ^0.28.0
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  sqflite: ^2.3.0
+  path: ^1.8.3
   infinite_scroll_pagination: ^5.1.0
   share_plus: ^11.0.0
   pdf: ^3.11.3
@@ -95,8 +95,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  isar_generator: ^3.1.0+1
-  build_runner: ^2.4.13
+  # Removed isar_generator and build_runner - no longer needed with SQLite
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
