@@ -38,7 +38,14 @@ class _NewsScreenState extends State<NewsScreen> {
     try {
       final Uri uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        // Use inAppBrowserView to keep the app in memory and prevent restarts
+        await launchUrl(
+          uri, 
+          mode: LaunchMode.inAppBrowserView,
+          browserConfiguration: const BrowserConfiguration(
+            showTitle: true,
+          ),
+        );
       } else {
         // Use ScaffoldMessenger instead of Get.snackbar for better reliability
         if (mounted) {
@@ -52,6 +59,7 @@ class _NewsScreenState extends State<NewsScreen> {
         }
       }
     } catch (e) {
+      // Show error message if in-app browser fails
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
