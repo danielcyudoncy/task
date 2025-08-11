@@ -11,12 +11,12 @@ import '../service/firebase_service.dart';
 import '../utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
 import 'package:task/service/fcm_service.dart';
-import '../service/isar_task_service.dart';
+import '../service/task_service.dart';
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
   final AuthController authController = Get.find<AuthController>();
-  late final IsarTaskService isarTaskService;
+  late final TaskService taskService;
 
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
@@ -64,7 +64,7 @@ class TaskController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    isarTaskService = Get.find<IsarTaskService>();
+    taskService = Get.find<TaskService>();
     // Delay initialization to ensure proper setup
     Future.delayed(const Duration(milliseconds: 300), () async {
       if (Get.isRegistered<TaskController>()) {
@@ -230,7 +230,8 @@ class TaskController extends GetxController {
         taskTitleCache[doc.id] = taskTitle;
 
         // Use Task.fromMap to ensure all fields are included
-        final task = Task.fromMap(taskData, doc.id);
+        taskData['taskId'] = doc.id;
+        final task = Task.fromMap(taskData);
         debugPrint('TaskController: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         pageTasks.add(task);
       }
@@ -299,7 +300,8 @@ class TaskController extends GetxController {
         taskTitleCache[doc.id] = taskTitle;
 
         // Use Task.fromMap to ensure all fields are included
-        final task = Task.fromMap(taskData, doc.id);
+        taskData['taskId'] = doc.id;
+            final task = Task.fromMap(taskData);
         debugPrint('TaskController: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         pageTasks.add(task);
       }
@@ -665,7 +667,8 @@ class TaskController extends GetxController {
           for (var doc in snapshot.docs) {
             var taskData = doc.data() as Map<String, dynamic>;
             // Use Task.fromMap for robust mapping
-            final task = Task.fromMap(taskData, doc.id);
+            taskData['taskId'] = doc.id;
+          final task = Task.fromMap(taskData);
             debugPrint('fetchTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}, priority=${task.priority}, assignedReporter=${task.assignedReporter}, assignedCameraman=${task.assignedCameraman}');
             updatedTasks.add(task);
           }
@@ -903,7 +906,8 @@ class TaskController extends GetxController {
       }
       
       final taskData = taskDoc.data()!;
-      final task = Task.fromMap(taskData, taskId);
+      taskData['taskId'] = taskId;
+      final task = Task.fromMap(taskData);
       
       // Check if user is assigned to this task
       if (!task.assignedUserIds.contains(userId)) {
@@ -1011,7 +1015,8 @@ class TaskController extends GetxController {
       return await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
         // Use Task.fromMap for consistent mapping
-        final task = Task.fromMap(data, doc.id);
+        data['taskId'] = doc.id;
+      final task = Task.fromMap(data);
         debugPrint('getAllTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }));
@@ -1033,7 +1038,8 @@ class TaskController extends GetxController {
       return await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
         // Use Task.fromMap for consistent mapping
-        final task = Task.fromMap(data, doc.id);
+        data['taskId'] = doc.id;
+        final task = Task.fromMap(data);
         debugPrint('getAssignedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }));
@@ -1055,7 +1061,8 @@ class TaskController extends GetxController {
       return await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
         // Use Task.fromMap for consistent mapping
-        final task = Task.fromMap(data, doc.id);
+        data['taskId'] = doc.id;
+        final task = Task.fromMap(data);
         debugPrint('getMyCreatedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }));
@@ -1076,7 +1083,8 @@ class TaskController extends GetxController {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         // Use Task.fromMap for consistent mapping
-        final task = Task.fromMap(data, doc.id);
+        data['taskId'] = doc.id;
+        final task = Task.fromMap(data);
         debugPrint('getTaskById: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }
@@ -1298,7 +1306,11 @@ class TaskController extends GetxController {
         debugPrint('fetchRelevantTasksForUser: added assignedTo task ${doc.id}');
       }
       // Convert to Task objects
-      final relevantTasks = allDocs.entries.map((e) => Task.fromMap(e.value, e.key)).toList();
+      final relevantTasks = allDocs.entries.map((e) {
+        final data = e.value;
+        data['taskId'] = e.key;
+        return Task.fromMap(data);
+      }).toList();
       debugPrint('fetchRelevantTasksForUser: final merged tasks count = ${relevantTasks.length}');
       tasks.assignAll(relevantTasks);
       errorMessage.value = '';
@@ -1315,21 +1327,21 @@ class TaskController extends GetxController {
   Future<void> addTaskLocal(Task task) async {
     task.lastModified = DateTime.now();
     task.syncStatus = 'pending';
-    await isarTaskService.addTask(task);
+    await taskService.addTask(task);
   }
 
   Future<List<Task>> getAllTasksLocal() async {
-    return await isarTaskService.getAllTasks();
+    return await taskService.getAllTasks();
   }
 
   Future<void> updateTaskLocal(Task task) async {
     task.lastModified = DateTime.now();
     task.syncStatus = 'pending';
-    await isarTaskService.updateTask(task);
+    await taskService.updateTask(task);
   }
 
   Future<void> deleteTaskLocal(String taskId) async {
-    await isarTaskService.deleteTask(taskId);
+    await taskService.deleteTask(taskId);
   }
 
   // --- OVERRIDE loadInitialTasks to use Isar for instant load, then sync from Firebase ---
@@ -1357,11 +1369,12 @@ class TaskController extends GetxController {
           .get();
       final firebaseTasks = snapshot.docs.map((doc) {
         final data = doc.data();
-        return Task.fromMap(data, doc.id);
+        data['taskId'] = doc.id;
+        return Task.fromMap(data);
       }).toList();
       // Update Isar with latest from Firebase, with conflict resolution
       for (final remoteTask in firebaseTasks) {
-        final localTask = await isarTaskService.getTaskById(remoteTask.taskId);
+        final localTask = await taskService.getTaskById(remoteTask.taskId);
         if (localTask == null) {
           // Not in local DB, add it
           remoteTask.syncStatus = 'synced';

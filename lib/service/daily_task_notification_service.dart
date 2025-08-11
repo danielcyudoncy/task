@@ -310,7 +310,8 @@ class DailyTaskNotificationService extends GetxService {
         }
         
         if (assignedToday) {
-          final task = Task.fromMap(data, doc.id);
+          data['taskId'] = doc.id;
+        final task = Task.fromMap(data);
           // Check if user is assigned to this task
           if (task.assignedUserIds.contains(userId)) {
             tasks.add(task);

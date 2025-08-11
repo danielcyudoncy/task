@@ -1,20 +1,19 @@
 // models/task_model.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:isar/isar.dart';
-part 'task_model.g.dart';
+import 'dart:convert';
 
 DateTime? parseDate(dynamic value) {
   if (value == null) return null;
   if (value is DateTime) return value;
   if (value is Timestamp) return value.toDate();
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   if (value is String) return DateTime.tryParse(value);
   return null;
 }
 
-@Collection()
 class Task {
-  Id isarId = Isar.autoIncrement;
+  int? id; // SQLite auto-increment primary key
 
   late String taskId;
   late String title;
@@ -142,12 +141,13 @@ class Task {
       this.completedByUserIds = const [],
       this.userCompletionTimestamps = const {}});
 
-  factory Task.fromMap(Map<String, dynamic> map, String id) {
+  factory Task.fromMap(Map<String, dynamic> map) {
+    String taskId = map['taskId'] ?? map['id']?.toString() ?? '';
     debugPrint(
         'fromMap creator data: createdBy=${map['createdBy']}, createdByName=${map['createdByName']}');
 
     return Task.full(
-      map['taskId'] ?? id,
+      taskId,
       map['title'] ?? '',
       map['description'] ?? '',
       map['createdByName'] ??
@@ -158,7 +158,7 @@ class Task {
       map['assignedDriverName'] ?? map['assignedDriver'],
       map['assignedLibrarian'],
       map['status'] ?? '',
-      List<String>.from(map['comments'] ?? []),
+      _parseStringList(map['comments']),
       parseDate(map['timestamp']) ?? DateTime.now(),
       map['assignedTo'],
       parseDate(map['assignmentTimestamp']),
@@ -169,7 +169,7 @@ class Task {
       map['assignedLibrarianId'],
       map['creatorAvatar'],
       map['category'],
-      List<String>.from(map['tags'] ?? []),
+      _parseStringList(map['tags']),
       parseDate(map['dueDate']),
       map['priority'],
       lastModified: parseDate(map['lastModified']),
@@ -178,16 +178,13 @@ class Task {
       archivedBy: map['archivedBy'],
       archiveReason: map['archiveReason'],
       archiveLocation: map['archiveLocation'],
-      attachmentUrls: List<String>.from(map['attachmentUrls'] ?? []),
-      attachmentNames: List<String>.from(map['attachmentNames'] ?? []),
-      attachmentTypes: List<String>.from(map['attachmentTypes'] ?? []),
-      attachmentSizes: List<int>.from(map['attachmentSizes'] ?? []),
+      attachmentUrls: _parseStringList(map['attachmentUrls']),
+      attachmentNames: _parseStringList(map['attachmentNames']),
+      attachmentTypes: _parseStringList(map['attachmentTypes']),
+      attachmentSizes: _parseIntList(map['attachmentSizes']),
       lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
-      completedByUserIds: List<String>.from(map['completedByUserIds'] ?? []),
-      userCompletionTimestamps: Map<String, DateTime>.from(
-        (map['userCompletionTimestamps'] as Map<String, dynamic>? ?? {})
-            .map((key, value) => MapEntry(key, parseDate(value) ?? DateTime.now())),
-      ),
+      completedByUserIds: _parseStringList(map['completedByUserIds']),
+      userCompletionTimestamps: _parseTimestampMap(map['userCompletionTimestamps']),
     );
   }
   
@@ -272,6 +269,7 @@ class Task {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'taskId': taskId,
       'title': title,
       'description': description,
@@ -281,10 +279,10 @@ class Task {
       'assignedDriver': assignedDriver,
       'assignedLibrarian': assignedLibrarian,
       'status': status,
-      'comments': comments,
-      'timestamp': timestamp,
+      'comments': jsonEncode(comments),
+      'timestamp': timestamp.millisecondsSinceEpoch,
       'assignedTo': assignedTo,
-      'assignmentTimestamp': assignmentTimestamp,
+      'assignmentTimestamp': assignmentTimestamp?.millisecondsSinceEpoch,
       'createdById': createdById,
       'assignedReporterId': assignedReporterId,
       'assignedCameramanId': assignedCameramanId,
@@ -292,23 +290,68 @@ class Task {
       'assignedLibrarianId': assignedLibrarianId,
       'creatorAvatar': creatorAvatar,
       'category': category,
-      'tags': tags,
-      'dueDate': dueDate,
+      'tags': jsonEncode(tags),
+      'dueDate': dueDate?.millisecondsSinceEpoch,
       'priority': priority,
-      'lastModified': lastModified ?? DateTime.now(),
+      'lastModified': (lastModified ?? DateTime.now()).millisecondsSinceEpoch,
       'syncStatus': syncStatus,
-      'archivedAt': archivedAt,
+      'archivedAt': archivedAt?.millisecondsSinceEpoch,
       'archivedBy': archivedBy,
       'archiveReason': archiveReason,
       'archiveLocation': archiveLocation,
-      'attachmentUrls': attachmentUrls,
-      'attachmentNames': attachmentNames,
-      'attachmentTypes': attachmentTypes,
-      'attachmentSizes': attachmentSizes,
-      'lastAttachmentAdded': lastAttachmentAdded,
-      'completedByUserIds': completedByUserIds,
-      'userCompletionTimestamps': userCompletionTimestamps.map((key, value) => MapEntry(key, value)),
+      'attachmentUrls': jsonEncode(attachmentUrls),
+      'attachmentNames': jsonEncode(attachmentNames),
+      'attachmentTypes': jsonEncode(attachmentTypes),
+      'attachmentSizes': jsonEncode(attachmentSizes),
+      'lastAttachmentAdded': lastAttachmentAdded?.millisecondsSinceEpoch,
+      'completedByUserIds': jsonEncode(completedByUserIds),
+      'userCompletionTimestamps': jsonEncode(userCompletionTimestamps.map((key, value) => MapEntry(key, value.millisecondsSinceEpoch))),
     }..removeWhere((key, value) => value == null);
+  }
+
+  // Helper methods for SQLite data parsing
+  static List<String> _parseStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is String) {
+      try {
+        return List<String>.from(jsonDecode(value));
+      } catch (e) {
+        return [];
+      }
+    }
+    if (value is List) return List<String>.from(value);
+    return [];
+  }
+
+  static List<int> _parseIntList(dynamic value) {
+    if (value == null) return [];
+    if (value is String) {
+      try {
+        return List<int>.from(jsonDecode(value));
+      } catch (e) {
+        return [];
+      }
+    }
+    if (value is List) return List<int>.from(value);
+    return [];
+  }
+
+  static Map<String, DateTime> _parseTimestampMap(dynamic value) {
+    if (value == null) return {};
+    if (value is String) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(value);
+        return decoded.map((key, value) => MapEntry(key, DateTime.fromMillisecondsSinceEpoch(value as int)));
+      } catch (e) {
+        return {};
+      }
+    }
+    if (value is Map) {
+      return Map<String, DateTime>.from(
+        value.map((key, value) => MapEntry(key.toString(), parseDate(value) ?? DateTime.now()))
+      );
+    }
+    return {};
   }
 
   Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache,
