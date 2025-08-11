@@ -175,7 +175,10 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                           onTap: () {
                             final url = article['url'];
                             if (url != null && url.toString().isNotEmpty) {
-                              launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                              launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView,
+          browserConfiguration: const BrowserConfiguration(
+            showTitle: true,
+          ));
                             }
                           },
                         )
@@ -187,7 +190,10 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                           onTap: () {
                             final url = article['url'];
                             if (url != null && url.toString().isNotEmpty) {
-                              launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                              launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView,
+            browserConfiguration: const BrowserConfiguration(
+              showTitle: true,
+            ));
                             }
                           },
                         ),
@@ -208,7 +214,10 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                         timeAgo: '',
                         onTap: () {
                           if (rssUrlLink != null) {
-                            launchUrl(Uri.parse(rssUrlLink), mode: LaunchMode.externalApplication);
+                            launchUrl(Uri.parse(rssUrlLink), mode: LaunchMode.inAppBrowserView,
+            browserConfiguration: const BrowserConfiguration(
+              showTitle: true,
+            ));
                           }
                         },
                       );

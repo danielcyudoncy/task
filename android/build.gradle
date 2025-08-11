@@ -5,10 +5,23 @@ allprojects {
     }
 }
 
+// Fix for android:attr/lStar error with isar_flutter_libs and API 35
+subprojects { subproject ->
+    if (subproject.name == 'isar_flutter_libs') {
+        subproject.afterEvaluate {
+            if (subproject.hasProperty('android')) {
+                subproject.android {
+                    compileSdkVersion 34
+                    buildToolsVersion "34.0.0"
+                }
+            }
+        }
+    }
+}
+
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-    project.evaluationDependsOn(":app")
 }
 
 tasks.register("clean", Delete) {

@@ -38,7 +38,10 @@ class UrlLauncherHelper {
         debugPrint('UrlLauncherHelper: Attempting external launch directly...');
         launched = await launchUrl(
           uri, 
-          mode: LaunchMode.externalApplication,
+          mode: LaunchMode.inAppBrowserView,
+      browserConfiguration: const BrowserConfiguration(
+        showTitle: true,
+      ),
         );
         debugPrint('UrlLauncherHelper: External launch result: $launched');
       } catch (e) {
@@ -81,7 +84,10 @@ class UrlLauncherHelper {
         try {
           debugPrint('UrlLauncherHelper: Trying with simplified URL approach...');
           final simpleUri = Uri.parse(cleanUrl.replaceAll(' ', '%20'));
-          launched = await launchUrl(simpleUri, mode: LaunchMode.externalApplication);
+          launched = await launchUrl(simpleUri, mode: LaunchMode.inAppBrowserView,
+      browserConfiguration: const BrowserConfiguration(
+        showTitle: true,
+      ));
           debugPrint('UrlLauncherHelper: Simplified URL launch result: $launched');
         } catch (e) {
           debugPrint('UrlLauncherHelper: Simplified URL launch failed: $e');
@@ -94,7 +100,10 @@ class UrlLauncherHelper {
             // Try with a different mode that might work better on Android
             launched = await launchUrl(
               uri,
-              mode: LaunchMode.externalNonBrowserApplication,
+              mode: LaunchMode.inAppBrowserView,
+      browserConfiguration: const BrowserConfiguration(
+        showTitle: true,
+      ),
             );
             debugPrint('UrlLauncherHelper: Android-specific launch result: $launched');
           } catch (e) {

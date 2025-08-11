@@ -8,7 +8,10 @@ class AfricaNewsCard extends StatelessWidget {
 
   void _launchURL() async {
     final uri = Uri.parse('https://www.africanews.com');
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView,
+        browserConfiguration: const BrowserConfiguration(
+          showTitle: true,
+        ))) {
       throw 'Could not launch BBC News';
     }
   }

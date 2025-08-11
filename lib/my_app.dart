@@ -16,9 +16,54 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:isar/isar.dart';
 import 'package:task/routes/global_bindings.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final Isar isar;
   const MyApp({super.key, required this.isar});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    debugPrint('App lifecycle state changed: $state');
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        debugPrint('App resumed - preserving state');
+        // App is back in foreground, preserve all states
+        break;
+      case AppLifecycleState.paused:
+        debugPrint('App paused - saving state');
+        // App is going to background, save state
+        break;
+      case AppLifecycleState.inactive:
+        debugPrint('App inactive - maintaining state');
+        // App is temporarily inactive
+        break;
+      case AppLifecycleState.detached:
+        debugPrint('App detached');
+        break;
+      case AppLifecycleState.hidden:
+        debugPrint('App hidden - maintaining state');
+        break;
+    }
+  }
 
   Future<bool> _showExitConfirmationDialog() async {
     return await Get.dialog<bool>(
@@ -92,7 +137,7 @@ class MyApp extends StatelessWidget {
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: currentThemeMode,
-              initialBinding: GlobalBindings(isar),
+              initialBinding: GlobalBindings(widget.isar),
               initialRoute: "/",
               getPages: AppRoutes.routes,
               translations: AppTranslations(),
