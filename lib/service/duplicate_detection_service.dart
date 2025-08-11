@@ -1,17 +1,17 @@
 // service/duplicate_detection_service.dart
 import 'package:get/get.dart';
 import 'package:task/models/task_model.dart';
-import 'package:task/service/isar_task_service.dart';
+import 'package:task/service/task_service.dart';
 
 class DuplicateDetectionService extends GetxService {
   static DuplicateDetectionService get to => Get.find();
   
-  final IsarTaskService _isarTaskService;
+  final TaskService _taskService;
   bool _isInitialized = false;
   
   DuplicateDetectionService({
-    IsarTaskService? isarTaskService,
-  }) : _isarTaskService = isarTaskService ?? Get.find<IsarTaskService>();
+    TaskService? taskService,
+  }) : _taskService = taskService ?? Get.find<TaskService>();
 
   /// Initializes the duplicate detection service
   Future<void> initialize() async {
@@ -42,7 +42,7 @@ class DuplicateDetectionService extends GetxService {
 
     try {
       // Get all tasks from local storage first (faster)
-      final localTasks = await _isarTaskService.getAllTasks();
+      final localTasks = await _taskService.getAllTasks();
       final potentialDuplicates = <Task>[];
 
       for (final task in localTasks) {
@@ -99,7 +99,7 @@ class DuplicateDetectionService extends GetxService {
       final normalizedDescription = _normalizeText(description);
 
       // Check local storage first
-      final localTasks = await _isarTaskService.getAllTasks();
+      final localTasks = await _taskService.getAllTasks();
       final exactDuplicates = localTasks.where((task) {
         final taskTitle = _normalizeText(task.title);
         final taskDescription = _normalizeText(task.description);
@@ -284,7 +284,7 @@ class DuplicateDetectionService extends GetxService {
     }
 
     try {
-      final allTasks = await _isarTaskService.getAllTasks();
+      final allTasks = await _taskService.getAllTasks();
       final duplicateGroups = <String, List<Task>>{};
       final processedTasks = <String>{};
 

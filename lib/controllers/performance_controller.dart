@@ -30,7 +30,11 @@ class PerformanceController extends GetxController {
       
       // Fetch all tasks
       final tasksSnapshot = await _firestore.collection('tasks').get();
-      final tasks = tasksSnapshot.docs.map((doc) => Task.fromMap(doc.data(), doc.id)).toList();
+      final tasks = tasksSnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['taskId'] = doc.id;
+        return Task.fromMap(data);
+      }).toList();
       
       List<Map<String, dynamic>> performanceList = [];
       double totalCompletionRate = 0.0;
@@ -38,7 +42,7 @@ class PerformanceController extends GetxController {
       for (var userDoc in users) {
         final userData = userDoc.data();
         final userId = userDoc.id;
-        final userName = userData['name'] ?? 'Unknown';
+        final userName = userData['fullName'] ?? userData['fullname'] ?? userData['name'] ?? 'Unknown User';
         final userRole = userData['role'] ?? 'Unknown';
         final userEmail = userData['email'] ?? '';
         
@@ -50,6 +54,7 @@ class PerformanceController extends GetxController {
           'userName': userName,
           'userRole': userRole,
           'userEmail': userEmail,
+          'photoUrl': userData['photoUrl'] ?? '',
           'completedTasks': userMetrics['completedTasks'],
           'totalAssignedTasks': userMetrics['totalAssignedTasks'],
           'completionRate': userMetrics['completionRate'],

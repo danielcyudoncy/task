@@ -9,10 +9,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
+// Removed Isar imports - using SQLite now
 import 'package:task/service/export_service.dart';
-import '../models/task_model.dart';
 import '../my_app.dart';
 
 // --- Ensure all your controllers and services are imported ---
@@ -29,7 +27,7 @@ import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/user_controller.dart';
 import 'package:task/controllers/wallpaper_controller.dart';
 import 'package:task/firebase_options.dart';
-import 'package:task/service/mock_user_deletion_service.dart';
+
 import 'package:task/service/user_deletion_service.dart';
 import 'package:task/service/cloud_function_user_deletion_service.dart';
 import 'package:task/service/news_service.dart';
@@ -43,7 +41,7 @@ import 'package:task/service/version_control_service.dart';
 import 'package:task/service/pdf_export_service.dart';
 import 'package:task/service/duplicate_detection_service.dart';
 import 'package:task/service/access_control_service.dart';
-import 'package:task/service/isar_task_service.dart';
+import 'package:task/service/task_service.dart';
 import 'package:task/service/firebase_messaging_service.dart';
 import 'package:task/service/daily_task_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -111,18 +109,11 @@ Future<void> bootstrapApp() async {
 
     debugPrint("🚀 BOOTSTRAP: Skipping Supabase initialization - using Firebase Storage");
 
-    // Step 2: Open Isar and register IsarTaskService BEFORE any controller
-    // Use different initialization for web vs native platforms
-    late final Isar isar;
-    if (kIsWeb) {
-      // Web doesn't need a directory path
-      isar = await Isar.open([TaskSchema], directory: '');
-    } else {
-      // Native platforms need a directory path
-      final dir = await getApplicationDocumentsDirectory();
-      isar = await Isar.open([TaskSchema], directory: dir.path);
-    }
-    Get.put(IsarTaskService(isar), permanent: true);
+    // Step 2: Initialize SQLite TaskService
+    debugPrint("🚀 BOOTSTRAP: Initializing SQLite TaskService");
+    final taskService = TaskService();
+    Get.put(taskService, permanent: true);
+    debugPrint("🚀 BOOTSTRAP: SQLite TaskService initialized");
 
     // Step 3: Initialize services and controllers with no dependencies
     debugPrint("🚀 BOOTSTRAP: Initializing audio player");
@@ -228,12 +219,8 @@ Future<void> bootstrapApp() async {
       rethrow;
     }
     
-    debugPrint("🚀 BOOTSTRAP: Putting UserDeletionService (mock or real)");
-    if (kReleaseMode) {
-      Get.put<UserDeletionService>(CloudFunctionUserDeletionService(), permanent: true);
-    } else {
-      Get.put<UserDeletionService>(MockUserDeletionService(), permanent: true);
-    }
+    debugPrint("🚀 BOOTSTRAP: Putting UserDeletionService");
+    Get.put<UserDeletionService>(CloudFunctionUserDeletionService(), permanent: true);
     debugPrint("🚀 BOOTSTRAP: Putting NewsService");
     Get.put(NewsService(), permanent: true); // News service for real-time news
     
@@ -302,8 +289,7 @@ Future<void> bootstrapApp() async {
     debugPrint('🚀 BOOTSTRAP: Performing post-initialization actions...');
     debugPrint('🚀 BOOTSTRAP: Skipping complex post-initialization to prevent issues');
 
-    debugPrint('🚀 BOOTSTRAP: Validating mock usage');
-    _validateMockUsage();
+
 
     // Step 7: Launch the app
     debugPrint('🚀 BOOTSTRAP: Launching app...');
@@ -316,7 +302,7 @@ Future<void> bootstrapApp() async {
     debugPrint('🚀 BOOTSTRAP: Bootstrap marked as complete');
     
     runApp(
-      MyApp(isar: isar),
+      const MyApp(),
     );
     debugPrint('🚀 BOOTSTRAP: App launched successfully');
   } catch (e, stackTrace) {
@@ -329,14 +315,7 @@ Future<void> bootstrapApp() async {
   }
 }
 
-void _validateMockUsage() {
-  if (kReleaseMode) {
-    debugPrint("""
-⚠️ WARNING: Using MockUserDeletionService in production!
-Replace with CloudFunctionUserDeletionService once Firebase payments are ready.
-""");
-  }
-}
+
 
 Future<AudioPlayer> _initializeAudioPlayer() async {
   final player = AudioPlayer();

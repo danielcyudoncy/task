@@ -322,14 +322,27 @@ class UserPerformanceTab extends StatelessWidget {
               CircleAvatar(
                 radius: 20.r,
                 backgroundColor: _getGradeColor(grade).withValues(alpha: 0.2),
-                child: Text(
-                  user['userName'][0].toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                    color: _getGradeColor(grade),
-                  ),
-                ),
+                backgroundImage: (user['photoUrl'] != null && 
+                    user['photoUrl'].toString().isNotEmpty && 
+                    (user['photoUrl'].toString().startsWith('http://') || 
+                     user['photoUrl'].toString().startsWith('https://')))
+                    ? NetworkImage(user['photoUrl'])
+                    : null,
+                child: (user['photoUrl'] == null || 
+                    user['photoUrl'].toString().isEmpty || 
+                    !(user['photoUrl'].toString().startsWith('http://') || 
+                      user['photoUrl'].toString().startsWith('https://')))
+                    ? Text(
+                        (user['userName'] != null && user['userName'].toString().isNotEmpty)
+                            ? user['userName'][0].toUpperCase()
+                            : 'U',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: _getGradeColor(grade),
+                        ),
+                      )
+                    : null,
               ),
               SizedBox(width: 12.w),
               Expanded(
@@ -340,7 +353,7 @@ class UserPerformanceTab extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            user['userName'],
+                            user['userName'] ?? 'Unknown User',
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.bold,
@@ -366,7 +379,7 @@ class UserPerformanceTab extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      user['userRole'],
+                      user['userRole'] ?? 'Unknown Role',
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: colorScheme.onSurface.withValues(alpha: 0.7),
