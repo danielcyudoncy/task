@@ -13,12 +13,11 @@ import 'package:task/views/app_lock_screen.dart';
 import 'utils/localization/app_localizations.dart';
 import 'utils/localization/translations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:isar/isar.dart';
+// Removed Isar import - using SQLite now
 import 'package:task/routes/global_bindings.dart';
 
 class MyApp extends StatefulWidget {
-  final Isar isar;
-  const MyApp({super.key, required this.isar});
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -137,7 +136,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: currentThemeMode,
-              initialBinding: GlobalBindings(widget.isar),
+              initialBinding: GlobalBindings(),
               initialRoute: "/",
               getPages: AppRoutes.routes,
               translations: AppTranslations(),
