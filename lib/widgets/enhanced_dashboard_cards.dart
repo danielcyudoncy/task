@@ -230,13 +230,12 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
           Text(
             subtitle,
             style: TextStyle(
-              fontSize: 12.sp,
+              fontSize: 11.sp,
               color: (Theme.of(context).brightness == Brightness.dark 
                   ? Colors.black 
                   : Colors.white).withValues(alpha: 0.7),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            
           ),
         ],
       ),

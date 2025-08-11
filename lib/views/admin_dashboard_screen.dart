@@ -1267,8 +1267,10 @@ class _TasksTabState extends State<_TasksTab> {
           return const SizedBox.shrink();
         }
         // Map doc to Task object
-        final task = Task.fromMap(doc, doc['id'] ?? doc['taskId'] ?? '');
-        final taskId = task.taskId;
+        final taskId = doc['id'] ?? doc['taskId'] ?? '';
+        final taskData = Map<String, dynamic>.from(doc);
+        taskData['taskId'] = taskId;
+        final task = Task.fromMap(taskData);
         if (taskId.toString().isEmpty) {
           debugPrint('Task with missing/null taskId: $task');
           return const SizedBox.shrink();

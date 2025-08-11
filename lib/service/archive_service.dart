@@ -4,23 +4,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/models/task_model.dart';
-import 'package:task/service/isar_task_service.dart';
+import 'package:task/service/task_service.dart';
 
 class ArchiveService extends GetxService {
   static ArchiveService get to => Get.find();
   
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
-  final IsarTaskService _isarTaskService;
+  final TaskService _taskService;
   bool _isInitialized = false;
   
   ArchiveService({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-    IsarTaskService? isarTaskService,
+    TaskService? taskService,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance,
-       _isarTaskService = isarTaskService ?? Get.find<IsarTaskService>();
+        _auth = auth ?? FirebaseAuth.instance,
+        _taskService = taskService ?? Get.find<TaskService>();
   
   /// Initializes the ArchiveService
   Future<void> initialize() async {
@@ -84,6 +84,7 @@ class ArchiveService extends GetxService {
         // Also update local database
         final updatedTask = Task.fromMap({
           ...taskDoc.data() as Map<String, dynamic>,
+          'taskId': taskId,
           'status': 'Archived',
           'archivedAt': now,
           'archivedBy': userName,
@@ -91,9 +92,9 @@ class ArchiveService extends GetxService {
           'archiveLocation': location,
           'lastModified': now,
           'syncStatus': 'pending',
-        }, taskId);
+        });
         
-        await _isarTaskService.updateTask(updatedTask);
+        await _taskService.updateTask(updatedTask);
       });
       
       if (Get.isSnackbarOpen != true) {
@@ -135,7 +136,9 @@ class ArchiveService extends GetxService {
       // Update local database
       final taskDoc = await _firestore.collection('tasks').doc(taskId).get();
       if (taskDoc.exists) {
-        final task = Task.fromMap(taskDoc.data()!, taskId);
+        final taskData = Map<String, dynamic>.from(taskDoc.data()!);
+        taskData['taskId'] = taskId;
+        final task = Task.fromMap(taskData);
         task.status = 'Completed';
         task.archivedAt = null;
         task.archivedBy = null;
@@ -144,7 +147,7 @@ class ArchiveService extends GetxService {
         task.lastModified = DateTime.now();
         task.syncStatus = 'pending';
         
-        await _isarTaskService.updateTask(task);
+        await _taskService.updateTask(task);
       }
       
       Get.snackbar(
@@ -163,7 +166,11 @@ class ArchiveService extends GetxService {
   Future<Map<String, int>> getArchiveStats() async {
     try {
       final snapshot = await _firestore.collection('tasks').get();
-      final tasks = snapshot.docs.map((doc) => Task.fromMap(doc.data(), doc.id)).toList();
+      final tasks = snapshot.docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['taskId'] = doc.id;
+        return Task.fromMap(data);
+      }).toList();
       
       final now = DateTime.now();
       final lastMonth = DateTime(now.year, now.month - 1, now.day);
@@ -195,7 +202,11 @@ class ArchiveService extends GetxService {
           .orderBy('lastModified', descending: true)
           .get();
           
-      return snapshot.docs.map((doc) => Task.fromMap(doc.data(), doc.id)).toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['taskId'] = doc.id;
+        return Task.fromMap(data);
+      }).toList();
     } catch (e) {
       debugPrint('Error getting tasks due for archiving: $e');
       return [];
@@ -236,8 +247,10 @@ class ArchiveService extends GetxService {
           .get();
           
       for (final doc in tasks.docs) {
-        final task = Task.fromMap(doc.data(), doc.id);
-        await _isarTaskService.updateTask(task);
+        final data = doc.data();
+        data['taskId'] = doc.id;
+        final task = Task.fromMap(data);
+        await _taskService.updateTask(task);
       }
       
       Get.snackbar(

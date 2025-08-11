@@ -534,7 +534,11 @@ class AdminController extends GetxController {
     try {
       var snapshot = await FirebaseFirestore.instance.collection('tasks').get();
       var tasks =
-          snapshot.docs.map((doc) => Task.fromMap(doc.data(), doc.id)).toList();
+          snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['taskId'] = doc.id;
+        return Task.fromMap(data);
+      }).toList();
 
       pendingTasks.value =
           tasks.where((task) => task.status == 'Pending').length;

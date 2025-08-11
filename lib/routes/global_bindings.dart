@@ -1,11 +1,8 @@
 // routes/global_bindings.dart
 
 import 'package:get/get.dart';
-import 'package:isar/isar.dart';
 
 class GlobalBindings extends Bindings {
-  final Isar isar;
-  GlobalBindings(this.isar);
 
   @override
   void dependencies() {
