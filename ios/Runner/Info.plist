@@ -50,5 +50,58 @@
 		<string>http</string>
 		<string>https</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to capture profile pictures and task-related images.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app accesses your photo library to select profile pictures and task-related images.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app uses the microphone for voice notes and audio recordings related to tasks.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses location to provide location-based task reminders and context.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>This app sends notifications to remind you about tasks and important updates.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>firebase.googleapis.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+			</dict>
+			<key>firebaseapp.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+			</dict>
+		</dict>
+	</dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>REVERSED_CLIENT_ID</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.838120475834-nto92419l06mo7vagkfn2krc0p2v6jam</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>EMAIL_LINK_AUTH</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>https</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

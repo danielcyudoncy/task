@@ -15,6 +15,8 @@ import 'utils/localization/translations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // Removed Isar import - using SQLite now
 import 'package:task/routes/global_bindings.dart';
+import 'package:task/views/email_link_signin_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -148,10 +150,43 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
+              // Handle incoming deep links for email authentication
+              unknownRoute: GetPage(
+                name: '/unknown',
+                page: () => _handleDeepLink(),
+              ),
             ),
           );
         });
       },
+    );
+  }
+
+  Widget _handleDeepLink() {
+    final uri = Uri.base;
+    final currentUrl = uri.toString();
+    
+    // Check if this is an email authentication link
+    if (currentUrl.contains('__/auth/links') || 
+        currentUrl.contains('firebaseapp.com') && currentUrl.contains('link')) {
+      
+      // Extract the link and navigate to email link signin screen
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed('/email-link-signin', arguments: currentUrl);
+      });
+      
+      return const EmailLinkSignInScreen();
+    }
+    
+    // For other unknown routes, redirect to splash
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.offAllNamed('/');
+    });
+    
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
