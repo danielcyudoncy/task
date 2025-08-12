@@ -58,28 +58,30 @@ class UserPerformanceTab extends StatelessWidget {
           ),
         ),
         SizedBox(height: 12.h),
-        Row(
-          children: [
-            Expanded(
-              child: _buildOverviewCard(
-                context,
-                'Total Users',
-                controller.totalUsers.value.toString(),
-                Icons.people,
-                colorScheme.primary,
+        IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildOverviewCard(
+                  context,
+                  'Total Users',
+                  controller.totalUsers.value.toString(),
+                  Icons.people,
+                  colorScheme.secondary,
+                ),
               ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: _buildOverviewCard(
-                context,
-                'Avg Completion Rate',
-                '${controller.averageCompletionRate.value.toStringAsFixed(1)}%',
-                Icons.trending_up,
-                colorScheme.secondary,
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _buildOverviewCard(
+                  context,
+                  'Avg Completion Rate',
+                  '${controller.averageCompletionRate.value.toStringAsFixed(1)}%',
+                  Icons.trending_up,
+                  colorScheme.secondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

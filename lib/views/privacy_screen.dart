@@ -223,7 +223,10 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                       ),
                       trailing: Icon(Icons.chevron_right, color: colorScheme.onPrimary),
-                      onTap: privacyController.openPrivacyPolicy,
+                      onTap: () {
+                        Get.find<SettingsController>().triggerFeedback();
+                        Get.toNamed('/privacy-policy');
+                      },
                     ),
 
                     // Security

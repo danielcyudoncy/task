@@ -12,6 +12,7 @@ import 'package:task/views/login_screen.dart';
 import 'package:task/views/manage_users_screen.dart';
 import 'package:task/views/notification_screen.dart';
 import 'package:task/views/privacy_screen.dart';
+import 'package:task/views/privacy_policy_screen.dart';
 import 'package:task/views/profile_screen.dart';
 import 'package:task/views/profile_update_screen.dart';
 import 'package:task/views/settings_screen.dart';
@@ -101,6 +102,13 @@ class AppRoutes {
     GetPage(
       name: "/privacy",
       page: () => const PrivacyScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: "/privacy-policy",
+      page: () => const PrivacyPolicyScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),

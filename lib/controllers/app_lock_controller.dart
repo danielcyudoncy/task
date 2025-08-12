@@ -22,8 +22,8 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   AppLifecycleState? _lastLifecycleState;
   DateTime? _backgroundTime;
   
-  // Lock timeout (in seconds) - app locks after 30 seconds in background
-  static const int lockTimeoutSeconds = 30;
+  // Lock timeout (in seconds) - app locks immediately when minimized for security
+  static const int lockTimeoutSeconds = 1;
   
   // Getter for current lifecycle state (useful for debugging and monitoring)
   AppLifecycleState? get currentLifecycleState => _lastLifecycleState;
@@ -74,8 +74,11 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       _backgroundTime = DateTime.now();
       debugPrint('App went to background (state: $currentState) at: $_backgroundTime');
       
-      // Different behavior based on previous state
-      if (_lastLifecycleState == AppLifecycleState.resumed) {
+      // Lock immediately when app is minimized for enhanced security
+      if (currentState == AppLifecycleState.paused || currentState == AppLifecycleState.hidden) {
+        debugPrint('App minimized - locking immediately for security');
+        _lockApp();
+      } else if (_lastLifecycleState == AppLifecycleState.resumed) {
         debugPrint('App transitioned from active to background - starting lock timer');
       } else if (_lastLifecycleState == AppLifecycleState.inactive) {
         debugPrint('App moved from inactive to paused/hidden');
