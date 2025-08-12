@@ -38,9 +38,6 @@ class _SplashScreenState extends State<SplashScreen> {
         
         final prefs = await SharedPreferences.getInstance();
         
-        // TEMPORARY: Reset onboarding for testing (remove this after testing)
-        await prefs.remove('hasSeenOnboarding');
-        
         final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
         
         if (!hasSeenOnboarding) {
