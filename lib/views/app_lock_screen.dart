@@ -104,14 +104,59 @@ class _AppLockScreenState extends State<AppLockScreen> {
               
               SizedBox(height: isTablet ? 12 : 8),
               
-              Text(
-                'Enter your PIN to unlock',
-                style: TextStyle(
-                  fontSize: isTablet ? 16.sp : 14.sp,
-                  color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontFamily: 'Raleway',
-                ),
-              ),
+              Obx(() => Column(
+                children: [
+                  Text(
+                    'Enter your PIN to unlock',
+                    style: TextStyle(
+                      fontSize: isTablet ? 16.sp : 14.sp,
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      fontFamily: 'Raleway',
+                    ),
+                  ),
+                  
+                  // Show default PIN hint if user hasn't set a custom PIN
+                   if (!_appLockController.hasSetPin.value) ...[
+                     SizedBox(height: isTablet ? 12 : 8),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 20 : 16,
+                        vertical: isTablet ? 12 : 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Default PIN: 0000',
+                            style: TextStyle(
+                              fontSize: isTablet ? 14.sp : 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.primary,
+                              fontFamily: 'Raleway',
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Please change this in Settings after unlocking',
+                            style: TextStyle(
+                              fontSize: isTablet ? 12.sp : 10.sp,
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              fontFamily: 'Raleway',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              )),
               
               SizedBox(height: isTablet ? 48 : 32),
               

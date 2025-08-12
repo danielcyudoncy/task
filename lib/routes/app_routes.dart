@@ -27,6 +27,7 @@ import 'package:task/views/news_screen.dart';
 import 'package:task/views/all_users_chat_screen.dart';
 import 'package:task/views/notification_fix_screen.dart';
 import 'package:task/views/email_link_signin_screen.dart';
+import 'package:task/views/app_lock_screen.dart';
 import 'package:task/widgets/save_success_screen.dart';
 
 class AppRoutes {
@@ -59,6 +60,12 @@ class AppRoutes {
     GetPage(
       name: "/email-link-signin",
       page: () => const EmailLinkSignInScreen(),
+      transition: Transition.fade,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: "/app-lock",
+      page: () => const AppLockScreen(),
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 200),
     ),

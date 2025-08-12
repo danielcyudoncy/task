@@ -101,12 +101,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           // Check if app is locked
           final AppLockController appLockController = Get.find<AppLockController>();
           if (appLockController.isAppLocked.value) {
-            return MaterialApp(
+            return GetMaterialApp(
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: currentThemeMode,
               home: const AppLockScreen(),
+              getPages: AppRoutes.routes,
+              translations: AppTranslations(),
+              locale: AppLocalizations.instance.currentLocale,
+              fallbackLocale: AppLocalizations.defaultLocale,
             );
           }
           
