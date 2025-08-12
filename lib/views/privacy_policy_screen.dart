@@ -16,7 +16,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark
-          ? colorScheme.onPrimary
+          ? colorScheme.surface
           : colorScheme.primary,
       body: SafeArea(
         child: Column(
@@ -28,7 +28,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
+                    icon: Icon(Icons.arrow_back, color: isDark ? colorScheme.onSurface : colorScheme.onPrimary),
                     onPressed: () {
                       Get.find<SettingsController>().triggerFeedback();
                       Get.back();
@@ -40,13 +40,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     style: GoogleFonts.raleway(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.onPrimary),
+                        color: isDark ? colorScheme.onSurface : colorScheme.onPrimary),
                   ),
                   const Spacer(flex: 2),
                 ],
               ),
             ),
-            Divider(height: 1, color: colorScheme.onPrimary.withValues(alpha: 0.3), thickness: 1),
+            Divider(height: 1, color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.3), thickness: 1),
             
             // Content
             Expanded(
@@ -80,7 +80,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         style: GoogleFonts.raleway(
                           fontSize: 28.sp,
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimary,
+                          color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
                         ),
                       ),
                     ),
@@ -94,14 +94,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             "Effective Date: 12/08/2025",
                             style: GoogleFonts.raleway(
                               fontSize: 14.sp,
-                              color: colorScheme.onPrimary.withValues(alpha: 0.7),
+                              color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.7),
                             ),
                           ),
                           Text(
                             "Last Updated: 12/08/2025",
                             style: GoogleFonts.raleway(
                               fontSize: 14.sp,
-                              color: colorScheme.onPrimary.withValues(alpha: 0.7),
+                              color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -114,6 +114,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "",
                       "Thank you for using our Task Management App (\"we\", \"our\", or \"us\"). Your privacy is important to us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (the \"App\"). Please read this policy carefully. If you do not agree with the terms of this Privacy Policy, please do not use the App.",
+                      isDark,
                     ),
                     
                     // Section 1
@@ -121,30 +122,35 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "1. Information We Collect",
                       "We may collect the following types of information:",
+                      isDark,
                     ),
                     
                     _buildSubSection(
                       colorScheme,
                       "a. Personal Information",
                       ["Name", "Email address", "User role (e.g., admin, user, librarian)", "Profile photo (if uploaded)"],
+                      isDark,
                     ),
                     
                     _buildSubSection(
                       colorScheme,
                       "b. Task-related Data",
                       ["Tasks you create or are assigned", "Task metadata such as due dates, tags, and completion status", "Comments or notes on tasks"],
+                      isDark,
                     ),
                     
                     _buildSubSection(
                       colorScheme,
                       "c. Usage Information",
                       ["App usage statistics", "Device information (e.g., model, operating system)", "Log files (e.g., errors, crashes)"],
+                      isDark,
                     ),
                     
                     _buildSubSection(
                       colorScheme,
                       "d. Optional Permissions",
                       ["Access to device storage (for file attachments)", "Notifications (to alert users about task updates)"],
+                      isDark,
                     ),
                     
                     // Section 2
@@ -152,6 +158,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "2. How We Use Your Information",
                       "We use the collected information for the following purposes:",
+                      isDark,
                     ),
                     
                     _buildBulletList(
@@ -164,6 +171,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         "To provide customer support",
                         "To ensure compliance with app policies and terms"
                       ],
+                      isDark,
                     ),
                     
                     // Section 3
@@ -171,6 +179,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "3. Sharing Your Information",
                       "We do not sell or rent your personal data. We may share your information in the following cases:",
+                      isDark,
                     ),
                     
                     _buildBulletList(
@@ -180,6 +189,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         "With service providers who help us operate the app (e.g., Firebase, analytics)",
                         "If required by law or in response to valid legal requests"
                       ],
+                      isDark,
                     ),
                     
                     // Section 4
@@ -187,6 +197,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "4. Data Retention",
                       "We retain your personal and task data for as long as necessary to provide our services, fulfill legal obligations, resolve disputes, and enforce our agreements.",
+                      isDark,
                     ),
                     
                     // Section 5
@@ -194,6 +205,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "5. Security",
                       "We implement reasonable administrative, technical, and physical safeguards to protect your information. However, no method of transmission over the internet or electronic storage is 100% secure.",
+                      isDark,
                     ),
                     
                     // Section 6
@@ -201,6 +213,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "6. Your Choices and Rights",
                       "Depending on your location, you may have the right to:",
+                      isDark,
                     ),
                     
                     _buildBulletList(
@@ -210,11 +223,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         "Request correction or deletion of your data",
                         "Object to processing or request data portability"
                       ],
+                      isDark,
                     ),
                     
                     _buildParagraph(
                       colorScheme,
                       "You can manage your account settings or contact us directly at danielcyudoncy@gmail.com for assistance.",
+                      isDark,
                     ),
                     
                     // Section 7
@@ -222,6 +237,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "7. Children's Privacy",
                       "Our App is not intended for children under the age of 13 (or under the age of 16 in some jurisdictions), and we do not knowingly collect data from them.",
+                      isDark,
                     ),
                     
                     // Section 8
@@ -229,6 +245,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "8. Third-Party Services",
                       "Our App may link to or use third-party services (e.g., Firebase). Their privacy practices are governed by their own policies. We encourage you to review them.",
+                      isDark,
                     ),
                     
                     // Section 9
@@ -236,6 +253,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "9. Changes to This Privacy Policy",
                       "We may update this policy from time to time. We will notify you of any significant changes by updating the \"Effective Date\" and, where appropriate, via in-app notification.",
+                      isDark,
                     ),
                     
                     // Section 10
@@ -243,6 +261,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       colorScheme,
                       "10. Contact Us",
                       "If you have any questions or concerns about this Privacy Policy, please contact us at:",
+                      isDark,
                     ),
                     
                     const SizedBox(height: 10),
@@ -273,7 +292,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                                 "Email: danieludoncy@gmail.com",
                                 style: GoogleFonts.raleway(
                                   fontSize: 14.sp,
-                                  color: colorScheme.onPrimary,
+                                  color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -292,7 +311,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                                 "Developer: Daniel Udoncy",
                                 style: GoogleFonts.raleway(
                                   fontSize: 14.sp,
-                                  color: colorScheme.onPrimary,
+                                  color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -313,7 +332,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildSection(ColorScheme colorScheme, String title, String content) {
+  Widget _buildSection(ColorScheme colorScheme, String title, String content, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -323,7 +342,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             style: GoogleFonts.raleway(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
-              color: colorScheme.onPrimary,
+              color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -332,7 +351,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           content,
           style: GoogleFonts.raleway(
             fontSize: 14.sp,
-            color: colorScheme.onPrimary.withValues(alpha: 0.8),
+            color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
             height: 1.5,
           ),
         ),
@@ -341,7 +360,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildSubSection(ColorScheme colorScheme, String title, List<String> items) {
+  Widget _buildSubSection(ColorScheme colorScheme, String title, List<String> items, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,7 +371,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             style: GoogleFonts.raleway(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
-              color: colorScheme.onPrimary,
+              color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
             ),
           ),
         ),
@@ -376,7 +395,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   item,
                   style: GoogleFonts.raleway(
                     fontSize: 14.sp,
-                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                    color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
                     height: 1.4,
                   ),
                 ),
@@ -389,7 +408,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildBulletList(ColorScheme colorScheme, List<String> items) {
+  Widget _buildBulletList(ColorScheme colorScheme, List<String> items, bool isDark) {
     return Column(
       children: [
         ...items.map((item) => Padding(
@@ -411,7 +430,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   item,
                   style: GoogleFonts.raleway(
                     fontSize: 14.sp,
-                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                    color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
                     height: 1.4,
                   ),
                 ),
@@ -424,14 +443,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
   
-  Widget _buildParagraph(ColorScheme colorScheme, String content) {
+  Widget _buildParagraph(ColorScheme colorScheme, String content, bool isDark) {
     return Column(
       children: [
         Text(
           content,
           style: GoogleFonts.raleway(
             fontSize: 14.sp,
-            color: colorScheme.onPrimary.withValues(alpha: 0.8),
+            color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
             height: 1.5,
           ),
         ),
