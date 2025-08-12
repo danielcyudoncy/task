@@ -259,7 +259,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         onTap: () {
                           Get.find<SettingsController>().triggerFeedback();
-                          Get.toNamed('/push-notification-settings');
+                          Get.toNamed('/notifications');
                         },
                       ),
                       ListTile(

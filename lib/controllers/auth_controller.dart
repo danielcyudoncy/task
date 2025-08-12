@@ -1236,10 +1236,12 @@ class AuthController extends GetxController {
 
 
   void _checkInactivity() {
+    // Automatic logout disabled to keep users logged in
+    // Users can manually logout if needed
     final now = DateTime.now();
-    if (now.difference(lastActivity.value).inMinutes >= 60) {
-      logout();
-    }
+    debugPrint('Inactivity check: ${now.difference(lastActivity.value).inMinutes} minutes since last activity');
+    // Note: Automatic logout has been disabled for better user experience
+    // Users will remain logged in until they manually logout
   }
   // Keep this in your auth controller for future debugging
   void printAuthState() {

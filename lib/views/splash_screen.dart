@@ -100,11 +100,11 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               SizedBox(height: 6.h),
               Text(
-                'Its Your Time'.tr,
+                'Informing the Nigerian People'.tr,
                 style: textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onPrimary,
                   fontFamily: 'Raleway',
-                  fontSize: 24.sp,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),

@@ -219,9 +219,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.black 
-                  : Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -231,9 +229,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 11.sp,
-              color: (Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.black 
-                  : Colors.white).withValues(alpha: 0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             
           ),
@@ -279,7 +275,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             children: [
               Icon(
                 Icons.analytics,
-                color: colorScheme.primary,
+                color: colorScheme.onSurface,
                 size: 20.sp,
               ),
               SizedBox(width: 8.w),
@@ -288,9 +284,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.black 
-                      : Colors.white,
+                  color: colorScheme.onSurface,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -363,9 +357,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12.sp,
-              color: (Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.black 
-                  : Colors.white).withValues(alpha: 0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -385,9 +377,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 10.sp,
-              color: (Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.black 
-                  : Colors.white).withValues(alpha: 0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -430,9 +420,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
           style: TextStyle(
             fontSize: 10.sp,
             fontWeight: FontWeight.w600,
-            color: (Theme.of(context).brightness == Brightness.dark 
-                ? Colors.black 
-                : Colors.white).withValues(alpha: 0.8),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
           ),
         ),
       ],
