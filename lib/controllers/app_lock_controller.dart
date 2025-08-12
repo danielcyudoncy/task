@@ -17,6 +17,10 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   final RxBool isBiometricEnabled = true.obs;
   final RxString appPin = ''.obs;
   final RxBool hasSetPin = false.obs;
+  final RxBool isUsingDefaultPin = true.obs;
+  
+  // Default PIN for first-time users
+  static const String defaultPin = '0000';
   
   // App lifecycle state
   AppLifecycleState? _lastLifecycleState;
@@ -140,13 +144,37 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     debugPrint('Locking app');
     isAppLocked.value = true;
     
-    // Navigate to lock screen
+    // Navigate to app lock screen
     Get.offAllNamed('/app-lock');
   }
   
   Future<void> unlockWithPin(String pin) async {
-    if (pin == appPin.value) {
+    // Check if PIN matches (either user's PIN or default PIN)
+    bool isCorrectPin = false;
+    
+    if (hasSetPin.value && pin == appPin.value) {
+      isCorrectPin = true;
+    } else if (!hasSetPin.value && pin == defaultPin) {
+      isCorrectPin = true;
+      isUsingDefaultPin.value = true;
+    }
+    
+    if (isCorrectPin) {
       _unlockApp();
+      
+      // Show warning if using default PIN
+      if (isUsingDefaultPin.value) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Get.snackbar(
+            'Security Warning',
+            'You are using the default PIN (0000). Please change it in Settings for better security.',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 5),
+          );
+        });
+      }
     } else {
       Get.snackbar(
         'Error',
@@ -205,6 +233,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   Future<void> setPin(String pin) async {
     appPin.value = pin;
     hasSetPin.value = true;
+    isUsingDefaultPin.value = false;
     await _saveSettings();
     
     Get.snackbar(
@@ -249,6 +278,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       isBiometricEnabled.value = prefs.getBool('biometric_enabled') ?? true;
       appPin.value = prefs.getString('app_pin') ?? '';
       hasSetPin.value = appPin.value.isNotEmpty;
+      isUsingDefaultPin.value = prefs.getBool('is_using_default_pin') ?? true;
       
       debugPrint('App lock settings loaded');
     } catch (e) {
@@ -263,6 +293,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       await prefs.setBool('app_lock_enabled', isAppLockEnabled.value);
       await prefs.setBool('biometric_enabled', isBiometricEnabled.value);
       await prefs.setString('app_pin', appPin.value);
+      await prefs.setBool('is_using_default_pin', isUsingDefaultPin.value);
       
       debugPrint('App lock settings saved');
     } catch (e) {
@@ -280,7 +311,6 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   // Check if app should be locked on startup
   bool shouldLockOnStartup() {
     return isAppLockEnabled.value && 
-           _authController.currentUser != null && 
-           hasSetPin.value;
+           _authController.currentUser != null;
   }
 }
