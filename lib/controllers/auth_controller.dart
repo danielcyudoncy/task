@@ -6,6 +6,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'dart:math';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
 import 'package:task/service/presence_service.dart';
@@ -17,6 +23,7 @@ class AuthController extends GetxController {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   final FirebaseService _firebaseService = FirebaseService();
   final FirebaseStorageService storageService = FirebaseStorageService();
@@ -767,6 +774,251 @@ class AuthController extends GetxController {
     }
   }
 
+  // Google Sign-In Method
+  Future<void> signInWithGoogle() async {
+    try {
+      debugPrint("AuthController: Starting Google sign in process");
+      isLoading(true);
+      
+      // Trigger the authentication flow
+      debugPrint("AuthController: Calling _googleSignIn.signIn()");
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        // User canceled the sign-in
+        debugPrint("AuthController: Google sign in canceled by user");
+        return;
+      }
+      
+      debugPrint("AuthController: Google user obtained: ${googleUser.email}");
+      
+      // Obtain the auth details from the request
+      debugPrint("AuthController: Getting Google authentication details");
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      debugPrint("AuthController: Got access token: ${googleAuth.accessToken != null}");
+      debugPrint("AuthController: Got ID token: ${googleAuth.idToken != null}");
+      
+      // Create a new credential
+      debugPrint("AuthController: Creating Firebase credential");
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      
+      // Sign in to Firebase with the Google credential
+      debugPrint("AuthController: Signing in to Firebase with Google credential");
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      debugPrint("AuthController: Firebase sign-in successful");
+      
+      if (userCredential.user == null) throw Exception("No user returned from Google sign in");
+      
+      // Check if this is a new user
+      final bool isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+      
+      if (isNewUser) {
+        // Create user document for new Google users
+        String? fcmToken;
+        if (!kIsWeb) {
+          try {
+            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+            
+            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+                settings.authorizationStatus == AuthorizationStatus.provisional) {
+              fcmToken = await FirebaseMessaging.instance.getToken();
+            }
+          } catch (e) {
+            debugPrint("Error getting FCM Token during Google signup: $e");
+          }
+        }
+        
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'uid': userCredential.user!.uid,
+          'email': userCredential.user!.email ?? '',
+          'fullName': userCredential.user!.displayName ?? '',
+          'role': 'Reporter', // Default role for Google sign-up
+          'fcmToken': fcmToken ?? "",
+          'profileComplete': false,
+          'photoUrl': userCredential.user!.photoURL ?? "",
+          'createdAt': FieldValue.serverTimestamp(),
+          'authProvider': 'google',
+        });
+        
+        userRole.value = 'Reporter';
+        fullName.value = userCredential.user!.displayName ?? '';
+        profilePic.value = userCredential.user!.photoURL ?? '';
+        
+        _safeSnackbar('Success', 'Account created successfully with Google!');
+        Get.offAllNamed("/profile-update");
+      } else {
+        // Existing user, load their data
+        await loadUserData();
+        lastActivity.value = DateTime.now();
+        
+        try {
+          await _handlePresence(true);
+        } catch (e) {
+          debugPrint("Presence setting failed: $e");
+        }
+        
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!isProfileComplete.value) {
+            Get.offAllNamed("/profile-update");
+          } else {
+            navigateBasedOnRole();
+          }
+        });
+      }
+      
+    } on FirebaseAuthException catch (e) {
+      debugPrint("Google sign in Firebase error: ${e.message}");
+      _safeSnackbar("Error", _handleAuthError(e));
+    } catch (e) {
+      debugPrint("Google sign in error: $e");
+      _safeSnackbar("Error", "Google sign in failed: $e");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // Apple Sign-In Method
+  Future<void> signInWithApple() async {
+    try {
+      debugPrint("AuthController: Starting Apple sign in process");
+      isLoading(true);
+      
+      // Check if Apple Sign In is available
+      if (!await SignInWithApple.isAvailable()) {
+        _safeSnackbar("Error", "Apple Sign In is not available on this device");
+        return;
+      }
+      
+      // Generate a random nonce for security
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+      
+      // Request credential from Apple
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+      
+      // Create OAuth credential for Firebase
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+      );
+      
+      // Sign in to Firebase with the Apple credential
+      final UserCredential userCredential = await _auth.signInWithCredential(oauthCredential);
+      
+      if (userCredential.user == null) throw Exception("No user returned from Apple sign in");
+      
+      // Check if this is a new user
+      final bool isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+      
+      if (isNewUser) {
+        // Create user document for new Apple users
+        String? fcmToken;
+        if (!kIsWeb) {
+          try {
+            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+            
+            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+                settings.authorizationStatus == AuthorizationStatus.provisional) {
+              fcmToken = await FirebaseMessaging.instance.getToken();
+            }
+          } catch (e) {
+            debugPrint("Error getting FCM Token during Apple signup: $e");
+          }
+        }
+        
+        // Construct full name from Apple credential
+        String fullNameFromApple = '';
+        if (appleCredential.givenName != null || appleCredential.familyName != null) {
+          fullNameFromApple = '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim();
+        }
+        
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'uid': userCredential.user!.uid,
+          'email': appleCredential.email ?? userCredential.user!.email ?? '',
+          'fullName': fullNameFromApple.isNotEmpty ? fullNameFromApple : (userCredential.user!.displayName ?? ''),
+          'role': 'Reporter', // Default role for Apple sign-up
+          'fcmToken': fcmToken ?? "",
+          'profileComplete': false,
+          'photoUrl': userCredential.user!.photoURL ?? "",
+          'createdAt': FieldValue.serverTimestamp(),
+          'authProvider': 'apple',
+        });
+        
+        userRole.value = 'Reporter';
+        fullName.value = fullNameFromApple.isNotEmpty ? fullNameFromApple : (userCredential.user!.displayName ?? '');
+        profilePic.value = userCredential.user!.photoURL ?? '';
+        
+        _safeSnackbar('Success', 'Account created successfully with Apple!');
+        Get.offAllNamed("/profile-update");
+      } else {
+        // Existing user, load their data
+        await loadUserData();
+        lastActivity.value = DateTime.now();
+        
+        try {
+          await _handlePresence(true);
+        } catch (e) {
+          debugPrint("Presence setting failed: $e");
+        }
+        
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!isProfileComplete.value) {
+            Get.offAllNamed("/profile-update");
+          } else {
+            navigateBasedOnRole();
+          }
+        });
+      }
+      
+    } on SignInWithAppleAuthorizationException catch (e) {
+      debugPrint("Apple sign in authorization error: ${e.message}");
+      if (e.code == AuthorizationErrorCode.canceled) {
+        debugPrint("Apple sign in canceled by user");
+        return;
+      }
+      _safeSnackbar("Error", "Apple sign in failed: ${e.message}");
+    } on FirebaseAuthException catch (e) {
+      debugPrint("Apple sign in Firebase error: ${e.message}");
+      _safeSnackbar("Error", _handleAuthError(e));
+    } catch (e) {
+      debugPrint("Apple sign in error: $e");
+      _safeSnackbar("Error", "Apple sign in failed: $e");
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // Helper method to generate a cryptographically secure nonce
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  // Helper method to hash the nonce
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
   Future<void> assignTask(String taskId, String userId) async {
     try {
       isLoading.value = true;
@@ -841,6 +1093,144 @@ class AuthController extends GetxController {
       _safeSnackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Email Link Authentication Methods
+  Future<void> sendSignInLinkToEmail(String email) async {
+    try {
+      isLoading(true);
+      
+      // Configure the action code settings
+      final ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+        // URL you want to redirect back to. This should be a deep link to your app
+        // For development, you can use a custom URL scheme
+        url: 'https://task-app.firebaseapp.com/email-link-signin',
+        // This must be true for email link authentication
+        handleCodeInApp: true,
+        iOSBundleId: 'com.example.task',
+        androidPackageName: 'com.example.task',
+        // Install the app if it's not already installed
+        androidInstallApp: true,
+        androidMinimumVersion: '21',
+      );
+
+      await _auth.sendSignInLinkToEmail(
+        email: email.trim(),
+        actionCodeSettings: actionCodeSettings,
+      );
+
+      // Save the email locally so you can complete sign in on the same device
+      await _saveEmailForSignIn(email.trim());
+      
+      _safeSnackbar("Success", "Authentication link sent to your email");
+    } on FirebaseAuthException catch (e) {
+      debugPrint("AuthController: Firebase auth error: ${e.message}");
+      _safeSnackbar("Error", _handleAuthError(e));
+      rethrow;
+    } catch (e) {
+      debugPrint("AuthController: General error during send sign in link: $e");
+      _safeSnackbar("Error", "Failed to send authentication link: $e");
+      rethrow;
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> signInWithEmailLink(String email, String emailLink) async {
+    try {
+      isLoading(true);
+      
+      // Confirm the link is a sign-in with email link.
+      if (!_auth.isSignInWithEmailLink(emailLink)) {
+        throw Exception("Invalid email link");
+      }
+
+      final UserCredential credential = await _auth.signInWithEmailLink(
+        email: email.trim(),
+        emailLink: emailLink,
+      );
+
+      if (credential.user == null) throw Exception("No user returned");
+
+      debugPrint("AuthController: User signed in with email link successfully");
+      await loadUserData();
+      lastActivity.value = DateTime.now();
+      
+      try {
+        await _handlePresence(true);
+        debugPrint("AuthController: Presence set successfully");
+      } catch (e) {
+        debugPrint("AuthController: Presence setting failed, continuing: $e");
+      }
+
+      // Clear the saved email
+      await _clearSavedEmail();
+      
+      // Navigate based on profile completion and role
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!isProfileComplete.value) {
+          debugPrint("AuthController: Navigating to profile update");
+          Get.offAllNamed("/profile-update");
+        } else {
+          debugPrint("AuthController: Profile is complete, navigating based on role");
+          final role = userRole.value;
+          if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+            debugPrint("AuthController: Navigating to admin-dashboard");
+            Get.offAllNamed("/admin-dashboard");
+          } else if (role == "Librarian") {
+            debugPrint("AuthController: Navigating to librarian-dashboard");
+            Get.offAllNamed("/librarian-dashboard");
+          } else if (["Reporter", "Cameraman", "Driver"].contains(role)) {
+            debugPrint("AuthController: Navigating to home");
+            Get.offAllNamed("/home");
+          } else {
+            debugPrint("AuthController: Navigating to login (fallback)");
+            Get.offAllNamed("/login");
+          }
+        }
+      });
+    } on FirebaseAuthException catch (e) {
+      debugPrint("AuthController: Firebase auth error: ${e.message}");
+      _safeSnackbar("Error", _handleAuthError(e));
+      rethrow;
+    } catch (e) {
+      debugPrint("AuthController: General error during email link sign in: $e");
+      _safeSnackbar("Error", "Email link sign in failed: $e");
+      rethrow;
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  // Helper method to save email for sign in
+  Future<void> _saveEmailForSignIn(String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('emailForSignIn', email);
+    } catch (e) {
+      debugPrint("Error saving email for sign in: $e");
+    }
+  }
+
+  // Helper method to get saved email
+  Future<String?> getSavedEmailForSignIn() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('emailForSignIn');
+    } catch (e) {
+      debugPrint("Error getting saved email: $e");
+      return null;
+    }
+  }
+
+  // Helper method to clear saved email
+  Future<void> _clearSavedEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('emailForSignIn');
+    } catch (e) {
+      debugPrint("Error clearing saved email: $e");
     }
   }
 

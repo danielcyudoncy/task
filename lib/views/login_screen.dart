@@ -52,16 +52,36 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _biometricLogin(BuildContext context) async {
+  void _biometricLogin() async {
     if (!await _biometricService.canCheckBiometrics()) {
       _safeSnackbar('Error', 'Biometric authentication is not available on this device.');
       return;
     }
     final authenticated = await _biometricService.authenticate(reason: 'Please authenticate to login');
-    if (authenticated && mounted) {
+    if (!mounted) return;
+    
+    if (authenticated) {
       _submit(context);
     } else {
       _safeSnackbar('Error', 'Biometric authentication failed.');
+    }
+  }
+
+  void _sendEmailLink() async {
+    if (_emailController.text.trim().isEmpty) {
+      _safeSnackbar('Error', 'Please enter your email address.');
+      return;
+    }
+
+    if (!GetUtils.isEmail(_emailController.text.trim())) {
+      _safeSnackbar('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    try {
+      await _auth.sendSignInLinkToEmail(_emailController.text.trim());
+    } catch (e) {
+      _safeSnackbar('Error', 'Failed to send authentication link. Please try again.');
     }
   }
 
@@ -355,38 +375,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                     IconButton(
                                       icon: Image.asset(AppIcons.google,
                                           width: 48.w, height: 48.h),
-                                      onPressed: () {
+                                      onPressed: () async {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        Get.snackbar(
-                                          'coming_soon'.tr,
-                                          'google_signin_not_implemented'.tr,
-                                          backgroundColor: Theme.of(context)
-                                              .colorScheme
-                                              .surface,
-                                          colorText: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface,
-                                        );
+                                        await _auth.signInWithGoogle();
                                       },
                                     ),
                                     SizedBox(width: 20.w),
                                     IconButton(
                                       icon: Image.asset(AppIcons.apple,
                                           width: 48.w, height: 48.h),
-                                      onPressed: () {
+                                      onPressed: () async {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        Get.snackbar(
-                                          'coming_soon'.tr,
-                                          'apple_signin_not_implemented'.tr,
-                                          backgroundColor: Theme.of(context)
-                                              .colorScheme
-                                              .surface,
-                                          colorText: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface,
-                                        );
+                                        await _auth.signInWithApple();
                                       },
                                     ),
                                   ],
@@ -461,7 +463,34 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           onPressed: () async {
                             Get.find<SettingsController>().triggerFeedback();
-                            _biometricLogin(context);
+                            _biometricLogin();
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        // Email Link Authentication Button
+                        ElevatedButton.icon(
+                          icon: Icon(
+                            Icons.email_outlined,
+                            color: isDark ? Colors.black : colorScheme.onPrimary,
+                          ),
+                          label: Text(
+                            'Send Login Link to Email',
+                            style: TextStyle(
+                              color: isDark ? Colors.black : colorScheme.onPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: isDark ? Colors.black : colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                          ),
+                          onPressed: () async {
+                            Get.find<SettingsController>().triggerFeedback();
+                            _sendEmailLink();
                           },
                         ),
                       ],

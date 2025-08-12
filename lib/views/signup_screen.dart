@@ -300,36 +300,20 @@ class SignUpScreen extends StatelessWidget {
                                   IconButton(
                                     icon: Image.asset(AppIcons.google,
                                         width: 48.w, height: 48.h),
-                                    onPressed: () {
+                                    onPressed: () async {
                                       Get.find<SettingsController>()
                                           .triggerFeedback();
-                                      Get.snackbar('coming_soon'.tr,
-                                          'google_signup_not_implemented'.tr,
-                                          backgroundColor: Theme.of(context)
-                                            .colorScheme
-                                            .surface,
-                                        colorText: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      );
+                                      await authController.signInWithGoogle();
                                     },
                                   ),
                                   SizedBox(width: 20.w),
                                   IconButton(
                                     icon: Image.asset(AppIcons.apple,
                                         width: 48.w, height: 48.h),
-                                    onPressed: () {
+                                    onPressed: () async {
                                       Get.find<SettingsController>()
                                           .triggerFeedback();
-                                      Get.snackbar('coming_soon'.tr,
-                                          'apple_signup_not_implemented'.tr,
-                                          backgroundColor: Theme.of(context)
-                                            .colorScheme
-                                            .surface,
-                                        colorText: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      );
+                                      await authController.signInWithApple();
                                     },
                                   ),
                                 ],
