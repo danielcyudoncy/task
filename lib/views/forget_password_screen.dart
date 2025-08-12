@@ -38,8 +38,9 @@ class ForgotPasswordScreen extends StatelessWidget {
         child: SafeArea(
           child: Padding(
             padding: EdgeInsets.all(24.w),
-            child: Column(
-              children: [
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
                 // Back arrow
                 Row(
                   children: [
@@ -62,22 +63,24 @@ class ForgotPasswordScreen extends StatelessWidget {
                   width: 213.w,
                   height: 216.h,
                 ),
-                SizedBox(height: 16.h),
+                
 
                 // Forgot Password Card
-                SizedBox(
+                Container(
                   width: 350.w,
-                  height: 400.h,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                    padding: EdgeInsets.all(40.w),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
+                  constraints: BoxConstraints(
+                    minHeight: 300.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  padding: EdgeInsets.all(40.w),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                           // Title
                           Text(
                             "Forgot Password",
@@ -193,8 +196,9 @@ class ForgotPasswordScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ]),
+             // Add some bottom spacing
+              
             ),
           ),
         ),
