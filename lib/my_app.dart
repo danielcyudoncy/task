@@ -16,7 +16,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 // Removed Isar import - using SQLite now
 import 'package:task/routes/global_bindings.dart';
 import 'package:task/views/email_link_signin_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
