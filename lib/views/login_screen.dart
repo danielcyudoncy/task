@@ -385,10 +385,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                     IconButton(
                                       icon: Image.asset(AppIcons.apple,
                                           width: 48.w, height: 48.h),
-                                      onPressed: () async {
+                                      onPressed: () {
                                         Get.find<SettingsController>()
                                             .triggerFeedback();
-                                        await _auth.signInWithApple();
+                                        Get.snackbar(
+                                          'Coming Soon',
+                                          'Apple Sign-In will be available soon!',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Get.theme.colorScheme.surface,
+                                          colorText: Get.theme.colorScheme.onSurface,
+                                        );
                                       },
                                     ),
                                   ],
