@@ -31,7 +31,7 @@ class MinimalTaskCard extends StatelessWidget {
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
 
-    return Container(
+    Widget cardContent = Container(
       margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: isSelected
@@ -60,7 +60,7 @@ class MinimalTaskCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
+          onTap: onTap ?? () => _showTaskDetails(context),
           child: Padding(
             padding: EdgeInsets.all(16.w),
             child: Column(
@@ -95,12 +95,15 @@ class MinimalTaskCard extends StatelessWidget {
                   _buildCategoryRow(context),
                 if (task.tags.isNotEmpty) _buildTagsRow(context),
                 if (task.dueDate != null) _buildDueDateRow(context),
+                _buildCommentsRow(context),
               ],
             ),
           ),
         ),
       ),
     );
+
+    return cardContent;
   }
 
   Widget _buildCreatorRow(BuildContext context) {
@@ -309,6 +312,37 @@ class MinimalTaskCard extends StatelessWidget {
     );
   }
 
+  Widget _buildCommentsRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.comment_outlined,
+            size: 16,
+            color: isDark
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Comments: ${task.comments.length}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? Colors.white70
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12.sp,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _getPriorityColor(String priority) {
     switch (priority.toLowerCase()) {
       case 'high':
@@ -320,5 +354,57 @@ class MinimalTaskCard extends StatelessWidget {
       default:
         return Colors.grey;
     }
+  }
+
+  void _showTaskDetails(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(task.title),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Description: ${task.description}'),
+                const SizedBox(height: 8),
+                Text('Status: ${task.status}'),
+                const SizedBox(height: 8),
+                Text('Category: ${task.category ?? 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Due Date: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Tags: ${task.tags.isNotEmpty ? task.tags.join(', ') : 'None'}'),
+                const SizedBox(height: 16),
+                if (task.comments.isNotEmpty) ...[
+                  const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ...task.comments.map((comment) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text('• $comment'),
+                  )),
+                ] else
+                  const Text('No comments available.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                   color: Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                : Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

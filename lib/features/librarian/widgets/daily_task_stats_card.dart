@@ -109,7 +109,14 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Close'),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Theme.of(context).colorScheme.primary,
+                ),
+              ),
             ),
           ],
         ),
@@ -233,7 +240,14 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Close'),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Theme.of(context).colorScheme.primary,
+                ),
+              ),
             ),
           ],
         ),
@@ -320,7 +334,11 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                                           color: Colors.blue,
                                         ),
                                       ),
-                                      if (hasNotifications) ...[                                         const SizedBox(width: 8),                                         Container(                                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),                                           decoration: BoxDecoration(                                             color: Colors.red,                                             borderRadius: BorderRadius.circular(8),                                           ),                                           child: Text(                                             'NEW',                                             style: TextStyle(                                               color: Colors.white,                                               fontSize: 8,                                               fontWeight: FontWeight.bold,                                             ),                                           ),                                         ),                                       ],
+                                      if (hasNotifications) ...[                                         const SizedBox(width: 8),                                         Container(                                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),                                           decoration: BoxDecoration(                                             color: Colors.red,                                             borderRadius: BorderRadius.circular(8),                                           ),                                           child: Text(                                             'NEW',                                             style: TextStyle(
+                                               color: Theme.of(context).colorScheme.onError,
+                                               fontSize: 8,
+                                               fontWeight: FontWeight.bold,
+                                             ),                                           ),                                         ),                                       ],
                                     ],
                                   ),
                                   Text(

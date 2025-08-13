@@ -23,6 +23,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   final _dateController = TextEditingController();
   final _timeController = TextEditingController();
   final _tagsController = TextEditingController();
+  final _commentsController = TextEditingController();
   String? _selectedCategory;
   final List<String> _categories = [
     'Political',
@@ -76,6 +77,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     _dateController.dispose();
     _timeController.dispose();
     _tagsController.dispose();
+    _commentsController.dispose();
     super.dispose();
   }
 
@@ -180,6 +182,9 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
               : null,
           category: _selectedCategory,
           tags: _tagsController.text.trim().split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+          comments: _commentsController.text.trim().isNotEmpty 
+              ? _commentsController.text.trim() 
+              : null,
         );
         debugPrint('createTask completed successfully');
         // Wait for taskController to finish loading
@@ -194,6 +199,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
         _dateController.clear();
         _timeController.clear();
         _tagsController.clear();
+        _commentsController.clear();
         setState(() {
           _selectedPriority = null;
           _selectedDate = null;
@@ -550,6 +556,35 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                 // Optional, but you can require at least one tag if desired
                                 return null;
                               },
+                            ),
+                            const SizedBox(height: 16),
+                            // Comments Field
+                            TextFormField(
+                              controller: _commentsController,
+                              style: TextStyle(
+                                color: colorScheme.onSurface,
+                                fontSize: 15.sp,
+                                fontFamily: 'Raleway',
+                              ),
+                              decoration: InputDecoration(
+                                labelText: "Comments (optional)",
+                                prefixIcon: const Icon(Icons.comment_rounded),
+                                labelStyle: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                filled: true,
+                                fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide.none,
+                                ),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                              ),
+                              maxLines: 3,
+                              minLines: 2,
+                              textInputAction: TextInputAction.newline,
                             ),
                             const SizedBox(height: 28),
                             // Save Button

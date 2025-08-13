@@ -41,6 +41,12 @@ class Task {
   DateTime? lastModified;
   String? syncStatus;
   
+  // Approval system fields
+  String? approvalStatus; // 'pending', 'approved', 'rejected'
+  String? approvedBy; // Admin user ID who approved/rejected
+  DateTime? approvalTimestamp;
+  String? approvalReason; // Optional reason for approval/rejection
+  
   // Media & Document Attachments
   List<String> attachmentUrls = []; // URLs of uploaded files
   List<String> attachmentNames = []; // Original file names
@@ -50,6 +56,12 @@ class Task {
   
   // Archive related fields
   bool get isArchived => status.toLowerCase() == 'archived';
+  
+  // Approval related fields
+  bool get isApproved => approvalStatus?.toLowerCase() == 'approved';
+  bool get isRejected => approvalStatus?.toLowerCase() == 'rejected';
+  bool get isPendingApproval => approvalStatus?.toLowerCase() == 'pending' || approvalStatus == null;
+  bool get canBeAssigned => isApproved; // Only approved tasks can be assigned
   
   // Helper method to get all assigned user IDs
   List<String> get assignedUserIds {
@@ -96,6 +108,7 @@ class Task {
         createdById = '',
         lastModified = DateTime.now(),
         syncStatus = 'pending',
+        approvalStatus = 'pending',
         attachmentUrls = [],
         attachmentNames = [],
         attachmentTypes = [],
@@ -129,6 +142,10 @@ class Task {
       this.priority,
       {this.lastModified,
       this.syncStatus,
+      this.approvalStatus,
+      this.approvedBy,
+      this.approvalTimestamp,
+      this.approvalReason,
       this.archivedAt,
       this.archivedBy,
       this.archiveReason,
@@ -174,6 +191,10 @@ class Task {
       map['priority'],
       lastModified: parseDate(map['lastModified']),
       syncStatus: map['syncStatus'],
+      approvalStatus: map['approvalStatus'] ?? 'pending',
+      approvedBy: map['approvedBy'],
+      approvalTimestamp: parseDate(map['approvalTimestamp']),
+      approvalReason: map['approvalReason'],
       archivedAt: parseDate(map['archivedAt']),
       archivedBy: map['archivedBy'],
       archiveReason: map['archiveReason'],
@@ -215,6 +236,10 @@ class Task {
     String? priority,
     DateTime? lastModified,
     String? syncStatus,
+    String? approvalStatus,
+    String? approvedBy,
+    DateTime? approvalTimestamp,
+    String? approvalReason,
     DateTime? archivedAt,
     String? archivedBy,
     String? archiveReason,
@@ -253,6 +278,10 @@ class Task {
       priority ?? this.priority,
       lastModified: lastModified ?? this.lastModified ?? DateTime.now(),
       syncStatus: syncStatus ?? this.syncStatus ?? 'pending',
+      approvalStatus: approvalStatus ?? this.approvalStatus,
+      approvedBy: approvedBy ?? this.approvedBy,
+      approvalTimestamp: approvalTimestamp ?? this.approvalTimestamp,
+      approvalReason: approvalReason ?? this.approvalReason,
       archivedAt: archivedAt ?? this.archivedAt,
       archivedBy: archivedBy ?? this.archivedBy,
       archiveReason: archiveReason ?? this.archiveReason,
@@ -295,6 +324,10 @@ class Task {
       'priority': priority,
       'lastModified': (lastModified ?? DateTime.now()).millisecondsSinceEpoch,
       'syncStatus': syncStatus,
+      'approvalStatus': approvalStatus,
+      'approvedBy': approvedBy,
+      'approvalTimestamp': approvalTimestamp?.millisecondsSinceEpoch,
+      'approvalReason': approvalReason,
       'archivedAt': archivedAt?.millisecondsSinceEpoch,
       'archivedBy': archivedBy,
       'archiveReason': archiveReason,

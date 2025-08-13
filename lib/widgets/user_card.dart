@@ -54,7 +54,14 @@ class _UserCardState extends State<UserCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(widget.user['fullname'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Role: ${widget.user['role']}", style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                      Text("Role: ${widget.user['role']}", 
+                style: TextStyle(
+                  fontSize: 14, 
+                  color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.grey[400] 
+                    : Colors.grey[600]
+                )
+              ),
                     ],
                   ),
                 ),

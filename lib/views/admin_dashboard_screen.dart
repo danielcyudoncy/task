@@ -19,6 +19,7 @@ import '../controllers/auth_controller.dart';
 import '../controllers/manage_users_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/widgets/task_card_widget.dart';
+import 'package:task/controllers/task_controller.dart';
 
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -45,7 +46,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     
     // Initialize performance controller
     performanceController = Get.put(PerformanceController());
@@ -139,7 +140,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: Colors.black.withOpacity(0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                   spreadRadius: 0,
@@ -200,7 +201,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           size: 24,
                         ),
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          backgroundColor: Colors.white.withOpacity(0.2),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -239,8 +240,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: Theme.of(context).brightness == Brightness.dark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.grey.withValues(alpha: 0.2),
+                                   ? Colors.white.withOpacity(0.1)
+                                   : Colors.grey.withOpacity(0.2),
                                   width: 1,
                                 ),
                               ),
@@ -404,7 +405,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                           ),
                                           borderRadius: BorderRadius.circular(24),
                                           border: Border.all(
-                                            color: Colors.white.withValues(alpha: 0.2),
+                                            color: Colors.white.withOpacity(0.2),
                                             width: 2,
                                           ),
                                         ),
@@ -1166,6 +1167,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 tabs: const [
                                   Tab(text: "Not Completed"),
                                   Tab(text: "Completed"),
+                                  Tab(text: "Pending Approval"),
                                   Tab(text: "User Performance"),
                                 ],
                               ),
@@ -1195,6 +1197,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                       userCache: userCache,
                                       getUserNameAndRole: getUserNameAndRole,
                                     ),
+                                    _TaskApprovalTab(
+                                      isDark: isDark,
+                                      userCache: userCache,
+                                      getUserNameAndRole: getUserNameAndRole,
+                                    ),
                                     const UserPerformanceTab(),
                                   ],
                                 ),
@@ -1212,6 +1219,442 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
         ),
         bottomNavigationBar: const UserNavBar(currentIndex: 0),
+      );
+    });
+  }
+}
+
+class _TaskApprovalTab extends StatefulWidget {
+  final bool isDark;
+  final Map<String, Map<String, String>> userCache;
+  final Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole;
+
+  const _TaskApprovalTab({
+    required this.isDark,
+    required this.userCache,
+    required this.getUserNameAndRole,
+  });
+
+  @override
+  State<_TaskApprovalTab> createState() => _TaskApprovalTabState();
+}
+
+class _TaskApprovalTabState extends State<_TaskApprovalTab> {
+  final TaskController taskController = Get.find<TaskController>();
+  final AuthController authController = Get.find<AuthController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch pending approval tasks when tab is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      taskController.fetchTasks();
+    });
+  }
+
+  void _showApprovalDialog(Task task) {
+    final TextEditingController reasonController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2C3E50)
+                      : Colors.white,
+                  Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF34495E)
+                      : const Color(0xFFF8F9FA),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF4A90E2),
+                        const Color(0xFF357088),
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.approval,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Task Approval',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Content
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                        // Task Info
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF3A4A5C)
+                                : const Color(0xFFF8F9FA),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.grey.withValues(alpha: 0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Task: ${task.title}',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Created by: ${task.createdBy}',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              if (task.description.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Description: ${task.description}',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Reason field
+                        Text(
+                          'Approval Reason (Optional)',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: reasonController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: 'Enter reason for approval/rejection...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade100,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                ),
+                // Footer with action buttons
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2C3E50)
+                        : const Color(0xFFF8F9FA),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Reject Button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () async {
+                            Get.find<SettingsController>().triggerFeedback();
+                            Navigator.of(context).pop();
+                            await taskController.rejectTask(
+                              task.taskId,
+                              reason: reasonController.text.trim(),
+                            );
+                            setState(() {}); // Refresh the list
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Reject',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Approve Button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () async {
+                            Get.find<SettingsController>().triggerFeedback();
+                            Navigator.of(context).pop();
+                            await taskController.approveTask(
+                              task.taskId,
+                              reason: reasonController.text.trim(),
+                            );
+                            setState(() {}); // Refresh the list
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Approve',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color emptyListColor = widget.isDark ? Colors.white70 : Colors.black54;
+
+    return Obx(() {
+      // Filter tasks that are pending approval
+      final pendingApprovalTasks = taskController.tasks
+          .where((task) => task.isPendingApproval)
+          .toList();
+
+      if (pendingApprovalTasks.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                size: 64,
+                color: emptyListColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No tasks pending approval",
+                style: TextStyle(
+                  color: emptyListColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        itemCount: pendingApprovalTasks.length,
+        itemBuilder: (context, index) {
+          final task = pendingApprovalTasks[index];
+          
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: InkWell(
+              onTap: () => _showApprovalDialog(task),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            task.title,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Pending',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Created by: ${task.createdBy}',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (task.description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        task.description,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Tap to review',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.onPrimaryContainer
+                                : Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.onPrimaryContainer
+                              : Theme.of(context).colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       );
     });
   }

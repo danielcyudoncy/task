@@ -4,21 +4,21 @@ import 'package:task/utils/constants/app_colors.dart';
 
 class AppTextTheme {
   static const TextTheme lightTextTheme = TextTheme(
-    displayLarge: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    displayMedium: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    displaySmall: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    headlineLarge: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    headlineMedium: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    headlineSmall: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    titleLarge: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    titleMedium: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    titleSmall: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    bodyLarge: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    bodyMedium: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    bodySmall: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    labelLarge: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    labelMedium: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-    labelSmall: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+    displayLarge: TextStyle(color: Colors.black),
+    displayMedium: TextStyle(color: Colors.black),
+    displaySmall: TextStyle(color: Colors.black),
+    headlineLarge: TextStyle(color: Colors.black),
+    headlineMedium: TextStyle(color: Colors.black),
+    headlineSmall: TextStyle(color: Colors.black),
+    titleLarge: TextStyle(color: Colors.black),
+    titleMedium: TextStyle(color: Colors.black),
+    titleSmall: TextStyle(color: Colors.black),
+    bodyLarge: TextStyle(color: Colors.black),
+    bodyMedium: TextStyle(color: Colors.black),
+    bodySmall: TextStyle(color: Colors.black),
+    labelLarge: TextStyle(color: Colors.black),
+    labelMedium: TextStyle(color: Colors.black),
+    labelSmall: TextStyle(color: Colors.black),
   );
 
   static const TextTheme darkTextTheme = TextTheme(

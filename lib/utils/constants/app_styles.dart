@@ -12,9 +12,10 @@ class AppStyles {
     colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
   );
 
-  static const cardTitleStyle = TextStyle(fontSize: 18, color: Color(0xFFDBDBDB));
+  // Note: These styles should be used with theme-aware colors
+  // Use Theme.of(context).textTheme or colorScheme instead of these hardcoded styles
+  static const cardTitleStyle = TextStyle(fontSize: 18);
   static const cardValueStyle = TextStyle(
-    color: Colors.white,
     fontSize: 18,
     fontWeight: FontWeight.bold,
   );
@@ -22,9 +23,11 @@ class AppStyles {
   static const sectionTitleStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
-    color: Colors.indigo,
   );
 
+  // Deprecated: Use theme-aware colors instead
+  @Deprecated('Use theme-aware colors instead')
   static const tabSelectedStyle = TextStyle(color: Colors.white);
+  @Deprecated('Use theme-aware colors instead')
   static const tabUnselectedStyle = TextStyle(color: Colors.black);
 }

@@ -21,8 +21,8 @@ class NotificationScreen extends StatelessWidget {
 
 
     // Get colors from theme instead of hardcoding
-    final backgroundColor = theme.colorScheme.background;
-    final cardColor = theme.colorScheme.surfaceVariant;
+    final backgroundColor = theme.colorScheme.surface;
+    final cardColor = theme.colorScheme.surfaceContainerHighest;
     final subtitleColor = theme.colorScheme.onSurfaceVariant;
 
     return Scaffold(
@@ -317,7 +317,6 @@ class NotificationScreen extends StatelessWidget {
   }
 
   Future<bool> _showDeleteDialog(BuildContext context, String id) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -336,9 +335,9 @@ class NotificationScreen extends StatelessWidget {
               child: Text(
                 "delete_notification".tr,
                 style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black87,
-                  fontWeight: FontWeight.w600,
-                ),
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -347,8 +346,8 @@ class NotificationScreen extends StatelessWidget {
         content: Text(
           "Are you sure you want to delete this notification? This action cannot be undone.",
           style: TextStyle(
-            color: isDark ? Colors.white70 : Colors.grey.shade600,
-            fontSize: 14.sp,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            fontSize: 12,
           ),
         ),
         actions: [
@@ -357,7 +356,7 @@ class NotificationScreen extends StatelessWidget {
             child: Text(
               "cancel".tr,
               style: TextStyle(
-                color: isDark ? Colors.white70 : Colors.grey.shade600,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
