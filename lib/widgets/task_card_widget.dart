@@ -40,7 +40,7 @@ class TaskCardWidget extends StatelessWidget {
         ? const Color(0xFF292B3A) 
         : Theme.of(context).primaryColor;
     const Color textColor = Colors.white;
-    const Color subTextColor = Colors.white70;
+    final Color subTextColor = isDark ? Colors.white70 : Colors.grey[600]!;
     final Color borderColor = colorScheme.outline.withAlpha((0.3 * 255).toInt());
 
     // Debug prints for diagnosis
@@ -57,205 +57,273 @@ class TaskCardWidget extends StatelessWidget {
       secondaryBackground: _buildDeleteBackground(),
       confirmDismiss: (direction) => _handleDismiss(context, direction),
       onDismissed: (direction) => _handleDismissed(direction),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 7.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: borderColor,
-              width: 1,
+      child: GestureDetector(
+        onTap: () => _showTaskDetails(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 7.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: borderColor,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black.withAlpha((0.38 * 255).round()) : const Color(0x22000000),
+                  blurRadius: 8,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isDark ? Colors.black.withAlpha((0.38 * 255).round()) : const Color(0x22000000),
-                blurRadius: 8,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                task.title, 
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 7),
-              Text(
-                task.description,
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Creator info
-              Row(
-                children: [
-                  const Icon(
-                    Icons.person_outline,
-                    size: 14,
-                    color: subTextColor,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  task.title, 
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                    fontSize: 16,
                   ),
-                  const SizedBox(width: 4),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  task.description,
+                  style: TextStyle(
+                    color: subTextColor,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Creator info
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 14,
+                      color: subTextColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Created by: ${_getCreatorName()}',
+                      style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Assigned Reporter
+                Text(
+                  'Assigned Reporter: ${_getAssignedReporterName()}',
+                  style: TextStyle(
+                    color: subTextColor,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Assigned Cameraman
+                Text(
+                  'Assigned Cameraman: ${_getAssignedCameramanName()}',
+                  style: TextStyle(
+                    color: subTextColor,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Assigned Driver
+                Text(
+                  'Assigned Driver: ${_getAssignedDriverName()}',
+                  style: TextStyle(
+                    color: subTextColor,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Status
+                Text(
+                  'Status: ${task.status}',
+                  style: TextStyle(
+                    color: subTextColor,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Tags
+                if (task.tags.isNotEmpty)
                   Text(
-                    'Created by: ${_getCreatorName()}',
+                    'Tags: ${task.tags.join(', ')}',
                     style: TextStyle(
                       color: subTextColor,
-                      fontSize: 12.sp,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              // Assigned Reporter
-              Text(
-                'Assigned Reporter: ${_getAssignedReporterName()}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Assigned Cameraman
-              Text(
-                'Assigned Cameraman: ${_getAssignedCameramanName()}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Assigned Driver
-              Text(
-                'Assigned Driver: ${_getAssignedDriverName()}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Status
-              Text(
-                'Status: ${task.status}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Category
-              Text(
-                'Category: ${(task.category != null && task.category!.isNotEmpty) ? task.category! : 'No category'}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Tags
-              Text(
-                'Tags: ${(task.tags.isNotEmpty) ? task.tags.join(', ') : 'No tags'}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Priority
-              Text(
-                'Priority: ${(task.priority != null && task.priority!.isNotEmpty) ? task.priority! : 'N/A'}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Due Date
-              Text(
-                'Due Date: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}',
-                style: TextStyle(
-                  color: subTextColor,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (!isCompleted && (isTaskOwner || isAssignedUser)) ...[
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[600],
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(40, 36),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon: const Icon(Icons.check, size: 18),
-                      label: const Text("Complete", style: TextStyle(fontSize: 13)),
-                      onPressed: () {
-                        TaskActions.completeTask(task);
-                      },
+                const SizedBox(height: 4),
+                // Priority
+                if (task.priority != null)
+                  Text(
+                    'Priority: ${task.priority}',
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
                     ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (isTaskOwner) ...[
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[600],
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(40, 36),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon: const Icon(Icons.delete, size: 18),
-                      label: const Text("Delete", style: TextStyle(fontSize: 13)),
-                      onPressed: () async {
-                        final confirmed = await _showDeleteConfirmation(context);
-                        if (confirmed == true) {
-                          TaskActions.deleteTask(task);
-                        }
-                      },
+                  ),
+                const SizedBox(height: 4),
+                // Due Date
+                if (task.dueDate != null)
+                  Text(
+                    'Due: ${DateFormat('MMM dd, yyyy – HH:mm').format(task.dueDate!)}',
+                    style: TextStyle(
+                      color: subTextColor,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(Icons.edit_note_rounded,
-                          color: textColor, size: 22.sp),
-                      onPressed: () {
-                        Get.find<SettingsController>().triggerFeedback();
-                        TaskActions.editTask(context, task);
-                      },
-                      tooltip: "Edit Task",
+                  ),
+                const SizedBox(height: 8),
+                // Comments count
+                Row(
+                  children: [
+                    Icon(
+                      Icons.comment_outlined,
+                      size: 14,
+                      color: subTextColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Comments: ${task.comments.length}',
+                      style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ],
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 15),
+                // Action buttons
+                if (isTaskOwner || isAssignedUser)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (!isCompleted)
+                        ElevatedButton(
+                          onPressed: () {
+                            Get.find<SettingsController>().triggerFeedback();
+                            _markAsCompleted();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[600],
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w, vertical: 8.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Text(
+                            'Complete',
+                            style: TextStyle(fontSize: 12.sp),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(Icons.delete_outline_rounded,
+                            color: Colors.red[400], size: 22.sp),
+                        onPressed: () {
+                          Get.find<SettingsController>().triggerFeedback();
+                          if (isTaskOwner) {
+                            TaskActions.deleteTask(task);
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(Icons.edit_note_rounded,
+                            color: textColor, size: 22.sp),
+                        onPressed: () {
+                          Get.find<SettingsController>().triggerFeedback();
+                          TaskActions.editTask(context, task);
+                        },
+                        tooltip: "Edit Task",
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showTaskDetails(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(task.title),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Description: ${task.description}'),
+                const SizedBox(height: 8),
+                Text('Status: ${task.status}'),
+                const SizedBox(height: 8),
+                Text('Category: ${task.category ?? 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Due Date: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Tags: ${task.tags.isNotEmpty ? task.tags.join(', ') : 'None'}'),
+                const SizedBox(height: 8),
+                Text('Creator: ${_getCreatorName()}'),
+                const SizedBox(height: 8),
+                Text('Reporter: ${_getAssignedReporterName()}'),
+                const SizedBox(height: 8),
+                Text('Cameraman: ${_getAssignedCameramanName()}'),
+                const SizedBox(height: 8),
+                Text('Driver: ${_getAssignedDriverName()}'),
+                const SizedBox(height: 16),
+                if (task.comments.isNotEmpty) ...[
+                  const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ...task.comments.map((comment) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text('• $comment'),
+                  )),
+                ] else
+                  const Text('No comments available.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -266,9 +334,16 @@ class TaskCardWidget extends StatelessWidget {
       padding: const EdgeInsets.only(left: 20),
       child: const Row(
         children: [
-          Icon(Icons.check, color: Colors.white),
-          SizedBox(width: 8),
-          Text("Complete", style: TextStyle(color: Colors.white)),
+          Icon(Icons.check, color: Colors.white, size: 30),
+          SizedBox(width: 10),
+          Text(
+            'Complete',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );
@@ -282,19 +357,24 @@ class TaskCardWidget extends StatelessWidget {
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Icon(Icons.delete, color: Colors.white),
-          SizedBox(width: 8),
-          Text("Delete", style: TextStyle(color: Colors.white)),
+          Text(
+            'Delete',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(width: 10),
+          Icon(Icons.delete, color: Colors.white, size: 30),
         ],
       ),
     );
   }
 
-  Future<bool?> _handleDismiss(
-      BuildContext context, DismissDirection direction) async {
+  Future<bool?> _handleDismiss(BuildContext context, DismissDirection direction) async {
     if (direction == DismissDirection.startToEnd && !isCompleted) {
-      TaskActions.completeTask(task);
-      return false;
+      return await _showCompleteConfirmation(context);
     } else if (direction == DismissDirection.endToStart) {
       return await _showDeleteConfirmation(context);
     }
@@ -302,31 +382,19 @@ class TaskCardWidget extends StatelessWidget {
   }
 
   void _handleDismissed(DismissDirection direction) {
-    if (direction == DismissDirection.endToStart) {
+    if (direction == DismissDirection.startToEnd && !isCompleted) {
+      _markAsCompleted();
+    } else if (direction == DismissDirection.endToStart) {
       TaskActions.deleteTask(task);
     }
   }
 
-  Future<bool?> _showDeleteConfirmation(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
+  Future<bool?> _showCompleteConfirmation(BuildContext context) async {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: colorScheme.surface,
-        title: Text(
-          "Delete Task",
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-        ),
-        content: Text(
-          "Are you sure you want to delete this task?",
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-        ),
+        title: const Text("Mark as Completed"),
+        content: Text("Are you sure you want to mark '${task.title}' as completed?"),
         actions: [
           TextButton(
             onPressed: () {
@@ -334,8 +402,42 @@ class TaskCardWidget extends StatelessWidget {
               Navigator.of(ctx).pop(false);
             },
             child: Text(
-              "Cancel",
-              style: TextStyle(color: colorScheme.primary),
+              "Cancel", 
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Navigator.of(ctx).pop(true);
+            },
+            child: Text(
+              "Complete", 
+              style: TextStyle(
+                      color: isDark ? Colors.green[300] : Colors.green[700]
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _showDeleteConfirmation(BuildContext context) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Task"),
+        content: Text("Are you sure you want to delete '${task.title}'? This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.find<SettingsController>().triggerFeedback();
+              Navigator.of(ctx).pop(false);
+            },
+            child: Text(
+              "Cancel", 
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
           ),
           TextButton(
@@ -345,7 +447,9 @@ class TaskCardWidget extends StatelessWidget {
             },
             child: Text(
               "Delete", 
-              style: TextStyle(color: Colors.red[600]),
+              style: TextStyle(
+                      color: isDark ? Colors.red[300] : Colors.red[600]
+                    ),
             ),
           ),
         ],
@@ -356,38 +460,89 @@ class TaskCardWidget extends StatelessWidget {
   String _getCreatorName() {
     try {
       final taskController = Get.find<TaskController>();
-
-      // 1. Check if we have a cached name
+      
+      // Check if we have a cached name
       if (task.createdById.isNotEmpty &&
           taskController.userNameCache.containsKey(task.createdById)) {
         return taskController.userNameCache[task.createdById]!;
       }
-
-      // 2. Fallback to createdBy field
+      
+      // Fallback to createdBy field
       if (task.createdBy.isNotEmpty) {
         return task.createdBy;
       }
-
-      // 3. Final fallback
+      
       return 'Unknown';
     } catch (e) {
-      debugPrint('Error getting creator name: $e');
-      return task.createdBy;
+      return 'Unknown';
     }
   }
 
   String _getAssignedReporterName() {
-    // Get the task document data to access assignedReporterName field
-    return task.assignedReporter ?? 'Not Assigned';
+    try {
+      if (task.assignedReporterId == null) return 'Not Assigned';
+      final taskController = Get.find<TaskController>();
+      
+      // Check cache first
+      if (taskController.userNameCache.containsKey(task.assignedReporterId!)) {
+        return taskController.userNameCache[task.assignedReporterId!]!;
+      }
+      
+      // Fallback to task field
+      if (task.assignedReporter != null && task.assignedReporter!.isNotEmpty) {
+        return task.assignedReporter!;
+      }
+      
+      return 'Unknown';
+    } catch (e) {
+      return 'Unknown';
+    }
   }
 
   String _getAssignedCameramanName() {
-    // Get the task document data to access assignedCameramanName field
-    return task.assignedCameraman ?? 'Not Assigned';
+    try {
+      if (task.assignedCameramanId == null) return 'Not Assigned';
+      final taskController = Get.find<TaskController>();
+      
+      // Check cache first
+      if (taskController.userNameCache.containsKey(task.assignedCameramanId!)) {
+        return taskController.userNameCache[task.assignedCameramanId!]!;
+      }
+      
+      // Fallback to task field
+      if (task.assignedCameraman != null && task.assignedCameraman!.isNotEmpty) {
+        return task.assignedCameraman!;
+      }
+      
+      return 'Unknown';
+    } catch (e) {
+      return 'Unknown';
+    }
   }
 
   String _getAssignedDriverName() {
-    // Get the task document data to access assignedDriverName field
-    return task.assignedDriver ?? 'Not Assigned';
+    try {
+      if (task.assignedDriverId == null) return 'Not Assigned';
+      final taskController = Get.find<TaskController>();
+      
+      // Check cache first
+      if (taskController.userNameCache.containsKey(task.assignedDriverId!)) {
+        return taskController.userNameCache[task.assignedDriverId!]!;
+      }
+      
+      // Fallback to task field
+      if (task.assignedDriver != null && task.assignedDriver!.isNotEmpty) {
+        return task.assignedDriver!;
+      }
+      
+      return 'Unknown';
+    } catch (e) {
+      return 'Unknown';
+    }
+  }
+
+  void _markAsCompleted() {
+    final taskController = Get.find<TaskController>();
+    taskController.updateTaskStatus(task.taskId, 'Completed');
   }
 }

@@ -288,9 +288,9 @@ class _AppDrawerState extends State<AppDrawer> {
                       duration: const Duration(milliseconds: 300),
                       child: const Icon(Icons.logout, color: Colors.red),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Logout',
-                      style: TextStyle(color: Colors.red),
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
                     ),
                     onTap: _confirmLogout,
                   ),

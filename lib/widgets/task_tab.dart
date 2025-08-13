@@ -20,8 +20,8 @@ class TasksTab extends StatelessWidget {
     final Color cardColor =
         isDark ? const Color(0xFF292B3A) : Theme.of(context).colorScheme.primary;
     const Color textColor = Colors.white;
-    const Color subTextColor = Colors.white70;
-    final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;
+    final Color subTextColor = isDark ? Colors.white70 : Colors.grey[600]!;
+  final Color emptyListColor = isDark ? Colors.white70 : Colors.black54;
 
     if (tasks.isEmpty) {
       return Center(
@@ -73,12 +73,12 @@ class TasksTab extends StatelessWidget {
                     doc.isNotEmpty && doc.containsKey('description')
                         ? doc['description']?.toString() ?? 'task_details_not_available'.tr
                         : 'task_details_not_available'.tr,
-                    style: const TextStyle(color: subTextColor, fontSize: 13),
+                    style: TextStyle(color: subTextColor, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'assigned_to'.trParams({'name': doc['assignedName'] ?? 'unassigned'.tr}),
-                    style: const TextStyle(color: subTextColor, fontSize: 13),
+                    style: TextStyle(color: subTextColor, fontSize: 13),
                   ),
                 ],
               ),

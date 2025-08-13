@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:task/utils/constants/app_colors.dart';
 import '../controllers/auth_controller.dart';
 import 'chat_screen.dart';
 import '../widgets/chat_nav_bar.dart';
@@ -64,7 +63,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     ),
                     child: Text(
                       totalUnread.toString(),
-                      style: TextStyle(fontSize: 10.sp, color: Colors.white),
+                      style: TextStyle(
+                  fontSize: 10.sp, 
+                  color: Theme.of(context).colorScheme.onPrimary
+                ),
                     ),
                   ),
                 )
@@ -117,7 +119,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('No one is online', style: TextStyle(color: Colors.grey)),
+                      child: Text('No one is online', style: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.grey[400] 
+            : Colors.grey[600]
+        )),
                     ),
                   );
                 }
@@ -153,7 +159,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           width: 56,
                           child: Text(
                             name.split(' ').first,
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(
+              fontSize: 12, 
+              color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.grey[400] 
+                : Colors.grey[600]
+            ),
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
@@ -195,7 +206,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         SizedBox(height: 16.h),
                         Text(
                           'No conversations yet',
-                          style: TextStyle(fontSize: 16.sp, color: AppColors.primaryColor),
+                          style: TextStyle(
+              fontSize: 16.sp, 
+              color: Theme.of(context).colorScheme.primary
+            ),
                         ),
                       ],
                     ),
@@ -428,7 +442,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             child: Text(
               unreadCount.toString(),
-              style: TextStyle(fontSize: 10.sp, color: Colors.white),
+              style: TextStyle(
+                    fontSize: 10.sp, 
+                    color: Theme.of(context).colorScheme.onPrimary
+                  ),
             ),
           ),
       ],

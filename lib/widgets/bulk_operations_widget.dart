@@ -394,12 +394,12 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
             Text('Total operations: ${result.totalOperations}'),
             Text(
               'Successful: ${result.successCount}',
-              style: TextStyle(color: AppColors.saveColor),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
             if (result.hasFailures) ...[
               Text(
                 'Failed: ${result.failureCount}',
-                style: TextStyle(color: AppColors.errorRed),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               const SizedBox(height: 8),
               Text(

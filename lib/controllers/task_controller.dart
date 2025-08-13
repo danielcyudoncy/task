@@ -355,6 +355,34 @@ class TaskController extends GetxController {
     String? librarianName,
   }) async {
     try {
+      // Check if task is approved before allowing assignment
+      final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      if (taskIndex != -1) {
+        final task = tasks[taskIndex];
+        if (!task.canBeAssigned) {
+          _safeSnackbar("Error", "This task must be approved before it can be assigned to users");
+          return;
+        }
+      } else {
+        // If task not found locally, check Firebase
+        final taskDoc = await FirebaseFirestore.instance
+            .collection('tasks')
+            .doc(taskId)
+            .get();
+        
+        if (taskDoc.exists) {
+          final taskData = taskDoc.data()!;
+          final approvalStatus = taskData['approvalStatus'] ?? 'pending';
+          if (approvalStatus.toLowerCase() != 'approved') {
+            _safeSnackbar("Error", "This task must be approved before it can be assigned to users");
+            return;
+          }
+        } else {
+          _safeSnackbar("Error", "Task not found");
+          return;
+        }
+      }
+
       // Prepare the update data with proper null safety
       final updateData = await _prepareAssignmentUpdates(
         reporterId: reporterId,
@@ -712,6 +740,7 @@ class TaskController extends GetxController {
     DateTime? dueDate,
     String? category,
     List<String>? tags,
+    String? comments,
   }) async {
     debugPrint('createTask: started');
     try {
@@ -747,7 +776,7 @@ class TaskController extends GetxController {
         null, // assignedDriver
         null, // assignedLibrarian
         'Pending',
-        [],
+        comments != null && comments.isNotEmpty ? [comments] : [],
         DateTime.now(),
         null, // assignedTo
         null, // assignmentTimestamp
@@ -785,7 +814,7 @@ class TaskController extends GetxController {
         "status": "Pending",
         "priority": priority,
         "dueDate": dueDate?.toIso8601String(),
-        "comments": [],
+        "comments": comments != null && comments.isNotEmpty ? [comments] : [],
         "timestamp": FieldValue.serverTimestamp(),
         "category": category,
         "tags": tags ?? [],
@@ -1405,5 +1434,126 @@ class TaskController extends GetxController {
     } catch (e) {
       errorMessage.value = 'Failed to sync tasks from cloud: $e';
     }
+  }
+
+  // --- APPROVAL METHODS ---
+  
+  /// Approve a task (Admin only)
+  Future<void> approveTask(String taskId, {String? reason}) async {
+    try {
+      final userId = authController.auth.currentUser?.uid;
+      if (userId == null) {
+        _safeSnackbar("Error", "User not authenticated");
+        return;
+      }
+
+      // Check if user is admin
+      if (!authController.isAdmin.value) {
+        _safeSnackbar("Error", "Only admins can approve tasks");
+        return;
+      }
+
+      final now = DateTime.now();
+      final approvalData = {
+        'approvalStatus': 'approved',
+        'approvedBy': userId,
+        'approvalTimestamp': FieldValue.serverTimestamp(),
+        'approvalReason': reason,
+        'lastModified': FieldValue.serverTimestamp(),
+      };
+
+      // Update in Firebase
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .update(approvalData);
+
+      // Update local task
+      final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      if (taskIndex != -1) {
+        final updatedTask = tasks[taskIndex].copyWith(
+          approvalStatus: 'approved',
+          approvedBy: userId,
+          approvalTimestamp: now,
+          approvalReason: reason,
+          lastModified: now,
+        );
+        tasks[taskIndex] = updatedTask;
+        await updateTaskLocal(updatedTask);
+        tasks.refresh();
+      }
+
+      _safeSnackbar("Success", "Task approved successfully");
+    } catch (e) {
+      _safeSnackbar("Error", "Failed to approve task: ${e.toString()}");
+      debugPrint("Error in approveTask: $e");
+    }
+  }
+
+  /// Reject a task (Admin only)
+  Future<void> rejectTask(String taskId, {String? reason}) async {
+    try {
+      final userId = authController.auth.currentUser?.uid;
+      if (userId == null) {
+        _safeSnackbar("Error", "User not authenticated");
+        return;
+      }
+
+      // Check if user is admin
+      if (!authController.isAdmin.value) {
+        _safeSnackbar("Error", "Only admins can reject tasks");
+        return;
+      }
+
+      final now = DateTime.now();
+      final rejectionData = {
+        'approvalStatus': 'rejected',
+        'approvedBy': userId,
+        'approvalTimestamp': FieldValue.serverTimestamp(),
+        'approvalReason': reason,
+        'lastModified': FieldValue.serverTimestamp(),
+      };
+
+      // Update in Firebase
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .update(rejectionData);
+
+      // Update local task
+      final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      if (taskIndex != -1) {
+        final updatedTask = tasks[taskIndex].copyWith(
+          approvalStatus: 'rejected',
+          approvedBy: userId,
+          approvalTimestamp: now,
+          approvalReason: reason,
+          lastModified: now,
+        );
+        tasks[taskIndex] = updatedTask;
+        await updateTaskLocal(updatedTask);
+        tasks.refresh();
+      }
+
+      _safeSnackbar("Success", "Task rejected successfully");
+    } catch (e) {
+      _safeSnackbar("Error", "Failed to reject task: ${e.toString()}");
+      debugPrint("Error in rejectTask: $e");
+    }
+  }
+
+  /// Get tasks pending approval (Admin only)
+  List<Task> get pendingApprovalTasks {
+    return tasks.where((task) => task.isPendingApproval).toList();
+  }
+
+  /// Get approved tasks
+  List<Task> get approvedTasks {
+    return tasks.where((task) => task.isApproved).toList();
+  }
+
+  /// Get rejected tasks
+  List<Task> get rejectedTasks {
+    return tasks.where((task) => task.isRejected).toList();
   }
 }

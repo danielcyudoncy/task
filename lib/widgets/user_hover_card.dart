@@ -77,7 +77,12 @@ class UserHoverCard extends StatelessWidget {
             ),
             subtitle: Text(
               "Role: ${user['role']}",
-              style: TextStyle(fontSize: 14.sp * textScale, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 14.sp * textScale,
+                color: Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.grey[400] 
+                  : Colors.grey[600]
+              ),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,

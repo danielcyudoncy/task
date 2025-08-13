@@ -5,7 +5,7 @@ import '../models/task_model.dart';
 class DatabaseService {
   static Database? _database;
   static const String _databaseName = 'tasks.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 3;
   
   // Table names
   static const String _tasksTable = 'tasks';
@@ -22,7 +22,45 @@ class DatabaseService {
       path,
       version: _databaseVersion,
       onCreate: _createTables,
+      onUpgrade: _onUpgrade,
     );
+  }
+  
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add new columns for version 2
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN createdBy TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedReporter TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedCameraman TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedDriver TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedLibrarian TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedTo TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignmentTimestamp INTEGER');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN createdById TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedReporterId TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedCameramanId TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedDriverId TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN assignedLibrarianId TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN creatorAvatar TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN category TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN tags TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN dueDate INTEGER');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN priority TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN lastModified INTEGER');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN syncStatus TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN attachmentUrls TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN attachmentNames TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN attachmentTypes TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN attachmentSizes TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN lastAttachmentAdded INTEGER');
+    }
+    if (oldVersion < 3) {
+      // Add approval system columns for version 3
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN approvalStatus TEXT DEFAULT "pending"');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN approvedBy TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN approvalTimestamp INTEGER');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN approvalReason TEXT');
+    }
   }
   
   Future<void> _createTables(Database db, int version) async {
@@ -32,6 +70,11 @@ class DatabaseService {
         taskId TEXT UNIQUE NOT NULL,
         title TEXT NOT NULL,
         description TEXT,
+        createdBy TEXT,
+        assignedReporter TEXT,
+        assignedCameraman TEXT,
+        assignedDriver TEXT,
+        assignedLibrarian TEXT,
         assignedToUserId TEXT,
         assignedToUserName TEXT,
         assignedToUserEmail TEXT,
@@ -41,6 +84,20 @@ class DatabaseService {
         status TEXT NOT NULL,
         comments TEXT,
         timestamp INTEGER NOT NULL,
+        assignedTo TEXT,
+        assignmentTimestamp INTEGER,
+        createdById TEXT,
+        assignedReporterId TEXT,
+        assignedCameramanId TEXT,
+        assignedDriverId TEXT,
+        assignedLibrarianId TEXT,
+        creatorAvatar TEXT,
+        category TEXT,
+        tags TEXT,
+        dueDate INTEGER,
+        priority TEXT,
+        lastModified INTEGER,
+        syncStatus TEXT,
         mediaAttachmentUrl TEXT,
         mediaAttachmentName TEXT,
         mediaAttachmentType TEXT,
@@ -49,8 +106,17 @@ class DatabaseService {
         archivedBy TEXT,
         archiveReason TEXT,
         archiveLocation TEXT,
+        attachmentUrls TEXT,
+        attachmentNames TEXT,
+        attachmentTypes TEXT,
+        attachmentSizes TEXT,
+        lastAttachmentAdded INTEGER,
         completedByUserIds TEXT,
-        userCompletionTimestamps TEXT
+        userCompletionTimestamps TEXT,
+        approvalStatus TEXT DEFAULT 'pending',
+        approvedBy TEXT,
+        approvalTimestamp INTEGER,
+        approvalReason TEXT
       )
     ''');
   }

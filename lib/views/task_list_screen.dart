@@ -305,9 +305,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                   ),
                                   textButtonTheme: TextButtonThemeData(
                                     style: TextButton.styleFrom(
-                                      foregroundColor: Theme.of(context).brightness == Brightness.dark 
-                                          ? Colors.white 
-                                          : Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ),

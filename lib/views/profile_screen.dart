@@ -304,7 +304,10 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           icon: const Icon(Icons.logout, color: Colors.white),
                           label: Text("log_out".tr,
-                              style: const TextStyle(fontSize: 18, color: Colors.white)),
+                              style: TextStyle(
+                  fontSize: 18, 
+                  color: Theme.of(context).colorScheme.onPrimary
+                )),
                           onPressed: () {
                             Get.find<SettingsController>().triggerFeedback();
                             authController.logout();
@@ -327,7 +330,10 @@ class ProfileScreen extends StatelessWidget {
                           icon: const Icon(Icons.delete_forever,
                               color: Colors.white),
                           label: Text("delete_account".tr,
-                              style: const TextStyle(fontSize: 18, color: Colors.white)),
+                              style: TextStyle(
+                  fontSize: 18, 
+                  color: Theme.of(context).colorScheme.onPrimary
+                )),
                           onPressed: () async {
                             Get.find<SettingsController>().triggerFeedback();
                             final confirmed = await showDialog<bool>(
@@ -346,7 +352,9 @@ class ProfileScreen extends StatelessWidget {
                                     onPressed: () {Get.find<SettingsController>().triggerFeedback();
                                         Navigator.of(context).pop(true);},
                                     child: Text('delete'.tr,
-                                        style: TextStyle(color: Colors.red)),
+                                        style: TextStyle(
+                  color: Theme.of(context).colorScheme.error
+                )),
                                   ),
                                 ],
                               ),

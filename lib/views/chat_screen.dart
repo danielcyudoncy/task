@@ -677,7 +677,12 @@ class _DateDivider extends StatelessWidget {
             ),
             child: Text(
               label,
-              style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark 
+                    ? Colors.grey[400] 
+                    : Colors.grey[700], 
+                  fontWeight: FontWeight.w600
+                ),
             ),
           ),
         ],
@@ -910,7 +915,9 @@ class UserDetailsSheet extends StatelessWidget {
                 shadowColor: Colors.black26,
               ),
               icon: const Icon(Icons.message, color: Colors.white),
-              label: Text("Message".tr, style: const TextStyle(color: Colors.white)),
+              label: Text("Message".tr, style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary
+              )),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
