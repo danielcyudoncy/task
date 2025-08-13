@@ -652,7 +652,7 @@ class SettingsScreen extends StatelessWidget {
                               ),
                             ),
                             child: TextButton(
-                              onPressed: () => Get.back(),
+                              onPressed: () => Navigator.of(context).pop(),
                               style: TextButton.styleFrom(
                                 foregroundColor: theme.colorScheme.onSurface,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -706,11 +706,12 @@ class SettingsScreen extends StatelessWidget {
                                   return;
                                 }
                                 
+                                // Close the dialog immediately after validation passes
+                                Navigator.of(context).pop();
+                                
+                                // Perform async operations after dialog is closed
                                 await appLockController.setPin(pin);
                                 await appLockController.toggleAppLock(true);
-                                
-                                // Always close the dialog first
-                                Get.back();
                                 
                                 // If the app is currently locked, unlock it after setting PIN
                                 if (appLockController.isAppLocked.value) {
