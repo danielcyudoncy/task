@@ -1481,6 +1481,16 @@ class TaskController extends GetxController {
         tasks[taskIndex] = updatedTask;
         await updateTaskLocal(updatedTask);
         tasks.refresh();
+        
+        // Send notification to task creator
+        if (updatedTask.createdBy != null && updatedTask.createdBy!.isNotEmpty) {
+          await sendTaskApprovalNotification(
+            updatedTask.createdBy!,
+            updatedTask.title,
+            'approved',
+            reason: reason,
+          );
+        }
       }
 
       _safeSnackbar("Success", "Task approved successfully");
@@ -1533,6 +1543,16 @@ class TaskController extends GetxController {
         tasks[taskIndex] = updatedTask;
         await updateTaskLocal(updatedTask);
         tasks.refresh();
+        
+        // Send notification to task creator
+        if (updatedTask.createdBy != null && updatedTask.createdBy!.isNotEmpty) {
+          await sendTaskApprovalNotification(
+            updatedTask.createdBy!,
+            updatedTask.title,
+            'rejected',
+            reason: reason,
+          );
+        }
       }
 
       _safeSnackbar("Success", "Task rejected successfully");

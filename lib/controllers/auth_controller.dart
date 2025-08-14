@@ -6,12 +6,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
-import 'dart:math';
+
+
+// Platform-specific imports
+import 'package:google_sign_in/google_sign_in.dart';
+// import 'package:sign_in_with_apple/sign_in_with_apple.dart'; // Commented out - Apple development not registered yet
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/service/firebase_service.dart';
 import 'package:task/service/presence_service.dart';
@@ -23,7 +23,7 @@ class AuthController extends GetxController {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn? _googleSignIn = kIsWeb ? null : GoogleSignIn();
 
   final FirebaseService _firebaseService = FirebaseService();
   final FirebaseStorageService storageService = FirebaseStorageService();
@@ -777,8 +777,15 @@ class AuthController extends GetxController {
   // Google Sign-In Method
   Future<void> signInWithGoogle() async {
     try {
-      debugPrint("AuthController: Starting Google sign in process");
       isLoading(true);
+      debugPrint("AuthController: Starting Google sign-in");
+      
+      if (_googleSignIn == null) {
+        debugPrint("AuthController: Google Sign-In not available on this platform");
+        _safeSnackbar("Error", "Google Sign-In not available on this platform");
+        isLoading(false);
+        return;
+      }
       
       // Trigger the authentication flow
       debugPrint("AuthController: Calling _googleSignIn.signIn()");
@@ -786,11 +793,10 @@ class AuthController extends GetxController {
       
       if (googleUser == null) {
         // User canceled the sign-in
-        debugPrint("AuthController: Google sign in canceled by user");
+        debugPrint("AuthController: Google sign-in canceled by user");
+        isLoading(false);
         return;
       }
-      
-      debugPrint("AuthController: Google user obtained: ${googleUser.email}");
       
       // Obtain the auth details from the request
       debugPrint("AuthController: Getting Google authentication details");
@@ -884,140 +890,7 @@ class AuthController extends GetxController {
     }
   }
 
-  // Apple Sign-In Method
-  Future<void> signInWithApple() async {
-    try {
-      debugPrint("AuthController: Starting Apple sign in process");
-      isLoading(true);
-      
-      // Check if Apple Sign In is available
-      if (!await SignInWithApple.isAvailable()) {
-        _safeSnackbar("Error", "Apple Sign In is not available on this device");
-        return;
-      }
-      
-      // Generate a random nonce for security
-      final rawNonce = _generateNonce();
-      final nonce = _sha256ofString(rawNonce);
-      
-      // Request credential from Apple
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: nonce,
-      );
-      
-      // Create OAuth credential for Firebase
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        rawNonce: rawNonce,
-      );
-      
-      // Sign in to Firebase with the Apple credential
-      final UserCredential userCredential = await _auth.signInWithCredential(oauthCredential);
-      
-      if (userCredential.user == null) throw Exception("No user returned from Apple sign in");
-      
-      // Check if this is a new user
-      final bool isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
-      
-      if (isNewUser) {
-        // Create user document for new Apple users
-        String? fcmToken;
-        if (!kIsWeb) {
-          try {
-            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
-            
-            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-                settings.authorizationStatus == AuthorizationStatus.provisional) {
-              fcmToken = await FirebaseMessaging.instance.getToken();
-            }
-          } catch (e) {
-            debugPrint("Error getting FCM Token during Apple signup: $e");
-          }
-        }
-        
-        // Construct full name from Apple credential
-        String fullNameFromApple = '';
-        if (appleCredential.givenName != null || appleCredential.familyName != null) {
-          fullNameFromApple = '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim();
-        }
-        
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'uid': userCredential.user!.uid,
-          'email': appleCredential.email ?? userCredential.user!.email ?? '',
-          'fullName': fullNameFromApple.isNotEmpty ? fullNameFromApple : (userCredential.user!.displayName ?? ''),
-          'role': 'Reporter', // Default role for Apple sign-up
-          'fcmToken': fcmToken ?? "",
-          'profileComplete': false,
-          'photoUrl': userCredential.user!.photoURL ?? "",
-          'createdAt': FieldValue.serverTimestamp(),
-          'authProvider': 'apple',
-        });
-        
-        userRole.value = 'Reporter';
-        fullName.value = fullNameFromApple.isNotEmpty ? fullNameFromApple : (userCredential.user!.displayName ?? '');
-        profilePic.value = userCredential.user!.photoURL ?? '';
-        
-        _safeSnackbar('Success', 'Account created successfully with Apple!');
-        Get.offAllNamed("/profile-update");
-      } else {
-        // Existing user, load their data
-        await loadUserData();
-        lastActivity.value = DateTime.now();
-        
-        try {
-          await _handlePresence(true);
-        } catch (e) {
-          debugPrint("Presence setting failed: $e");
-        }
-        
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!isProfileComplete.value) {
-            Get.offAllNamed("/profile-update");
-          } else {
-            navigateBasedOnRole();
-          }
-        });
-      }
-      
-    } on SignInWithAppleAuthorizationException catch (e) {
-      debugPrint("Apple sign in authorization error: ${e.message}");
-      if (e.code == AuthorizationErrorCode.canceled) {
-        debugPrint("Apple sign in canceled by user");
-        return;
-      }
-      _safeSnackbar("Error", "Apple sign in failed: ${e.message}");
-    } on FirebaseAuthException catch (e) {
-      debugPrint("Apple sign in Firebase error: ${e.message}");
-      _safeSnackbar("Error", _handleAuthError(e));
-    } catch (e) {
-      debugPrint("Apple sign in error: $e");
-      _safeSnackbar("Error", "Apple sign in failed: $e");
-    } finally {
-      isLoading(false);
-    }
-  }
 
-  // Helper method to generate a cryptographically secure nonce
-  String _generateNonce([int length = 32]) {
-    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
-  }
-
-  // Helper method to hash the nonce
-  String _sha256ofString(String input) {
-    final bytes = utf8.encode(input);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
 
   Future<void> assignTask(String taskId, String userId) async {
     try {

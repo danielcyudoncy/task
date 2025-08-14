@@ -91,3 +91,114 @@ Future<void> sendTaskNotification(
   } catch (e) {
   }
 }
+
+/// Send notification when a task is approved or rejected
+Future<void> sendTaskApprovalNotification(
+    String taskCreatorId, String taskTitle, String approvalStatus, {String? reason}) async {
+  try {
+    // ✅ Fetch FCM Token from Firestore
+    DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
+        .instance
+        .collection("users")
+        .doc(taskCreatorId)
+        .get();
+
+    final userData = userDoc.data();
+    if (userData == null || !userData.containsKey('fcmToken')) {
+      if (kDebugMode) {
+        print("⚠️ No FCM Token found for user: $taskCreatorId");
+      }
+      return;
+    }
+    final String? fcmToken = userData['fcmToken'];
+
+    if (fcmToken == null || fcmToken.isEmpty) {
+      return;
+    }
+
+    // ✅ Securely retrieve Firebase Server Key
+    final String? serverKey = dotenv.env['FIREBASE_SERVER_KEY'];
+    if (serverKey == null || serverKey.isEmpty) {
+      return;
+    }
+
+    // Determine notification content based on approval status
+    String notificationTitle;
+    String notificationBody;
+    String notificationType;
+    
+    if (approvalStatus.toLowerCase() == 'approved') {
+      notificationTitle = "Task Approved";
+      notificationBody = "Your task '$taskTitle' has been approved";
+      notificationType = "task_approved";
+    } else {
+      notificationTitle = "Task Rejected";
+      notificationBody = "Your task '$taskTitle' has been rejected";
+      notificationType = "task_rejected";
+    }
+    
+    if (reason != null && reason.isNotEmpty) {
+      notificationBody += ". Reason: $reason";
+    }
+
+    // ✅ Send Notification via FCM
+    final http.Response response = await http.post(
+      Uri.parse("https://fcm.googleapis.com/fcm/send"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "key=$serverKey",
+      },
+      body: jsonEncode({
+        "to": fcmToken,
+        "notification": {
+          "title": notificationTitle,
+          "body": notificationBody,
+          "sound": "default",
+        },
+        "android": {
+          "priority": "high",
+          "notification": {
+            "sound": "default",
+          },
+        },
+        "apns": {
+          "payload": {
+            "aps": {
+              "sound": "default",
+            },
+          },
+        },
+      }),
+    );
+
+    // ✅ Log the Response
+    if (response.statusCode == 200) {
+      if (kDebugMode) {
+        print("✅ Task approval notification sent successfully to $taskCreatorId");
+      }
+    } else {
+      if (kDebugMode) {
+        print(
+          "❌ Failed to send task approval notification: ${response.statusCode} ${response.body}");
+      }
+    }
+
+    // ✅ Store Notification in Firestore
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(taskCreatorId)
+        .collection("notifications")
+        .add({
+      "title": notificationTitle,
+      "message": notificationBody,
+      "type": notificationType,
+      "timestamp": FieldValue.serverTimestamp(),
+      "isRead": false,
+    });
+  // ignore: empty_catches
+  } catch (e) {
+    if (kDebugMode) {
+      print("❌ Error sending task approval notification: $e");
+    }
+  }
+}

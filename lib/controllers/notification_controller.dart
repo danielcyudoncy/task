@@ -144,6 +144,11 @@ class NotificationController extends GetxController {
         } else {
           debugPrint('_updateValidNotifications: Task ID is null or empty');
         }
+      } else if (type == 'task_approved' || type == 'task_rejected') {
+        // For approval notifications, we don't need to validate against a task
+        // since they are sent directly to the task creator
+        debugPrint('_updateValidNotifications: Task approval/rejection notification, adding directly');
+        valid.add(n);
       } else {
         debugPrint('_updateValidNotifications: Non-task notification, adding directly');
         valid.add(n);
