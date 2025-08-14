@@ -46,5 +46,6 @@ app.*.map.json
 
 # Sensitive configuration files
 assets/.env
+assets/service-account.json
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist

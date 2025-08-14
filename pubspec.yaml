@@ -39,6 +39,7 @@ dependencies:
   firebase_database: ^11.0.0
   firebase_messaging: ^15.2.9
   firebase_storage: ^12.0.0
+  googleapis_auth: ^1.6.0
   flutter:
     sdk: flutter
   flutter_animate: ^4.5.2
@@ -114,6 +115,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/.env
+    - assets/service-account.json
     - assets/png/logo.png
     - assets/icons/apple.png
     - assets/icons/back_arrow.png
