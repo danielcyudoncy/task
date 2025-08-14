@@ -1483,9 +1483,9 @@ class TaskController extends GetxController {
         tasks.refresh();
         
         // Send notification to task creator
-        if (updatedTask.createdBy != null && updatedTask.createdBy!.isNotEmpty) {
+        if (updatedTask.createdBy.isNotEmpty) {
           await sendTaskApprovalNotification(
-            updatedTask.createdBy!,
+            updatedTask.createdBy,
             updatedTask.title,
             'approved',
             reason: reason,
@@ -1545,9 +1545,9 @@ class TaskController extends GetxController {
         tasks.refresh();
         
         // Send notification to task creator
-        if (updatedTask.createdBy != null && updatedTask.createdBy!.isNotEmpty) {
+        if (updatedTask.createdBy.isNotEmpty) {
           await sendTaskApprovalNotification(
-            updatedTask.createdBy!,
+            updatedTask.createdBy,
             updatedTask.title,
             'rejected',
             reason: reason,

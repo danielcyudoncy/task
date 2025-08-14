@@ -32,13 +32,16 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     final assignableTasks = widget.adminController.taskSnapshotDocs.where((task) {
       final completed = (task['status'] ?? '').toString().toLowerCase() == 'completed';
       
+      // Check if task has been approved by admin
+      final isApproved = (task['approved'] ?? false) == true || (task['isApproved'] ?? false) == true;
+      
       // Check if both reporter and cameraman are assigned
       final hasReporter = task['assignedReporterId'] != null && task['assignedReporterId'].toString().isNotEmpty;
       final hasCameraman = task['assignedCameramanId'] != null && task['assignedCameramanId'].toString().isNotEmpty;
       final fullyAssigned = hasReporter && hasCameraman;
       
-      // Task is available if it's not completed and not fully assigned (missing reporter or cameraman)
-      return !completed && !fullyAssigned;
+      // Task is available if it's approved, not completed and not fully assigned (missing reporter or cameraman)
+      return isApproved && !completed && !fullyAssigned;
     }).toList();
 
     return Dialog(

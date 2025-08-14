@@ -236,7 +236,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 11.sp,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              color: Colors.white,
             ),
             
           ),
