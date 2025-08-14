@@ -3,7 +3,38 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ For environment variables
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:googleapis_auth/auth_io.dart' as auth;
+import 'package:flutter/services.dart';
+
+/// Get OAuth2 access token for FCM HTTP v1 API
+Future<String?> _getAccessToken() async {
+  try {
+    // Load service account JSON from assets
+    final serviceAccountJson = await rootBundle.loadString('assets/service-account.json');
+    final serviceAccount = auth.ServiceAccountCredentials.fromJson(json.decode(serviceAccountJson));
+    
+    // Define FCM scope
+    const scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+    
+    // Get access token
+    final client = await auth.clientViaServiceAccount(serviceAccount, scopes);
+    final accessToken = client.credentials.accessToken.data;
+    client.close();
+    
+    return accessToken;
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Error getting access token: $e');
+    }
+    return null;
+  }
+}
+
+/// Get Firebase project ID from environment
+String? _getProjectId() {
+  return dotenv.env['FIREBASE_PROJECT_ID'];
+}
 
 Future<void> sendTaskNotification(
     String assignedUserId, String taskTitle) async {
@@ -28,39 +59,45 @@ Future<void> sendTaskNotification(
       return;
     }
 
-    // ✅ Securely retrieve Firebase Server Key
-    final String? serverKey = dotenv.env['FIREBASE_SERVER_KEY'];
-    if (serverKey == null || serverKey.isEmpty) {
+    // ✅ Get OAuth2 access token and project ID
+    final String? accessToken = await _getAccessToken();
+    final String? projectId = _getProjectId();
+    
+    if (accessToken == null || projectId == null) {
+      if (kDebugMode) {
+        print("❌ Missing access token or project ID");
+      }
       return;
     }
 
-    // ✅ Send Notification via FCM
+    // ✅ Send Notification via FCM HTTP v1 API
     final http.Response response = await http.post(
-      Uri.parse("https://fcm.googleapis.com/fcm/send"),
+      Uri.parse("https://fcm.googleapis.com/v1/projects/$projectId/messages:send"),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "key=$serverKey",
+        "Authorization": "Bearer $accessToken",
       },
       body: jsonEncode({
-        "to": fcmToken,
-        "notification": {
-          "title": "New Task Assigned",
-          "body": "You have been assigned a new task: $taskTitle",
-          "sound": "default",
-        },
-        "android": {
-          "priority": "high",
+        "message": {
+          "token": fcmToken,
           "notification": {
-            "sound": "default",
+            "title": "New Task Assigned",
+            "body": "You have been assigned a new task: $taskTitle",
           },
-        },
-        "apns": {
-          "payload": {
-            "aps": {
+          "android": {
+            "priority": "high",
+            "notification": {
               "sound": "default",
             },
           },
-        },
+          "apns": {
+            "payload": {
+              "aps": {
+                "sound": "default",
+              },
+            },
+          },
+        }
       }),
     );
 
@@ -116,9 +153,14 @@ Future<void> sendTaskApprovalNotification(
       return;
     }
 
-    // ✅ Securely retrieve Firebase Server Key
-    final String? serverKey = dotenv.env['FIREBASE_SERVER_KEY'];
-    if (serverKey == null || serverKey.isEmpty) {
+    // ✅ Get OAuth2 access token and project ID
+    final String? accessToken = await _getAccessToken();
+    final String? projectId = _getProjectId();
+    
+    if (accessToken == null || projectId == null) {
+      if (kDebugMode) {
+        print("❌ Missing access token or project ID");
+      }
       return;
     }
 
@@ -141,33 +183,34 @@ Future<void> sendTaskApprovalNotification(
       notificationBody += ". Reason: $reason";
     }
 
-    // ✅ Send Notification via FCM
+    // ✅ Send Notification via FCM HTTP v1 API
     final http.Response response = await http.post(
-      Uri.parse("https://fcm.googleapis.com/fcm/send"),
+      Uri.parse("https://fcm.googleapis.com/v1/projects/$projectId/messages:send"),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "key=$serverKey",
+        "Authorization": "Bearer $accessToken",
       },
       body: jsonEncode({
-        "to": fcmToken,
-        "notification": {
-          "title": notificationTitle,
-          "body": notificationBody,
-          "sound": "default",
-        },
-        "android": {
-          "priority": "high",
+        "message": {
+          "token": fcmToken,
           "notification": {
-            "sound": "default",
+            "title": notificationTitle,
+            "body": notificationBody,
           },
-        },
-        "apns": {
-          "payload": {
-            "aps": {
+          "android": {
+            "priority": "high",
+            "notification": {
               "sound": "default",
             },
           },
-        },
+          "apns": {
+            "payload": {
+              "aps": {
+                "sound": "default",
+              },
+            },
+          },
+        }
       }),
     );
 
