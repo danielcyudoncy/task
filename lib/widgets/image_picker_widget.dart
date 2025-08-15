@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/snackbar_utils.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 
 class ImagePickerWidget extends StatelessWidget {
   final AuthController controller;
@@ -77,32 +77,45 @@ class ImagePickerWidget extends StatelessWidget {
 
   Future<void> _handleImageSelection(BuildContext context) async {
     try {
+      debugPrint("ImagePickerWidget: Starting image selection");
       final XFile? pickedImage = await _showImagePickerDialog(context);
       if (pickedImage != null) {
+        debugPrint("ImagePickerWidget: Image selected - ${pickedImage.name}");
         
         if (kIsWeb) {
           // For web, read as bytes
           try {
+            debugPrint("ImagePickerWidget: Reading image as bytes for web");
             final bytes = await pickedImage.readAsBytes();
+            debugPrint("ImagePickerWidget: Image bytes read successfully, size: ${bytes.length}");
             await controller.uploadProfilePictureFromBytes(bytes, pickedImage.name);
           } catch (e) {
+            debugPrint("ImagePickerWidget: Failed to read image bytes: $e");
             SnackbarUtils.showSnackbar("Error", "Failed to read image: ${e.toString()}");
           }
         } else {
           // For mobile, use File
           try {
+            debugPrint("ImagePickerWidget: Processing image file for mobile");
             final File imageFile = File(pickedImage.path);
             if (await imageFile.exists()) {
+              final fileSize = await imageFile.length();
+              debugPrint("ImagePickerWidget: Image file exists, size: $fileSize bytes");
               await controller.uploadProfilePicture(imageFile);
             } else {
+              debugPrint("ImagePickerWidget: Selected image file doesn't exist");
               SnackbarUtils.showSnackbar("Error", "Selected image doesn't exist");
             }
           } catch (e) {
+            debugPrint("ImagePickerWidget: Failed to process image file: $e");
             SnackbarUtils.showSnackbar("Error", "Failed to process image: ${e.toString()}");
           }
         }
+      } else {
+        debugPrint("ImagePickerWidget: No image selected");
       }
     } catch (e) {
+      debugPrint("ImagePickerWidget: Failed to select image: $e");
       SnackbarUtils.showSnackbar("Error", "Failed to select image: ${e.toString()}");
     }
   }

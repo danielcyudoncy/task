@@ -246,7 +246,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            "Enable two-factor authentication",
+                            "Enable App Lock (Biometric Authentication)",
                             style: GoogleFonts.raleway(
                               color: colorScheme.onPrimary.withValues(alpha: 0.8),
                               fontSize: 14.sp,

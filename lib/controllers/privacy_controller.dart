@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -288,7 +289,7 @@ class PrivacyController extends GetxController {
         debugPrint('Two-factor authentication enabled (non-biometric)');
         
         // Show dialog to set up alternative 2FA method
-        _showTwoFactorSetupDialog();
+        _showBiometricSetupDialog();
       }
     } catch (e) {
       debugPrint('Error enabling two-factor authentication: $e');
@@ -296,24 +297,45 @@ class PrivacyController extends GetxController {
     }
   }
   
-  /// Show two-factor authentication setup dialog
-  void _showTwoFactorSetupDialog() {
+  /// Show biometric setup dialog
+  void _showBiometricSetupDialog() {
     Get.dialog(
       AlertDialog(
-        title: const Text('Two-Factor Authentication'),
+        title: const Text('Biometric Authentication Required'),
         content: const Text(
-          'Biometric authentication is not available on this device. '
-          'Two-factor authentication has been enabled with alternative methods. '
-          'You can configure additional security options in your account settings.',
+          'To enable app lock, you need to set up biometric authentication (fingerprint, face unlock, etc.) on your device first.\n\n'
+          'Please go to your device Settings > Security > Biometric Authentication and set up fingerprint or face unlock, then try again.',
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              // You could optionally open device settings here
+            },
             child: const Text('OK'),
           ),
         ],
       ),
     );
+  }
+
+  /// Get biometric type string for user feedback
+  String _getBiometricTypeString(List<dynamic> biometrics) {
+    debugPrint('PrivacyController: Getting biometric type string for: $biometrics');
+    
+    if (biometrics.contains('fingerprint')) {
+      return 'fingerprint';
+    } else if (biometrics.contains('face')) {
+      return 'face unlock';
+    } else if (biometrics.contains('iris')) {
+      return 'iris scan';
+    } else {
+      return 'biometric authentication';
+    }
   }
   
   // Removed unused 2FA setup methods - can be added back when needed
@@ -608,38 +630,52 @@ class PrivacyController extends GetxController {
   /// Toggle two-factor authentication
   Future<void> toggleTwoFactorAuth(bool value) async {
     try {
+      debugPrint('PrivacyController: Starting toggleTwoFactorAuth with value: $value');
+      
       if (value) {
+        // Debug biometric status first
+        final debugStatus = await _biometricService.debugBiometricStatus();
+        debugPrint('PrivacyController: Biometric debug status: $debugStatus');
+        
         // Check if biometric authentication is available
         final isAvailable = await _biometricService.canCheckBiometrics();
+        final availableBiometrics = await _biometricService.getAvailableBiometrics();
         
-        if (isAvailable) {
-          // Test biometric authentication
+        debugPrint('PrivacyController: isAvailable=$isAvailable, availableBiometrics=$availableBiometrics');
+        
+        if (isAvailable && availableBiometrics.isNotEmpty) {
+          debugPrint('PrivacyController: Attempting biometric authentication');
+          
+          // Test biometric authentication with biometric-only option
           final authenticated = await _biometricService.authenticate(
-            reason: 'Enable Two-Factor Authentication'
+            reason: 'Enable App Lock with Biometric Authentication',
+            biometricOnly: true
           );
+          
+          debugPrint('PrivacyController: Authentication result: $authenticated');
           
           if (authenticated) {
             twoFactorAuth.value = true;
-            debugPrint('Two-factor authentication enabled with biometric');
-            _showSuccessSnackbar('Two-factor authentication enabled');
+            debugPrint('PrivacyController: App lock enabled with biometric authentication');
+            _showSuccessSnackbar('App lock enabled with ${_getBiometricTypeString(availableBiometrics)}');
           } else {
             twoFactorAuth.value = false;
+            debugPrint('PrivacyController: Biometric authentication failed');
             _showErrorSnackbar('Biometric authentication failed');
           }
         } else {
-          // Fallback to other 2FA methods
-          twoFactorAuth.value = true;
-          debugPrint('Two-factor authentication enabled (non-biometric)');
-          _showTwoFactorSetupDialog();
+          debugPrint('PrivacyController: Biometrics not available, showing setup dialog');
+          // Show dialog to explain biometric setup
+          _showBiometricSetupDialog();
         }
       } else {
         twoFactorAuth.value = false;
-        debugPrint('Two-factor authentication disabled');
-        _showSuccessSnackbar('Two-factor authentication disabled');
+        debugPrint('PrivacyController: App lock disabled');
+        _showSuccessSnackbar('App lock disabled');
       }
     } catch (e) {
-      debugPrint('Error toggling two-factor authentication: $e');
-      _showErrorSnackbar('Failed to toggle two-factor authentication');
+      debugPrint('PrivacyController: Error toggling app lock: $e');
+      _showErrorSnackbar('Failed to toggle app lock');
     }
   }
   
