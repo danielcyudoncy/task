@@ -248,8 +248,11 @@ class AdminController extends GetxController {
       }).toList(); // No need for whereType or cast, this is safer
       taskSnapshotDocs.assignAll(taskDocs);
 
-      // Assign all the stats
-      totalUsers.value = userDocs.length;
+      // Assign all the stats (excluding librarians)
+      totalUsers.value = userDocs.where((doc) {
+        final userData = doc.data();
+        return userData['role'] != 'Librarian';
+      }).length;
       onlineUsers.value = onlineUsersSnapshot.count ?? 0;
       totalConversations.value = conversationsSnapshot.count ?? 0;
       newsCount.value = newsSnapshot.count ?? 0;

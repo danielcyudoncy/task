@@ -19,6 +19,7 @@ class ManageUsersController extends GetxController {
   var usersList = <Map<String, dynamic>>[].obs;
   var filteredUsersList = <Map<String, dynamic>>[].obs;
   var selectedRole = 'All'.obs;
+  var currentSearchQuery = ''.obs;
   var tasksList = <Map<String, dynamic>>[].obs;
   DocumentSnapshot? lastDocument;
   var hasMoreUsers = true.obs;
@@ -101,7 +102,7 @@ class ManageUsersController extends GetxController {
             'email': data['email'] ?? 'No Email',
             'photoUrl': photoUrl,
           };
-        }).toList();
+        }).where((user) => user['role'] != 'Librarian').toList();
 
         if (isNextPage && !fetchAll) {
           usersList.addAll(newUsers);
@@ -254,11 +255,22 @@ class ManageUsersController extends GetxController {
   }
 
   void searchUsers(String query) {
+    currentSearchQuery.value = query;
+    List<Map<String, dynamic>> baseList;
+    
+    // First apply role filter
+    if (selectedRole.value == 'All') {
+      baseList = usersList.where((user) => user['role'] != 'Librarian').toList();
+    } else {
+      baseList = usersList.where((user) => user['role'] == selectedRole.value && user['role'] != 'Librarian').toList();
+    }
+    
+    // Then apply search filter on the role-filtered list
     if (query.isEmpty) {
-      filteredUsersList.assignAll(usersList);
+      filteredUsersList.assignAll(baseList);
     } else {
       filteredUsersList.assignAll(
-        usersList
+        baseList
             .where((user) =>
                 user['fullname'].toLowerCase().contains(query.toLowerCase()) ||
                 user['email'].toLowerCase().contains(query.toLowerCase()))
@@ -291,14 +303,8 @@ class ManageUsersController extends GetxController {
   }
 
   void filterByRole(String? role) {
-    if (role == null || role == 'All') {
-      filteredUsersList.assignAll(usersList);
-      selectedRole.value = 'All';
-    } else {
-      filteredUsersList.assignAll(
-        usersList.where((user) => user['role'] == role).toList(),
-      );
-      selectedRole.value = role;
-    }
+    selectedRole.value = role ?? 'All';
+    // Trigger search with current query to apply both role and search filters
+    searchUsers(currentSearchQuery.value);
   }
 }

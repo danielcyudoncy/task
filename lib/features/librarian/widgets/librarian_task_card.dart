@@ -11,6 +11,7 @@ import 'package:task/features/librarian/screens/librarian_task_detail_screen.dar
 import 'package:task/features/librarian/widgets/task_actions.dart';
 import 'package:task/theme/app_durations.dart';
 import 'package:task/controllers/task_controller.dart';
+import 'package:task/widgets/approval_status_chip.dart';
 
 
 class LibrarianTaskCard extends StatefulWidget {
@@ -185,29 +186,38 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                       ),
                     ),
                     const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(widget.task.status).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _getStatusColor(widget.task.status).withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            widget.task.status,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: _getStatusColor(widget.task.status),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ApprovalStatusChip(
+                          approvalStatus: widget.task.approvalStatus,
+                        ),
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(widget.task.status).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _getStatusColor(widget.task.status).withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      widget.task.status,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: _getStatusColor(widget.task.status),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               
               const SizedBox(height: 12),
               

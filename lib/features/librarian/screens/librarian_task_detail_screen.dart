@@ -234,32 +234,87 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Status chip with animation
-                  AnimatedContainer(
-                    duration: AppDurations.fastAnimation,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(_task.status),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _getStatusColor(_task.status).withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                  // Status and approval chips
+                  Row(
+                    children: [
+                      // Status chip with animation
+                      AnimatedContainer(
+                        duration: AppDurations.fastAnimation,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      _task.status.toUpperCase(),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(_task.status),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _getStatusColor(_task.status).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          _task.status.toUpperCase(),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // Approval status chip
+                      if (_task.approvalStatus != null && _task.approvalStatus != 'pending')
+                        AnimatedContainer(
+                          duration: AppDurations.fastAnimation,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _task.isApproved 
+                                ? Colors.green 
+                                : _task.isRejected 
+                                    ? Colors.red 
+                                    : Colors.grey,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (_task.isApproved 
+                                    ? Colors.green 
+                                    : _task.isRejected 
+                                        ? Colors.red 
+                                        : Colors.grey).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _task.isApproved 
+                                    ? Icons.check_circle 
+                                    : Icons.cancel,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _task.approvalStatus!.toUpperCase(),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -389,6 +444,47 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
             ),
             
             const SizedBox(height: 24),
+            
+            // Approval information section
+            if (_task.approvalStatus != null && _task.approvalStatus != 'pending')
+              _buildSection(
+                context,
+                title: 'Approval Status',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow(
+                      context,
+                      icon: _task.isApproved ? Icons.check_circle_outline : Icons.cancel_outlined,
+                      label: _task.isApproved ? 'Approved' : 'Rejected',
+                      value: _task.approvalTimestamp != null 
+                          ? dateFormat.format(_task.approvalTimestamp!.toLocal())
+                          : 'Unknown date',
+                    ),
+                    if (_task.approvedBy != null) ...[
+                      const Divider(height: 24),
+                      _buildDetailRow(
+                        context,
+                        icon: Icons.person_outline,
+                        label: _task.isApproved ? 'Approved By' : 'Rejected By',
+                        value: _task.approvedBy!,
+                      ),
+                    ],
+                    if (_task.approvalReason != null && _task.approvalReason!.isNotEmpty) ...[
+                      const Divider(height: 24),
+                      _buildDetailRow(
+                        context,
+                        icon: Icons.comment_outlined,
+                        label: _task.isApproved ? 'Approval Reason' : 'Rejection Reason',
+                        value: _task.approvalReason!,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              
+            if (_task.approvalStatus != null && _task.approvalStatus != 'pending')
+              const SizedBox(height: 24),
             
             // Assigned users section
             _buildSection(
