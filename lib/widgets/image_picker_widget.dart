@@ -137,9 +137,18 @@ class ImagePickerWidget extends StatelessWidget {
                     maxHeight: 800,
                     imageQuality: 85,
                   );
-                  if (context.mounted) Navigator.of(context).pop(picked);
+                  if (context.mounted && Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop(picked);
+                  } else {
+                    Get.back(result: picked);
+                  }
                 } catch (e) {
-                  if (context.mounted) Navigator.of(context).pop();
+                  debugPrint("ImagePickerWidget: Gallery picker error: $e");
+                  if (context.mounted && Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    Get.back();
+                  }
                 }
               },
               child: Text(
@@ -159,9 +168,18 @@ class ImagePickerWidget extends StatelessWidget {
                     maxHeight: 800,
                     imageQuality: 85,
                   );
-                  if (context.mounted) Navigator.of(context).pop(picked);
+                  if (context.mounted && Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop(picked);
+                  } else {
+                    Get.back(result: picked);
+                  }
                 } catch (e) {
-                  if (context.mounted) Navigator.of(context).pop();
+                  debugPrint("ImagePickerWidget: Camera picker error: $e");
+                  if (context.mounted && Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    Get.back();
+                  }
                 }
               },
               child: Text(
