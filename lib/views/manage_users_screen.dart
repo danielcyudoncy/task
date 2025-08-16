@@ -62,9 +62,9 @@ class ManageUsersScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                DropdownButton<String>(
+                Obx(() => DropdownButton<String>(
                   value: manageUsersController.selectedRole.value,
-                                          items: <String>['All', 'Admin', 'Reporter', 'Cameraman', 'Driver', 'Librarian']
+                                          items: <String>['All', 'Admin', 'Reporter', 'Cameraman', 'Driver']
                       .map((role) => DropdownMenuItem(
                             value: role,
                             child: Text(role, style: TextStyle(color: theme.colorScheme.onSurface)),
@@ -74,7 +74,7 @@ class ManageUsersScreen extends StatelessWidget {
                   underline: const SizedBox(),
                   style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
                   dropdownColor: theme.colorScheme.surface,
-                ),
+                )),
               ],
             ),
           ),

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'status_chip.dart';
+import 'approval_status_chip.dart';
 
 class MinimalTaskCard extends StatelessWidget {
   final Task task;
@@ -84,6 +85,10 @@ class MinimalTaskCard extends StatelessWidget {
                     StatusChip(
                       status: task.status,
                       textScale: 1.0,
+                    ),
+                    const SizedBox(width: 8),
+                    ApprovalStatusChip(
+                      approvalStatus: task.approvalStatus,
                     ),
                   ],
                 ),
