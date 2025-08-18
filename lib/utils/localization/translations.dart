@@ -132,6 +132,7 @@ class AppTranslations extends Translations {
       'save_continue': 'Save & Continue',
       'or_sign_up_with': 'Or sign up with',
       'already_have_account': 'Already have an account? ',
+      'check_for_updates': 'Check for Updates',
       
       // Onboarding
       'skip': 'Skip',
@@ -326,6 +327,7 @@ class AppTranslations extends Translations {
       'save_continue': 'Enregistrer et continuer',
       'or_sign_up_with': 'Ou s\'inscrire avec',
       'already_have_account': 'Vous avez déjà un compte ? ',
+      'check_for_updates': 'Vérifier les mises à jour',
       
       // Onboarding
       'skip': 'Passer',
@@ -496,6 +498,7 @@ class AppTranslations extends Translations {
       'phone_number': 'Lambar waya',
       'role': 'Matsayi',
       'select_role': 'Zaɓi matsayi',
+      'check_for_updates': 'Duba sabuntawa',
       
       // Dashboard
       'daily_assignments': 'AIKIN YAU DA KULLUM',
@@ -651,6 +654,7 @@ class AppTranslations extends Translations {
       'phone_number': 'Nọmba foonu',
       'role': 'Ipele',
       'select_role': 'Yan ipele',
+      'check_for_updates': 'Ṣayẹwo awọn imudojuiwọn',
       
       // Dashboard
       'daily_assignments': 'IṢẸ́ ỌJỌ́ KỌỌKAN',
@@ -808,6 +812,7 @@ class AppTranslations extends Translations {
       'phone_number': 'Nọmba ekwentị',
       'role': 'Ọrụ',
       'select_role': 'Họrọ ọrụ',
+      'check_for_updates': 'Lelee mmelite',
       
       // Dashboard
       'daily_assignments': 'ỌRỤ KWA ỤBỌCHỊ',
@@ -862,4 +867,4 @@ class AppTranslations extends Translations {
       'head_of_unit': 'Onye isi nkeji',
     },
   };
-} 
+}

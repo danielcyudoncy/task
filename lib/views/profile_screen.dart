@@ -7,6 +7,7 @@ import 'package:task/utils/constants/app_fonts_family.dart';
 import 'package:task/utils/devices/app_devices.dart';
 import 'package:task/widgets/app_drawer.dart';
 import '../controllers/auth_controller.dart';
+import '../service/update_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -278,6 +279,68 @@ class ProfileScreen extends StatelessWidget {
                         onTap: () {
                           Get.find<SettingsController>().triggerFeedback();
                           Get.toNamed('/profile-update');
+                        },
+                      ),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.system_update,
+                          color: colorScheme.onSurface,
+                        ),
+                        title: Text("check_for_updates".tr,
+                            style: TextStyle(
+                                color: colorScheme.onSurface)),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          color: colorScheme.onSurface,
+                        ),
+                        onTap: () async {
+                          Get.find<SettingsController>().triggerFeedback();
+                          
+                          // Show loading indicator
+                          Get.dialog(
+                            const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            barrierDismissible: false,
+                          );
+                          
+                          try {
+                            // Check for updates
+                            await UpdateService.checkForUpdates(
+                              forceCheck: true,
+                              showDialog: true,
+                            );
+                            
+                            // Close loading dialog
+                            Get.back();
+                            
+                            // Show success message if no updates found
+                            final updateStatus = await UpdateService.getUpdateStatus();
+                            if (!updateStatus['hasUpdate']) {
+                              Get.snackbar(
+                                'No Updates',
+                                'You are using the latest version of the app',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.green,
+                                colorText: Colors.white,
+                                duration: const Duration(seconds: 3),
+                              );
+                            }
+                          } catch (e) {
+                            // Close loading dialog
+                            Get.back();
+                            
+                            // Show error message
+                            Get.snackbar(
+                              'Update Check Failed',
+                              'Unable to check for updates. Please try again later.',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                          }
                         },
                       ),
                     ],
