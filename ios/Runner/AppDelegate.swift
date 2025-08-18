@@ -1,6 +1,5 @@
 import Flutter
 import UIKit
-import audioplayers
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -11,6 +10,4 @@ import audioplayers
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
-
-  AudioplayersPlugin.register(with: registry.registrar(forPlugin: "xyz.luan.audioplayers")!)
 }

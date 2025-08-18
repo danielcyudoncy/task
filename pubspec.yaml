@@ -1,5 +1,5 @@
 name: task
-description: "A new Flutter project."
+description: "A comprehensive task management and news application with real-time updates, user collaboration, and multi-language support."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -86,7 +86,9 @@ dependencies:
   share_plus: ^11.0.0
   pdf: ^3.11.3
   file_picker: ^10.2.0
- 
+  # In-app update dependencies
+  in_app_update: ^4.2.3
+  package_info_plus: ^8.0.2
 
 
 dev_dependencies:
