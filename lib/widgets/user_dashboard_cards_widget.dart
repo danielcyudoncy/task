@@ -28,100 +28,193 @@ class UserDashboardCardsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const cardColor = Color(0xFF357088);
-    // Card heights
-    const double assignedTaskHeight = 160;
-    const double newsFeedHeight = 160;
-    const double onlineNowHeight = 120;
-    const double taskCreatedHeight = 120;
+    final orientation = MediaQuery.of(context).orientation;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Responsive card dimensions based on orientation
+    final cardWidth = orientation == Orientation.portrait 
+        ? (screenWidth - 48) / 2.2  // Portrait: smaller cards
+        : (screenWidth - 48) / 4.5; // Landscape: even smaller cards
+    
+    final assignedTaskHeight = orientation == Orientation.portrait ? 160.0 : 120.0;
+    final newsFeedHeight = orientation == Orientation.portrait ? 160.0 : 120.0;
+    final onlineNowHeight = orientation == Orientation.portrait ? 120.0 : 100.0;
+    final taskCreatedHeight = orientation == Orientation.portrait ? 120.0 : 100.0;
+    
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: IntrinsicHeight(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Left column
-            Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                SizedBox(
-                  width: 140.w,
-                  height: assignedTaskHeight.h,
-                  child: Obx(() {
-                    final count = assignedTasksCount.value;
+      child: orientation == Orientation.portrait
+          ? _buildPortraitLayout(cardWidth, assignedTaskHeight, taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor)
+          : _buildLandscapeLayout(cardWidth, assignedTaskHeight, taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor),
+    );
+  }
+  
+  Widget _buildPortraitLayout(double cardWidth, double assignedTaskHeight, double taskCreatedHeight, double onlineNowHeight, double newsFeedHeight, Color cardColor) {
+    return IntrinsicHeight(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Left column
+          Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              SizedBox(
+                width: cardWidth,
+                height: assignedTaskHeight,
+                child: Obx(() {
+                  final count = assignedTasksCount.value;
+                  return _DashboardGridCard(
+                    icon: Icons.assignment_turned_in,
+                    value: count,
+                    label: 'assigned_task'.tr,
+                    onTap: onAssignedTasksTap,
+                    color: cardColor,
+                  );
+                }),
+              ),
+              SizedBox(height: 14.h),
+              SizedBox(
+                width: cardWidth,
+                height: taskCreatedHeight,
+                child: StreamBuilder<int>(
+                  stream: tasksCreatedStream,
+                  builder: (context, snapshot) {
+                    final count = snapshot.data ?? 0;
                     return _DashboardGridCard(
-                      icon: Icons.assignment_turned_in,
+                      icon: Icons.create,
                       value: count,
-                      label: 'assigned_task'.tr,
-                      onTap: onAssignedTasksTap,
+                      label: 'task_created'.tr,
+                      onTap: onTasksCreatedTap,
                       color: cardColor,
                     );
-                  }),
+                  },
                 ),
-                SizedBox(height: 14.h),
-                SizedBox(
-                  width: 140.w,
-                  height: taskCreatedHeight.h,
-                  child: StreamBuilder<int>(
-                    stream: tasksCreatedStream,
-                    builder: (context, snapshot) {
-                      final count = snapshot.data ?? 0;
-                      return _DashboardGridCard(
-                        icon: Icons.create,
-                        value: count,
-                        label: 'task_created'.tr,
-                        onTap: onTasksCreatedTap,
-                        color: cardColor,
-                      );
-                    },
-                  ),
+              ),
+            ],
+          ),
+          SizedBox(width: 14.w),
+          // Right column
+          Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              SizedBox(
+                width: cardWidth,
+                height: onlineNowHeight,
+                child: StreamBuilder<int>(
+                  stream: onlineUsersStream,
+                  builder: (context, snapshot) {
+                    final count = snapshot.data ?? 0;
+                    return _DashboardGridCard(
+                      icon: Icons.wifi_tethering,
+                      value: count,
+                      label: 'online_users_count'.tr,
+                      onTap: onOnlineUsersTap,
+                      color: cardColor,
+                    );
+                  },
                 ),
-              ],
+              ),
+              SizedBox(height: 14.h),
+              SizedBox(
+                width: cardWidth,
+                height: newsFeedHeight,
+                child: StreamBuilder<int>(
+                  stream: newsFeedStream,
+                  builder: (context, snapshot) {
+                    final count = snapshot.data ?? 0;
+                    return _DashboardGridCard(
+                      icon: Icons.rss_feed,
+                      value: count,
+                      label: 'news_feed'.tr,
+                      onTap: onNewsFeedTap,
+                      color: cardColor,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildLandscapeLayout(double cardWidth, double assignedTaskHeight, double taskCreatedHeight, double onlineNowHeight, double newsFeedHeight, Color cardColor) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          SizedBox(
+            width: cardWidth,
+            height: assignedTaskHeight,
+            child: Obx(() {
+              final count = assignedTasksCount.value;
+              return _DashboardGridCard(
+                icon: Icons.assignment_turned_in,
+                value: count,
+                label: 'assigned_task'.tr,
+                onTap: onAssignedTasksTap,
+                color: cardColor,
+              );
+            }),
+          ),
+          SizedBox(width: 14.w),
+          SizedBox(
+            width: cardWidth,
+            height: onlineNowHeight,
+            child: StreamBuilder<int>(
+              stream: onlineUsersStream,
+              builder: (context, snapshot) {
+                final count = snapshot.data ?? 0;
+                return _DashboardGridCard(
+                  icon: Icons.wifi_tethering,
+                  value: count,
+                  label: 'online_users_count'.tr,
+                  onTap: onOnlineUsersTap,
+                  color: cardColor,
+                );
+              },
             ),
-            SizedBox(width: 14.w),
-            // Right column
-            Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                SizedBox(
-                  width: 140.w,
-                  height: onlineNowHeight.h,
-                  child: StreamBuilder<int>(
-                    stream: onlineUsersStream,
-                    builder: (context, snapshot) {
-                      final count = snapshot.data ?? 0;
-                      return _DashboardGridCard(
-                        icon: Icons.wifi_tethering,
-                        value: count,
-                        label: 'online_users_count'.tr,
-                        onTap: onOnlineUsersTap,
-                        color: cardColor,
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(height: 14.h),
-                SizedBox(
-                  width: 140.w,
-                  height: newsFeedHeight.h,
-                  child: StreamBuilder<int>(
-                    stream: newsFeedStream,
-                    builder: (context, snapshot) {
-                      final count = snapshot.data ?? 0;
-                      return _DashboardGridCard(
-                        icon: Icons.rss_feed,
-                        value: count,
-                        label: 'news_feed'.tr,
-                        onTap: onNewsFeedTap,
-                        color: cardColor,
-                      );
-                    },
-                  ),
-                ),
-              ],
+          ),
+          SizedBox(width: 14.w),
+          SizedBox(
+            width: cardWidth,
+            height: taskCreatedHeight,
+            child: StreamBuilder<int>(
+              stream: tasksCreatedStream,
+              builder: (context, snapshot) {
+                final count = snapshot.data ?? 0;
+                return _DashboardGridCard(
+                  icon: Icons.create,
+                  value: count,
+                  label: 'task_created'.tr,
+                  onTap: onTasksCreatedTap,
+                  color: cardColor,
+                );
+              },
             ),
-          ],
-        ),
+          ),
+          SizedBox(width: 14.w),
+          SizedBox(
+            width: cardWidth,
+            height: newsFeedHeight,
+            child: StreamBuilder<int>(
+              stream: newsFeedStream,
+              builder: (context, snapshot) {
+                final count = snapshot.data ?? 0;
+                return _DashboardGridCard(
+                  icon: Icons.rss_feed,
+                  value: count,
+                  label: 'news_feed'.tr,
+                  onTap: onNewsFeedTap,
+                  color: cardColor,
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -146,43 +239,35 @@ class _DashboardGridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: SizedBox.square(
-        dimension: 120.w, // Adjust as needed for your design
-        child: Container(
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 36),
-              const SizedBox(height: 10),
-              Text(
-                value.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 36),
+            const SizedBox(height: 10),
+            Text(
+              value.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 4),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: true,
-                  textAlign: TextAlign.center,
-                ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

@@ -112,13 +112,13 @@ class ProfileScreen extends StatelessWidget {
                         ? Image.network(
                             profilePicUrl,
                             width: 140.w,
-                            height: 140.h,
+                            height: 140.w,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
                               color: Colors.grey[300],
                               width: 140.w,
-                              height: 140.h,
+                              height: 140.w,
                               child: Icon(Icons.person,
                                   size: 72, color: Colors.grey[600]),
                             ),
@@ -126,7 +126,7 @@ class ProfileScreen extends StatelessWidget {
                         : Container(
                             color: Colors.grey[300],
                             width: 140.w,
-                            height: 140.h,
+                            height: 140.w,
                             child: Icon(Icons.person,
                                 size: 72, color: Colors.grey[600]),
                           ),

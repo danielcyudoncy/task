@@ -18,8 +18,14 @@ class UserHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final orientation = MediaQuery.of(context).orientation;
+    final isPortrait = orientation == Orientation.portrait;
+    
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16.w, 
+        vertical: isPortrait ? 16.h : 8.h,
+      ),
       child: Column(
         children: [
           /// Top Row: Menu + Avatar
@@ -27,7 +33,11 @@ class UserHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.menu, color: Colors.white, size: 28.sp),
+                icon: Icon(
+                  Icons.menu, 
+                  color: Colors.white, 
+                  size: isPortrait ? 28.sp : 24.sp,
+                ),
                 onPressed: () {
                   if (scaffoldKey.currentState != null) {
                     scaffoldKey.currentState!.openDrawer();
@@ -54,7 +64,7 @@ class UserHeader extends StatelessWidget {
                             ),
                           ),
                           child: CircleAvatar(
-                            radius: 20.sp,
+                            radius: isPortrait ? 20.sp : 16.sp,
                             backgroundColor: Colors.white,
                             backgroundImage:
                                 authController.profilePic.value.isNotEmpty
@@ -69,7 +79,7 @@ class UserHeader extends StatelessWidget {
                                     style: TextStyle(
                                       color:
                                           Theme.of(context).colorScheme.primary,
-                                      fontSize: 20.sp,
+                                      fontSize: isPortrait ? 20.sp : 16.sp,
                                       fontFamily: 'Raleway',
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -120,7 +130,10 @@ class UserHeader extends StatelessWidget {
 
           /// Greeting Row
           Padding(
-            padding: EdgeInsets.only(left: 8.w, top: 8.h),
+            padding: EdgeInsets.only(
+              left: 8.w, 
+              top: isPortrait ? 8.h : 4.h,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -129,19 +142,19 @@ class UserHeader extends StatelessWidget {
                         "${'hello'.tr}, ${authController.fullName.value}!",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 22.sp,
+                          fontSize: isPortrait ? 22.sp : 18.sp,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Raleway',
                         ),
                       ),
                 )),
-                SizedBox(height: 4.h),
+                SizedBox(height: isPortrait ? 4.h : 2.h),
                 Obx(() => Center(
                   child: Text(
                         authController.currentUser?.email ?? '',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16.sp,
+                          fontSize: isPortrait ? 16.sp : 14.sp,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),

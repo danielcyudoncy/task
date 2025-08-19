@@ -75,6 +75,14 @@ class _SplashScreenState extends State<SplashScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final orientation = MediaQuery.of(context).orientation;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Calculate responsive logo size based on orientation
+    final logoSize = orientation == Orientation.portrait 
+        ? screenWidth * 0.4  // 40% of screen width in portrait
+        : screenHeight * 0.35; // 35% of screen height in landscape
 
     return Scaffold(
       body: Container(
@@ -89,27 +97,29 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo with rounded corners
+              // Logo with rounded corners - responsive sizing
               ClipRRect(
                 borderRadius: BorderRadius.circular(16.r),
                 child: Image.asset(
                   AppIcons.logo,
-                  width: 200.w,
-                  height: 200.h,
+                  width: logoSize,
+                  height: logoSize,
+                  fit: BoxFit.contain,
                 ),
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: orientation == Orientation.portrait ? 6.h : 4.h),
               Text(
                 'Informing the Nigerian People'.tr,
                 style: textTheme.headlineSmall?.copyWith(
                   color: colorScheme.onPrimary,
                   fontFamily: 'Raleway',
-                  fontSize: 16.sp,
+                  fontSize: orientation == Orientation.portrait ? 16.sp : 14.sp,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
+                textAlign: TextAlign.center,
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: orientation == Orientation.portrait ? 16.h : 12.h),
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
               ),

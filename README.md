@@ -129,7 +129,7 @@ A comprehensive task management and news application built with Flutter and Fire
 1. **Clone the repository**
 
    ```bash
-   git clone [your-repository-url]
+   git clone [https://github.com/danielcyudoncy/task]
    cd task
    ```
 
@@ -243,33 +243,6 @@ flutter test integration_test/
 flutter test test/update_service_test.dart
 ```
 
-## 🚀 Building for Production
-
-### Android ###.
-
-<!-- bash -->
-# Debug APK ###.
-
-flutter build apk --debug
-
-# Release APK
-
-flutter build apk --release
-
-# App Bundle for Play Store ###.
-
-flutter build appbundle --release
-
-### iOS ###.
-
-<!-- bash -->
-# Debug build
-flutter build ios --debug
-
-# Release build
-flutter build ios --release
-```
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -315,4 +288,4 @@ For support and questions:
   - `NEWS_SETUP.md` - News integration guide
   - `SOCIAL_AUTH_SETUP.md` - Social authentication setup
 
-Project Link: [https://github.com/yourusername/task](https://github.com/yourusername/task)
+Project Link: [https://github.com/danielcyudoncy/task](https://github.com/danielcyudoncy/task)

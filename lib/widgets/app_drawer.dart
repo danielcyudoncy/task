@@ -27,7 +27,7 @@ class _AppDrawerState extends State<AppDrawer> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenHeight = MediaQuery.of(context).size.height;
-
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Drawer(
       child: SafeArea(
@@ -35,7 +35,7 @@ class _AppDrawerState extends State<AppDrawer> {
           children: [
             // Drawer Header
             Container(
-              height: 200.h,
+              height: isLandscape ? screenHeight * 0.25 : 200.h,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -53,13 +53,13 @@ class _AppDrawerState extends State<AppDrawer> {
                   Positioned.fill(
                     child: CustomPaint(
                       painter: ConcentricCirclePainter(
-                        centerOffset: Offset(70.w, 90.h),
+                        centerOffset: Offset(70.w, isLandscape ? 45.h : 90.h),
                         ringColor: isDark ? Colors.white54 : Colors.white,
                       ),
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.all(16.w),
+                    padding: EdgeInsets.all(isLandscape ? 12.w : 16.w),
                     child: Row(
                       children: [
                         Container(
@@ -71,7 +71,7 @@ class _AppDrawerState extends State<AppDrawer> {
                             ),
                           ),
                           child: CircleAvatar(
-                            radius: 40.r,
+                            radius: isLandscape ? 30.r : 40.r,
                             backgroundColor: Colors.white,
                             backgroundImage: authController
                                     .profilePic.value.isNotEmpty
@@ -84,7 +84,7 @@ class _AppDrawerState extends State<AppDrawer> {
                                             .toUpperCase()
                                         : '?',
                                     style: TextStyle(
-                                      fontSize: 28.sp,
+                                      fontSize: isLandscape ? 20.sp : 28.sp,
                                       fontFamily: 'Raleway',
                                       color: Theme.of(context).primaryColor,
                                     ),
@@ -92,7 +92,7 @@ class _AppDrawerState extends State<AppDrawer> {
                                 : null,
                           ),
                         ),
-                        SizedBox(width: 16.w),
+                        SizedBox(width: isLandscape ? 12.w : 16.w),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +101,7 @@ class _AppDrawerState extends State<AppDrawer> {
                               AutoSizeText(
                                 authController.fullName.value,
                                 style: TextStyle(
-                                    fontSize: 20.sp,
+                                    fontSize: isLandscape ? 16.sp : 20.sp,
                                     fontFamily: 'Raleway',
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white),
@@ -109,11 +109,12 @@ class _AppDrawerState extends State<AppDrawer> {
                                 minFontSize: 12,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: 4.h),
+                              SizedBox(height: isLandscape ? 2.h : 4.h),
                               Text(
                                 authController.currentUser?.email ?? '',
                                 style: TextStyle(
-                                    fontSize: 12.sp, color: Colors.white70),
+                                    fontSize: isLandscape ? 10.sp : 12.sp, 
+                                    color: Colors.white70),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 2,
                               ),

@@ -30,6 +30,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Enable all orientations for better user experience
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
   }
 
   @override
@@ -87,10 +94,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // Get current orientation to set appropriate design size
+    final orientation = MediaQuery.of(context).orientation;
+    final designSize = orientation == Orientation.portrait 
+        ? const Size(375, 812)  // Portrait design size
+        : const Size(812, 375); // Landscape design size
+    
     return ScreenUtilInit(
-      designSize: const Size(375, 812),
+      designSize: designSize,
       minTextAdapt: true,
       splitScreenMode: true,
+      useInheritedMediaQuery: true,
+      ensureScreenSize: true,
       builder: (context, child) {
         final ThemeController themeController = Get.find<ThemeController>();
         return Obx(() {
