@@ -80,6 +80,8 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final orientation = MediaQuery.of(context).orientation;
+    final isPortrait = orientation == Orientation.portrait;
 
     // Calculate the number of tasks assigned to the user (matches notification logic)
     final String userId = authController.currentUser?.uid ?? '';
@@ -103,7 +105,10 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 // Header (menu, avatar, greeting, email)
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w, 
+                    vertical: isPortrait ? 16.h : 8.h,
+                  ),
                   child: Column(
                     children: [
                       // First Row: Menu + Avatar with Notification
@@ -111,8 +116,11 @@ class _HomeScreenState extends State<HomeScreen>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           IconButton(
-                            icon: Icon(Icons.menu,
-                                color: Colors.white, size: 28.sp),
+                            icon: Icon(
+                              Icons.menu,
+                              color: Colors.white, 
+                              size: isPortrait ? 28.sp : 24.sp,
+                            ),
                             onPressed: () {
                               settingsController.triggerFeedback();
                               if (_scaffoldKey.currentState != null) {
@@ -173,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         ),
                                       ),
                                       child: CircleAvatar(
-                                        radius: 20.sp,
+                                        radius: isPortrait ? 20.sp : 16.sp,
                                         backgroundColor: Colors.white,
                                         backgroundImage: profilePic.isNotEmpty
                                             ? NetworkImage(profilePic)
@@ -187,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen>
                                                   color: Theme.of(context)
                                                       .colorScheme
                                                       .primary,
-                                                  fontSize: 20.sp,
+                                                  fontSize: isPortrait ? 20.sp : 16.sp,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               )
@@ -247,7 +255,10 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       // Second Row: Greeting + Email
                       Padding(
-                        padding: EdgeInsets.only(left: 8.w, top: 8.h),
+                        padding: EdgeInsets.only(
+                          left: 8.w, 
+                          top: isPortrait ? 8.h : 4.h,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -256,19 +267,19 @@ class _HomeScreenState extends State<HomeScreen>
                                 "${'hello'.tr}, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'user'.tr}",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20.sp,
+                                  fontSize: isPortrait ? 20.sp : 16.sp,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Raleway',
                                 ),
                               ),
                             )),
-                            SizedBox(height: 4.h),
+                            SizedBox(height: isPortrait ? 4.h : 2.h),
                             Obx(() => Center(
                               child: Text(
                                 authController.currentUser?.email ?? '',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14.sp,
+                                  fontSize: isPortrait ? 14.sp : 12.sp,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),

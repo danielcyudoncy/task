@@ -45,8 +45,7 @@ class TasksSection extends StatelessWidget {
           _buildHeader(context),
           _buildTabBar(context),
           const SizedBox(height: 8),
-          SizedBox(
-            height: 400,
+          Expanded(
             child: _buildTabBarView(),
           ),
         ],
