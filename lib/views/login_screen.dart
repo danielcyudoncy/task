@@ -67,23 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _sendEmailLink() async {
-    if (_emailController.text.trim().isEmpty) {
-      _safeSnackbar('Error', 'Please enter your email address.');
-      return;
-    }
-
-    if (!GetUtils.isEmail(_emailController.text.trim())) {
-      _safeSnackbar('Error', 'Please enter a valid email address.');
-      return;
-    }
-
-    try {
-      await _auth.sendSignInLinkToEmail(_emailController.text.trim());
-    } catch (e) {
-      _safeSnackbar('Error', 'Failed to send authentication link. Please try again.');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -472,33 +455,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _biometricLogin();
                           },
                         ),
-                        const SizedBox(height: 16),
-                        // Email Link Authentication Button
-                        ElevatedButton.icon(
-                          icon: Icon(
-                            Icons.email_outlined,
-                            color: isDark ? Colors.black : colorScheme.onPrimary,
-                          ),
-                          label: Text(
-                            'Send Login Link to Email',
-                            style: TextStyle(
-                              color: isDark ? Colors.black : colorScheme.onPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            foregroundColor: isDark ? Colors.black : colorScheme.onPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                          ),
-                          onPressed: () async {
-                            Get.find<SettingsController>().triggerFeedback();
-                            _sendEmailLink();
-                          },
-                        ),
+                       
                       ],
                     ),
                   ),
