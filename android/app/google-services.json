@@ -31,6 +31,14 @@
           }
         },
         {
+          "client_id": "838120475834-rjlvladrakif109uqf4k1tak3ojtcpon.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.task",
+            "certificate_hash": "bd97cd7c0f9aa29de7fc210a1e50215b58b973e2"
+          }
+        },
+        {
           "client_id": "838120475834-ve53o1rofddsmu5fkhtadnlqr46965d3.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

@@ -301,6 +301,8 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
           SizedBox(height: 12.h),
           
           Row(
+            
+           
             children: [
               Expanded(
                 flex: 1,
@@ -364,7 +366,8 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12.sp,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w600,
+              color: color.withValues(alpha: 0.9), // Use the stat color with high opacity
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -384,7 +387,8 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 10.sp,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              fontWeight: FontWeight.w500,
+              color: color.withValues(alpha: 0.8), // Use same color as the stat with high opacity
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -427,7 +431,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
           style: TextStyle(
             fontSize: 10.sp,
             fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+            color: color, // Use the same grade color for better visibility
           ),
         ),
       ],

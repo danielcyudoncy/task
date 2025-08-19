@@ -206,7 +206,8 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     }
     
     final authenticated = await _biometricService.authenticate(
-      reason: 'Please authenticate to unlock the app'
+      reason: 'Please authenticate to unlock the app',
+      biometricOnly: true  // Force fingerprint only
     );
     
     if (authenticated) {

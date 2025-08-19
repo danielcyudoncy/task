@@ -11,7 +11,17 @@ class BiometricService {
     try {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
+      final biometrics = await _auth.getAvailableBiometrics();
+      
       debugPrint('BiometricService: canCheckBiometrics=$canCheck, isDeviceSupported=$isSupported');
+      debugPrint('BiometricService: Available biometrics: $biometrics');
+      
+      // Only return true if we specifically have fingerprint capability
+      if (!biometrics.contains(BiometricType.fingerprint)) {
+        debugPrint('BiometricService: No fingerprint biometric available');
+        return false;
+      }
+      
       return canCheck && isSupported;
     } catch (e) {
       debugPrint('BiometricService: Error in canCheckBiometrics: $e');
