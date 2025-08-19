@@ -226,7 +226,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Colors.white,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -236,7 +236,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 11.sp,
-              color: Colors.white,
+              color: Colors.grey[300],
             ),
             
           ),
@@ -291,7 +291,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+                  color: colorScheme.onPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

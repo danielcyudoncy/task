@@ -1,6 +1,8 @@
 // service/biometric_service.dart
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_auth/error_codes.dart' as auth_error;
 
 class BiometricService {
   final LocalAuthentication _auth = LocalAuthentication();
@@ -42,6 +44,27 @@ class BiometricService {
       
       debugPrint('BiometricService: Authentication result: $didAuthenticate');
       return didAuthenticate;
+    } on PlatformException catch (e) {
+      debugPrint('BiometricService: Platform exception: ${e.code} - ${e.message}');
+      
+      // Handle specific error codes
+      switch (e.code) {
+        case auth_error.notAvailable:
+          debugPrint('BiometricService: Biometric authentication not available');
+          break;
+        case auth_error.notEnrolled:
+          debugPrint('BiometricService: No biometrics enrolled on device');
+          break;
+        case auth_error.lockedOut:
+          debugPrint('BiometricService: Biometric authentication locked out');
+          break;
+        case auth_error.permanentlyLockedOut:
+          debugPrint('BiometricService: Biometric authentication permanently locked out');
+          break;
+        default:
+          debugPrint('BiometricService: Unknown platform exception: ${e.code}');
+      }
+      return false;
     } catch (e) {
       debugPrint('BiometricService: Authentication error: $e');
       return false;
@@ -64,5 +87,30 @@ class BiometricService {
     }
     
     return result;
+  }
+
+  /// Check if biometric authentication is properly set up
+  Future<String> getBiometricStatus() async {
+    try {
+      final canCheck = await _auth.canCheckBiometrics;
+      final isSupported = await _auth.isDeviceSupported();
+      final availableBiometrics = await _auth.getAvailableBiometrics();
+      
+      if (!isSupported) {
+        return 'Device does not support biometric authentication';
+      }
+      
+      if (!canCheck) {
+        return 'Biometric authentication not available';
+      }
+      
+      if (availableBiometrics.isEmpty) {
+        return 'No biometric methods enrolled on device';
+      }
+      
+      return 'Biometric authentication ready';
+    } catch (e) {
+      return 'Error checking biometric status: $e';
+    }
   }
 }

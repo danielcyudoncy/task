@@ -103,5 +103,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID or Touch ID for secure authentication and app lock functionality.</string>
 </dict>
 </plist>
