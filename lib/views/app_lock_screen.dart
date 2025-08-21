@@ -65,12 +65,6 @@ class _AppLockScreenState extends State<AppLockScreen> {
     isLoading.value = false;
   }
   
-  Future<void> _unlockWithBiometric() async {
-    isLoading.value = true;
-    await _appLockController.unlockWithBiometric();
-    isLoading.value = false;
-  }
-  
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -195,15 +189,8 @@ class _AppLockScreenState extends State<AppLockScreen> {
                   itemCount: 12,
                   itemBuilder: (context, index) {
                     if (index == 9) {
-                      // Biometric button
-                      return Obx(() => _appLockController.isBiometricEnabled.value
-                        ? _buildActionButton(
-                            icon: Icons.fingerprint,
-                            onPressed: isLoading.value ? null : _unlockWithBiometric,
-                            colorScheme: colorScheme,
-                            isTablet: isTablet,
-                          )
-                        : const SizedBox.shrink());
+                      // Empty space instead of biometric
+                      return const SizedBox.shrink();
                     } else if (index == 10) {
                       // Number 0
                       return _buildNumberButton(

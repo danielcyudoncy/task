@@ -118,31 +118,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       barrierDismissible: true,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF2C3E50)
+              : Colors.white,
           child: Container(
             width: MediaQuery.of(context).size.width * 0.9,
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF2C3E50)
-                      : Colors.white,
-                  Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF34495E)
-                      : const Color(0xFFF8F9FA),
-                ],
-              ),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: const Color(0xFF9E9E9E),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
                   spreadRadius: 0,
                 ),
               ],
@@ -154,14 +145,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF4A90E2),
-                        const Color(0xFF357088),
-                      ],
-                    ),
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(24),
                       topRight: Radius.circular(24),
@@ -172,12 +156,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.info_outline,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           size: 18,
                         ),
                       ),
@@ -186,7 +170,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         child: Text(
                           'Task Details',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                             fontSize: 20.sp,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -195,13 +179,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.primary,
                           size: 24,
                         ),
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.2),
+                          backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -234,16 +218,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF3A4A5C)
-                                    : const Color(0xFFF8F9FA),
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                   ? Colors.white.withOpacity(0.1)
-                                   : Colors.grey.withOpacity(0.2),
-                                  width: 1,
-                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,12 +229,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                       Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF4A90E2).withValues(alpha: 0.1),
+                                          color: Theme.of(context).colorScheme.primary,
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Icon(
                                           Icons.task_alt,
-                                          color: const Color(0xFF4A90E2),
+                                          color: Theme.of(context).colorScheme.onPrimary,
                                           size: 16,
                                         ),
                                       ),
@@ -290,16 +266,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF3A4A5C)
-                                    : const Color(0xFFF8F9FA),
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.grey.withValues(alpha: 0.2),
-                                  width: 1,
-                                ),
                               ),
                               child: Row(
                                 children: [
@@ -307,10 +275,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
                                       color: taskStatus == 'Completed'
-                                          ? Colors.green.withValues(alpha: 0.1)
+                                          ? const Color(0xFFE8F5E8)
                                           : taskStatus == 'Not Completed'
-                                              ? Colors.orange.withValues(alpha: 0.1)
-                                              : Colors.grey.withValues(alpha: 0.1),
+                                              ? const Color(0xFFFFF3E0)
+                                              : const Color(0xFFF5F5F5),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Icon(
@@ -344,10 +312,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: taskStatus == 'Completed'
-                                            ? Colors.green.withValues(alpha: 0.1)
+                                            ? Colors.green
                                             : taskStatus == 'Not Completed'
-                                                ? Colors.orange.withValues(alpha: 0.1)
-                                                : Colors.grey.withValues(alpha: 0.1),
+                                                ? Colors.orange
+                                                : Colors.grey,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
@@ -355,11 +323,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.w600,
-                                          color: taskStatus == 'Completed'
-                                              ? Colors.green
-                                              : taskStatus == 'Not Completed'
-                                                  ? Colors.orange
-                                                  : Colors.grey,
+                                          color: Colors.white,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -373,16 +337,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF3A4A5C)
-                                    : const Color(0xFFF8F9FA),
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.grey.withValues(alpha: 0.2),
-                                  width: 1,
-                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,19 +351,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              const Color(0xFF4A90E2),
-                                              const Color(0xFF357088),
-                                            ],
-                                          ),
+                                          color: Theme.of(context).colorScheme.primary,
                                           borderRadius: BorderRadius.circular(24),
-                                          border: Border.all(
-                                            color: Colors.white.withOpacity(0.2),
-                                            width: 2,
-                                          ),
                                         ),
                                         child: Center(
                                           child: Text(
@@ -415,7 +360,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                                 ? creatorName.substring(0, 1).toUpperCase()
                                                 : '?',
                                             style:  TextStyle(
-                                              color: Colors.white,
+                                              color: Theme.of(context).colorScheme.onPrimary,
                                               fontSize: 18.sp,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -444,12 +389,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF357088).withValues(alpha: 0.1),
+                                          color: Theme.of(context).colorScheme.primary,
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(
                                           Icons.person_outline,
-                                          color: const Color(0xFF357088),
+                                          color: Theme.of(context).colorScheme.onPrimary,
                                           size: 14,
                                         ),
                                       ),
@@ -458,14 +403,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFF357088).withValues(alpha: 0.1),
+                                            color: Theme.of(context).colorScheme.primary,
                                             borderRadius: BorderRadius.circular(10),
                                           ),
                                           child: Text(
                                             creatorRole,
                                             style: TextStyle(
                                               fontSize: 11.sp,
-                                              color: const Color(0xFF357088),
+                                              color: Theme.of(context).colorScheme.onPrimary,
                                               fontWeight: FontWeight.w600,
                                             ),
                                             overflow: TextOverflow.ellipsis,
@@ -483,28 +428,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF3A4A5C)
-                                    : const Color(0xFFF8F9FA),
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.grey.withValues(alpha: 0.2),
-                                  width: 1,
-                                ),
                               ),
                               child: Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: Colors.purple.withValues(alpha: 0.1),
+                                      color: Theme.of(context).colorScheme.primary,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Icon(
                                       Icons.access_time,
-                                      color: Colors.purple,
+                                      color: Theme.of(context).colorScheme.onPrimary,
                                       size: 16,
                                     ),
                                   ),
@@ -569,27 +506,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       barrierDismissible: true,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF2C3E50)
+              : Colors.white,
           child: Container(
             width: math.max(MediaQuery.of(context).size.width * 0.9, 400),
             height: MediaQuery.of(context).size.height * 0.7,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF2C3E50)
-                      : Colors.white,
-                  Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF34495E)
-                      : const Color(0xFFF8F9FA),
-                ],
-              ),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2C3E50)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: const Color(0xFF9E9E9E),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                   spreadRadius: 0,
@@ -602,14 +532,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF4A90E2),
-                        const Color(0xFF357088),
-                      ],
-                    ),
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(24),
                       topRight: Radius.circular(24),
@@ -620,7 +543,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -637,7 +560,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             Text(
                               'Pending Tasks',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
@@ -648,7 +571,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   ? 'All tasks completed! 🎉'
                                   : '${tasks.length} task${tasks.length != 1 ? 's' : ''} awaiting completion',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -658,13 +581,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           size: 24,
                         ),
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          backgroundColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -732,7 +655,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                               ],
                             ),
                             child: Material(
-                              color: Colors.transparent,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF3A4A5C)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(16),
                                 onTap: () {
@@ -749,7 +675,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                           Container(
                                             padding: const EdgeInsets.all(6),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF4A90E2).withValues(alpha: 0.1),
+                                              color: const Color(0xFFE3F2FD),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: Icon(
@@ -1160,7 +1086,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                     ? Theme.of(context).colorScheme.onPrimary
                                     : Theme.of(context).colorScheme.primary,
                                 unselectedLabelColor:
-                                    isDark ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7) : Colors.black54,
+                                    isDark ? const Color(0xFFB0B0B0) : Colors.black54,
                                 labelStyle: const TextStyle(
                                     fontWeight: FontWeight.w500, fontSize: 15),
                                 isScrollable: true,
@@ -1282,7 +1208,7 @@ class _TaskApprovalTabState extends State<_TaskApprovalTab> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: const Color(0xFF9E9E9E),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                   spreadRadius: 0,
@@ -1370,8 +1296,8 @@ class _TaskApprovalTabState extends State<_TaskApprovalTab> {
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.grey.withValues(alpha: 0.2),
+                                  ? const Color(0xFF4A4A4A)
+                                  : const Color(0xFFE0E0E0),
                               width: 1,
                             ),
                           ),
