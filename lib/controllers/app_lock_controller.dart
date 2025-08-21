@@ -2,19 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:task/service/biometric_service.dart';
 import 'package:task/controllers/auth_controller.dart';
 
 class AppLockController extends GetxController with WidgetsBindingObserver {
   static AppLockController get to => Get.find<AppLockController>();
-  
-  final BiometricService _biometricService = BiometricService();
   final AuthController _authController = Get.find<AuthController>();
   
   // Observable variables
   final RxBool isAppLocked = false.obs;
   final RxBool isAppLockEnabled = true.obs;
-  final RxBool isBiometricEnabled = true.obs;
+  final RxBool isBiometricEnabled = false.obs;  // Disabled by default
   final RxString appPin = ''.obs;
   final RxBool hasSetPin = false.obs;
   final RxBool isUsingDefaultPin = true.obs;
@@ -29,6 +26,12 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   // Lock timeout (in seconds) - app locks immediately when minimized for security
   static const int lockTimeoutSeconds = 1;
   
+  // Grace period after successful authentication (in seconds)
+  static const int gracePeriodSeconds = 30;
+  
+  // Track last successful authentication time
+  DateTime? _lastAuthTime;
+  
   // Getter for current lifecycle state (useful for debugging and monitoring)
   AppLifecycleState? get currentLifecycleState => _lastLifecycleState;
   
@@ -37,6 +40,17 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
     _loadSettings();
+    
+    // Check if we should lock on startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('AppLockController: Checking if app should be locked on startup...');
+      if (shouldLockOnStartup()) {
+        debugPrint('AppLockController: App should be locked on startup');
+        _lockApp();
+      } else {
+        debugPrint('AppLockController: App should not be locked on startup');
+      }
+    });
   }
   
   @override
@@ -91,41 +105,30 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   }
   
   void _handleAppResumed() {
-    if (isAppLockEnabled.value && 
-        _authController.currentUser != null && 
-        _backgroundTime != null) {
-      
-      final timeInBackground = DateTime.now().difference(_backgroundTime!);
-      debugPrint('App resumed from $_lastLifecycleState after: ${timeInBackground.inSeconds} seconds');
-      
-      // Enhanced logic based on previous state
-      bool shouldLock = false;
-      
-      if (_lastLifecycleState == AppLifecycleState.paused || 
-          _lastLifecycleState == AppLifecycleState.hidden) {
-        // App was fully backgrounded - apply full timeout
-        shouldLock = timeInBackground.inSeconds >= lockTimeoutSeconds;
-      } else if (_lastLifecycleState == AppLifecycleState.inactive) {
-        // App was briefly inactive (e.g., notification overlay) - shorter timeout
-        shouldLock = timeInBackground.inSeconds >= (lockTimeoutSeconds ~/ 2);
+    debugPrint('AppLockController: App resumed from ${_lastLifecycleState}');
+    debugPrint('AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
+    debugPrint('AppLockController: currentUser = ${_authController.currentUser != null}');
+    
+    // Check if we should lock on resume
+    if (isAppLockEnabled.value && _authController.currentUser != null) {
+      // Check if we're within the grace period after authentication
+      if (_lastAuthTime != null) {
+        final timeSinceAuth = DateTime.now().difference(_lastAuthTime!);
+        if (timeSinceAuth.inSeconds < gracePeriodSeconds) {
+          debugPrint('AppLockController: Within grace period (${gracePeriodSeconds - timeSinceAuth.inSeconds}s remaining), not locking');
+          return;
+        }
       }
       
-      if (shouldLock) {
-        debugPrint('Locking app due to timeout from state: $_lastLifecycleState');
-        _lockApp();
-      } else {
-        debugPrint('App resumed within timeout period - no lock required');
-      }
-      
-      _backgroundTime = null;
-    } else if (_lastLifecycleState == AppLifecycleState.paused || 
-               _lastLifecycleState == AppLifecycleState.hidden) {
-      // App was backgrounded but no background time recorded (edge case)
-      debugPrint('App resumed from background but no timestamp - applying precautionary lock');
-      if (isAppLockEnabled.value && _authController.currentUser != null) {
-        _lockApp();
-      }
+      debugPrint('AppLockController: Conditions met for locking on resume');
+      _lockApp();
+    } else {
+      debugPrint('AppLockController: App lock conditions not met on resume');
+      debugPrint('AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
+      debugPrint('AppLockController: hasCurrentUser = ${_authController.currentUser != null}');
     }
+    
+    _backgroundTime = null;
   }
   
   void _handleAppDetached() {
@@ -141,11 +144,15 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   }
   
   void _lockApp() {
-    debugPrint('Locking app');
+    debugPrint('Locking app - current route: ${Get.currentRoute}');
+    debugPrint('App lock enabled: ${isAppLockEnabled.value}');
+    debugPrint('Biometric enabled: ${isBiometricEnabled.value}');
     isAppLocked.value = true;
     
     // Navigate to app lock screen
+    debugPrint('Navigating to app lock screen...');
     Get.offAllNamed('/app-lock');
+    debugPrint('Navigation to app lock screen completed');
   }
   
   Future<void> unlockWithPin(String pin) async {
@@ -186,46 +193,12 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     }
   }
   
-  Future<void> unlockWithBiometric() async {
-    if (!isBiometricEnabled.value) {
-      Get.snackbar(
-        'Error',
-        'Biometric authentication is disabled.',
-        snackPosition: SnackPosition.TOP,
-      );
-      return;
-    }
-    
-    if (!await _biometricService.canCheckBiometrics()) {
-      Get.snackbar(
-        'Error',
-        'Biometric authentication is not available on this device.',
-        snackPosition: SnackPosition.TOP,
-      );
-      return;
-    }
-    
-    final authenticated = await _biometricService.authenticate(
-      reason: 'Please authenticate to unlock the app',
-      biometricOnly: true  // Force fingerprint only
-    );
-    
-    if (authenticated) {
-      _unlockApp();
-    } else {
-      Get.snackbar(
-        'Error',
-        'Biometric authentication failed.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
-  }
+  // Biometric authentication removed
   
   void _unlockApp() {
     debugPrint('Unlocking app');
     isAppLocked.value = false;
+    _lastAuthTime = DateTime.now();
     
     // Navigate back to appropriate screen based on user role
     _authController.navigateBasedOnRole();

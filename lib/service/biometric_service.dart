@@ -16,9 +16,9 @@ class BiometricService {
       debugPrint('BiometricService: canCheckBiometrics=$canCheck, isDeviceSupported=$isSupported');
       debugPrint('BiometricService: Available biometrics: $biometrics');
       
-      // Only return true if we specifically have fingerprint capability
-      if (!biometrics.contains(BiometricType.fingerprint)) {
-        debugPrint('BiometricService: No fingerprint biometric available');
+      // Check if any biometric is available (fingerprint, face, or other)
+      if (biometrics.isEmpty) {
+        debugPrint('BiometricService: No biometrics available');
         return false;
       }
       
@@ -42,6 +42,28 @@ class BiometricService {
 
   Future<bool> authenticate({String reason = 'Please authenticate to continue', bool biometricOnly = false}) async {
     try {
+      debugPrint('BiometricService: Starting authentication check...');
+      
+      // First check if we can use biometrics
+      final canCheck = await _auth.canCheckBiometrics;
+      debugPrint('BiometricService: canCheckBiometrics = $canCheck');
+      
+      final isSupported = await _auth.isDeviceSupported();
+      debugPrint('BiometricService: isDeviceSupported = $isSupported');
+      
+      final availableBiometrics = await _auth.getAvailableBiometrics();
+      debugPrint('BiometricService: availableBiometrics = $availableBiometrics');
+      
+      if (!canCheck || !isSupported) {
+        debugPrint('BiometricService: Device does not support biometrics');
+        return false;
+      }
+      
+      if (availableBiometrics.isEmpty) {
+        debugPrint('BiometricService: No biometrics enrolled on device');
+        return false;
+      }
+      
       debugPrint('BiometricService: Starting authentication with reason: $reason, biometricOnly: $biometricOnly');
       
       final bool didAuthenticate = await _auth.authenticate(
@@ -49,6 +71,8 @@ class BiometricService {
         options: AuthenticationOptions(
           biometricOnly: biometricOnly,
           stickyAuth: true,
+          useErrorDialogs: true, // Show system error dialogs
+          sensitiveTransaction: true, // Treat as sensitive operation
         ),
       );
       

@@ -83,6 +83,16 @@ class TaskController extends GetxController {
     super.onClose();
   }
 
+  // Refresh tasks list
+  Future<void> refreshTasks() async {
+    isRefreshing(true);
+    try {
+      await loadInitialTasks();
+    } finally {
+      isRefreshing(false);
+    }
+  }
+
   // Initialize cache from local storage if available
   Future<void> initializeCache() async {
     await loadCache();

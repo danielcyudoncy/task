@@ -45,7 +45,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     }).toList();
 
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
       elevation: 0,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.85,
@@ -55,25 +55,11 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
           maxHeight: MediaQuery.of(context).size.height * 0.8,
         ),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark 
-                ? [
-                    const Color(0xFF1A1A2E),
-                    const Color(0xFF16213E),
-                    const Color(0xFF0F3460),
-                  ]
-                : [
-                    Colors.white,
-                    const Color(0xFFF8FAFF),
-                    const Color(0xFFE3F2FD),
-                  ],
-          ),
+          color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: const Color(0xFF9E9E9E),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -94,7 +80,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                           end: Alignment.bottomRight,
                           colors: [
                             primaryColor,
-                            primaryColor.withValues(alpha: 0.8),
+                            primaryColor,
                           ],
                         ),
                         borderRadius: const BorderRadius.only(
@@ -107,7 +93,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: const Color(0xFFE8E8E8),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -134,7 +120,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                 Text(
                                   "to ${widget.user?['fullName'] ?? widget.user?['fullname'] ?? ''}",
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: Colors.white,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -170,15 +156,15 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: selectedTaskTitle != null 
-                                  ? primaryColor.withValues(alpha: 0.3)
-                                  : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2)),
+                                  ? primaryColor
+                                  : (isDark ? const Color(0xFF4A4A4A) : const Color(0xFFE0E0E0)),
                               width: selectedTaskTitle != null ? 2 : 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: selectedTaskTitle != null 
-                                    ? primaryColor.withValues(alpha: 0.1)
-                                    : Colors.black.withValues(alpha: 0.05),
+                                    ? const Color(0xFF9E9E9E)
+                                    : const Color(0xFFF5F5F5),
                                 blurRadius: selectedTaskTitle != null ? 15 : 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -217,7 +203,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                               icon: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: 0.1),
+                                  color: const Color(0xFFE3F2FD),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -319,7 +305,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: const Color(0xFFF5F5F5),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -378,7 +364,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
         color: isDark ? const Color(0xFF2A2A3E) : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
+          color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFE0E0E0),
         ),
       ),
       child: Row(
@@ -424,7 +410,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
           Container(
             padding: const EdgeInsets.all(1),
             decoration: BoxDecoration(
-              color: getPriorityColor(task).withAlpha((0.1 * 255).round()),
+              color: const Color(0xFFF0F0F0),
               borderRadius: BorderRadius.circular(2),
             ),
             child: Icon(
@@ -453,14 +439,14 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
         gradient: isOutlined ? null : LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [backgroundColor, backgroundColor.withAlpha((0.8 * 255).round())],
+          colors: [backgroundColor, backgroundColor],
         ),
         color: isOutlined ? Colors.transparent : backgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: isOutlined ? Border.all(color: backgroundColor, width: 2) : null,
         boxShadow: isOutlined ? null : [
           BoxShadow(
-            color: backgroundColor.withAlpha((0.3 * 255).round()),
+            color: const Color(0xFF9E9E9E),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),

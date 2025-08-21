@@ -4,13 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
+import '../widgets/task_review_dialog.dart';
 import './task_action_utility.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 
 
-class TaskCardWidget extends StatelessWidget {
+class TaskCardWidget extends StatefulWidget {
   final Task task;
   final bool isCompleted;
   final bool isDark;
@@ -23,37 +24,44 @@ class TaskCardWidget extends StatelessWidget {
   });
 
   @override
+  State<TaskCardWidget> createState() => _TaskCardWidgetState();
+}
+
+class _TaskCardWidgetState extends State<TaskCardWidget> {
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final currentUserId = Get.find<AuthController>().auth.currentUser?.uid;
-    final isTaskOwner = task.createdById == currentUserId;
+    final isTaskOwner = widget.task.createdById == currentUserId;
     final isAssignedUser =
-        task.assignedReporterId == currentUserId ||
-        task.assignedCameramanId == currentUserId ||
-        task.assignedDriverId == currentUserId ||
-        task.assignedLibrarianId == currentUserId ||
-        task.assignedTo == currentUserId;
-    
-    // Use the same color scheme as admin dashboard
-    final Color cardColor = isDark 
-        ? const Color(0xFF292B3A) 
-        : Theme.of(context).primaryColor;
-    const Color textColor = Colors.white;
-    final Color subTextColor = isDark ? Colors.white70 : Colors.grey[600]!;
+        widget.task.assignedReporterId == currentUserId ||
+        widget.task.assignedCameramanId == currentUserId ||
+        widget.task.assignedDriverId == currentUserId ||
+        widget.task.assignedLibrarianId == currentUserId ||
+        widget.task.assignedTo == currentUserId;
+
+    // Determine card colors based on dark mode
+    final Color cardColor = widget.isDark
+        ? const Color(0xFF1E1E1E)
+        : Colors.white;
+    final Color textColor = widget.isDark ? Colors.white : Colors.black87;
+    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.grey[600]!;
+
+    // For debugging task details
     final Color borderColor = colorScheme.outline.withAlpha((0.3 * 255).toInt());
 
     // Debug prints for diagnosis
     debugPrint(
-      'TaskCardWidget: taskId= [32m${task.taskId} [0m, '
-      'dueDate= [32m${task.dueDate} [0m, '
-      'category= [32m${task.category} [0m, '
-      'tags= [32m${task.tags} [0m'
+      'TaskCardWidget: taskId= [32m${widget.task.taskId} [0m, '
+      'dueDate= [32m${widget.task.dueDate} [0m, '
+      'category= [32m${widget.task.category} [0m, '
+      'tags= [32m${widget.task.tags} [0m'
     );
 
     return Dismissible(
-      key: ValueKey(task.taskId),
-      background: !isCompleted ? _buildCompleteBackground() : Container(),
+      key: ValueKey(widget.task.taskId),
+      background: !widget.isCompleted ? _buildCompleteBackground() : Container(),
       secondaryBackground: _buildDeleteBackground(),
       confirmDismiss: (direction) => _handleDismiss(context, direction),
       onDismissed: (direction) => _handleDismissed(direction),
@@ -71,7 +79,7 @@ class TaskCardWidget extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.black.withAlpha((0.38 * 255).round()) : const Color(0x22000000),
+                  color: widget.isDark ? Colors.black.withAlpha((0.38 * 255).round()) : const Color(0x22000000),
                   blurRadius: 8,
                   offset: const Offset(0, 5),
                 ),
@@ -82,8 +90,8 @@ class TaskCardWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  task.title, 
-                  style: const TextStyle(
+                  widget.task.title, 
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: textColor,
                     fontSize: 16,
@@ -91,7 +99,7 @@ class TaskCardWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  task.description,
+                  widget.task.description,
                   style: TextStyle(
                     color: subTextColor,
                     fontSize: 13.sp,
@@ -151,7 +159,7 @@ class TaskCardWidget extends StatelessWidget {
                 const SizedBox(height: 4),
                 // Status
                 Text(
-                  'Status: ${task.status}',
+                  'Status: ${widget.task.status}',
                   style: TextStyle(
                     color: subTextColor,
                     fontSize: 13.sp,
@@ -160,9 +168,9 @@ class TaskCardWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 // Tags
-                if (task.tags.isNotEmpty)
+                if (widget.task.tags.isNotEmpty)
                   Text(
-                    'Tags: ${task.tags.join(', ')}',
+                    'Tags: ${widget.task.tags.join(', ')}',
                     style: TextStyle(
                       color: subTextColor,
                       fontSize: 13.sp,
@@ -171,9 +179,9 @@ class TaskCardWidget extends StatelessWidget {
                   ),
                 const SizedBox(height: 4),
                 // Priority
-                if (task.priority != null)
+                if (widget.task.priority != null)
                   Text(
-                    'Priority: ${task.priority}',
+                    'Priority: ${widget.task.priority}',
                     style: TextStyle(
                       color: subTextColor,
                       fontSize: 13.sp,
@@ -182,9 +190,9 @@ class TaskCardWidget extends StatelessWidget {
                   ),
                 const SizedBox(height: 4),
                 // Due Date
-                if (task.dueDate != null)
+                if (widget.task.dueDate != null)
                   Text(
-                    'Due: ${DateFormat('MMM dd, yyyy – HH:mm').format(task.dueDate!)}',
+                    'Due: ${DateFormat('MMM dd, yyyy – HH:mm').format(widget.task.dueDate!)}',
                     style: TextStyle(
                       color: subTextColor,
                       fontSize: 13.sp,
@@ -202,7 +210,7 @@ class TaskCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Comments: ${task.comments.length}',
+                      'Comments: ${widget.task.comments.length}',
                       style: TextStyle(
                         color: subTextColor,
                         fontSize: 12.sp,
@@ -217,7 +225,7 @@ class TaskCardWidget extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      if (!isCompleted)
+                      if (!widget.isCompleted)
                         ElevatedButton(
                           onPressed: () {
                             Get.find<SettingsController>().triggerFeedback();
@@ -244,7 +252,7 @@ class TaskCardWidget extends StatelessWidget {
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
                           if (isTaskOwner) {
-                            TaskActions.deleteTask(task);
+                            TaskActions.deleteTask(widget.task);
                           }
                         },
                       ),
@@ -254,7 +262,7 @@ class TaskCardWidget extends StatelessWidget {
                             color: textColor, size: 22.sp),
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
-                          TaskActions.editTask(context, task);
+                          TaskActions.editTask(context, widget.task);
                         },
                         tooltip: "Edit Task",
                       ),
@@ -273,21 +281,21 @@ class TaskCardWidget extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(task.title),
+          title: Text(widget.task.title),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Description: ${task.description}'),
+                Text('Description: ${widget.task.description}'),
                 const SizedBox(height: 8),
-                Text('Status: ${task.status}'),
+                Text('Status: ${widget.task.status}'),
                 const SizedBox(height: 8),
-                Text('Category: ${task.category ?? 'N/A'}'),
+                Text('Category: ${widget.task.category ?? 'N/A'}'),
                 const SizedBox(height: 8),
-                Text('Due Date: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
+                Text('Due Date: ${widget.task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(widget.task.dueDate!) : 'N/A'}'),
                 const SizedBox(height: 8),
-                Text('Tags: ${task.tags.isNotEmpty ? task.tags.join(', ') : 'None'}'),
+                Text('Tags: ${widget.task.tags.isNotEmpty ? widget.task.tags.join(', ') : 'None'}'),
                 const SizedBox(height: 8),
                 Text('Creator: ${_getCreatorName()}'),
                 const SizedBox(height: 8),
@@ -297,10 +305,10 @@ class TaskCardWidget extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text('Driver: ${_getAssignedDriverName()}'),
                 const SizedBox(height: 16),
-                if (task.comments.isNotEmpty) ...[
+                if (widget.task.comments.isNotEmpty) ...[
                   const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  ...task.comments.map((comment) => Padding(
+                  ...widget.task.comments.map((comment) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text('• $comment'),
                   )),
@@ -373,7 +381,7 @@ class TaskCardWidget extends StatelessWidget {
   }
 
   Future<bool?> _handleDismiss(BuildContext context, DismissDirection direction) async {
-    if (direction == DismissDirection.startToEnd && !isCompleted) {
+    if (direction == DismissDirection.startToEnd && !widget.isCompleted) {
       return await _showCompleteConfirmation(context);
     } else if (direction == DismissDirection.endToStart) {
       return await _showDeleteConfirmation(context);
@@ -382,10 +390,10 @@ class TaskCardWidget extends StatelessWidget {
   }
 
   void _handleDismissed(DismissDirection direction) {
-    if (direction == DismissDirection.startToEnd && !isCompleted) {
+    if (direction == DismissDirection.startToEnd && !widget.isCompleted) {
       _markAsCompleted();
     } else if (direction == DismissDirection.endToStart) {
-      TaskActions.deleteTask(task);
+      TaskActions.deleteTask(widget.task);
     }
   }
 
@@ -394,7 +402,7 @@ class TaskCardWidget extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Mark as Completed"),
-        content: Text("Are you sure you want to mark '${task.title}' as completed?"),
+        content: Text("Are you sure you want to mark '${widget.task.title}' as completed?"),
         actions: [
           TextButton(
             onPressed: () {
@@ -414,7 +422,7 @@ class TaskCardWidget extends StatelessWidget {
             child: Text(
               "Complete", 
               style: TextStyle(
-                      color: isDark ? Colors.green[300] : Colors.green[700]
+                      color: widget.isDark ? Colors.green[300] : Colors.green[700]
                     ),
             ),
           ),
@@ -428,7 +436,7 @@ class TaskCardWidget extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Delete Task"),
-        content: Text("Are you sure you want to delete '${task.title}'? This action cannot be undone."),
+        content: Text("Are you sure you want to delete '${widget.task.title}'? This action cannot be undone."),
         actions: [
           TextButton(
             onPressed: () {
@@ -448,7 +456,7 @@ class TaskCardWidget extends StatelessWidget {
             child: Text(
               "Delete", 
               style: TextStyle(
-                      color: isDark ? Colors.red[300] : Colors.red[600]
+                      color: widget.isDark ? Colors.red[300] : Colors.red[600]
                     ),
             ),
           ),
@@ -462,14 +470,14 @@ class TaskCardWidget extends StatelessWidget {
       final taskController = Get.find<TaskController>();
       
       // Check if we have a cached name
-      if (task.createdById.isNotEmpty &&
-          taskController.userNameCache.containsKey(task.createdById)) {
-        return taskController.userNameCache[task.createdById]!;
+      if (widget.task.createdById.isNotEmpty &&
+          taskController.userNameCache.containsKey(widget.task.createdById)) {
+        return taskController.userNameCache[widget.task.createdById]!;
       }
       
       // Fallback to createdBy field
-      if (task.createdBy.isNotEmpty) {
-        return task.createdBy;
+      if (widget.task.createdBy.isNotEmpty) {
+        return widget.task.createdBy;
       }
       
       return 'Unknown';
@@ -480,17 +488,17 @@ class TaskCardWidget extends StatelessWidget {
 
   String _getAssignedReporterName() {
     try {
-      if (task.assignedReporterId == null) return 'Not Assigned';
+      if (widget.task.assignedReporterId == null) return 'Not Assigned';
       final taskController = Get.find<TaskController>();
       
       // Check cache first
-      if (taskController.userNameCache.containsKey(task.assignedReporterId!)) {
-        return taskController.userNameCache[task.assignedReporterId!]!;
+      if (taskController.userNameCache.containsKey(widget.task.assignedReporterId!)) {
+        return taskController.userNameCache[widget.task.assignedReporterId!]!;
       }
       
       // Fallback to task field
-      if (task.assignedReporter != null && task.assignedReporter!.isNotEmpty) {
-        return task.assignedReporter!;
+      if (widget.task.assignedReporter != null && widget.task.assignedReporter!.isNotEmpty) {
+        return widget.task.assignedReporter!;
       }
       
       return 'Unknown';
@@ -501,17 +509,17 @@ class TaskCardWidget extends StatelessWidget {
 
   String _getAssignedCameramanName() {
     try {
-      if (task.assignedCameramanId == null) return 'Not Assigned';
+      if (widget.task.assignedCameramanId == null) return 'Not Assigned';
       final taskController = Get.find<TaskController>();
       
       // Check cache first
-      if (taskController.userNameCache.containsKey(task.assignedCameramanId!)) {
-        return taskController.userNameCache[task.assignedCameramanId!]!;
+      if (taskController.userNameCache.containsKey(widget.task.assignedCameramanId!)) {
+        return taskController.userNameCache[widget.task.assignedCameramanId!]!;
       }
       
       // Fallback to task field
-      if (task.assignedCameraman != null && task.assignedCameraman!.isNotEmpty) {
-        return task.assignedCameraman!;
+      if (widget.task.assignedCameraman != null && widget.task.assignedCameraman!.isNotEmpty) {
+        return widget.task.assignedCameraman!;
       }
       
       return 'Unknown';
@@ -522,17 +530,17 @@ class TaskCardWidget extends StatelessWidget {
 
   String _getAssignedDriverName() {
     try {
-      if (task.assignedDriverId == null) return 'Not Assigned';
+      if (widget.task.assignedDriverId == null) return 'Not Assigned';
       final taskController = Get.find<TaskController>();
       
       // Check cache first
-      if (taskController.userNameCache.containsKey(task.assignedDriverId!)) {
-        return taskController.userNameCache[task.assignedDriverId!]!;
+      if (taskController.userNameCache.containsKey(widget.task.assignedDriverId!)) {
+        return taskController.userNameCache[widget.task.assignedDriverId!]!;
       }
       
       // Fallback to task field
-      if (task.assignedDriver != null && task.assignedDriver!.isNotEmpty) {
-        return task.assignedDriver!;
+      if (widget.task.assignedDriver != null && widget.task.assignedDriver!.isNotEmpty) {
+        return widget.task.assignedDriver!;
       }
       
       return 'Unknown';
@@ -541,8 +549,44 @@ class TaskCardWidget extends StatelessWidget {
     }
   }
 
-  void _markAsCompleted() {
+  void _markAsCompleted() async {
     final taskController = Get.find<TaskController>();
-    taskController.updateTaskStatus(task.taskId, 'Completed');
+    await taskController.updateTaskStatus(widget.task.taskId, 'Completed');
+    
+    // Show review dialog for admins and managers
+    final authController = Get.find<AuthController>();
+    final userRole = authController.userRole.value.toLowerCase();
+    final userId = authController.auth.currentUser?.uid;
+    
+    if (userId != null && _canShowReviewDialog(userRole)) {
+      // Wait a bit to show the review dialog after the completion snackbar
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => TaskReviewDialog(
+            task: widget.task,
+            reviewerId: userId,
+            reviewerRole: userRole,
+            onReviewSubmitted: () {
+              // Refresh the task list to show the new review
+              taskController.refreshTasks();
+            },
+          ),
+        );
+      }
+    }
+  }
+
+  bool _canShowReviewDialog(String userRole) {
+    switch (userRole) {
+      case 'admin':
+      case 'assignment_editor':
+      case 'head_of_department':
+      case 'head_of_unit':
+        return true;
+      default:
+        return false;
+    }
   }
 }

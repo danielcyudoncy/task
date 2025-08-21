@@ -97,6 +97,12 @@ class Task {
   // Individual user completion tracking
   List<String> completedByUserIds = []; // List of user IDs who have marked this task as complete
   Map<String, DateTime> userCompletionTimestamps = {}; // Track when each user completed the task
+  
+  // Task review system
+  Map<String, String> taskReviews = {}; // Reviewer ID -> Review comment
+  Map<String, double> taskRatings = {}; // Reviewer ID -> Rating (1-5)
+  Map<String, DateTime> reviewTimestamps = {}; // When each review was submitted
+  Map<String, String> reviewerRoles = {}; // Role of each reviewer
 
   Task()
       : taskId = '',
@@ -114,7 +120,11 @@ class Task {
         attachmentTypes = [],
         attachmentSizes = [],
         completedByUserIds = [],
-        userCompletionTimestamps = {};
+        userCompletionTimestamps = {},
+        taskReviews = {},
+        taskRatings = {},
+        reviewTimestamps = {},
+        reviewerRoles = {};
 
   Task.full(
       this.taskId,
@@ -156,7 +166,16 @@ class Task {
       this.attachmentSizes = const [],
       this.lastAttachmentAdded,
       this.completedByUserIds = const [],
-      this.userCompletionTimestamps = const {}});
+      this.userCompletionTimestamps = const {},
+      Map<String, String>? taskReviews,
+      Map<String, double>? taskRatings,
+      Map<String, DateTime>? reviewTimestamps,
+      Map<String, String>? reviewerRoles}) {
+    this.taskReviews = taskReviews ?? {};
+    this.taskRatings = taskRatings ?? {};
+    this.reviewTimestamps = reviewTimestamps ?? {};
+    this.reviewerRoles = reviewerRoles ?? {};
+  }
 
   factory Task.fromMap(Map<String, dynamic> map) {
     String taskId = map['taskId'] ?? map['id']?.toString() ?? '';
@@ -206,6 +225,20 @@ class Task {
       lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
       completedByUserIds: _parseStringList(map['completedByUserIds']),
       userCompletionTimestamps: _parseTimestampMap(map['userCompletionTimestamps']),
+      taskReviews: map['taskReviews'] != null
+          ? Map<String, String>.from(jsonDecode(map['taskReviews']))
+          : null,
+      taskRatings: map['taskRatings'] != null
+          ? (jsonDecode(map['taskRatings']) as Map<String, dynamic>)
+              .map((k, v) => MapEntry(k, double.parse(v)))
+          : null,
+      reviewTimestamps: map['reviewTimestamps'] != null
+          ? (jsonDecode(map['reviewTimestamps']) as Map<String, dynamic>)
+              .map((k, v) => MapEntry(k, DateTime.fromMillisecondsSinceEpoch(v)))
+          : null,
+      reviewerRoles: map['reviewerRoles'] != null
+          ? Map<String, String>.from(jsonDecode(map['reviewerRoles']))
+          : null,
     );
   }
   
@@ -251,6 +284,10 @@ class Task {
     DateTime? lastAttachmentAdded,
     List<String>? completedByUserIds,
     Map<String, DateTime>? userCompletionTimestamps,
+    Map<String, String>? taskReviews,
+    Map<String, double>? taskRatings,
+    Map<String, DateTime>? reviewTimestamps,
+    Map<String, String>? reviewerRoles,
   }) {
     return Task.full(
       taskId ?? this.taskId,
@@ -293,6 +330,10 @@ class Task {
       lastAttachmentAdded: lastAttachmentAdded ?? this.lastAttachmentAdded,
       completedByUserIds: completedByUserIds ?? List.from(this.completedByUserIds),
       userCompletionTimestamps: userCompletionTimestamps ?? Map.from(this.userCompletionTimestamps),
+      taskReviews: taskReviews ?? Map.from(this.taskReviews),
+      taskRatings: taskRatings ?? Map.from(this.taskRatings),
+      reviewTimestamps: reviewTimestamps ?? Map.from(this.reviewTimestamps),
+      reviewerRoles: reviewerRoles ?? Map.from(this.reviewerRoles),
     );
   }
 
@@ -338,6 +379,10 @@ class Task {
       'attachmentSizes': jsonEncode(attachmentSizes),
       'lastAttachmentAdded': lastAttachmentAdded?.millisecondsSinceEpoch,
       'completedByUserIds': jsonEncode(completedByUserIds),
+      'taskReviews': jsonEncode(taskReviews),
+      'taskRatings': jsonEncode(taskRatings.map((k, v) => MapEntry(k, v.toString()))),
+      'reviewTimestamps': jsonEncode(reviewTimestamps.map((k, v) => MapEntry(k, v.millisecondsSinceEpoch))),
+      'reviewerRoles': jsonEncode(reviewerRoles),
       'userCompletionTimestamps': jsonEncode(userCompletionTimestamps.map((key, value) => MapEntry(key, value.millisecondsSinceEpoch))),
     }..removeWhere((key, value) => value == null);
   }
@@ -385,6 +430,78 @@ class Task {
       );
     }
     return {};
+  }
+
+  // Review system methods
+  bool canUserReview(String userId, String userRole) {
+    // Only allow one review per user
+    if (taskReviews.containsKey(userId)) return false;
+    
+    // Check if user has appropriate role
+    switch (userRole.toLowerCase()) {
+      case 'admin':
+      case 'assignment_editor':
+      case 'head_of_department':
+      case 'head_of_unit':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  // Add or update a review
+  void addReview(String reviewerId, String reviewerRole, String comment, double rating) {
+    if (!canUserReview(reviewerId, reviewerRole)) {
+      throw Exception('User does not have permission to review this task');
+    }
+    
+    if (rating < 1 || rating > 5) {
+      throw Exception('Rating must be between 1 and 5');
+    }
+    
+    taskReviews[reviewerId] = comment;
+    taskRatings[reviewerId] = rating;
+    reviewTimestamps[reviewerId] = DateTime.now();
+    reviewerRoles[reviewerId] = reviewerRole;
+  }
+
+  // Remove a review
+  void removeReview(String reviewerId) {
+    taskReviews.remove(reviewerId);
+    taskRatings.remove(reviewerId);
+    reviewTimestamps.remove(reviewerId);
+    reviewerRoles.remove(reviewerId);
+  }
+
+  // Get average rating
+  double get averageRating {
+    if (taskRatings.isEmpty) return 0;
+    final sum = taskRatings.values.reduce((a, b) => a + b);
+    return sum / taskRatings.length;
+  }
+
+  // Calculate performance impact
+  double calculatePerformanceImpact() {
+    if (taskRatings.isEmpty) return 0;
+    
+    // Weigh impact by reviewer roles
+    double weightedImpact = 0;
+    int totalWeight = 0;
+    
+    for (var reviewerId in taskRatings.keys) {
+      int weight = switch (reviewerRoles[reviewerId]?.toLowerCase()) {
+        'admin' => 4,
+        'head_of_department' => 3,
+        'head_of_unit' => 2,
+        'assignment_editor' => 2,
+        _ => 1,
+      };
+      
+      weightedImpact += (taskRatings[reviewerId]! - 3) / 2 * weight;
+      totalWeight += weight;
+    }
+    
+    return totalWeight > 0 ? weightedImpact / totalWeight : 0;
   }
 
   Map<String, dynamic> toMapWithUserInfo(Map<String, String> userNameCache,

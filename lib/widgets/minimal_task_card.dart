@@ -36,7 +36,7 @@ class MinimalTaskCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: isSelected
-            ? colorScheme.primary.withValues(alpha: 0.1)
+            ? colorScheme.primary
             : isDark
                 ? const Color(0xFF292B3A)
                 : colorScheme.surface,
@@ -44,14 +44,14 @@ class MinimalTaskCard extends StatelessWidget {
         border: Border.all(
           color: isSelected
               ? colorScheme.primary
-              : colorScheme.outline.withValues(alpha: 0.3),
+              : colorScheme.outline,
           width: isSelected ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.2)
-                : const Color(0x15000000),
+                ? Colors.black
+                : const Color(0xFF000000),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -365,7 +365,13 @@ class MinimalTaskCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return Material(
+          color: Colors.transparent,
+          child: AlertDialog(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              shadowColor: Colors.transparent,
           title: Text(task.title),
           content: SingleChildScrollView(
             child: Column(
@@ -408,6 +414,7 @@ class MinimalTaskCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
         );
       },
     );
