@@ -365,13 +365,11 @@ class MinimalTaskCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Material(
-          color: Colors.transparent,
-          child: AlertDialog(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              shadowColor: Colors.transparent,
+        return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          elevation: 8,
+          shadowColor: Colors.black26,
           title: Text(task.title),
           content: SingleChildScrollView(
             child: Column(
@@ -414,7 +412,6 @@ class MinimalTaskCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
         );
       },
     );
