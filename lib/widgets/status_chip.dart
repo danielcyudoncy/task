@@ -37,8 +37,13 @@ class StatusChip extends StatelessWidget {
     
     return Padding(
       padding: const EdgeInsets.only(left: 8.0),
-      child: Chip(
-        label: Text(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: chipColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
           status,
           style: TextStyle(
             color: textColor,
@@ -46,12 +51,6 @@ class StatusChip extends StatelessWidget {
             fontFamily: 'raleway',
             fontSize: 12.sp * textScale,
           ),
-        ),
-        backgroundColor: chipColor,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        side: BorderSide(
-          color: textColor.withAlpha((0.3 * 255).round()),
-          width: 1,
         ),
       ),
     );

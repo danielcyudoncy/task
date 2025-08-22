@@ -467,7 +467,7 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
                         context,
                         icon: Icons.person_outline,
                         label: _task.isApproved ? 'Approved By' : 'Rejected By',
-                        value: _task.approvedBy!,
+                        value: _getApproverName(_task.approvedBy!),
                       ),
                     ],
                     if (_task.approvalReason != null && _task.approvalReason!.isNotEmpty) ...[
@@ -702,6 +702,11 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
     );
   }
   
+  String _getApproverName(String userId) {
+    final TaskController taskController = Get.find<TaskController>();
+    return taskController.userNameCache[userId] ?? 'Unknown User';
+  }
+
   Color _getStatusColor(String status) {
     final colorScheme = Theme.of(context).colorScheme;
     switch (status.toLowerCase()) {

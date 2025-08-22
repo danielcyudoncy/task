@@ -113,7 +113,7 @@ class _AppDrawerState extends State<AppDrawer> {
                               Text(
                                 authController.currentUser?.email ?? '',
                                 style: TextStyle(
-                                    fontSize: isLandscape ? 10.sp : 12.sp, 
+                                    fontSize: isLandscape ? 12.sp : 10.sp, 
                                     color: Colors.white70),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 2,

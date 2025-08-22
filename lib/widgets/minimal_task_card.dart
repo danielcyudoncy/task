@@ -40,27 +40,19 @@ class MinimalTaskCard extends StatelessWidget {
             : isDark
                 ? const Color(0xFF292B3A)
                 : colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isSelected
-              ? colorScheme.primary
-              : colorScheme.outline,
-          width: isSelected ? 2 : 1,
-        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black
-                : const Color(0xFF000000),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           onTap: onTap ?? () => _showTaskDetails(context),
           child: Padding(
             padding: EdgeInsets.all(16.w),
