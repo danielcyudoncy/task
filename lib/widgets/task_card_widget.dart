@@ -44,12 +44,12 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     // Determine card colors based on dark mode
     final Color cardColor = widget.isDark
         ? const Color(0xFF1E1E1E)
-        : Colors.white;
-    final Color textColor = widget.isDark ? Colors.white : Colors.black87;
-    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.grey[600]!;
+        : colorScheme.primary;
+    final Color textColor = widget.isDark ? Colors.white : Colors.white;
+    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
 
     // For debugging task details
-    final Color borderColor = colorScheme.outline.withAlpha((0.3 * 255).toInt());
+    colorScheme.outline.withAlpha((0.3 * 255).toInt());
 
     // Debug prints for diagnosis
     debugPrint(
@@ -72,16 +72,12 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
           child: Container(
             decoration: BoxDecoration(
               color: cardColor,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: borderColor,
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDark ? Colors.black.withAlpha((0.38 * 255).round()) : const Color(0x22000000),
-                  blurRadius: 8,
-                  offset: const Offset(0, 5),
+                  color: widget.isDark ? Colors.black.withAlpha((0.25 * 255).round()) : Colors.black12,
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -235,14 +231,15 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                             backgroundColor: Colors.green[600],
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16.w, vertical: 8.h),
+                                horizontal: 16.w, vertical: 10.h),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(16),
                             ),
+                            elevation: 2,
                           ),
                           child: Text(
                             'Complete',
-                            style: TextStyle(fontSize: 12.sp),
+                            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
                           ),
                         ),
                       const SizedBox(width: 8),
@@ -259,7 +256,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       const SizedBox(width: 8),
                       IconButton(
                         icon: Icon(Icons.edit_note_rounded,
-                            color: textColor, size: 22.sp),
+                            color: widget.isDark ? textColor : Colors.white, size: 22.sp),
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
                           TaskActions.editTask(context, widget.task);
@@ -281,6 +278,10 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.surface,
           title: Text(widget.task.title),
           content: SingleChildScrollView(
             child: Column(
@@ -320,12 +321,18 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
               child: Text(
                 'Close',
                 style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

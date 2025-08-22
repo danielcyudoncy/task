@@ -28,10 +28,9 @@ class TaskDetailModal extends StatelessWidget {
     final Color mainText = colorScheme.onSurface;
     final Color subText = colorScheme.onSurfaceVariant;
     final Color accent = colorScheme.primary;
-    final Color borderColor = colorScheme.outline;
 
     return Dialog(
-      backgroundColor: Colors.transparent,
+      
       child: Container(
         constraints: BoxConstraints(
           maxWidth: 500.w,
@@ -39,13 +38,13 @@ class TaskDetailModal extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(32),
+          
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha((0.5 * 255).round()),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: Colors.black12,
+              blurRadius: 30,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -75,7 +74,7 @@ class TaskDetailModal extends StatelessWidget {
                       'Task Details',
                       style: textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: mainText,
+                        color: Colors.white,
                         fontSize: 20.sp,
                       ),
                     ),
@@ -87,7 +86,7 @@ class TaskDetailModal extends StatelessWidget {
                     },
                     icon: Icon(
                       Icons.close,
-                      color: mainText,
+                      color:Colors.white,
                       size: 24.sp,
                     ),
                   ),
@@ -141,8 +140,7 @@ class TaskDetailModal extends StatelessWidget {
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderColor),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Text(
                         task.description,
@@ -237,10 +235,7 @@ class TaskDetailModal extends StatelessWidget {
                                             decoration: BoxDecoration(
                                               color: colorScheme.primaryContainer,
                                               borderRadius:
-                                                  BorderRadius.circular(16),
-                                              border: Border.all(
-                                                color: colorScheme.primary.withValues(alpha: 0.3),
-                                              ),
+                                                  BorderRadius.circular(24),
                                             ),
                                             child: Text(
                                               tag,
@@ -278,9 +273,8 @@ class TaskDetailModal extends StatelessWidget {
                                   padding: EdgeInsets.all(12.w),
                                   margin: EdgeInsets.only(bottom: 8.h),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: borderColor),
+                                    color: colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
                                     comment,
@@ -314,9 +308,7 @@ class TaskDetailModal extends StatelessWidget {
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: colorScheme.outline),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

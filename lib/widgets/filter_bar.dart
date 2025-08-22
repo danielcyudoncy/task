@@ -27,7 +27,6 @@ class FilterBarWidget extends StatelessWidget {
 
     final backgroundColor =
         isLightMode ? Colors.white : const Color(0xFF1E1E1E);
-    final borderColor = isLightMode ? Colors.grey[300]! : Colors.white;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: basePadding, vertical: 12),
@@ -53,17 +52,19 @@ class FilterBarWidget extends StatelessWidget {
               fillColor: isLightMode ? Colors.white : const Color(0xFF2C2C2E),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: borderColor),
+                borderRadius: BorderRadius.circular(24),
+                borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: borderColor),
+                borderRadius: BorderRadius.circular(24),
+                borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    BorderSide(color: isLightMode ? Colors.blue : Colors.white),
+                borderRadius: BorderRadius.circular(24),
+                borderSide: BorderSide(
+                  color: isLightMode ? Colors.blue.withOpacity(0.3) : Colors.white.withOpacity(0.3),
+                  width: 2,
+                ),
               ),
             ),
           ),
@@ -90,12 +91,12 @@ class FilterBarWidget extends StatelessWidget {
                     fillColor:
                         isLightMode ? Colors.white : const Color(0xFF2C2C2E),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: borderColor),
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: borderColor),
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                   dropdownColor:
@@ -129,12 +130,12 @@ class FilterBarWidget extends StatelessWidget {
                     fillColor:
                         isLightMode ? Colors.white : const Color(0xFF2C2C2E),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: borderColor),
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: borderColor),
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                   dropdownColor:
