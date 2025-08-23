@@ -1,5 +1,4 @@
 // views/notification_fix_screen.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -89,11 +88,12 @@ class _NotificationFixScreenState extends State<NotificationFixScreen> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Text(
               'Notification Fix Tool',
               style: TextStyle(
@@ -135,7 +135,7 @@ class _NotificationFixScreenState extends State<NotificationFixScreen> {
               ),
             )),
             
-            SizedBox(height: 24.h),
+            SizedBox(height: 20.h),
             
             // Fix button
             SizedBox(
@@ -170,7 +170,7 @@ class _NotificationFixScreenState extends State<NotificationFixScreen> {
               ),
             ),
             
-            SizedBox(height: 16.h),
+            SizedBox(height: 12.h),
             
             // Status message
             if (statusMessage.isNotEmpty)
@@ -200,7 +200,7 @@ class _NotificationFixScreenState extends State<NotificationFixScreen> {
                 ),
               ),
             
-            SizedBox(height: 24.h),
+            SizedBox(height: 16.h),
             
             // Instructions
             Card(
@@ -243,7 +243,8 @@ class _NotificationFixScreenState extends State<NotificationFixScreen> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
