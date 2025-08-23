@@ -26,7 +26,12 @@ class PerformanceController extends GetxController {
       // Fetch all users
       final usersSnapshot = await _firestore.collection('users').get();
       final users = usersSnapshot.docs;
-      totalUsers.value = users.length;
+      // Count users excluding librarians
+      totalUsers.value = users.where((doc) {
+        final userData = doc.data();
+        final userRole = userData['role'] ?? 'Unknown';
+        return userRole != 'Librarian';
+      }).length;
       
       // Fetch all tasks
       final tasksSnapshot = await _firestore.collection('tasks').get();
@@ -45,6 +50,11 @@ class PerformanceController extends GetxController {
         final userName = userData['fullName'] ?? userData['fullname'] ?? userData['name'] ?? 'Unknown User';
         final userRole = userData['role'] ?? 'Unknown';
         final userEmail = userData['email'] ?? '';
+        
+        // Skip librarians from performance tracking
+        if (userRole == 'Librarian') {
+          continue;
+        }
         
         // Calculate user performance metrics
         final userMetrics = await _calculateUserMetrics(userId, tasks);
@@ -71,7 +81,7 @@ class PerformanceController extends GetxController {
       performanceList.sort((a, b) => b['completionRate'].compareTo(a['completionRate']));
       
       userPerformanceData.value = performanceList;
-      averageCompletionRate.value = users.isNotEmpty ? totalCompletionRate / users.length : 0.0;
+      averageCompletionRate.value = performanceList.isNotEmpty ? totalCompletionRate / performanceList.length : 0.0;
       topPerformers.value = performanceList.take(5).toList();
       
     } catch (e) {
@@ -82,12 +92,11 @@ class PerformanceController extends GetxController {
   }
   
   Future<Map<String, dynamic>> _calculateUserMetrics(String userId, List<Task> allTasks) async {
-    // Filter tasks assigned to this user
+    // Filter tasks assigned to this user (excluding librarian assignments)
     final assignedTasks = allTasks.where((task) => 
       task.assignedReporterId == userId ||
       task.assignedCameramanId == userId ||
-      task.assignedDriverId == userId ||
-      task.assignedLibrarianId == userId
+      task.assignedDriverId == userId
     ).toList();
     
     // Filter completed tasks by this user
