@@ -25,10 +25,10 @@ import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/user_controller.dart';
+
 import 'package:task/controllers/wallpaper_controller.dart';
 import 'package:task/firebase_options.dart';
 
-import 'package:task/service/user_deletion_service.dart';
 import 'package:task/service/cloud_function_user_deletion_service.dart';
 import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
@@ -45,7 +45,6 @@ import 'package:task/service/task_service.dart';
 import 'package:task/service/firebase_messaging_service.dart';
 import 'package:task/service/daily_task_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:task/utils/snackbar_utils.dart';
 
 // --- Emulator/Production Switch ---
 const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
@@ -56,46 +55,51 @@ bool _isBootstrapComplete = false;
 bool get isBootstrapComplete => _isBootstrapComplete;
 
 Future<void> bootstrapApp() async {
-  debugPrint("🚀 BOOTSTRAP: Starting app initialization");
-  
-  // Ensure Flutter bindings are initialized
-  WidgetsFlutterBinding.ensureInitialized();
-  debugPrint("🚀 BOOTSTRAP: WidgetsFlutterBinding initialized");
-  
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  
-  // Initialize error handling
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint('🚨 FLUTTER ERROR: ${details.exception}');
-    debugPrint('🚨 STACK TRACE: ${details.stack}');
-  };
-  
-  // Set uncaught error handler
-  PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('🚨 UNCAUGHT ERROR: $error');
-    debugPrint('🚨 STACK TRACE: $stack');
-    return true;
-  };
-  
   try {
-    // Step 1: Initialize external libraries
+    debugPrint("🚀 BOOTSTRAP: Starting app initialization");
+    
+    // Ensure Flutter bindings are initialized
+    WidgetsFlutterBinding.ensureInitialized();
+    debugPrint("🚀 BOOTSTRAP: WidgetsFlutterBinding initialized");
+    
+    // Set preferred orientations
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    
+    // Initialize error handling
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      debugPrint('🚨 FLUTTER ERROR: ${details.exception}');
+      debugPrint('🚨 STACK TRACE: ${details.stack}');
+    };
+    
+    // Set uncaught error handler
+    PlatformDispatcher.instance.onError = (error, stack) {
+      debugPrint('🚨 UNCAUGHT ERROR: $error');
+      debugPrint('🚨 STACK TRACE: $stack');
+      return true;
+    };
+
+    // Load environment variables
     debugPrint("🚀 BOOTSTRAP: Loading environment variables");
     await dotenv.load(fileName: "assets/.env");
     debugPrint("🚀 BOOTSTRAP: Environment variables loaded");
+
+    // Initialize Firebase
     debugPrint("🚀 BOOTSTRAP: Initializing Firebase");
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
     // Automatically connect to emulator if flag is set
     if (useEmulator) {
       useFirebaseEmulator(emulatorHost);
     }
     debugPrint("🚀 BOOTSTRAP: Firebase initialized");
+    
+    // Initialize Firebase services
     debugPrint("🚀 BOOTSTRAP: Verifying Firebase services");
     await _verifyFirebaseServices();
     debugPrint("🚀 BOOTSTRAP: Firebase services verified");
@@ -104,223 +108,165 @@ Future<void> bootstrapApp() async {
     debugPrint("🚀 BOOTSTRAP: Initializing Firebase Messaging Service");
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     final firebaseMessagingService = FirebaseMessagingService();
-    firebaseMessagingService.initialize();
+    await firebaseMessagingService.initialize();
     Get.put(firebaseMessagingService, permanent: true);
     debugPrint("🚀 BOOTSTRAP: Firebase Messaging Service initialized");
 
-    debugPrint("🚀 BOOTSTRAP: Skipping Supabase initialization - using Firebase Storage");
-
-    // Step 2: Initialize SQLite TaskService
+    // Initialize other services
     debugPrint("🚀 BOOTSTRAP: Initializing SQLite TaskService");
     final taskService = TaskService();
+    await taskService.initialize();
     Get.put(taskService, permanent: true);
     debugPrint("🚀 BOOTSTRAP: SQLite TaskService initialized");
 
-    // Step 3: Initialize services and controllers with no dependencies
+    // Initialize audio player
     debugPrint("🚀 BOOTSTRAP: Initializing audio player");
     final audioPlayer = await _initializeAudioPlayer();
     debugPrint("🚀 BOOTSTRAP: Audio player initialized");
-    debugPrint("🚀 BOOTSTRAP: Putting ThemeController");
+    
+    // Initialize controllers
+    debugPrint("🚀 BOOTSTRAP: Initializing controllers");
     Get.put(ThemeController(), permanent: true);
-    debugPrint("🚀 BOOTSTRAP: Putting SettingsController");
     Get.put(SettingsController(audioPlayer), permanent: true);
-    debugPrint("🚀 BOOTSTRAP: Basic controllers initialized");
-
-    // --- THIS IS THE CORRECTED INITIALIZATION ORDER ---
-
-    // Step 3: Put all services that other controllers depend on FIRST.
-    debugPrint("🚀 BOOTSTRAP: Putting FirebaseStorageService");
-    try {
-      await Get.putAsync<FirebaseStorageService>(() async {
-        final service = FirebaseStorageService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing FirebaseStorageService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
     
-    debugPrint("🚀 BOOTSTRAP: Putting ExportService");
-    try {
-      await Get.putAsync<ExportService>(() async {
-        final service = ExportService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing ExportService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
+    // Initialize other services with proper error handling
+    await _initializeService<FirebaseStorageService>(
+      () => FirebaseStorageService(),
+      'FirebaseStorageService',
+    );
     
-    debugPrint("🚀 BOOTSTRAP: Putting ArchiveService");
-    try {
-      await Get.putAsync<ArchiveService>(() async {
-        final service = ArchiveService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing ArchiveService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
+    await _initializeService<ExportService>(
+      () => ExportService(),
+      'ExportService',
+    );
     
-    debugPrint("🚀 BOOTSTRAP: Putting TaskAttachmentService");
-    try {
-      await Get.putAsync<TaskAttachmentService>(() async {
-        final service = TaskAttachmentService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing TaskAttachmentService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
+    await _initializeService<ArchiveService>(
+      () => ArchiveService(),
+      'ArchiveService',
+    );
     
-    debugPrint("🚀 BOOTSTRAP: Putting PdfExportService");
-    try {
-      await Get.putAsync<PdfExportService>(() async {
-        final service = PdfExportService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing PdfExportService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
+    await _initializeService<TaskAttachmentService>(
+      () => TaskAttachmentService(),
+      'TaskAttachmentService',
+    );
     
-    debugPrint("🚀 BOOTSTRAP: Putting VersionControlService");
-    try {
-      await Get.putAsync<VersionControlService>(() async {
-        final service = VersionControlService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing VersionControlService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
+    await _initializeService<PdfExportService>(
+      () => PdfExportService(),
+      'PdfExportService',
+    );
     
-    debugPrint("🚀 BOOTSTRAP: Putting DuplicateDetectionService");
-    try {
-      await Get.putAsync<DuplicateDetectionService>(() async {
-        final service = DuplicateDetectionService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing DuplicateDetectionService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
+    await _initializeService<VersionControlService>(
+      () => VersionControlService(),
+      'VersionControlService',
+    );
     
-    debugPrint("🚀 BOOTSTRAP: Putting UserDeletionService");
-    Get.put<UserDeletionService>(CloudFunctionUserDeletionService(), permanent: true);
-    debugPrint("🚀 BOOTSTRAP: Putting NewsService");
-    Get.put(NewsService(), permanent: true); // News service for real-time news
+    await _initializeService<DuplicateDetectionService>(
+      () => DuplicateDetectionService(),
+      'DuplicateDetectionService',
+    );
     
-    debugPrint("🚀 BOOTSTRAP: Putting DailyTaskNotificationService");
-    Get.put(DailyTaskNotificationService(), permanent: true); // Daily task notification service
-    debugPrint("🚀 BOOTSTRAP: Services initialized");
-
-    // Step 4: Put the AuthController (no need to await onReady)
+    await _initializeService<CloudFunctionUserDeletionService>(
+      () => CloudFunctionUserDeletionService(),
+      'UserDeletionService',
+    );
+    
+    await _initializeService<NewsService>(
+      () => NewsService(),
+      'NewsService',
+    );
+    
+    await _initializeService<DailyTaskNotificationService>(
+      () => DailyTaskNotificationService(),
+      'DailyTaskNotificationService',
+    );
+    
+    await _initializeService<AccessControlService>(
+      () => AccessControlService(),
+      'AccessControlService',
+    );
+    
+    debugPrint("🚀 BOOTSTRAP: Services initialized, now initializing controllers");
+    
+    // Initialize controllers that depend on services
     debugPrint('🚀 BOOTSTRAP: Putting AuthController...');
     Get.put(AuthController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: AuthController put successfully');
 
-    // Step 5: Put all remaining controllers. They can now safely find their dependencies.
     debugPrint('🚀 BOOTSTRAP: Putting remaining controllers...');
     debugPrint('🚀 BOOTSTRAP: Putting AppLockController');
     Get.put(AppLockController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting AdminController');
     Get.put(AdminController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting UserController');
-    Get.put(UserController(Get.find<UserDeletionService>()), permanent: true);
+    Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting PresenceService');
     Get.put(PresenceService(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting ChatController');
     Get.put(ChatController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting TaskController');
     Get.put(TaskController(), permanent: true);
+    
+    // Initialize services that depend on controllers
+    await _initializeService<BulkOperationsService>(
+      () => BulkOperationsService(),
+      'BulkOperationsService',
+    );
+    
+    debugPrint("🚀 BOOTSTRAP: All services and controllers initialized successfully");
     debugPrint('🚀 BOOTSTRAP: Putting ManageUsersController');
-    Get.put(ManageUsersController(Get.find<UserDeletionService>()), permanent: true);
+    Get.put(ManageUsersController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting NotificationController');
     Get.put(NotificationController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting PrivacyController');
     Get.put(PrivacyController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
     Get.put(WallpaperController(), permanent: true);
-    
-    // Step 6: Put services that depend on controllers AFTER controllers are registered
-    debugPrint("🚀 BOOTSTRAP: Putting AccessControlService");
-    try {
-      await Get.putAsync<AccessControlService>(() async {
-        final service = AccessControlService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing AccessControlService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
-    
-    debugPrint("🚀 BOOTSTRAP: Putting BulkOperationsService");
-    try {
-      await Get.putAsync<BulkOperationsService>(() async {
-        final service = BulkOperationsService();
-        await service.initialize();
-        return service;
-      }, permanent: true);
-    } catch (e, st) {
-      debugPrint('Error initializing BulkOperationsService: $e');
-      debugPrint('$st');
-      rethrow;
-    }
-    
-    debugPrint('🚀 BOOTSTRAP: All controllers and services put successfully');
 
-    // Step 6: Perform post-initialization actions (simplified to prevent issues)
-    debugPrint('🚀 BOOTSTRAP: Performing post-initialization actions...');
-    debugPrint('🚀 BOOTSTRAP: Skipping complex post-initialization to prevent issues');
-
-
-
-    // Step 7: Launch the app
-    debugPrint('🚀 BOOTSTRAP: Launching app...');
-    
-    // Add a delay to ensure all initialization is complete
-    await Future.delayed(const Duration(milliseconds: 500));
+    debugPrint('🚀 BOOTSTRAP: All controllers initialized successfully');
     
     // Mark bootstrap as complete
     _isBootstrapComplete = true;
     debugPrint('🚀 BOOTSTRAP: Bootstrap marked as complete');
     
-    // Mark app as ready for snackbars
-    SnackbarUtils.markAppAsReady();
-    debugPrint('🚀 BOOTSTRAP: App marked as ready for snackbars');
+    // Ensure widgets are properly initialized
+    WidgetsFlutterBinding.ensureInitialized();
     
-    runApp(
-      const MyApp(),
-    );
+    // Run the app
+    runApp(const MyApp());
     debugPrint('🚀 BOOTSTRAP: App launched successfully');
-  } catch (e, stackTrace) {
-    debugPrint('DEBUG: CRASH CAUGHT!');
-    debugPrint('Error Type: ${e.runtimeType}');
-    debugPrint('Error Message: $e');
-    debugPrint('Stack Trace:\n$stackTrace');
+    
+  } catch (e, stack) {
+    debugPrint('🚨 CRITICAL ERROR during bootstrap: $e');
+    debugPrint('🚨 STACK TRACE: $stack');
+    
+    // Show error UI if bootstrap fails
     runApp(MaterialApp(
-        home: Scaffold(body: Center(child: Text('Bootstrap Failed: $e')))));
+      home: Scaffold(
+        body: Center(
+          child: Text('Failed to initialize app: $e'),
+        ),
+      ),
+    ));
   }
 }
 
-
+Future<void> _initializeService<T extends GetxService>(
+  T Function() create, 
+  String serviceName
+) async {
+  try {
+    debugPrint("🚀 BOOTSTRAP: Initializing $serviceName");
+    final service = create();
+    // Simply put the service into GetX without calling any methods
+    // Most GetxService implementations don't need explicit initialization
+    Get.put<T>(service, permanent: true);
+    debugPrint("✅ $serviceName initialized successfully");
+  } catch (e, stack) {
+    debugPrint('❌ Failed to initialize $serviceName: $e');
+    debugPrint('Stack trace: $stack');
+    rethrow;
+  }
+}
 
 Future<AudioPlayer> _initializeAudioPlayer() async {
   final player = AudioPlayer();

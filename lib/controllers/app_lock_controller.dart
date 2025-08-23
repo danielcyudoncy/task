@@ -46,7 +46,10 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       debugPrint('AppLockController: Checking if app should be locked on startup...');
       if (shouldLockOnStartup()) {
         debugPrint('AppLockController: App should be locked on startup');
-        _lockApp();
+        // Delay navigation to ensure GetX is fully initialized
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _lockApp();
+        });
       } else {
         debugPrint('AppLockController: App should not be locked on startup');
       }

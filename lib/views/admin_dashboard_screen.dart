@@ -10,7 +10,7 @@ import 'package:task/utils/constants/app_strings.dart';
 import 'package:task/utils/devices/app_devices.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/enhanced_dashboard_cards.dart';
-import 'package:task/widgets/user_performance_tab.dart';
+
 import '../controllers/performance_controller.dart';
 import 'package:task/widgets/user_header.dart';
 import 'package:task/widgets/user_nav_bar.dart';
@@ -46,7 +46,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     
     // Initialize performance controller
     performanceController = Get.put(PerformanceController());
@@ -1094,7 +1094,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                   Tab(text: "Not Completed"),
                                   Tab(text: "Completed"),
                                   Tab(text: "Pending Approval"),
-                                  Tab(text: "User Performance"),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -1128,7 +1127,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                       userCache: userCache,
                                       getUserNameAndRole: getUserNameAndRole,
                                     ),
-                                    const UserPerformanceTab(),
                                   ],
                                 ),
                               ),

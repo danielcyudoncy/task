@@ -4,6 +4,13 @@ import 'database_service.dart';
 class TaskService {
   final DatabaseService _databaseService = DatabaseService();
 
+  // Initialize the service
+  Future<void> initialize() async {
+    // Initialize database by accessing the database getter
+    // This will trigger the database initialization if not already done
+    await _databaseService.database;
+  }
+
   // Add a new task
   Future<void> addTask(Task task) async {
     await _databaseService.insertTask(task);

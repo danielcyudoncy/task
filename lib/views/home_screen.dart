@@ -366,6 +366,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         Container(
                           width: double.infinity,
+                          height: 400, // Add explicit height constraint
                           decoration: BoxDecoration(
                             gradient: isDark
                                 ? LinearGradient(

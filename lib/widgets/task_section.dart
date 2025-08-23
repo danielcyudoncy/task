@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/utils/constants/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
@@ -81,7 +82,7 @@ class TasksSection extends StatelessWidget {
               child: Icon(
                 Icons.add,
                 color: colorScheme.onPrimary,
-                size: 22,
+                size: 22.sp,
               ),
             ),
           ),
@@ -102,16 +103,16 @@ class TasksSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(25),
       ),
       indicatorSize: TabBarIndicatorSize.tab,
-      indicatorPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      labelColor: isDark ? colorScheme.surface : Colors.white,
-      unselectedLabelColor: isDark ? colorScheme.onPrimary.withValues(alpha: 0.7) : Colors.black54,
-      labelStyle: const TextStyle(
+      indicatorPadding: const EdgeInsets.symmetric(horizontal: 38, vertical: 8),
+      labelColor: isDark ? colorScheme.surface : AppColors.white,
+      unselectedLabelColor: isDark ? colorScheme.onPrimary.withValues(alpha: 0.7) : AppColors.black,
+      labelStyle: TextStyle(
         fontWeight: FontWeight.w600,
-        fontSize: 15,
+        fontSize: 15.sp,
       ),
-      unselectedLabelStyle: const TextStyle(
+      unselectedLabelStyle: TextStyle(
         fontWeight: FontWeight.w500,
-        fontSize: 15,
+        fontSize: 15.sp,
       ),
       tabs: [
         Tab(text: 'not_completed'.tr),

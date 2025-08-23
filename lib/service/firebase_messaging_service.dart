@@ -9,7 +9,7 @@ class FirebaseMessagingService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  void initialize() {
+  Future<void> initialize() async {
     // ✅ Request Notification Permissions
     _requestPermissions();
 
