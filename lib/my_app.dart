@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:io';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:task/routes/app_routes.dart';
@@ -15,7 +14,6 @@ import 'utils/localization/translations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // Removed Isar import - using SQLite now
 import 'package:task/routes/global_bindings.dart';
-import 'package:task/views/email_link_signin_screen.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -25,17 +23,17 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Enable all orientations for better user experience
+    _setOrientation();
+  }
+
+  void _setOrientation() {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
     ]);
   }
 
@@ -73,138 +71,110 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<bool> _showExitConfirmationDialog() async {
-    return await Get.dialog<bool>(
-      AlertDialog(
+    return await showDialog(
+      context: Get.context!,
+      builder: (context) => AlertDialog(
         title: const Text('Exit App'),
-        content: const Text('Are you sure you want to exit the app?'),
+        content: const Text('Are you sure you want to exit?'),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
           ),
           TextButton(
-            onPressed: () => Get.back(result: true),
-            child: const Text('Exit'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes'),
           ),
         ],
       ),
-      barrierDismissible: false,
     ) ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get current orientation to set appropriate design size
-    final orientation = MediaQuery.of(context).orientation;
-    final designSize = orientation == Orientation.portrait 
-        ? const Size(375, 812)  // Portrait design size
-        : const Size(812, 375); // Landscape design size
-    
-    return ScreenUtilInit(
-      designSize: designSize,
-      minTextAdapt: true,
-      splitScreenMode: true,
-      useInheritedMediaQuery: true,
-      ensureScreenSize: true,
-      builder: (context, child) {
-        final ThemeController themeController = Get.find<ThemeController>();
-        return Obx(() {
-          final currentThemeMode = themeController.isDarkMode.value
-              ? ThemeMode.dark
-              : ThemeMode.light;
-          
-          // Check if app is locked
-          final AppLockController appLockController = Get.find<AppLockController>();
-          if (appLockController.isAppLocked.value) {
-            return GetMaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: currentThemeMode,
-              home: const AppLockScreen(),
-              getPages: AppRoutes.routes,
-              translations: AppTranslations(),
-              locale: AppLocalizations.instance.currentLocale,
-              fallbackLocale: AppLocalizations.defaultLocale,
-            );
-          }
-          
-          return PopScope(
-            canPop: false,
-            onPopInvokedWithResult: (didPop, result) async {
-              print('PopScope onPopInvoked called: didPop=$didPop');
-              if (didPop) return;
-              
-              // Show confirmation dialog before minimizing/closing
-              final shouldExit = await _showExitConfirmationDialog();
-              print('Exit confirmation result: $shouldExit');
-              if (shouldExit) {
-                // On Android, minimize the app instead of closing
-                if (Platform.isAndroid) {
-                  print('Calling SystemNavigator.pop() on Android');
-                  SystemNavigator.pop();
-                } else {
-                  // On other platforms, close the app
-                  print('Calling SystemNavigator.pop() on other platform');
-                  SystemNavigator.pop();
-                }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Get current orientation to set appropriate design size
+        final orientation = MediaQuery.of(context).orientation;
+        final designSize = orientation == Orientation.portrait 
+            ? const Size(375, 812)  // Portrait design size
+            : const Size(812, 375); // Landscape design size
+        
+        return ScreenUtilInit(
+          designSize: designSize,
+          minTextAdapt: true,
+          splitScreenMode: true,
+          useInheritedMediaQuery: true,
+          ensureScreenSize: true,
+          builder: (context, child) {
+            final ThemeController themeController = Get.find<ThemeController>();
+            
+            return Obx(() {
+              try {
+                final currentThemeMode = themeController.isDarkMode.value
+                    ? ThemeMode.dark
+                    : ThemeMode.light;
+                
+                final AppLockController appLockController = Get.find<AppLockController>();
+                
+                return PopScope(
+                  canPop: false,
+                  onPopInvoked: (didPop) async {
+                    if (didPop) return;
+                    final shouldExit = await _showExitConfirmationDialog();
+                    if (shouldExit) {
+                      SystemNavigator.pop();
+                    }
+                  },
+                  child: GetMaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    title: 'Assignment Logging App',
+                    theme: AppTheme.lightTheme,
+                    darkTheme: AppTheme.darkTheme,
+                    themeMode: currentThemeMode,
+                    initialBinding: GlobalBindings(),
+                    initialRoute: "/",
+                    getPages: AppRoutes.routes,
+                    translations: AppTranslations(),
+                    locale: AppLocalizations.instance.currentLocale,
+                    fallbackLocale: AppLocalizations.defaultLocale,
+                    supportedLocales: AppLocalizations.supportedLocales,
+                    localizationsDelegates: const [
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                    home: appLockController.isAppLocked.value
+                        ? const AppLockScreen()
+                        : null,
+                    builder: (context, widget) {
+                      ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
+                        return Scaffold(
+                          body: Center(
+                            child: Text('An error occurred: ${errorDetails.exception}'),
+                          ),
+                        );
+                      };
+                      return widget!;
+                    },
+                  ),
+                );
+              } catch (e, stack) {
+                debugPrint('Error in app initialization: $e');
+                debugPrint('Stack trace: $stack');
+                return MaterialApp(
+                  home: Scaffold(
+                    body: Center(
+                      child: Text('Error initializing app: $e'),
+                    ),
+                  ),
+                );
               }
-            },
-            child: GetMaterialApp(
-              debugShowCheckedModeBanner: false,
-              title: 'Assignment Logging App',
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: currentThemeMode,
-              initialBinding: GlobalBindings(),
-              initialRoute: "/",
-              getPages: AppRoutes.routes,
-              translations: AppTranslations(),
-              locale: AppLocalizations.instance.currentLocale,
-              fallbackLocale: AppLocalizations.defaultLocale,
-              supportedLocales: AppLocalizations.supportedLocales,
-              localizationsDelegates: const [
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              // Handle incoming deep links for email authentication
-              unknownRoute: GetPage(
-                name: '/unknown',
-                page: () => _handleDeepLink(),
-              ),
-            ),
-          );
-        });
+            });
+          },
+        );
       },
     );
   }
 
-  Widget _handleDeepLink() {
-    final uri = Uri.base;
-    final currentUrl = uri.toString();
-    
-    // Check if this is an email authentication link
-    if (currentUrl.contains('__/auth/links') || 
-        currentUrl.contains('firebaseapp.com') && currentUrl.contains('link')) {
-      
-      // Extract the link and navigate to email link signin screen
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Get.offAllNamed('/email-link-signin', arguments: currentUrl);
-      });
-      
-      return const EmailLinkSignInScreen();
-    }
-    
-    // For other unknown routes, redirect to splash
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.offAllNamed('/');
-    });
-    
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
 }

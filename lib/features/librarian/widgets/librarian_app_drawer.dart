@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
+import 'package:task/utils/devices/app_devices.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
 
@@ -24,7 +25,7 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = AppDevices.getScreenHeight(context);
 
     return Drawer(
       child: SafeArea(

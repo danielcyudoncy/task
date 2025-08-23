@@ -107,11 +107,11 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLargeScreen = MediaQuery.of(context).size.width > 600;
+    final screenWidth = AppDevices.getScreenWidth(context);
+    final isLargeScreen = screenWidth > 600;
     final basePadding = isLargeScreen ? 32.0.w : 16.0.w;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isTablet = AppDevices.isTablet(context);
-    final screenWidth = AppDevices.getScreenWidth(context);
 
     return Scaffold(
       key: _scaffoldKey,

@@ -52,11 +52,12 @@ class LibrarianTaskController extends GetxController {
       isLoading.value = true;
       final snapshot = await _firestore
           .collection('tasks')
-          .where('status', isNotEqualTo: 'completed')
           .orderBy('createdAt', descending: true)
           .get();
 
-      uncompletedTasks.value = snapshot.docs.map((doc) {
+      uncompletedTasks.value = snapshot.docs
+          .where((doc) => doc.data()['status'] != 'completed')
+          .map((doc) {
         return {'id': doc.id, ...doc.data()};
       }).toList();
     } catch (e) {

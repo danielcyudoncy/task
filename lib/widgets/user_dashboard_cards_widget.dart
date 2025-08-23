@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:task/utils/devices/app_devices.dart';
 
 class UserDashboardCardsWidget extends StatelessWidget {
   final RxInt assignedTasksCount;
@@ -29,7 +30,8 @@ class UserDashboardCardsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     const cardColor = Color(0xFF357088);
     final orientation = MediaQuery.of(context).orientation;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = AppDevices.getScreenWidth(context);
+    AppDevices.isTablet(context);
     
     // Responsive card dimensions based on orientation
     final cardWidth = orientation == Orientation.portrait 
@@ -42,7 +44,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
     final taskCreatedHeight = orientation == Orientation.portrait ? 120.0 : 100.0;
     
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(12.0),
       child: orientation == Orientation.portrait
           ? _buildPortraitLayout(cardWidth, assignedTaskHeight, taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor)
           : _buildLandscapeLayout(cardWidth, assignedTaskHeight, taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor),

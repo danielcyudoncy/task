@@ -1183,31 +1183,26 @@ class TaskController extends GetxController {
     final assignedToStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedTo', isEqualTo: userId)
-        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
       
     final reporterStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedReporterId', isEqualTo: userId)
-        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
       
     final cameramanStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedCameramanId', isEqualTo: userId)
-        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
         
     final driverStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedDriverId', isEqualTo: userId)
-        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
         
     final librarianStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedLibrarianId', isEqualTo: userId)
-        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
 
     return rx.CombineLatestStream.combine5<QuerySnapshot, QuerySnapshot, QuerySnapshot, QuerySnapshot, QuerySnapshot, int>(

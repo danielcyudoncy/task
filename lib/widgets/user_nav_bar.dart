@@ -23,7 +23,7 @@ class UserNavBar extends StatelessWidget {
 
     return ConvexAppBar(
       style: TabStyle.react,
-      backgroundColor: isLightMode ? Colors.white : Colors.black,
+      backgroundColor: isLightMode ? AppColors.white : AppColors.black,
       activeColor: AppColors.primaryColor,
       color: Colors.grey,
       elevation: 12,
