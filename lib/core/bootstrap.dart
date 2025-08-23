@@ -30,6 +30,7 @@ import 'package:task/controllers/wallpaper_controller.dart';
 import 'package:task/firebase_options.dart';
 
 import 'package:task/service/cloud_function_user_deletion_service.dart';
+import 'package:task/service/user_deletion_service.dart';
 import 'package:task/service/news_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
@@ -169,6 +170,9 @@ Future<void> bootstrapApp() async {
       () => CloudFunctionUserDeletionService(),
       'UserDeletionService',
     );
+    
+    // Register the service by interface type as well
+    Get.put<UserDeletionService>(Get.find<CloudFunctionUserDeletionService>(), permanent: true);
     
     await _initializeService<NewsService>(
       () => NewsService(),
