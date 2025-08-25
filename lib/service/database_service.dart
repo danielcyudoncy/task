@@ -5,7 +5,7 @@ import '../models/task_model.dart';
 class DatabaseService {
   static Database? _database;
   static const String _databaseName = 'tasks.db';
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
   
   // Table names
   static const String _tasksTable = 'tasks';
@@ -60,6 +60,14 @@ class DatabaseService {
       await db.execute('ALTER TABLE $_tasksTable ADD COLUMN approvedBy TEXT');
       await db.execute('ALTER TABLE $_tasksTable ADD COLUMN approvalTimestamp INTEGER');
       await db.execute('ALTER TABLE $_tasksTable ADD COLUMN approvalReason TEXT');
+    }
+    if (oldVersion < 4) {
+      // Add report completion and task review columns for version 4
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN reportCompletionInfo TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN taskReviews TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN taskRatings TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN reviewTimestamps TEXT');
+      await db.execute('ALTER TABLE $_tasksTable ADD COLUMN reviewerRoles TEXT');
     }
   }
   
@@ -116,7 +124,12 @@ class DatabaseService {
         approvalStatus TEXT DEFAULT 'pending',
         approvedBy TEXT,
         approvalTimestamp INTEGER,
-        approvalReason TEXT
+        approvalReason TEXT,
+        reportCompletionInfo TEXT,
+        taskReviews TEXT,
+        taskRatings TEXT,
+        reviewTimestamps TEXT,
+        reviewerRoles TEXT
       )
     ''');
   }
