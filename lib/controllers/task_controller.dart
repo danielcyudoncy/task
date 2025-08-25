@@ -1,17 +1,19 @@
 // controllers/task_controller.dart
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // <-- make sure to import this!
-import '../models/task_model.dart';
-import '../controllers/auth_controller.dart';
-import '../service/firebase_service.dart';
-import '../utils/snackbar_utils.dart';
+import 'package:task/models/task_model.dart';
+import 'package:task/models/report_completion_info.dart';
+import 'package:task/controllers/auth_controller.dart';
+import 'package:task/service/firebase_service.dart';
+import 'package:task/utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
 import 'package:task/service/fcm_service.dart';
-import '../service/task_service.dart';
+import 'package:task/service/task_service.dart';
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
@@ -929,7 +931,11 @@ class TaskController extends GetxController {
   }
 
   // New method for individual user task completion
-  Future<void> markTaskCompletedByUser(String taskId, String userId) async {
+  Future<void> markTaskCompletedByUser(
+    String taskId,
+    String userId, {
+    ReportCompletionInfo? reportCompletionInfo,
+  }) async {
     try {
       isLoading(true);
       
@@ -975,6 +981,14 @@ class TaskController extends GetxController {
       // Prepare update data
       Map<String, dynamic> updateData = {
         'completedByUserIds': updatedCompletedByUserIds,
+        
+        // Add report completion info if provided (for reporters)
+        if (reportCompletionInfo != null)
+          'reportCompletionInfo': {
+            if (task.reportCompletionInfo.isNotEmpty)
+              ...task.reportCompletionInfo.map((key, value) => MapEntry(key, value.toMap())),
+            userId: reportCompletionInfo.toMap(),
+          },
         'userCompletionTimestamps': updatedTimestamps,
       };
       
@@ -992,10 +1006,19 @@ class TaskController extends GetxController {
       // Update local task list
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
+        // Create updated report completion info map
+        final Map<String, ReportCompletionInfo> updatedReportCompletionInfo = Map.from(task.reportCompletionInfo);
+        if (reportCompletionInfo != null) {
+          updatedReportCompletionInfo[userId] = reportCompletionInfo;
+        }
+
         Task updatedTask = tasks[taskIndex].copyWith(
           completedByUserIds: updatedCompletedByUserIds,
-          userCompletionTimestamps: Map<String, DateTime>.from(updatedTimestamps.map((key, value) => MapEntry(key, value is DateTime ? value : DateTime.now()))),
+          userCompletionTimestamps: Map<String, DateTime>.from(updatedTimestamps.map((key, value) => 
+            MapEntry(key, value is DateTime ? value : DateTime.now()))),
           status: allCompleted ? 'Completed' : tasks[taskIndex].status,
+          // Include the updated report completion info in the local task
+          reportCompletionInfo: updatedReportCompletionInfo,
         );
         tasks[taskIndex] = updatedTask;
         tasks.refresh();

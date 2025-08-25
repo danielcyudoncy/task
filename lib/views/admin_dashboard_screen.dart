@@ -602,7 +602,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: tasks.isEmpty
-                        ? _buildEmptyState()
+                        ? SingleChildScrollView(
+                            child: _buildEmptyState(),
+                          )
                         : StatefulBuilder(
                             builder: (ctx, setState) => ListView.builder(
                               itemCount: tasks.length,

@@ -1,7 +1,9 @@
 // models/task_model.dart
+import 'dart:core';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
+import 'package:task/models/report_completion_info.dart';
 
 DateTime? parseDate(dynamic value) {
   if (value == null) return null;
@@ -98,6 +100,9 @@ class Task {
   List<String> completedByUserIds = []; // List of user IDs who have marked this task as complete
   Map<String, DateTime> userCompletionTimestamps = {}; // Track when each user completed the task
   
+  // Report completion tracking
+  Map<String, ReportCompletionInfo> reportCompletionInfo = {}; // Reporter ID -> Completion Info
+  
   // Task review system
   Map<String, String> taskReviews = {}; // Reviewer ID -> Review comment
   Map<String, double> taskRatings = {}; // Reviewer ID -> Rating (1-5)
@@ -167,6 +172,7 @@ class Task {
       this.lastAttachmentAdded,
       this.completedByUserIds = const [],
       this.userCompletionTimestamps = const {},
+      this.reportCompletionInfo = const {},
       Map<String, String>? taskReviews,
       Map<String, double>? taskRatings,
       Map<String, DateTime>? reviewTimestamps,
@@ -178,11 +184,35 @@ class Task {
   }
 
   factory Task.fromMap(Map<String, dynamic> map) {
+    // debugPrint('Task.fromMap called with: $map');
     String taskId = map['taskId'] ?? map['id']?.toString() ?? '';
     debugPrint(
         'fromMap creator data: createdBy=${map['createdBy']}, createdByName=${map['createdByName']}');
+        
+    // Parse reportCompletionInfo
+    Map<String, ReportCompletionInfo> reportCompletionInfo = {};
+    if (map['reportCompletionInfo'] != null) {
+      try {
+        if (map['reportCompletionInfo'] is String) {
+          final decoded = jsonDecode(map['reportCompletionInfo']) as Map<String, dynamic>;
+          decoded.forEach((key, value) {
+            if (value is Map<String, dynamic>) {
+              reportCompletionInfo[key] = ReportCompletionInfo.fromMap(value);
+            }
+          });
+        } else if (map['reportCompletionInfo'] is Map) {
+          (map['reportCompletionInfo'] as Map<String, dynamic>).forEach((key, value) {
+            if (value is Map<String, dynamic>) {
+              reportCompletionInfo[key] = ReportCompletionInfo.fromMap(value);
+            }
+          });
+        }
+      } catch (e) {
+        debugPrint('Error parsing reportCompletionInfo: $e');
+      }
+    }
 
-    return Task.full(
+    final task = Task.full(
       taskId,
       map['title'] ?? '',
       map['description'] ?? '',
@@ -223,23 +253,29 @@ class Task {
       attachmentTypes: _parseStringList(map['attachmentTypes']),
       attachmentSizes: _parseIntList(map['attachmentSizes']),
       lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
-      completedByUserIds: _parseStringList(map['completedByUserIds']),
-      userCompletionTimestamps: _parseTimestampMap(map['userCompletionTimestamps']),
-      taskReviews: map['taskReviews'] != null
-          ? Map<String, String>.from(jsonDecode(map['taskReviews']))
-          : null,
-      taskRatings: map['taskRatings'] != null
-          ? (jsonDecode(map['taskRatings']) as Map<String, dynamic>)
-              .map((k, v) => MapEntry(k, double.parse(v)))
-          : null,
-      reviewTimestamps: map['reviewTimestamps'] != null
-          ? (jsonDecode(map['reviewTimestamps']) as Map<String, dynamic>)
-              .map((k, v) => MapEntry(k, DateTime.fromMillisecondsSinceEpoch(v)))
-          : null,
-      reviewerRoles: map['reviewerRoles'] != null
-          ? Map<String, String>.from(jsonDecode(map['reviewerRoles']))
-          : null,
-    );
+      completedByUserIds: _parseStringList(map['completedByUserIds']));
+
+    // Parse and set other maps
+    task.reportCompletionInfo = reportCompletionInfo;
+    task.userCompletionTimestamps = _parseTimestampMap(map['userCompletionTimestamps']);
+    
+    // Parse review data
+    if (map['taskReviews'] != null) {
+      task.taskReviews = Map<String, String>.from(jsonDecode(map['taskReviews']));
+    }
+    if (map['taskRatings'] != null) {
+      task.taskRatings = (jsonDecode(map['taskRatings']) as Map<String, dynamic>)
+          .map((k, v) => MapEntry(k, double.parse(v.toString())));
+    }
+    if (map['reviewTimestamps'] != null) {
+      task.reviewTimestamps = (jsonDecode(map['reviewTimestamps']) as Map<String, dynamic>)
+          .map((k, v) => MapEntry(k, DateTime.fromMillisecondsSinceEpoch(v)));
+    }
+    if (map['reviewerRoles'] != null) {
+      task.reviewerRoles = Map<String, String>.from(jsonDecode(map['reviewerRoles']));
+    }
+
+    return task;
   }
   
   // Create a copy of the task with updated fields
@@ -288,6 +324,7 @@ class Task {
     Map<String, double>? taskRatings,
     Map<String, DateTime>? reviewTimestamps,
     Map<String, String>? reviewerRoles,
+    Map<String, ReportCompletionInfo>? reportCompletionInfo,
   }) {
     return Task.full(
       taskId ?? this.taskId,
@@ -334,6 +371,7 @@ class Task {
       taskRatings: taskRatings ?? Map.from(this.taskRatings),
       reviewTimestamps: reviewTimestamps ?? Map.from(this.reviewTimestamps),
       reviewerRoles: reviewerRoles ?? Map.from(this.reviewerRoles),
+      reportCompletionInfo: reportCompletionInfo ?? Map.from(this.reportCompletionInfo),
     );
   }
 
@@ -355,6 +393,8 @@ class Task {
       'assignmentTimestamp': assignmentTimestamp?.millisecondsSinceEpoch,
       'createdById': createdById,
       'assignedReporterId': assignedReporterId,
+      'reportCompletionInfo': jsonEncode(Map.fromEntries(
+        reportCompletionInfo.entries.map((e) => MapEntry(e.key, e.value.toMap())))),
       'assignedCameramanId': assignedCameramanId,
       'assignedDriverId': assignedDriverId,
       'assignedLibrarianId': assignedLibrarianId,
