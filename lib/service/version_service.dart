@@ -1,3 +1,4 @@
+// service/version_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -47,7 +48,6 @@ class VersionService {
       
       return null;
     } catch (e) {
-      print('Error checking for update: $e');
       return null;
     }
   }
@@ -70,7 +70,6 @@ class VersionService {
       return '1.1.0'; // Replace with actual logic
       
     } catch (e) {
-      print('Error fetching latest version: $e');
       // Return null to indicate no update available
       return null;
     }

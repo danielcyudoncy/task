@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
+import 'package:task/models/report_completion_info.dart';
 import 'status_chip.dart';
 import 'approval_status_chip.dart';
 
@@ -310,21 +311,54 @@ class MinimalTaskCard extends StatelessWidget {
   }
 
   Widget _buildCommentsRow(BuildContext context) {
+    if (task.status != 'completed' || task.reportCompletionInfo.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(
+          children: [
+            Icon(
+              Icons.comment_outlined,
+              size: 16,
+              color: isDark
+                  ? Colors.white70
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                'Comments: ${task.comments.length}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark
+                          ? Colors.white70
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12.sp,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show completion comments for completed tasks
+    final ReportCompletionInfo completionInfo = task.reportCompletionInfo.values.first;
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
           Icon(
-            Icons.comment_outlined,
+            Icons.check_circle_outline,
             size: 16,
             color: isDark
-                ? Colors.white70
-                : Theme.of(context).colorScheme.onSurfaceVariant,
+                ? Colors.green[300]
+                : Colors.green[600],
           ),
           const SizedBox(width: 4),
           Expanded(
             child: Text(
-              'Comments: ${task.comments.length}',
+              'Completed: ${completionInfo.comments?.isNotEmpty == true ? completionInfo.comments : "No comments"}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: isDark
                         ? Colors.white70

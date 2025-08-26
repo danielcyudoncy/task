@@ -1266,12 +1266,6 @@ class TaskController extends GetxController {
         final taskIds = <String>{};
         
         // Debug logging
-        print('DEBUG: assignedTasksCountStream for userId: $userId');
-        print('DEBUG: assignedTo docs: ${a.docs.length}');
-        print('DEBUG: reporter docs: ${b.docs.length}');
-        print('DEBUG: cameraman docs: ${c.docs.length}');
-        print('DEBUG: driver docs: ${d.docs.length}');
-        print('DEBUG: librarian docs: ${e.docs.length}');
         
         // Only include non-completed tasks in the count
         final assignedToDocs = a.docs.where((doc) => doc['status'] != 'Completed');
@@ -1286,8 +1280,6 @@ class TaskController extends GetxController {
         taskIds.addAll(driverDocs.map((doc) => doc.id));
         taskIds.addAll(librarianDocs.map((doc) => doc.id));
         
-        print('DEBUG: Total unique task IDs: ${taskIds.length}');
-        print('DEBUG: Task IDs: $taskIds');
         
         return taskIds.length;
       },

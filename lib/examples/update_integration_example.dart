@@ -1,3 +1,4 @@
+// examples/update_integration_example.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../service/update_service.dart';
@@ -6,7 +7,7 @@ import '../widgets/update_dialog.dart';
 
 /// Example of how to integrate the update mechanism into your app
 class UpdateIntegrationExample extends StatefulWidget {
-  const UpdateIntegrationExample({Key? key}) : super(key: key);
+  const UpdateIntegrationExample({super.key});
   
   @override
   State<UpdateIntegrationExample> createState() => _UpdateIntegrationExampleState();

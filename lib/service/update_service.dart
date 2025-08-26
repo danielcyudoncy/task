@@ -1,3 +1,4 @@
+// service/update_service.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -51,7 +52,6 @@ class UpdateService {
         );
       }
     } catch (e) {
-      print('Error checking for updates: $e');
       if (showDialog) {
         _showUpdateError();
       }
@@ -72,7 +72,6 @@ class UpdateService {
         // when the user opens the app next time
       }
     } catch (e) {
-      print('Background update check failed: $e');
     }
   }
   

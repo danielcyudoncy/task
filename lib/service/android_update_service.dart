@@ -30,7 +30,6 @@ class AndroidUpdateService {
         }
       }
     } catch (e) {
-      print('Error checking for Android update: $e');
     }
   }
   
@@ -94,7 +93,6 @@ class AndroidUpdateService {
         await _startFlexibleUpdate();
       }
     } catch (e) {
-      print('Error starting update: $e');
       _showUpdateError();
     } finally {
       _isUpdateInProgress = false;
@@ -108,18 +106,14 @@ class AndroidUpdateService {
       
       switch (result) {
         case AppUpdateResult.success:
-          print('Immediate update completed successfully');
           break;
         case AppUpdateResult.userDeniedUpdate:
-          print('User denied the update');
           break;
         case AppUpdateResult.inAppUpdateFailed:
-          print('In-app update failed');
           _showUpdateError();
           break;
       }
     } catch (e) {
-      print('Error performing immediate update: $e');
       _showUpdateError();
     }
   }
@@ -131,19 +125,15 @@ class AndroidUpdateService {
       
       switch (result) {
         case AppUpdateResult.success:
-          print('Flexible update started successfully');
           _listenForFlexibleUpdateCompletion();
           break;
         case AppUpdateResult.userDeniedUpdate:
-          print('User denied the flexible update');
           break;
         case AppUpdateResult.inAppUpdateFailed:
-          print('Flexible update failed');
           _showUpdateError();
           break;
       }
     } catch (e) {
-      print('Error starting flexible update: $e');
       _showUpdateError();
     }
   }
@@ -202,7 +192,6 @@ class AndroidUpdateService {
     try {
       await InAppUpdate.completeFlexibleUpdate();
     } catch (e) {
-      print('Error completing flexible update: $e');
     }
   }
 }

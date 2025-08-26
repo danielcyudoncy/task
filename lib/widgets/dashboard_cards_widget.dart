@@ -64,7 +64,7 @@ class DashboardCardsWidget extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      Container(
+                      SizedBox(
                         height: totalUsersHeight,
                         child: _DashboardGridCard(
                           icon: Icons.people_alt_outlined,
@@ -76,7 +76,7 @@ class DashboardCardsWidget extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: cardSpacing),
-                      Container(
+                      SizedBox(
                         height: pendingTasksHeight,
                         child: _DashboardGridCard(
                           icon: Icons.assignment_late_outlined,
@@ -96,7 +96,7 @@ class DashboardCardsWidget extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      Container(
+                      SizedBox(
                         height: onlineNowHeight,
                         child: _DashboardGridCard(
                           icon: Icons.wifi_tethering,
@@ -108,7 +108,7 @@ class DashboardCardsWidget extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: cardSpacing),
-                      Container(
+                      SizedBox(
                         height: newsFeedHeight,
                         child: _DashboardGridCard(
                           icon: Icons.rss_feed,
