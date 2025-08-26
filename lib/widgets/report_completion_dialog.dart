@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/models/report_completion_info.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 class ReportCompletionDialog extends StatefulWidget {
   final Function(ReportCompletionInfo) onComplete;
@@ -30,10 +31,11 @@ class _ReportCompletionDialogState extends State<ReportCompletionDialog> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Text(
               'Report Completion Details',
               style: Theme.of(context).textTheme.titleLarge,
@@ -123,7 +125,11 @@ class _ReportCompletionDialogState extends State<ReportCompletionDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  },
                   child: const Text('CANCEL'),
                 ),
                 const SizedBox(width: 8),
@@ -132,23 +138,15 @@ class _ReportCompletionDialogState extends State<ReportCompletionDialog> {
                     try {
                       // Validate all required fields
                       if (hasAired && airTime == null) {
-                        Get.snackbar(
-                          'Error',
+                        SnackbarUtils.showError(
                           'Please select the air time for the report',
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 3),
                         );
                         return;
                       }
                       
                       if (videoEditorController.text.trim().isEmpty) {
-                        Get.snackbar(
-                          'Error',
+                        SnackbarUtils.showError(
                           'Please enter the video editor\'s name',
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 3),
                         );
                         return;
                       }
@@ -167,16 +165,14 @@ class _ReportCompletionDialogState extends State<ReportCompletionDialog> {
                       
                       // Call onComplete callback and close dialog
                       widget.onComplete(completionInfo);
-                      Navigator.of(context).pop();
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
                     } catch (e, stackTrace) {
                       debugPrint('Error in ReportCompletionDialog: $e');
                       debugPrint('Stack trace: $stackTrace');
-                      Get.snackbar(
-                        'Error',
+                      SnackbarUtils.showError(
                         'Failed to submit completion info: ${e.toString()}',
-                        backgroundColor: Colors.red,
-                        colorText: Colors.white,
-                        duration: const Duration(seconds: 5),
                       );
                     }
                   },
@@ -186,6 +182,7 @@ class _ReportCompletionDialogState extends State<ReportCompletionDialog> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

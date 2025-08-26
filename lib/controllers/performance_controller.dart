@@ -66,6 +66,8 @@ class PerformanceController extends GetxController {
           'userEmail': userEmail,
           'photoUrl': userData['photoUrl'] ?? '',
           'completedTasks': userMetrics['completedTasks'],
+          'inProgressTasks': userMetrics['inProgressTasks'],
+          'overdueTasks': userMetrics['overdueTasks'],
           'totalAssignedTasks': userMetrics['totalAssignedTasks'],
           'completionRate': userMetrics['completionRate'],
           'averageCompletionTime': userMetrics['averageCompletionTime'],
@@ -104,8 +106,22 @@ class PerformanceController extends GetxController {
       task.completedByUserIds.contains(userId) == true
     ).toList();
     
+    // Filter in-progress tasks (assigned but not completed by this user)
+    final inProgressTasks = assignedTasks.where((task) => 
+      !task.completedByUserIds.contains(userId) && 
+      task.status.toLowerCase() != 'completed'
+    ).toList();
+    
+    // Filter overdue tasks (in-progress tasks past due date)
+    final now = DateTime.now();
+    final overdueTasks = inProgressTasks.where((task) => 
+      task.dueDate != null && task.dueDate!.isBefore(now)
+    ).toList();
+    
     final totalAssigned = assignedTasks.length;
     final totalCompleted = completedTasks.length;
+    final totalInProgress = inProgressTasks.length;
+    final totalOverdue = overdueTasks.length;
     final completionRate = totalAssigned > 0 ? (totalCompleted / totalAssigned) * 100 : 0.0;
     
     // Calculate average completion time
@@ -138,6 +154,8 @@ class PerformanceController extends GetxController {
     
     return {
       'completedTasks': totalCompleted,
+      'inProgressTasks': totalInProgress,
+      'overdueTasks': totalOverdue,
       'totalAssignedTasks': totalAssigned,
       'completionRate': completionRate,
       'averageCompletionTime': averageCompletionTime,

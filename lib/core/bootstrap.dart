@@ -46,6 +46,7 @@ import 'package:task/service/task_service.dart';
 import 'package:task/service/firebase_messaging_service.dart';
 import 'package:task/service/daily_task_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 // --- Emulator/Production Switch ---
 const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
@@ -227,6 +228,10 @@ Future<void> bootstrapApp() async {
     Get.put(WallpaperController(), permanent: true);
 
     debugPrint('🚀 BOOTSTRAP: All controllers initialized successfully');
+    
+    // Mark app as ready for snackbars
+    SnackbarUtils.markAppAsReady();
+    debugPrint('🚀 BOOTSTRAP: App marked as ready for snackbars');
     
     // Mark bootstrap as complete
     _isBootstrapComplete = true;

@@ -5,6 +5,7 @@ import 'package:task/controllers/task_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/models/report_completion_info.dart';
 import 'package:task/widgets/report_completion_dialog.dart';
+import 'package:task/utils/snackbar_utils.dart';
 
 class TaskActions {
   static void editTask(BuildContext context, dynamic task) {
@@ -68,8 +69,7 @@ class TaskActions {
               if (ctx.mounted) {
                 Navigator.of(ctx).pop();
               }
-              Get.snackbar("Success", "Task updated successfully",
-                  snackPosition: SnackPosition.BOTTOM);
+              SnackbarUtils.showSuccess("Task updated successfully");
             },
             child: const Text("Save"),
           ),
@@ -81,8 +81,7 @@ class TaskActions {
   static void deleteTask(dynamic task) async {
     final taskController = Get.find<TaskController>();
     await taskController.deleteTask(task.taskId);
-    Get.snackbar("Success: Success", "Task deleted",
-        snackPosition: SnackPosition.BOTTOM);
+    SnackbarUtils.showSuccess("Task deleted");
   }
 
   static void completeTask(dynamic task) async {
@@ -93,8 +92,7 @@ class TaskActions {
       final userRole = authController.userRole.value;
       
       if (currentUserId == null) {
-        Get.snackbar("Error", "User not authenticated",
-            snackPosition: SnackPosition.BOTTOM);
+        SnackbarUtils.showError("User not authenticated");
         return;
       }
       
@@ -121,38 +119,19 @@ class TaskActions {
             currentUserId,
             reportCompletionInfo: result,
           );
-          Get.snackbar(
-            "Success", 
-            "Task marked as completed with report details",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
+          SnackbarUtils.showSuccess("Task marked as completed with report details");
         } else {
           debugPrint('User cancelled completion dialog');
         }
       } else {
         debugPrint('Marking task as completed for non-reporter user');
         await taskController.markTaskCompletedByUser(task.taskId, currentUserId);
-        Get.snackbar(
-          "Success", 
-          "Task marked as completed",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        SnackbarUtils.showSuccess("Task marked as completed");
       }
     } catch (e, stackTrace) {
       debugPrint('Error completing task: $e');
       debugPrint('Stack trace: $stackTrace');
-      Get.snackbar(
-        "Error",
-        "Failed to complete task: ${e.toString()}",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 5),
-      );
+      SnackbarUtils.showError("Failed to complete task: ${e.toString()}");
     }
   }
 }
