@@ -4,8 +4,11 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
+import 'package:task/service/export_service.dart';
+import 'package:task/service/pdf_export_service.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/utils/devices/app_devices.dart';
+import 'package:task/widgets/task_action_utility.dart';
 
 
 class TaskDetailScreen extends StatefulWidget {
@@ -135,20 +138,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               ),
             )
           else if (widget.task.status.toLowerCase() != 'archived')
-            _isLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.archive_outlined),
-                    onPressed: () => _handleTaskAction(() => _archiveTask(context)),
-                    tooltip: 'Archive Task',
-                  ),
+            IconButton(
+              icon: const Icon(Icons.archive_outlined),
+              onPressed: () => _handleTaskAction(() => _archiveTask(context)),
+              tooltip: 'Archive Task',
+            ),
           PopupMenuButton<String>(
             onSelected: (value) async {
               switch (value) {
@@ -156,9 +150,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   _showExportOptions(context);
                   break;
                 case 'edit':
-                  // TODO: Navigate to edit screen
                   if (context.mounted) {
-                    // Get.to(() => EditTaskScreen(task: task));
+                    TaskActions.editTask(context, widget.task);
                   }
                   break;
               }
@@ -192,7 +185,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         padding: EdgeInsets.all(
           isTablet ? AppSizes.defaultPadding * 1.5 : AppSizes.defaultPadding,
         ),
-        child: Container(
+        child: SizedBox(
           width: isTablet ? screenWidth * 0.8 : screenWidth,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,19 +359,57 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Implement CSV export
+              onPressed: () async {
                 Navigator.pop(context);
-                Get.snackbar('Export', 'Exporting task to CSV...');
+                try {
+                  final exportService = Get.find<ExportService>();
+                  await exportService.exportTasks(
+                    tasks: [widget.task.toMap()],
+                    format: ExportFormat.csv,
+                    shareAfterExport: true,
+                  );
+                  Get.snackbar(
+                    'Success',
+                    'Task exported to CSV successfully',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+                } catch (e) {
+                  Get.snackbar(
+                    'Error',
+                    'Failed to export task: ${e.toString()}',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                }
               },
               child: const Text('Export as CSV'),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Implement PDF export
+              onPressed: () async {
                 Navigator.pop(context);
-                Get.snackbar('Export', 'Exporting task to PDF...');
+                try {
+                  final pdfExportService = Get.find<PdfExportService>();
+                  await pdfExportService.exportAndShareTask(widget.task);
+                  Get.snackbar(
+                    'Success',
+                    'Task exported to PDF successfully',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+                } catch (e) {
+                  Get.snackbar(
+                    'Error',
+                    'Failed to export task: ${e.toString()}',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                }
               },
               child: const Text('Export as PDF'),
             ),
@@ -394,6 +425,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   Future<void> _archiveTask(BuildContext context) async {
+    final navigator = Navigator.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -415,10 +447,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     if (confirmed == true) {
       await _handleTaskAction(() async {
         await _taskController.updateTaskStatus(_taskId, 'Archived');
-        if (mounted) {
-          Navigator.pop(context);
-        }
       });
+      if (mounted) {
+        navigator.pop();
+      }
     }
   }
 
@@ -468,25 +500,21 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           children: [
             if (widget.task.assignedReporterId != null)
               _buildAssignedChip(
-                'Reporter',
                 widget.task.assignedReporter ?? 'Reporter #${widget.task.assignedReporterId}',
                 Icons.person_outline,
               ),
             if (widget.task.assignedCameramanId != null)
               _buildAssignedChip(
-                'Cameraman',
                 widget.task.assignedCameraman ?? 'Cameraman #${widget.task.assignedCameramanId}',
                 Icons.videocam_outlined,
               ),
             if (widget.task.assignedDriverId != null)
               _buildAssignedChip(
-                'Driver',
                 widget.task.assignedDriver ?? 'Driver #${widget.task.assignedDriverId}',
                 Icons.drive_eta_outlined,
               ),
             if (widget.task.assignedLibrarianId != null)
               _buildAssignedChip(
-                'Librarian',
                 widget.task.assignedLibrarian ?? 'Librarian #${widget.task.assignedLibrarianId}',
                 Icons.menu_book_outlined,
               ),
@@ -497,7 +525,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     );
   }
 
-  Widget _buildAssignedChip(String role, String name, IconData icon) {
+  Widget _buildAssignedChip(String name, IconData icon) {
     final theme = Theme.of(context);
     
     return Container(
@@ -506,7 +534,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         vertical: AppSizes.xs,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppSizes.sm),
       ),
       child: Row(

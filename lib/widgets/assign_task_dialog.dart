@@ -33,16 +33,48 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       final completed = (task['status'] ?? '').toString().toLowerCase() == 'completed';
       
       // Check if task has been approved by admin
-      final isApproved = (task['approved'] ?? false) == true || (task['isApproved'] ?? false) == true;
+      final approvalStatus = task['approvalStatus']?.toString().toLowerCase();
+      final isApproved = approvalStatus == 'approved';
+      
+      // Also check legacy fields for backward compatibility
+      final legacyApproved = (task['approved'] ?? false) == true || (task['isApproved'] ?? false) == true;
+      final finalApproved = isApproved || legacyApproved;
       
       // Check if both reporter and cameraman are assigned
       final hasReporter = task['assignedReporterId'] != null && task['assignedReporterId'].toString().isNotEmpty;
       final hasCameraman = task['assignedCameramanId'] != null && task['assignedCameramanId'].toString().isNotEmpty;
       final fullyAssigned = hasReporter && hasCameraman;
       
+      // Debug logging for task assignment filtering
+      final taskTitle = task['title'] ?? 'Unknown Task';
+      debugPrint('=== ASSIGN TASK DIALOG FILTERING ===');
+      debugPrint('Task: $taskTitle');
+      debugPrint('Status: ${task['status']}');
+      debugPrint('Completed: $completed');
+      debugPrint('ApprovalStatus field: ${task['approvalStatus']}');
+      debugPrint('Approved field (legacy): ${task['approved']}');
+      debugPrint('IsApproved field (legacy): ${task['isApproved']}');
+      debugPrint('IsApproved from approvalStatus: $isApproved');
+      debugPrint('LegacyApproved: $legacyApproved');
+      debugPrint('Final approved: $finalApproved');
+      debugPrint('AssignedReporterId: ${task['assignedReporterId']}');
+      debugPrint('AssignedCameramanId: ${task['assignedCameramanId']}');
+      debugPrint('HasReporter: $hasReporter');
+      debugPrint('HasCameraman: $hasCameraman');
+      debugPrint('FullyAssigned: $fullyAssigned');
+      final isAssignable = finalApproved && !completed && !fullyAssigned;
+      debugPrint('Final isAssignable: $isAssignable');
+      debugPrint('=====================================');
+      
       // Task is available if it's approved, not completed and not fully assigned (missing reporter or cameraman)
-      return isApproved && !completed && !fullyAssigned;
+      return isAssignable;
     }).toList();
+    
+    debugPrint('=== ASSIGN TASK DIALOG SUMMARY ===');
+    debugPrint('Total tasks in snapshot: ${widget.adminController.taskSnapshotDocs.length}');
+    debugPrint('Assignable tasks count: ${assignableTasks.length}');
+    debugPrint('Assignable task titles: ${assignableTasks.map((t) => t['title']).toList()}');
+    debugPrint('===================================');
 
     return Dialog(
       backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,

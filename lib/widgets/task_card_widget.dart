@@ -557,8 +557,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
   }
 
   void _markAsCompleted() async {
-    final taskController = Get.find<TaskController>();
-    await taskController.updateTaskStatus(widget.task.taskId, 'Completed');
+    // Use the new multi-user completion system
+    TaskActions.completeTask(widget.task);
     
     // Show review dialog for admins and managers
     final authController = Get.find<AuthController>();
@@ -567,7 +567,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     
     if (userId != null && _canShowReviewDialog(userRole)) {
       // Wait a bit to show the review dialog after the completion snackbar
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 2));
       if (mounted) {
         showDialog(
           context: context,
@@ -577,6 +577,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
             reviewerRole: userRole,
             onReviewSubmitted: () {
               // Refresh the task list to show the new review
+              final taskController = Get.find<TaskController>();
               taskController.refreshTasks();
             },
           ),

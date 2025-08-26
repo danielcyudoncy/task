@@ -40,10 +40,13 @@ class TaskAssignmentScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (taskController.tasks.isEmpty) {
+        // Get only approved tasks that can be assigned
+        final assignableTasks = taskController.assignableTasks;
+        
+        if (assignableTasks.isEmpty) {
           return Center(
             child: Text(
-              "No tasks available",
+              "No approved tasks available for assignment",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -71,9 +74,9 @@ class TaskAssignmentScreen extends StatelessWidget {
               ),
             Expanded(
               child: ListView.builder(
-                itemCount: taskController.tasks.length,
+                itemCount: assignableTasks.length,
                 itemBuilder: (context, index) {
-                  final task = taskController.tasks[index];
+                  final task = assignableTasks[index];
 
                   return Card(
                     color: colorScheme.surface,
@@ -158,8 +161,8 @@ class TaskAssignmentScreen extends StatelessWidget {
                       style: TextStyle(color: colorScheme.onSurface));
                 }
                 
-                // Show tasks that don't have all three roles assigned (reporter, cameraman, and driver)
-                final unassignedTasks = taskController.tasks
+                // Show approved tasks that don't have all three roles assigned (reporter, cameraman, and driver)
+                final unassignedTasks = taskController.assignableTasks
                     .where((task) =>
                         (task.assignedReporterId == null || task.assignedReporterId!.isEmpty) ||
                         (task.assignedCameramanId == null || task.assignedCameramanId!.isEmpty) ||

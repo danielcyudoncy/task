@@ -1,4 +1,6 @@
 // controllers/librarian_task_controller.dart
+// ignore_for_file: empty_catches
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
@@ -39,8 +41,6 @@ class LibrarianTaskController extends GetxController {
       completedTasks.value = snapshot.docs.map((doc) {
         return {'id': doc.id, ...doc.data()};
       }).toList();
-    } catch (e) {
-      print('Error fetching completed tasks: $e');
     } finally {
       isLoading.value = false;
     }
@@ -60,8 +60,6 @@ class LibrarianTaskController extends GetxController {
           .map((doc) {
         return {'id': doc.id, ...doc.data()};
       }).toList();
-    } catch (e) {
-      print('Error fetching uncompleted tasks: $e');
     } finally {
       isLoading.value = false;
     }
@@ -80,7 +78,6 @@ class LibrarianTaskController extends GetxController {
         return {'id': doc.id, ...doc.data()};
       }).toList();
     } catch (e) {
-      print('Error fetching archived tasks: $e');
     }
   }
 
@@ -95,7 +92,6 @@ class LibrarianTaskController extends GetxController {
       await fetchArchivedTasks();
       await fetchCompletedTasks(); // remove from active
     } catch (e) {
-      print('Error archiving task: $e');
     }
   }
 
@@ -112,7 +108,6 @@ class LibrarianTaskController extends GetxController {
       });
       await refreshAll();
     } catch (e) {
-      print('Error updating tags/categories: $e');
     }
   }
 
@@ -137,8 +132,6 @@ class LibrarianTaskController extends GetxController {
             desc.contains(queryLower) ||
             tags.contains(queryLower);
       }).toList();
-    } catch (e) {
-      print('Error searching tasks: $e');
     } finally {
       isSearching.value = false;
     }

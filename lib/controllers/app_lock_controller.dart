@@ -108,7 +108,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   }
   
   void _handleAppResumed() {
-    debugPrint('AppLockController: App resumed from ${_lastLifecycleState}');
+    debugPrint('AppLockController: App resumed from $_lastLifecycleState');
     debugPrint('AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
     debugPrint('AppLockController: currentUser = ${_authController.currentUser != null}');
     

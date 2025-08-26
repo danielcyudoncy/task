@@ -84,8 +84,8 @@ class PerformanceController extends GetxController {
       averageCompletionRate.value = performanceList.isNotEmpty ? totalCompletionRate / performanceList.length : 0.0;
       topPerformers.value = performanceList.take(5).toList();
       
+    // ignore: empty_catches
     } catch (e) {
-      print('Error fetching user performance data: $e');
     } finally {
       isLoading.value = false;
     }
