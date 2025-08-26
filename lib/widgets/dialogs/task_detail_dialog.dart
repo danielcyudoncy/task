@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../controllers/admin_controller.dart';
+import '../../models/report_completion_info.dart';
 
 class TaskDetailDialog {
   static void show({
@@ -146,18 +148,21 @@ class TaskDetailDialog {
             final creatorRole = userInfo?["role"] ?? "Unknown";
             final taskStatus = _getTaskStatus(title, context);
             
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTaskTitleSection(context, title),
-                const SizedBox(height: 12),
-                _buildStatusSection(context, taskStatus),
-                const SizedBox(height: 12),
-                _buildCreatorSection(context, creatorName, creatorRole),
-                const SizedBox(height: 12),
-                _buildDateSection(context, dateStr),
-              ],
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTaskTitleSection(context, title),
+                  const SizedBox(height: 12),
+                  _buildStatusSection(context, taskStatus),
+                  const SizedBox(height: 12),
+                  _buildCreatorSection(context, creatorName, creatorRole),
+                  const SizedBox(height: 12),
+                  _buildDateSection(context, dateStr),
+                  if (taskStatus == 'Completed') ..._buildCompletionComments(context, title),
+                ],
+              ),
             );
           },
         ),
@@ -423,6 +428,132 @@ class TaskDetailDialog {
         ],
       ),
     );
+  }
+
+  static List<Widget> _buildCompletionComments(BuildContext context, String title) {
+    try {
+      final adminController = Get.find<AdminController>();
+      final doc = adminController.taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
+      
+      if (doc == null || doc['reportCompletionInfo'] == null) {
+        return [];
+      }
+      
+      final reportCompletionInfoMap = Map<String, dynamic>.from(doc['reportCompletionInfo'] ?? {});
+      
+      if (reportCompletionInfoMap.isEmpty) {
+        return [];
+      }
+      
+      List<Widget> widgets = [
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.comment_outlined,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Completion Comments',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...reportCompletionInfoMap.entries.map((entry) {
+                final completionData = Map<String, dynamic>.from(entry.value ?? {});
+                final reportCompletionInfo = ReportCompletionInfo.fromMap(completionData);
+                
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Has Aired: ${reportCompletionInfo.hasAired ? "Yes" : "No"}',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      if (reportCompletionInfo.airTime != null)
+                        Text(
+                          'Air Time: ${DateFormat('MMM dd, yyyy HH:mm').format(reportCompletionInfo.airTime!)}',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      if (reportCompletionInfo.videoEditorName != null && reportCompletionInfo.videoEditorName!.isNotEmpty)
+                        Text(
+                          'Video Editor: ${reportCompletionInfo.videoEditorName}',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      if (reportCompletionInfo.comments != null && reportCompletionInfo.comments!.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Comments: ${reportCompletionInfo.comments}',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ];
+      
+      return widgets;
+    } catch (e) {
+      return [];
+    }
   }
 
   static String _getTaskStatus(String title, BuildContext context) {

@@ -1,6 +1,5 @@
 // widgets/report_completion_dialog.dart
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/models/report_completion_info.dart';
 import 'package:task/utils/snackbar_utils.dart';
