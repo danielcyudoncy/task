@@ -129,6 +129,108 @@ Future<void> sendTaskNotification(
   }
 }
 
+/// Send notification to admin users when a reporter submits completion info
+Future<void> sendReportCompletionNotification(
+    String taskId, String taskTitle, String reporterName, String additionalComments) async {
+  try {
+    // Get all admin users
+    final adminUsersSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('role', whereIn: ['Admin', 'Assignment Editor', 'Head of Department', 'Head of Unit'])
+        .get();
+
+    for (final adminDoc in adminUsersSnapshot.docs) {
+      final adminData = adminDoc.data();
+      final adminId = adminDoc.id;
+      final fcmToken = adminData['fcmToken'] as String?;
+
+      if (fcmToken == null || fcmToken.isEmpty) {
+        if (kDebugMode) {
+          print("⚠️ No FCM Token found for admin user: $adminId");
+        }
+        continue;
+      }
+
+      // Get OAuth2 access token and project ID
+      final String? accessToken = await _getAccessToken();
+      final String? projectId = _getProjectId();
+      
+      if (accessToken == null || projectId == null) {
+        if (kDebugMode) {
+          print("❌ Missing access token or project ID");
+        }
+        continue;
+      }
+
+      final notificationTitle = "Task Completion Report";
+      final notificationBody = "$reporterName has submitted completion details for '$taskTitle'";
+      
+      // Send Notification via FCM HTTP v1 API
+      final http.Response response = await http.post(
+        Uri.parse("https://fcm.googleapis.com/v1/projects/$projectId/messages:send"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $accessToken",
+        },
+        body: jsonEncode({
+          "message": {
+            "token": fcmToken,
+            "notification": {
+              "title": notificationTitle,
+              "body": notificationBody,
+            },
+            "android": {
+              "priority": "high",
+              "notification": {
+                "sound": "default",
+              },
+            },
+            "apns": {
+              "payload": {
+                "aps": {
+                  "sound": "default",
+                },
+              },
+            },
+          }
+        }),
+      );
+
+      // Log the Response
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print("✅ Report completion notification sent successfully to admin $adminId");
+        }
+      } else {
+        if (kDebugMode) {
+          print(
+            "❌ Failed to send report completion notification to admin $adminId: ${response.statusCode} ${response.body}");
+        }
+      }
+
+      // Store Notification in Firestore
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(adminId)
+          .collection("notifications")
+          .add({
+        "title": notificationTitle,
+        "message": notificationBody,
+        "type": "report_completion",
+        "taskId": taskId,
+        "reporterName": reporterName,
+        "comments": additionalComments,
+        "timestamp": FieldValue.serverTimestamp(),
+        "isRead": false,
+      });
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print("❌ Error sending report completion notification: $e");
+    }
+  }
+}
+
 /// Send notification when a task is approved or rejected
 Future<void> sendTaskApprovalNotification(
     String taskCreatorId, String taskTitle, String approvalStatus, {String? reason}) async {

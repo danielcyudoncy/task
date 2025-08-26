@@ -1000,6 +1000,37 @@ class TaskController extends GetxController {
           .doc(taskId)
           .update(updateData);
       
+      // Send notification to admin users if reporter submitted completion info
+      if (reportCompletionInfo != null) {
+        try {
+          // Get reporter's name from cache or fetch it
+          String reporterName = userNameCache[userId] ?? 'Unknown Reporter';
+          if (reporterName == 'Unknown Reporter') {
+            try {
+              final userDoc = await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(userId)
+                  .get();
+              if (userDoc.exists) {
+                reporterName = userDoc.data()?['fullName'] ?? 'Unknown Reporter';
+                userNameCache[userId] = reporterName; // Cache it
+              }
+            } catch (e) {
+              debugPrint('Error fetching reporter name: $e');
+            }
+          }
+          
+          await sendReportCompletionNotification(
+             taskId,
+             task.title,
+             reporterName,
+             reportCompletionInfo.comments ?? '',
+           );
+        } catch (e) {
+          debugPrint('Error sending admin notification: $e');
+        }
+      }
+      
       // Update local task list
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
