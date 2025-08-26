@@ -1,5 +1,4 @@
 // views/home_screen.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -85,8 +84,6 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Calculate the number of tasks assigned to the user (matches notification logic)
     final String userId = authController.currentUser?.uid ?? '';
-    print('DEBUG: HomeScreen userId: $userId');
-    print('DEBUG: AuthController currentUser: ${authController.currentUser}');
 
     return Scaffold(
       key: _scaffoldKey,
@@ -313,7 +310,6 @@ class _HomeScreenState extends State<HomeScreen>
                                       .snapshots(),
                                   builder: (context, onlineSnapshot) {
                                     final onlineUsersCount = onlineSnapshot.data?.docs.length ?? 0;
-                                    print('DEBUG: About to call assignedTasksCountStream with userId: $userId');
                                     return StreamBuilder<int>(
                                       stream: taskController.assignedTasksCountStream(userId),
                                       builder: (context, createdSnapshot) {
