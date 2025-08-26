@@ -8,21 +8,32 @@ import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import '../widgets/image_picker_widget.dart';
 
-class ProfileUpdateScreen extends StatelessWidget {
-  ProfileUpdateScreen({super.key});
+class ProfileUpdateScreen extends StatefulWidget {
+  const ProfileUpdateScreen({super.key});
 
+  @override
+  State<ProfileUpdateScreen> createState() => _ProfileUpdateScreenState();
+}
+
+class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
   final AuthController auth = Get.find<AuthController>();
   final _formKey = GlobalKey<FormState>();
 
   @override
+  void initState() {
+    super.initState();
+    // Prefill form controllers
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      auth.fullNameController.text = auth.fullName.value;
+      auth.emailController.text = auth.auth.currentUser?.email ?? '';
+      auth.phoneNumberController.text = auth.phoneNumberController.text;
+      auth.selectedRole.value = auth.userRole.value;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Prefill form controllers
-    auth.fullNameController.text = auth.fullName.value;
-    auth.emailController.text = auth.auth.currentUser?.email ?? '';
-    auth.phoneNumberController.text = auth.phoneNumberController.text;
-    auth.selectedRole.value = auth.userRole.value;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,

@@ -30,7 +30,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
 
     return Scaffold(
       backgroundColor: isDark
-          ? colorScheme.background
+          ? colorScheme.surface
           : colorScheme.primary,
       body: SafeArea(
         child: Column(

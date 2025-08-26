@@ -132,12 +132,12 @@ class AccessControlService extends GetxService {
       
       // Librarian can delete tasks they created or are assigned to
       if (user['role'] == 'Librarian') {
-        return task.createdBy == userId || 
-               task.assignedLibrarian == userId;
+        return task.createdById == userId || 
+               task.assignedLibrarianId == userId;
       }
       
       // Other roles can only delete tasks they created
-      return task.createdBy == userId;
+      return task.createdById == userId;
     } catch (e) {
       Get.log('Failed to check delete permission for task ${task.taskId}: $e');
       return false;

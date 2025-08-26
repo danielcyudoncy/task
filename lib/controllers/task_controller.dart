@@ -13,12 +13,12 @@ import 'package:task/service/firebase_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
 import 'package:task/service/fcm_service.dart';
-import 'package:task/service/task_service.dart';
+
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
   final AuthController authController = Get.find<AuthController>();
-  late final TaskService taskService;
+
 
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
@@ -63,26 +63,63 @@ class TaskController extends GetxController {
   String filterStatus = 'All';
   String sortBy = 'Newest';
 
+  StreamSubscription<QuerySnapshot>? _taskStreamSubscription;
+
   @override
   void onInit() async {
     super.onInit();
-    taskService = Get.find<TaskService>();
+    debugPrint('TaskController: onInit called');
+
     // Delay initialization to ensure proper setup
     Future.delayed(const Duration(milliseconds: 300), () async {
+      debugPrint('TaskController: Starting delayed initialization');
       if (Get.isRegistered<TaskController>()) {
+        debugPrint('TaskController: Controller is registered, proceeding with initialization');
         await initializeCache();
         await preFetchUserNames();
         await loadInitialTasks();
         fetchTaskCounts();
         calculateNewTaskCount(); // Calculate new task count on init
+        _startRealtimeTaskListener(); // Start real-time listener
+        debugPrint('TaskController: Initialization complete');
+      } else {
+        debugPrint('TaskController: Controller not registered, skipping initialization');
       }
     });
   }
 
   @override
   void onClose() {
+    _taskStreamSubscription?.cancel();
     saveCache();
     super.onClose();
+  }
+
+  // Start real-time listener for task updates
+  void _startRealtimeTaskListener() {
+    debugPrint('TaskController: Starting real-time task listener');
+    _taskStreamSubscription = FirebaseFirestore.instance
+        .collection('tasks')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        debugPrint('TaskController: Real-time update received, ${snapshot.docs.length} tasks');
+        final updatedTasks = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['taskId'] = doc.id;
+          return Task.fromMap(data);
+        }).toList();
+        
+        // Update the tasks list
+        tasks.assignAll(updatedTasks);
+        tasks.refresh();
+        debugPrint('TaskController: Tasks updated via real-time listener');
+      },
+      onError: (error) {
+        debugPrint('TaskController: Real-time listener error: $error');
+      },
+    );
   }
 
   // Refresh tasks list
@@ -244,7 +281,7 @@ class TaskController extends GetxController {
         // Use Task.fromMap to ensure all fields are included
         taskData['taskId'] = doc.id;
         final task = Task.fromMap(taskData);
-        debugPrint('TaskController: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        debugPrint('TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         pageTasks.add(task);
       }
 
@@ -314,7 +351,7 @@ class TaskController extends GetxController {
         // Use Task.fromMap to ensure all fields are included
         taskData['taskId'] = doc.id;
             final task = Task.fromMap(taskData);
-        debugPrint('TaskController: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        debugPrint('TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         pageTasks.add(task);
       }
 
@@ -777,40 +814,6 @@ class TaskController extends GetxController {
       isLoading(true);
       debugPrint('createTask: isLoading set to true');
 
-      // Create local Task object
-      final localTask = Task.full(
-        DateTime.now().millisecondsSinceEpoch.toString(), // temp local ID
-        title,
-        description,
-        authController.fullName.value,
-        null, // assignedReporter
-        null, // assignedCameraman
-        null, // assignedDriver
-        null, // assignedLibrarian
-        'Pending',
-        comments != null && comments.isNotEmpty ? [comments] : [],
-        DateTime.now(),
-        null, // assignedTo
-        null, // assignmentTimestamp
-        userId,
-        null, // assignedReporterId
-        null, // assignedCameramanId
-        null, // assignedDriverId
-        null, // assignedLibrarianId
-        authController.profilePic.value,
-        category,
-        tags ?? [],
-        dueDate,
-        priority,
-        lastModified: DateTime.now(),
-        syncStatus: 'pending',
-      );
-      // Save to Isar first for instant UX
-      await addTaskLocal(localTask);
-      // Update UI instantly
-      tasks.insert(0, localTask);
-      tasks.refresh();
-      _safeSnackbar("Success", "Task saved locally");
 
       // Prepare data for Firebase
       final taskData = {
@@ -831,14 +834,13 @@ class TaskController extends GetxController {
         "category": category,
         "tags": tags ?? [],
         "lastModified": DateTime.now().toIso8601String(),
-        "syncStatus": "synced",
       };
-      // Sync to Firebase in background
+      // Create task in Firebase
       await _firebaseService.createTask(taskData);
       debugPrint('createTask: Firebase call complete');
-      // Optionally, update Isar with the real Firebase ID after sync
+      // Reload tasks to update UI
       await loadInitialTasks();
-      _safeSnackbar("Success", "Task synced to cloud");
+      _safeSnackbar("Success", "Task created successfully");
       return;
     } catch (e) {
       debugPrint('createTask: error: $e');
@@ -854,31 +856,27 @@ class TaskController extends GetxController {
       String taskId, String title, String description, String status) async {
     try {
       isLoading(true);
-      // Update local task first
+      // Update task in Firebase
+      await _firebaseService.updateTask(taskId, {
+        "title": title,
+        "description": description,
+        "status": status,
+        "lastModified": DateTime.now().toIso8601String(),
+      });
+      
+      // Update local task list
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
         Task updatedTask = tasks[taskIndex].copyWith(
           title: title,
           description: description,
           status: status,
+          lastModified: DateTime.now(),
         );
-        // Set lastModified and syncStatus
-        updatedTask.lastModified = DateTime.now();
-        updatedTask.syncStatus = 'pending';
-        await updateTaskLocal(updatedTask);
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
       }
-      _safeSnackbar("Success", "Task updated locally");
-      // Sync to Firebase
-      await _firebaseService.updateTask(taskId, {
-        "title": title,
-        "description": description,
-        "status": status,
-        "lastModified": DateTime.now().toIso8601String(),
-        "syncStatus": "synced",
-      });
-      _safeSnackbar("Success", "Task updated in cloud");
+      _safeSnackbar("Success", "Task updated successfully");
       calculateNewTaskCount(); // Calculate new task count after updating task
     } catch (e) {
       _safeSnackbar("Error", "Failed to update task: $e");
@@ -890,14 +888,13 @@ class TaskController extends GetxController {
   Future<void> deleteTask(String taskId) async {
     try {
       isLoading(true);
-      // Delete from local storage first
-      await deleteTaskLocal(taskId);
+      // Delete from Firebase
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
+      
+      // Remove from local task list
       tasks.removeWhere((task) => task.taskId == taskId);
       tasks.refresh();
-      _safeSnackbar("Success", "Task deleted locally");
-      // Sync to Firebase
-      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
-      _safeSnackbar("Success", "Task deleted in cloud");
+      _safeSnackbar("Success", "Task deleted successfully");
       calculateNewTaskCount(); // Calculate new task count after deleting task
     } catch (e) {
       _safeSnackbar("Error", "Failed to delete task: $e");
@@ -1381,88 +1378,42 @@ class TaskController extends GetxController {
   }
 
   // --- LOCAL CRUD METHODS (ISAR) ---
-  Future<void> addTaskLocal(Task task) async {
-    task.lastModified = DateTime.now();
-    task.syncStatus = 'pending';
-    await taskService.addTask(task);
-  }
 
-  Future<List<Task>> getAllTasksLocal() async {
-    return await taskService.getAllTasks();
-  }
 
-  Future<void> updateTaskLocal(Task task) async {
-    task.lastModified = DateTime.now();
-    task.syncStatus = 'pending';
-    await taskService.updateTask(task);
-  }
-
-  Future<void> deleteTaskLocal(String taskId) async {
-    await taskService.deleteTask(taskId);
-  }
-
-  // --- OVERRIDE loadInitialTasks to use Isar for instant load, then sync from Firebase ---
+  // Load tasks directly from Firebase
   Future<void> loadInitialTasks() async {
     isLoading(true);
     try {
-      // Load from Isar first for instant UI
-      final localTasks = await getAllTasksLocal();
-      tasks.assignAll(localTasks);
+      debugPrint('=== LOADING INITIAL TASKS ===');
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .orderBy('timestamp', descending: true)
+          .get();
+      
+      debugPrint('loadInitialTasks: Found ${snapshot.docs.length} tasks in Firebase');
+      
+      final firebaseTasks = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['taskId'] = doc.id;
+        final task = Task.fromMap(data);
+        debugPrint('loadInitialTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
+        return task;
+      }).toList();
+      
+      tasks.assignAll(firebaseTasks);
       tasks.refresh();
-      // Then sync from Firebase and update Isar
-      await loadTasksFromFirebaseAndUpdateIsar();
+      debugPrint('loadInitialTasks: Loaded ${tasks.length} tasks into controller');
+      debugPrint('=== END LOADING INITIAL TASKS ===');
+      errorMessage.value = '';
     } catch (e) {
+      debugPrint('loadInitialTasks: Error loading tasks: $e');
       errorMessage.value = 'Failed to load tasks: $e';
     } finally {
       isLoading(false);
     }
   }
 
-  Future<void> loadTasksFromFirebaseAndUpdateIsar() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tasks')
-          .orderBy('timestamp', descending: true)
-          .get();
-      final firebaseTasks = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['taskId'] = doc.id;
-        return Task.fromMap(data);
-      }).toList();
-      // Update Isar with latest from Firebase, with conflict resolution
-      for (final remoteTask in firebaseTasks) {
-        final localTask = await taskService.getTaskById(remoteTask.taskId);
-        if (localTask == null) {
-          // Not in local DB, add it
-          remoteTask.syncStatus = 'synced';
-          await addTaskLocal(remoteTask);
-        } else {
-          // Conflict resolution: last-write-wins
-          final localModified = localTask.lastModified ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final remoteModified = remoteTask.lastModified ?? DateTime.fromMillisecondsSinceEpoch(0);
-          if (remoteModified.isAfter(localModified)) {
-            // Remote wins
-            remoteTask.syncStatus = 'synced';
-            await updateTaskLocal(remoteTask);
-          } else if (localModified.isAfter(remoteModified)) {
-            // Local wins, mark as conflict if not already synced
-            localTask.syncStatus = 'conflict';
-            await updateTaskLocal(localTask);
-          } else {
-            // Same, mark as synced
-            localTask.syncStatus = 'synced';
-            await updateTaskLocal(localTask);
-          }
-        }
-      }
-      // Update UI
-      final allLocalTasks = await getAllTasksLocal();
-      tasks.assignAll(allLocalTasks);
-      tasks.refresh();
-    } catch (e) {
-      errorMessage.value = 'Failed to sync tasks from cloud: $e';
-    }
-  }
+
 
   // --- APPROVAL METHODS ---
   
@@ -1498,7 +1449,10 @@ class TaskController extends GetxController {
 
       // Update local task
       final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      debugPrint('approveTask: Found task at index $taskIndex for taskId $taskId');
       if (taskIndex != -1) {
+        final oldTask = tasks[taskIndex];
+        debugPrint('approveTask: Old task approvalStatus: ${oldTask.approvalStatus}');
         final updatedTask = tasks[taskIndex].copyWith(
           approvalStatus: 'approved',
           approvedBy: userId,
@@ -1507,13 +1461,16 @@ class TaskController extends GetxController {
           lastModified: now,
         );
         tasks[taskIndex] = updatedTask;
-        await updateTaskLocal(updatedTask);
+        debugPrint('approveTask: Updated task approvalStatus: ${updatedTask.approvalStatus}');
+        debugPrint('approveTask: Updated task isApproved: ${updatedTask.isApproved}');
+        debugPrint('approveTask: Updated task canBeAssigned: ${updatedTask.canBeAssigned}');
         tasks.refresh();
+        debugPrint('approveTask: Task list refreshed, total tasks: ${tasks.length}');
         
         // Send notification to task creator
-        if (updatedTask.createdBy.isNotEmpty) {
+        if (updatedTask.createdById.isNotEmpty) {
           await sendTaskApprovalNotification(
-            updatedTask.createdBy,
+            updatedTask.createdById,
             updatedTask.title,
             'approved',
             reason: reason,
@@ -1569,13 +1526,12 @@ class TaskController extends GetxController {
           lastModified: now,
         );
         tasks[taskIndex] = updatedTask;
-        await updateTaskLocal(updatedTask);
         tasks.refresh();
         
         // Send notification to task creator
-        if (updatedTask.createdBy.isNotEmpty) {
+        if (updatedTask.createdById.isNotEmpty) {
           await sendTaskApprovalNotification(
-            updatedTask.createdBy,
+            updatedTask.createdById,
             updatedTask.title,
             'rejected',
             reason: reason,
@@ -1603,5 +1559,18 @@ class TaskController extends GetxController {
   /// Get rejected tasks
   List<Task> get rejectedTasks {
     return tasks.where((task) => task.isRejected).toList();
+  }
+
+  /// Get assignable tasks (approved tasks that can be assigned)
+  List<Task> get assignableTasks {
+    debugPrint('=== ASSIGNABLE TASKS GETTER CALLED ===');
+    debugPrint('assignableTasks: Total tasks count = ${tasks.length}');
+    final assignable = tasks.where((task) {
+      debugPrint('assignableTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
+      return task.canBeAssigned;
+    }).toList();
+    debugPrint('assignableTasks: Assignable tasks count = ${assignable.length}');
+    debugPrint('=== END ASSIGNABLE TASKS GETTER ===');
+    return assignable;
   }
 }

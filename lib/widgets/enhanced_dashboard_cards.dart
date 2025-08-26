@@ -23,7 +23,6 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final adminController = Get.find<AdminController>();
     final performanceController = Get.find<PerformanceController>();
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Obx(() {
       return Column(
@@ -37,7 +36,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                   'Total Users',
                   adminController.totalUsers.value.toString(),
                   Icons.people,
-                  const Color(0xFF6366F1), // Indigo color for better contrast
+                  Colors.green, // Indigo color for better contrast
                   'Active users in system',
                   onManageUsersTap,
                 ),
@@ -67,7 +66,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                   'News Articles',
                   adminController.newsCount.value.toString(),
                   Icons.article,
-                  colorScheme.secondary,
+                 Colors.orange,
                   'Published articles',
                   onNewsFeedTap,
                 ),
@@ -99,7 +98,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                       ? '--' 
                       : '${performanceController.averageCompletionRate.value.toStringAsFixed(1)}%',
                   Icons.trending_up,
-                  const Color(0xFF4CAF50),
+                 const Color(0xFFFFD700),
                   'Overall completion rate',
                   null,
                 ),

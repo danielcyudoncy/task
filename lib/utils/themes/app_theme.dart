@@ -39,54 +39,54 @@ class AppColors extends ThemeExtension<AppColors> {
 }
 
 class AppTheme {
-  // --- Standard Theme Colors ---=
-  static const Color _primaryBlue = Color(0xFF1E2A5C);
-  static const Color _secondaryBlue = Color(0xFF00B0FF);
-  static const Color _lightSurfaceVariant = Color(0xFFDBDBDB);
-  static const Color _darkSurfaceVariant = Color(0xFF23243A);
-
-  // --- NEW: Define the custom dashboard colors here ---
-  static const Color _success = Color(0xFF2E7D32); // A nice green
-  static const Color _warning = Color(0xFFEF6C00); // A nice orange
-  static const Color _accent1 = Color(0xFF6A1B9A); // A nice purple
+  // --- Channels TV Theme Colors ---
+  static const Color _primaryBlue = Color(0xFF0040A8); // Channels TV primary blue
+  static const Color _secondaryBlue = Color(0xFF0050D0); // Lighter variation of primary
+  static const Color _lightSurfaceVariant = Color(0xFFF0F0F0); // Light gray from logo
+  static const Color _darkSurfaceVariant = Color(0xFF003080); // Darker variation of primary
+  
+  // --- Brand Accent Colors ---
+  static const Color _success = Color(0xFF00A8A8); // Teal variation matching brand
+  static const Color _warning = Color(0xFFC0C0C0); // Silver from logo
+  static const Color _accent1 = Color(0xFF002060); // Darker blue accent
 
   static ThemeData lightTheme = _baseTheme(
     brightness: Brightness.light,
     primaryColor: _primaryBlue,
     secondaryColor: _secondaryBlue,
     background: Colors.white,
-    onBackground: Colors.black,
+    onBackground: _primaryBlue,
     surface: Colors.white,
-    onSurface: Colors.black,
+    onSurface: _primaryBlue,
     surfaceVariant: _lightSurfaceVariant,
-    onSurfaceVariant: Colors.black54,
-    primaryContainer: const Color(0xFFDDE1F9),
+    onSurfaceVariant: const Color(0xB30040A8), // 70% alpha of _primaryBlue
+    primaryContainer: const Color(0xFFE8F0FF), // Light blue background
     onPrimaryContainer: _primaryBlue,
-    dividerColor: Colors.black12,
-    hintColor: Colors.black54,
-    appBarBackgroundColor: const Color(0xFF181B2A),
+    dividerColor: const Color(0x4DC0C0C0), // 30% alpha of _warning
+    hintColor: const Color(0x800040A8), // 50% alpha of _primaryBlue
+    appBarBackgroundColor: _primaryBlue,
     inputFillColor: _lightSurfaceVariant,
-    textColor: Colors.black,
+    textColor: _primaryBlue,
     isDark: false,
   );
 
   static ThemeData darkTheme = _baseTheme(
     brightness: Brightness.dark,
-    primaryColor: const Color(0xFF181B2A),
+    primaryColor: _primaryBlue,
     secondaryColor: _secondaryBlue,
-    background: const Color(0xFF181B2A),
+    background: _darkSurfaceVariant,
     onBackground: Colors.white,
-    surface: const Color(0xFF23243A),
+    surface: _primaryBlue,
     onSurface: Colors.white,
     surfaceVariant: _darkSurfaceVariant,
-    onSurfaceVariant: Colors.white70,
-    primaryContainer: const Color(0xFF23243A),
+    onSurfaceVariant: _warning, // Silver color for contrast
+    primaryContainer: _accent1,
     onPrimaryContainer: Colors.white,
-    dividerColor: Colors.white24,
-    hintColor: Colors.white70,
-    appBarBackgroundColor: Colors.transparent,
+    dividerColor: _warning.withOpacity(0.5), // Silver with opacity
+    hintColor: _warning.withOpacity(0.7),
+    appBarBackgroundColor: _primaryBlue,
     inputFillColor: _darkSurfaceVariant,
-    textColor: const Color(0xFFDBDBDB),
+    textColor: Colors.white,
     isDark: true,
   );
 

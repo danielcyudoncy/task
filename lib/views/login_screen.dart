@@ -31,8 +31,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // Reset loading state to ensure we're not stuck in loading
-    _auth.resetLoadingState();
+    // Reset loading state after build completes to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _auth.resetLoadingState();
+    });
   }
 
   @override
