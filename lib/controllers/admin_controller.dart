@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/fcm_service.dart';
@@ -611,6 +612,38 @@ class AdminController extends GetxController {
       await fetchDashboardData();
     } catch (e) {
       _safeSnackbar("Error", "Failed to assign task or notify user: $e");
+    }
+  }
+
+  /// Get tasks pending approval
+  List<Map<String, dynamic>> get pendingApprovalTasks {
+    return taskSnapshotDocs.where((task) {
+      final approvalStatus = task['approvalStatus']?.toString().toLowerCase();
+      return approvalStatus == null || approvalStatus == 'pending';
+    }).toList();
+  }
+
+  /// Approve a task (delegates to TaskController)
+  Future<void> approveTask(String taskId, {String? reason}) async {
+    try {
+      final taskController = Get.find<TaskController>();
+      await taskController.approveTask(taskId, reason: reason);
+      // Refresh dashboard data to update UI
+      await fetchDashboardData();
+    } catch (e) {
+      _safeSnackbar("Error", "Failed to approve task: ${e.toString()}");
+    }
+  }
+
+  /// Reject a task (delegates to TaskController)
+  Future<void> rejectTask(String taskId, {String? reason}) async {
+    try {
+      final taskController = Get.find<TaskController>();
+      await taskController.rejectTask(taskId, reason: reason);
+      // Refresh dashboard data to update UI
+      await fetchDashboardData();
+    } catch (e) {
+      _safeSnackbar("Error", "Failed to reject task: ${e.toString()}");
     }
   }
 }
