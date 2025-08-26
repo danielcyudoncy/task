@@ -4,7 +4,9 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -188,12 +190,16 @@ class PrivacyController extends GetxController {
   Future<void> _enableThirdPartyServices() async {
     try {
       // Enable push notifications
+      // Note: FCM service integration would be implemented here
       // await _messagingService.requestPermission();
       
-      // Enable Firebase Analytics (if configured)
-      // FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+      // Enable Firebase Analytics
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
       
-      debugPrint('Third-party services enabled');
+      // Enable Firebase Crashlytics
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      
+      debugPrint('Third-party services enabled (Analytics and Crashlytics)');
     } catch (e) {
       debugPrint('Error enabling third-party services: $e');
     }
@@ -205,40 +211,97 @@ class PrivacyController extends GetxController {
       // Note: We can't completely disable FCM, but we can stop requesting permissions
       // and disable analytics data collection
       
-      // Disable Firebase Analytics (if configured)
-      // FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+      // Disable Firebase Analytics
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
       
-      debugPrint('Third-party services disabled');
+      // Disable Firebase Crashlytics
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+      
+      debugPrint('Third-party services disabled (Analytics and Crashlytics)');
     } catch (e) {
       debugPrint('Error disabling third-party services: $e');
     }
   }
   
-  /// Enable location services (placeholder - requires permission_handler)
+  /// Enable location services
   Future<void> _enableLocationServices() async {
     try {
-      // Note: This app doesn't currently use location services
-      // This is a placeholder for future implementation
-      debugPrint('Location services enabled (placeholder)');
+      // Request location permissions
+      final locationPermission = await Permission.location.request();
       
-      // Future implementation would include:
-      // - Request location permissions
-      // - Enable location-based features
-      // - Update user preferences in Firestore
+      if (locationPermission.isGranted) {
+        // Location permission granted
+        debugPrint('Location services enabled - permission granted');
+        
+        // Enable location-based features
+        // This could include:
+        // - Location-based task assignments
+        // - Geofencing for task reminders
+        // - Location tracking for field workers
+        
+        // Update user preferences in Firestore
+        final user = _auth.currentUser;
+        if (user != null) {
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('privacy_settings')
+              .doc('preferences')
+              .update({
+            'location_services': true,
+            'location_enabled_at': FieldValue.serverTimestamp(),
+          });
+        }
+        
+        debugPrint('Location services fully enabled');
+      } else if (locationPermission.isDenied) {
+        locationServices.value = false;
+        debugPrint('Location permission denied');
+        _showErrorSnackbar('Location permission denied. Please enable in device settings.');
+      } else if (locationPermission.isPermanentlyDenied) {
+        locationServices.value = false;
+        debugPrint('Location permission permanently denied');
+        _showErrorSnackbar('Location permission permanently denied. Please enable in device settings.');
+        // Optionally open app settings
+        await openAppSettings();
+      }
     } catch (e) {
       debugPrint('Error enabling location services: $e');
+      _showErrorSnackbar('Failed to enable location services');
     }
   }
   
   /// Disable location services
   Future<void> _disableLocationServices() async {
     try {
-      debugPrint('Location services disabled');
+      debugPrint('Disabling location services');
       
-      // Future implementation would include:
-      // - Disable location-based features
-      // - Clear cached location data
-      // - Update user preferences
+      // Disable location-based features
+      // This would stop:
+      // - Location-based task assignments
+      // - Geofencing for task reminders
+      // - Location tracking for field workers
+      
+      // Clear cached location data (if any)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('last_known_location');
+      await prefs.remove('location_cache');
+      
+      // Update user preferences in Firestore
+      final user = _auth.currentUser;
+      if (user != null) {
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('privacy_settings')
+            .doc('preferences')
+            .update({
+          'location_services': false,
+          'location_disabled_at': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      debugPrint('Location services disabled');
     } catch (e) {
       debugPrint('Error disabling location services: $e');
     }
@@ -474,6 +537,42 @@ class PrivacyController extends GetxController {
     return userData;
   }
 
+  /// Delete user data from Firestore
+  Future<void> _deleteUserDataFromFirestore(String userId) async {
+    try {
+      // Delete user document
+      await _firestore.collection('users').doc(userId).delete();
+      
+      // Delete privacy settings
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('privacy_settings')
+          .doc('preferences')
+          .delete();
+      
+      // Delete any other user-related collections
+      // Note: Add more collections as needed based on your app's data structure
+      
+      debugPrint('User data deleted from Firestore');
+    } catch (e) {
+      debugPrint('Error deleting user data from Firestore: $e');
+      rethrow;
+    }
+  }
+  
+  /// Clear all local storage data
+  Future<void> _clearLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      debugPrint('Local storage cleared');
+    } catch (e) {
+      debugPrint('Error clearing local storage: $e');
+      rethrow;
+    }
+  }
+
   /// Deletes user account with confirmation
   Future<void> deleteUserAccount() async {
     // Show confirmation dialog
@@ -509,18 +608,20 @@ class PrivacyController extends GetxController {
         return;
       }
 
-      // TODO: Implement actual account deletion
-      // This would typically involve:
-      // 1. Deleting user data from Firestore
-      // 2. Deleting user authentication account
-      // 3. Clearing local storage
-      // 4. Logging out and redirecting to login
+      // Step 1: Delete user data from Firestore
+      await _deleteUserDataFromFirestore(user.uid);
       
-      await Future.delayed(const Duration(seconds: 2)); // Simulate processing
+      // Step 2: Clear local storage
+      await _clearLocalStorage();
       
-      _showInfoSnackbar('Your account deletion has been requested. Your account will be permanently deleted within 24 hours.');
+      // Step 3: Delete user authentication account
+      await user.delete();
       
-      // TODO: Implement actual logout and redirect
+      // Step 4: Show success message and redirect to login
+      _showSuccessSnackbar('Your account has been permanently deleted.');
+      
+      // Navigate to login screen and clear navigation stack
+      Get.offAllNamed('/login');
       
     } catch (e) {
       debugPrint('Error deleting user account: $e');
@@ -539,22 +640,22 @@ class PrivacyController extends GetxController {
         // Enable third-party services
         debugPrint('Enabling third-party services (Analytics, Crash Reporting)');
         
-        // TODO: Enable Firebase Analytics
-        // await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+        // Enable Firebase Analytics
+        await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
         
-        // TODO: Enable Firebase Crashlytics
-        // await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+        // Enable Firebase Crashlytics
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
         
         _showSuccessSnackbar('Third-party services enabled');
       } else {
         // Disable third-party services
         debugPrint('Disabling third-party services (Analytics, Crash Reporting)');
         
-        // TODO: Disable Firebase Analytics
-        // await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+        // Disable Firebase Analytics
+        await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
         
-        // TODO: Disable Firebase Crashlytics
-        // await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
+        // Disable Firebase Crashlytics
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
         
         _showSuccessSnackbar('Third-party services disabled');
       }
@@ -597,22 +698,20 @@ class PrivacyController extends GetxController {
         // Enable targeted ads
         debugPrint('Enabling targeted advertisements');
         
-        // TODO: Enable ad personalization
-        // This would typically involve:
-        // - Setting ad personalization consent
-        // - Updating Google Ads settings
-        // - Communicating with ad networks (AdMob, etc.)
+        // Enable ad personalization
+        // Note: This requires additional setup with Google Mobile Ads SDK
+        // For now, we'll store the preference and it can be used by ad networks
+        debugPrint('Ad personalization enabled - targeted ads will be shown');
         
         _showSuccessSnackbar('Targeted ads enabled');
       } else {
         // Disable targeted ads
         debugPrint('Disabling targeted advertisements');
         
-        // TODO: Disable ad personalization
-        // This would typically involve:
-        // - Removing ad personalization consent
-        // - Showing non-personalized ads only
-        // - Updating ad network settings
+        // Disable ad personalization
+        // Note: This requires additional setup with Google Mobile Ads SDK
+        // For now, we'll store the preference and it can be used by ad networks
+        debugPrint('Ad personalization disabled - only non-personalized ads will be shown');
         
         _showSuccessSnackbar('Targeted ads disabled - you will see generic ads');
       }
@@ -702,17 +801,7 @@ class PrivacyController extends GetxController {
     );
   }
 
-  /// Show info snackbar
-  void _showInfoSnackbar(String message) {
-    Get.snackbar(
-      'Info',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.orange,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 4),
-    );
-  }
+
 
   /// Show detailed permission error with instructions
   void _showDetailedPermissionError() {

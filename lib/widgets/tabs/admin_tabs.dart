@@ -368,8 +368,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
 
   void _approveTask(String taskId) async {
     try {
-      // TODO: Implement approveTask method in AdminController
-      // await adminController.approveTask(taskId);
+      await adminController.approveTask(taskId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -392,8 +391,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
 
   void _rejectTask(String taskId) async {
     try {
-      // TODO: Implement rejectTask method in AdminController
-      // await adminController.rejectTask(taskId);
+      await adminController.rejectTask(taskId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -423,8 +421,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
         );
       }
 
-      // TODO: Implement pendingApprovalTasks getter in AdminController
-      final pendingTasks = <Map<String, dynamic>>[];
+      final pendingTasks = adminController.pendingApprovalTasks;
       if (pendingTasks.isEmpty) {
         return _buildEmptyState(context);
       }
