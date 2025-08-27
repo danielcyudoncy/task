@@ -4,9 +4,44 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/controllers/theme_controller.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
+
+  // Get dynamic background color based on theme mode
+  Color _getBackgroundColor(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    switch (themeController.currentThemeMode.value) {
+      case AppThemeMode.light:
+        return Colors.white;
+      case AppThemeMode.dark:
+        return colorScheme.primary; // App primary blue for dark mode
+      case AppThemeMode.system:
+        return themeController.isSystemDark.value 
+            ? const Color(0xFF424242) // Gray for system dark
+            : Colors.white; // White for system light
+    }
+  }
+  
+  // Get dynamic text color based on background
+  Color _getTextColor(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    switch (themeController.currentThemeMode.value) {
+      case AppThemeMode.light:
+        return colorScheme.primary; // Dark blue text on white background
+      case AppThemeMode.dark:
+        return colorScheme.onPrimary; // White text on blue background
+      case AppThemeMode.system:
+        return themeController.isSystemDark.value 
+            ? Colors.white // White text on gray background
+            : colorScheme.primary; // Dark blue text on white background
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,10 +49,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? colorScheme.surface
-          : colorScheme.primary,
+    return Obx(() => Scaffold(
+      backgroundColor: _getBackgroundColor(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -28,7 +61,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: isDark ? colorScheme.onSurface : colorScheme.onPrimary),
+                    icon: Icon(Icons.arrow_back, color: _getTextColor(context)),
                     onPressed: () {
                       Get.find<SettingsController>().triggerFeedback();
                       Get.back();
@@ -40,13 +73,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     style: GoogleFonts.raleway(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? colorScheme.onSurface : colorScheme.onPrimary),
+                        color: _getTextColor(context)),
                   ),
                   const Spacer(flex: 2),
                 ],
               ),
             ),
-            Divider(height: 1, color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.3), thickness: 1),
+            Divider(height: 1, color: _getTextColor(context).withOpacity(0.3), thickness: 1),
             
             // Content
             Expanded(
@@ -63,7 +96,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 20),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: colorScheme.secondary.withValues(alpha: 0.1),
+                          color: colorScheme.secondary.withOpacity(0.1),
                         ),
                         child: Icon(
                           Icons.privacy_tip_outlined,
@@ -80,7 +113,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         style: GoogleFonts.raleway(
                           fontSize: 28.sp,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
+                          color: isDark ? colorScheme.onSurface : colorScheme.primary,
                         ),
                       ),
                     ),
@@ -94,14 +127,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             "Effective Date: 12/08/2025",
                             style: GoogleFonts.raleway(
                               fontSize: 14.sp,
-                              color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.7),
+                              color: (isDark ? colorScheme.onSurface : colorScheme.primary).withOpacity(0.7),
                             ),
                           ),
                           Text(
                             "Last Updated: 12/08/2025",
                             style: GoogleFonts.raleway(
                               fontSize: 14.sp,
-                              color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.7),
+                              color: (isDark ? colorScheme.onSurface : colorScheme.primary).withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -270,10 +303,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: colorScheme.secondary.withValues(alpha: 0.1),
+                        color: colorScheme.secondary.withAlpha(1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: colorScheme.secondary.withValues(alpha: 0.3),
+                          color: colorScheme.secondary.withAlpha(3),
                           width: 1,
                         ),
                       ),
@@ -292,7 +325,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                                 "Email: danieludoncy@gmail.com",
                                 style: GoogleFonts.raleway(
                                   fontSize: 14.sp,
-                                  color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
+                                  color: isDark ? colorScheme.onSurface : colorScheme.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -311,7 +344,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                                 "Developer: Daniel Udoncy",
                                 style: GoogleFonts.raleway(
                                   fontSize: 14.sp,
-                                  color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
+                                  color: isDark ? colorScheme.onSurface : colorScheme.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -329,7 +362,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
   
   Widget _buildSection(ColorScheme colorScheme, String title, String content, bool isDark) {
@@ -342,7 +375,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             style: GoogleFonts.raleway(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
-              color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
+              color: isDark ? colorScheme.onSurface : colorScheme.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -351,7 +384,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           content,
           style: GoogleFonts.raleway(
             fontSize: 14.sp,
-            color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
+            color: (isDark ? colorScheme.onSurface : colorScheme.primary).withOpacity(0.8),
             height: 1.5,
           ),
         ),
@@ -371,7 +404,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             style: GoogleFonts.raleway(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
-              color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
+              color: isDark ? colorScheme.onSurface : colorScheme.primary,
             ),
           ),
         ),
@@ -395,7 +428,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   item,
                   style: GoogleFonts.raleway(
                     fontSize: 14.sp,
-                    color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
+                    color: (isDark ? colorScheme.onSurface : colorScheme.primary).withOpacity(0.8),
                     height: 1.4,
                   ),
                 ),
@@ -430,7 +463,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   item,
                   style: GoogleFonts.raleway(
                     fontSize: 14.sp,
-                    color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
+                    color: (isDark ? colorScheme.onSurface : colorScheme.primary).withOpacity(0.8),
                     height: 1.4,
                   ),
                 ),
@@ -450,7 +483,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           content,
           style: GoogleFonts.raleway(
             fontSize: 14.sp,
-            color: (isDark ? colorScheme.onSurface : colorScheme.onPrimary).withValues(alpha: 0.8),
+            color: (isDark ? colorScheme.onSurface : colorScheme.primary).withOpacity(0.8),
             height: 1.5,
           ),
         ),

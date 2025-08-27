@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 
 class AppStyles {
   static const gradientBackground = LinearGradient(
-    colors:  [Color(0xFF08169D), Color(0xFF08169D)],
+    colors: [Color(0xFF0040A8), Color(0xFF003080)], // Theme primary to dark variant
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
   static const cardGradient = LinearGradient(
-    colors: [Color(0xFF6773EC), Color(0xFF3A49D9)],
+    colors: [Color(0xFF0050D0), Color(0xFF0040A8)], // Theme secondary to primary
   );
 
   // Note: These styles should be used with theme-aware colors

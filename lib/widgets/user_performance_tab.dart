@@ -19,38 +19,26 @@ class UserPerformanceTab extends StatelessWidget {
         );
       }
 
-      return Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Performance Overview Cards
-              _buildPerformanceOverview(context, performanceController),
-              SizedBox(height: 20.h),
-              
-              // Performance Distribution Chart
-              _buildPerformanceDistribution(context, performanceController),
-              SizedBox(height: 20.h),
-              
-              // Top Performers Section
-              _buildTopPerformersSection(context, performanceController),
-              SizedBox(height: 20.h),
-              
-              // All Users Performance List
-              _buildAllUsersPerformance(context, performanceController),
-            ],
-          ),
+      return SingleChildScrollView(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Performance Overview Cards
+            _buildPerformanceOverview(context, performanceController),
+            SizedBox(height: 20.h),
+            
+            // Performance Distribution Chart
+            _buildPerformanceDistribution(context, performanceController),
+            SizedBox(height: 20.h),
+            
+            // Top Performers Section
+            _buildTopPerformersSection(context, performanceController),
+            SizedBox(height: 20.h),
+            
+            // All Users Performance List
+            _buildAllUsersPerformance(context, performanceController),
+          ],
         ),
       );
     });
@@ -473,29 +461,31 @@ class UserPerformanceTab extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 16.h),
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        gradient: isTopPerformer 
-            ? LinearGradient(
-                colors: [
-                  (appColors?.success ?? colorScheme.primary).withValues(alpha: 0.08),
-                  (appColors?.success ?? colorScheme.primary).withValues(alpha: 0.03),
+        gradient: LinearGradient(
+          colors: isTopPerformer 
+              ? [
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.85),
+                ]
+              : [
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.9),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: isTopPerformer ? null : colorScheme.surface,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
           color: isTopPerformer 
               ? (appColors?.success ?? colorScheme.primary).withValues(alpha: 0.4)
-              : colorScheme.outline.withValues(alpha: 0.2),
+              : colorScheme.primary.withValues(alpha: 0.3),
           width: isTopPerformer ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isTopPerformer 
                 ? (appColors?.success ?? colorScheme.primary).withValues(alpha: 0.15)
-                : colorScheme.shadow.withValues(alpha: 0.08),
+                : colorScheme.primary.withValues(alpha: 0.2),
             blurRadius: isTopPerformer ? 8 : 6,
             offset: const Offset(0, 3),
           ),
@@ -506,45 +496,61 @@ class UserPerformanceTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      _getGradeColor(grade, context).withValues(alpha: 0.3),
-                      _getGradeColor(grade, context).withValues(alpha: 0.1),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorScheme.onPrimary.withValues(alpha: 0.2),
+                      border: Border.all(
+                        color: isTopPerformer 
+                            ? (appColors?.success ?? const Color(0xFFFFD700)) // Gold border for top performers
+                            : colorScheme.onPrimary.withValues(alpha: 0.4),
+                        width: isTopPerformer ? 3 : 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 22.r,
+                      backgroundColor: Colors.transparent,
+                      backgroundImage: (user['photoUrl'] != null && 
+                          user['photoUrl'].toString().isNotEmpty && 
+                          user['photoUrl'] != 'null') 
+                          ? NetworkImage(user['photoUrl']) 
+                          : null,
+                      child: (user['photoUrl'] == null || 
+                              user['photoUrl'].toString().isEmpty || 
+                              user['photoUrl'] == 'null')
+                          ? Text(
+                              user['userName']?.toString().isNotEmpty == true
+                                  ? user['userName'][0].toUpperCase()
+                                  : user['userEmail']?[0].toUpperCase() ?? '?',
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
-                  border: Border.all(
-                    color: _getGradeColor(grade, context).withValues(alpha: 0.4),
-                    width: 2,
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 22.r,
-                  backgroundColor: Colors.transparent,
-                  backgroundImage: (user['photoUrl'] != null && 
-                      user['photoUrl'].toString().isNotEmpty && 
-                      user['photoUrl'] != 'null') 
-                      ? NetworkImage(user['photoUrl']) 
-                      : null,
-                  child: (user['photoUrl'] == null || 
-                          user['photoUrl'].toString().isEmpty || 
-                          user['photoUrl'] == 'null')
-                      ? Text(
-                          user['userName']?.toString().isNotEmpty == true
-                              ? user['userName'][0].toUpperCase()
-                              : user['userEmail']?[0].toUpperCase() ?? '?',
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            color: _getGradeColor(grade),
-                          ),
-                        )
-                      : null,
-                ),
+                  if (isTopPerformer && _shouldShowTrophy(user))
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        padding: EdgeInsets.all(4.w),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFD700), // Gold color
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.emoji_events,
+                          color: colorScheme.primary, // Use theme primary blue color
+                          size: 12.sp,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               SizedBox(width: 12.w),
               Expanded(
@@ -562,7 +568,7 @@ class UserPerformanceTab extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
+                              color: colorScheme.onPrimary,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -570,14 +576,7 @@ class UserPerformanceTab extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                _getGradeColor(grade, context).withValues(alpha: 0.25),
-                                _getGradeColor(grade, context).withValues(alpha: 0.15),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            color: _getGradeColor(grade, context).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(16.r),
                             border: Border.all(
                               color: _getGradeColor(grade, context).withValues(alpha: 0.4),
@@ -600,7 +599,7 @@ class UserPerformanceTab extends StatelessWidget {
                       '${completionRate.toStringAsFixed(1)}% completion rate',
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: colorScheme.onSurface.withValues(alpha: 0.8),
+                        color: colorScheme.onPrimary.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -618,18 +617,21 @@ class UserPerformanceTab extends StatelessWidget {
                 'Completed',
                 user['completedTasks'].toString(),
                 Icons.check_circle_outline,
+                isOnPrimary: true,
               ),
               _buildMetricItem(
                 context,
                 'In Progress',
                 user['inProgressTasks'].toString(),
                 Icons.schedule_outlined,
+                isOnPrimary: true,
               ),
               _buildMetricItem(
                 context,
                 'Overdue',
                 user['overdueTasks'].toString(),
                 Icons.warning_amber_outlined,
+                isOnPrimary: true,
               ),
             ],
           ),
@@ -638,7 +640,7 @@ class UserPerformanceTab extends StatelessWidget {
             height: 8.h,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(4.r),
-              color: colorScheme.outline.withValues(alpha: 0.15),
+              color: colorScheme.onPrimary.withValues(alpha: 0.2),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4.r),
@@ -656,7 +658,7 @@ class UserPerformanceTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricItem(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildMetricItem(BuildContext context, String label, String value, IconData icon, {bool isOnPrimary = false}) {
     final colorScheme = Theme.of(context).colorScheme;
     
     return Container(
@@ -666,19 +668,25 @@ class UserPerformanceTab extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.15),
+              color: isOnPrimary 
+                  ? colorScheme.onPrimary.withValues(alpha: 0.15)
+                  : colorScheme.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(
-                color: colorScheme.primary.withValues(alpha: 0.2),
+                color: isOnPrimary 
+                    ? colorScheme.onPrimary.withValues(alpha: 0.2)
+                    : colorScheme.primary.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
             child: Icon(
               icon,
               size: 18.sp,
-              color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.grey
-                  : colorScheme.primary,
+              color: isOnPrimary 
+                  ? colorScheme.onPrimary
+                  : (Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.grey
+                      : colorScheme.primary),
             ),
           ),
           SizedBox(height: 6.h),
@@ -687,7 +695,7 @@ class UserPerformanceTab extends StatelessWidget {
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
+              color: isOnPrimary ? colorScheme.onPrimary : colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 2.h),
@@ -697,12 +705,29 @@ class UserPerformanceTab extends StatelessWidget {
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w500,
-              color: colorScheme.onSurface.withValues(alpha: 0.8),
+              color: isOnPrimary 
+                  ? colorScheme.onPrimary.withValues(alpha: 0.8)
+                  : colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Determines if a user should show the trophy based on their performance
+  bool _shouldShowTrophy(Map<String, dynamic> user) {
+    final completedTasks = user['completedTasks'] as int? ?? 0;
+    final completionRate = user['completionRate'] as double? ?? 0.0;
+    final grade = user['performanceGrade'] as String? ?? 'F';
+    
+    // Show trophy only if:
+    // 1. User has completed at least 1 task
+    // 2. Has a completion rate of at least 60%
+    // 3. Has a grade of A+, A, B+, or B
+    return completedTasks > 0 && 
+           completionRate >= 60.0 && 
+           (grade.toUpperCase().startsWith('A') || grade.toUpperCase().startsWith('B'));
   }
 
   Color _getGradeColor(String grade, [BuildContext? context]) {
