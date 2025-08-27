@@ -108,82 +108,155 @@ class TasksTab extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      color: Theme.of(context).primaryColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => showTaskDetailDialog(title),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  UIHelpers.buildStatusBadge(status),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  UIHelpers.buildUserAvatar(name: creatorName, size: 24),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Created by $creatorName',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  UIHelpers.buildPriorityBadge(priority),
-                ],
-              ),
-              if (canCompleteTask) ...[
-                const SizedBox(height: 12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).primaryColor.withValues(alpha: 0.9),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    ElevatedButton.icon(
-                       onPressed: doc != null ? () => _completeTask(doc, currentUserId, userRole) : null,
-                       icon: const Icon(Icons.check_circle, size: 16),
-                       label: const Text('Complete'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () => _addComment(taskId, title),
-                      icon: const Icon(Icons.comment, size: 16),
-                      label: const Text('Comment'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ],
-              ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Created by $creatorName',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _getPriorityColor(priority).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: _getPriorityColor(priority).withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Text(
+                        priority,
+                        style: TextStyle(
+                          color: _getPriorityColor(priority),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (canCompleteTask) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton.icon(
+                         onPressed: doc != null ? () => _completeTask(doc, currentUserId, userRole) : null,
+                         icon: const Icon(Icons.check_circle, size: 16),
+                         label: const Text('Complete'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF27AE60),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          textStyle: const TextStyle(fontSize: 12),
+                          elevation: 0,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: () => _addComment(taskId, title),
+                        icon: const Icon(Icons.comment, size: 16),
+                        label: const Text('Comment'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          side: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          textStyle: const TextStyle(fontSize: 12),
+                          backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                ],
+            ),
           ),
         ),
       ),
@@ -200,6 +273,19 @@ class TasksTab extends StatelessWidget {
     return assignedReporterId == userId ||
            assignedCameramanId == userId ||
            assignedDriverId == userId;
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return const Color(0xFFE74C3C); // Red
+      case 'medium':
+        return const Color(0xFFF39C12); // Orange
+      case 'low':
+        return const Color(0xFF27AE60); // Green
+      default:
+        return const Color(0xFF95A5A6); // Grey
+    }
   }
 
   Future<void> _completeTask(Map<String, dynamic> doc, String currentUserId, String userRole) async {
@@ -499,138 +585,207 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      color: Theme.of(context).primaryColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _showApprovalDialog(task),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF39C12).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.pending_actions,
-                      color: Color(0xFFF39C12),
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  UIHelpers.buildPriorityBadge(priority),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  UIHelpers.buildUserAvatar(name: creatorName, size: 24),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          creatorName,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).primaryColor.withValues(alpha: 0.9),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF39C12).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFF39C12).withValues(alpha: 0.4),
                         ),
+                      ),
+                      child: const Icon(
+                        Icons.pending_actions,
+                        color: Color(0xFFF39C12),
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _getPriorityColor(priority).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: _getPriorityColor(priority).withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Text(
+                        priority,
+                        style: TextStyle(
+                          color: _getPriorityColor(priority),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            creatorName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            category,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 12,
+                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(height: 2),
                         Text(
-                          category,
+                          dateStr,
                           style: TextStyle(
                             fontSize: 10,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 12,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dateStr,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[600],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _rejectTask(task['id']),
+                        icon: const Icon(Icons.close, size: 16),
+                        label: const Text('Reject'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE74C3C),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _rejectTask(task['id']),
-                      icon: const Icon(Icons.close, size: 16),
-                      label: const Text('Reject'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE74C3C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _approveTask(task['id']),
-                      icon: const Icon(Icons.check, size: 16),
-                      label: const Text('Approve'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF27AE60),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _approveTask(task['id']),
+                        icon: const Icon(Icons.check, size: 16),
+                        label: const Text('Approve'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF27AE60),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return const Color(0xFFE74C3C); // Red
+      case 'medium':
+        return const Color(0xFFF39C12); // Orange
+      case 'low':
+        return const Color(0xFF27AE60); // Green
+      default:
+        return const Color(0xFF95A5A6); // Grey
+    }
   }
 }

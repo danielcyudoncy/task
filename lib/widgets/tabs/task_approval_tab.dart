@@ -77,146 +77,172 @@ class TaskApprovalTab extends StatelessWidget {
   Widget _buildTaskCard(BuildContext context, Task task, AuthController authController) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      color: Theme.of(context).primaryColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _showTaskApprovalDialog(context, task),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      task.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      'Pending Approval',
-                      style: TextStyle(
-                        color: Colors.orange.shade700,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (task.description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  task.description,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).primaryColor.withValues(alpha: 0.9),
               ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.person_outline,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: FutureBuilder<Map<String, String>>(
-                      future: getUserNameAndRole(task.createdById, () {}),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          final creatorName = snapshot.data!['name'] ?? 'Unknown';
-                          return Text(
-                            'Created by $creatorName',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
-                          );
-                        }
-                        return Text(
-                          'Loading creator...',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Icon(
-                    Icons.access_time,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    UIHelpers.formatDate(task.timestamp),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
-              if (task.category != null || task.priority != null) ...[
-                const SizedBox(height: 8),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Row(
                   children: [
-                    if (task.category != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
+                    Expanded(
+                      child: Text(
+                        task.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onPrimary,
                         ),
-                        child: Text(
-                          task.category!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                      ),
+                      child: Text(
+                        'Pending Approval',
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                    ],
-                    if (task.priority != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _getPriorityColor(task.priority!).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          task.priority!,
-                          style: TextStyle(
-                            color: _getPriorityColor(task.priority!),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                    ),
                   ],
                 ),
+                if (task.description.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    task.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: FutureBuilder<Map<String, String>>(
+                        future: getUserNameAndRole(task.createdById, () {}),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            final creatorName = snapshot.data!['name'] ?? 'Unknown';
+                            return Text(
+                              'Created by $creatorName',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                              ),
+                            );
+                          }
+                          return Text(
+                            'Loading creator...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      UIHelpers.formatDate(task.timestamp),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
+                if (task.category != null || task.priority != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (task.category != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Text(
+                            task.category!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (task.priority != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _getPriorityColor(task.priority!).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: _getPriorityColor(task.priority!).withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            task.priority!,
+                            style: TextStyle(
+                              color: _getPriorityColor(task.priority!),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

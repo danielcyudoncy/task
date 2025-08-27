@@ -320,17 +320,96 @@ class _AppDrawerState extends State<AppDrawer> {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      child: Obx(() => SwitchListTile(
-        title: Text('dark_mode'.tr,
-            style: TextStyle(
-                fontSize: 16.sp,
-                color: Theme.of(context).textTheme.bodyLarge?.color)),
-        value: themeController.isDarkMode.value,
-        onChanged: (value) {
-          themeController.toggleTheme(value);
-        },
-      )),
+      child: Padding(
+        padding: EdgeInsets.all(8.w),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.palette_outlined,
+                  size: 18.sp,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  'Theme',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Obx(() => _buildCompactThemeOptions(themeController)),
+          ],
+        ),
+      ),
     );
+  }
+
+  Widget _buildCompactThemeOptions(ThemeController themeController) {
+    return Row(
+      children: AppThemeMode.values.map((mode) {
+        final isSelected = themeController.currentThemeMode.value == mode;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => themeController.setThemeMode(mode),
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 2.w),
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(
+                  color: isSelected 
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                  width: isSelected ? 2 : 1,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    _getThemeIcon(mode),
+                    size: 16.sp,
+                    color: isSelected 
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    mode.displayName,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected 
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  IconData _getThemeIcon(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.light:
+        return Icons.light_mode_outlined;
+      case AppThemeMode.dark:
+        return Icons.dark_mode_outlined;
+      case AppThemeMode.system:
+        return Icons.settings_system_daydream_outlined;
+    }
   }
 
 
