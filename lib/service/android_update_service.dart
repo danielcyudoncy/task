@@ -30,6 +30,7 @@ class AndroidUpdateService {
         }
       }
     } catch (e) {
+      'Error checking for updates';
     }
   }
   
@@ -192,6 +193,7 @@ class AndroidUpdateService {
     try {
       await InAppUpdate.completeFlexibleUpdate();
     } catch (e) {
+      _showUpdateError();
     }
   }
 }

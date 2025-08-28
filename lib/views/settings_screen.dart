@@ -426,7 +426,7 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: Text(
                   'Update your app lock PIN',
                   style: TextStyle(
-                    color: textColor.withOpacity(0.7),
+                    color: textColor.withAlpha(7),
                     fontSize: 13,
                   ),
                 ),

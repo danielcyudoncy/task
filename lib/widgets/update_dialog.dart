@@ -1,3 +1,4 @@
+// widgets/update_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../service/version_service.dart';
@@ -11,13 +12,13 @@ class UpdateDialog extends StatelessWidget {
   final VoidCallback? onLater;
   
   const UpdateDialog({
-    Key? key,
+    super.key,
     required this.updateInfo,
     this.forceUpdate = false,
     this.onUpdate,
     this.onSkip,
     this.onLater,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -231,11 +232,11 @@ class UpdateNotification extends StatelessWidget {
   final VoidCallback? onDismiss;
   
   const UpdateNotification({
-    Key? key,
+    super.key,
     required this.updateInfo,
     this.onTap,
     this.onDismiss,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {
@@ -255,7 +256,7 @@ class UpdateNotification extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withAlpha(1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(

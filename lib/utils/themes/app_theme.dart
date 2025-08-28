@@ -82,8 +82,8 @@ class AppTheme {
     onSurfaceVariant: _warning, // Silver color for contrast
     primaryContainer: _accent1,
     onPrimaryContainer: Colors.white,
-    dividerColor: _warning.withOpacity(0.5), // Silver with opacity
-    hintColor: _warning.withOpacity(0.7),
+    dividerColor: _warning.withAlpha(5), // Silver with opacity
+    hintColor: _warning.withAlpha(7),
     appBarBackgroundColor: _primaryBlue,
     inputFillColor: _darkSurfaceVariant,
     textColor: Colors.white,

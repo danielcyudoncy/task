@@ -101,8 +101,12 @@ class VersionService {
     final current = currentVersion.split('.').map(int.parse).toList();
     
     // Ensure both versions have the same number of parts
-    while (latest.length < current.length) latest.add(0);
-    while (current.length < latest.length) current.add(0);
+    while (latest.length < current.length) {
+      latest.add(0);
+    }
+    while (current.length < latest.length) {
+      current.add(0);
+    }
     
     for (int i = 0; i < latest.length; i++) {
       if (latest[i] > current[i]) return true;

@@ -1,3 +1,4 @@
+// widgets/dialogs/pending_tasks_dialog.dart
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -68,7 +69,7 @@ class PendingTasksDialog {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.onPrimary.withAlpha(2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -96,7 +97,7 @@ class PendingTasksDialog {
                       ? 'All tasks completed! 🎉'
                       : '${tasks.length} task${tasks.length != 1 ? 's' : ''} awaiting completion',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
+                    color: Theme.of(context).colorScheme.onPrimary.withAlpha(9),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -112,7 +113,7 @@ class PendingTasksDialog {
               size: 24,
             ),
             style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
+              backgroundColor: Theme.of(context).colorScheme.onPrimary.withAlpha(2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
