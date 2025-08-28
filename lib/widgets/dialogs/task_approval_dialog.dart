@@ -1,3 +1,4 @@
+// widgets/dialogs/task_approval_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/admin_controller.dart';
@@ -37,7 +38,7 @@ class TaskApprovalDialog {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withAlpha(3),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -118,7 +119,7 @@ class TaskApprovalDialog {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(status).withOpacity(0.2),
+                    color: _getStatusColor(status).withAlpha(2),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _getStatusColor(status),
@@ -146,7 +147,7 @@ class TaskApprovalDialog {
               size: 24,
             ),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withAlpha(2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -272,8 +273,8 @@ class TaskApprovalDialog {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.2),
+              ? Colors.white.withAlpha(1)
+              : Colors.grey.withAlpha(2),
         ),
       ),
       child: Column(
@@ -284,7 +285,7 @@ class TaskApprovalDialog {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A90E2).withOpacity(0.1),
+                  color: const Color(0xFF4A90E2).withAlpha(1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -348,10 +349,10 @@ class TaskApprovalDialog {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF4A90E2).withOpacity(0.1),
+        color: const Color(0xFF4A90E2).withAlpha(1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF4A90E2).withOpacity(0.3),
+          color: const Color(0xFF4A90E2).withAlpha(3),
         ),
       ),
       child: Text(
@@ -376,8 +377,8 @@ class TaskApprovalDialog {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.3),
+              ? Colors.white.withAlpha(1)
+              : Colors.grey.withAlpha(3),
         ),
       ),
       child: Row(

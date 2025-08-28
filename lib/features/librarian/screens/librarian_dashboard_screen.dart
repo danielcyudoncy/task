@@ -1,6 +1,4 @@
 // features/librarian/screens/librarian_dashboard_screen.dart
-// ignore_for_file: deprecated_member_use
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -25,14 +23,16 @@ class LibrarianDashboardScreen extends StatefulWidget {
   const LibrarianDashboardScreen({super.key});
 
   @override
-  State<LibrarianDashboardScreen> createState() => _LibrarianDashboardScreenState();
+  State<LibrarianDashboardScreen> createState() =>
+      _LibrarianDashboardScreenState();
 }
 
-class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> with SingleTickerProviderStateMixin {
+class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen>
+    with SingleTickerProviderStateMixin {
   final TaskController _taskController = Get.find<TaskController>();
   final ExportService _exportService = Get.find<ExportService>();
   final ArchiveService _archiveService = Get.find<ArchiveService>();
-  
+
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
   final RxString _searchQuery = ''.obs;
@@ -43,19 +43,19 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
   final RxMap<String, int> _archiveStats = <String, int>{}.obs;
   final RxString _archiveStatsError = ''.obs;
   final RxString _taskError = ''.obs;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _initializeServices();
   }
-  
+
   /// Initializes all required services
   Future<void> _initializeServices() async {
     try {
       _isLoading.value = true;
-      
+
       // Initialize ArchiveService
       if (!Get.isRegistered<ArchiveService>()) {
         await Get.putAsync<ArchiveService>(() async {
@@ -64,7 +64,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
           return service;
         }, permanent: true);
       }
-      
+
       // Initialize ExportService
       if (!Get.isRegistered<ExportService>()) {
         await Get.putAsync<ExportService>(() async {
@@ -73,7 +73,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
           return service;
         }, permanent: true);
       }
-      
+
       // Load initial data
       await _loadArchiveStats();
     } catch (e) {
@@ -83,34 +83,36 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
       _isLoading.value = false;
     }
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _loadArchiveStats() async {
     try {
       _isLoading.value = true;
       _archiveStatsError.value = '';
       _archiveStats.clear();
-      
+
       final stats = await _archiveService.getArchiveStats().timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          throw TimeoutException('Connection timed out. Please check your internet connection.');
+          throw TimeoutException(
+              'Connection timed out. Please check your internet connection.');
         },
       );
-      
+
       _archiveStats.value = {
         'totalArchived': stats['totalArchived'] ?? 0,
         'archivedThisMonth': stats['archivedThisMonth'] ?? 0,
       };
     } on TimeoutException catch (e) {
       _archiveStatsError.value = e.message ?? 'Request timed out';
-      _showErrorSnackbar('Network Error', 'Failed to load archive stats: ${e.message}');
+      _showErrorSnackbar(
+          'Network Error', 'Failed to load archive stats: ${e.message}');
     } catch (e) {
       _archiveStatsError.value = e.toString();
       _showErrorSnackbar('Error', 'Failed to load archive statistics');
@@ -118,7 +120,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
       _isLoading.value = false;
     }
   }
-  
+
   Future<void> _refreshData() async {
     try {
       _isRefreshing.value = true;
@@ -134,10 +136,10 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
       _isRefreshing.value = false;
     }
   }
-  
+
   void _showErrorSnackbar(String title, String message) {
     if (!mounted) return;
-    
+
     Get.snackbar(
       title,
       message,
@@ -153,7 +155,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
       reverseAnimationCurve: Curves.easeInCubic,
     );
   }
-  
+
   Future<void> _showFilters() async {
     final result = await showModalBottomSheet<TaskFilters>(
       context: context,
@@ -163,38 +165,42 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
         initialFilters: _filters.value,
       ),
     );
-    
+
     if (result != null) {
       _filters.value = result;
     }
   }
-  
+
   Future<void> _exportTasks() async {
     try {
       // Get tasks based on current filters
       List<Task> tasks = [];
-      
+
       switch (_tabController.index) {
         case 0: // All tasks
           tasks = await _taskController.getAllTasks();
           break;
         case 1: // Completed
           final allTasks = await _taskController.getAllTasks();
-          tasks = allTasks.where((task) => task.status.toLowerCase() == 'completed').toList();
+          tasks = allTasks
+              .where((task) => task.status.toLowerCase() == 'completed')
+              .toList();
           break;
         case 2: // Pending
           final allTasks = await _taskController.getAllTasks();
-          tasks = allTasks.where((task) => task.status.toLowerCase() != 'completed').toList();
+          tasks = allTasks
+              .where((task) => task.status.toLowerCase() != 'completed')
+              .toList();
           break;
       }
-      
+
       // Apply archive filter
       if (_showArchived.value) {
         tasks = tasks.where((task) => task.isArchived).toList();
       } else {
         tasks = tasks.where((task) => !task.isArchived).toList();
       }
-      
+
       // Apply search filter
       if (_searchQuery.value.isNotEmpty) {
         final query = _searchQuery.value.toLowerCase();
@@ -205,13 +211,14 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
               task.tags.any((tag) => tag.toLowerCase().contains(query));
         }).toList();
       }
-      
+
       // Apply additional filters
       if (_filters.value.hasActiveFilters) {
         tasks = _applyFilters(tasks, _filters.value);
       }
-      
+
       if (tasks.isEmpty) {
+        if (!mounted) return;
         Get.snackbar(
           'No Tasks',
           'There are no tasks to export with the current filters.',
@@ -219,7 +226,10 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
         );
         return;
       }
-      
+
+      // Store theme data before async operation
+      final theme = Theme.of(context);
+
       final exportType = await showModalBottomSheet<String>(
         context: context,
         builder: (context) => SafeArea(
@@ -227,13 +237,15 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.picture_as_pdf, color: Theme.of(context).colorScheme.error),
+                leading:
+                    Icon(Icons.picture_as_pdf, color: theme.colorScheme.error),
                 title: const Text('Export as PDF'),
                 onTap: () => Navigator.of(context).pop('pdf'),
               ),
               const Divider(height: 1),
               ListTile(
-                leading: Icon(Icons.table_chart, color: Theme.of(context).colorScheme.secondary),
+                leading:
+                    Icon(Icons.table_chart, color: theme.colorScheme.secondary),
                 title: const Text('Export as CSV'),
                 onTap: () => Navigator.of(context).pop('csv'),
               ),
@@ -241,11 +253,12 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
           ),
         ),
       );
-      
+
       if (exportType == null) return;
-      
+
       if (exportType == 'pdf') {
         final file = await _exportService.exportToPdf(tasks);
+        if (!mounted) return;
         await _exportService.shareFile(
           file,
           subject: 'Tasks Export - ${DateTime.now().toString().split(' ')[0]}',
@@ -253,6 +266,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
         );
       } else if (exportType == 'csv') {
         final file = await _exportService.exportToCsv(tasks);
+        if (!mounted) return;
         await _exportService.shareFile(
           file,
           subject: 'Tasks Export - ${DateTime.now().toString().split(' ')[0]}',
@@ -260,6 +274,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
         );
       }
     } catch (e) {
+      if (!mounted) return;
       Get.snackbar(
         'Error',
         'Failed to export tasks: $e',
@@ -267,52 +282,52 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
       );
     }
   }
-  
-  
+
   List<Task> _applyFilters(List<Task> tasks, TaskFilters filters) {
     if (!filters.hasActiveFilters) {
       return tasks;
     }
-    
+
     return tasks.where((task) {
       // Status filter
       if (filters.statuses?.isNotEmpty == true) {
-        if (!filters.statuses!.any((status) => 
-            task.status.toLowerCase() == status.toLowerCase())) {
+        if (!filters.statuses!.any(
+            (status) => task.status.toLowerCase() == status.toLowerCase())) {
           return false;
         }
       }
-      
+
       // Category filter
       if (filters.categories?.isNotEmpty == true && task.category != null) {
-        if (!filters.categories!.any((category) => 
+        if (!filters.categories!.any((category) =>
             task.category!.toLowerCase() == category.toLowerCase())) {
           return false;
         }
       }
-      
+
       // Tags filter
       if (filters.tags?.isNotEmpty == true) {
-        if (task.tags.isEmpty || !filters.tags!.any((tag) => 
-            task.tags.any((taskTag) => 
+        if (task.tags.isEmpty ||
+            !filters.tags!.any((tag) => task.tags.any((taskTag) =>
                 taskTag.toLowerCase().trim() == tag.toLowerCase().trim()))) {
           return false;
         }
       }
-      
+
       // Date range filter
       if (filters.startDate != null || filters.endDate != null) {
-        if (filters.startDate != null && 
+        if (filters.startDate != null &&
             task.timestamp.isBefore(filters.startDate!)) {
           return false;
         }
-        
-        if (filters.endDate != null && 
-            task.timestamp.isAfter(filters.endDate!.add(const Duration(days: 1)))) {
+
+        if (filters.endDate != null &&
+            task.timestamp
+                .isAfter(filters.endDate!.add(const Duration(days: 1)))) {
           return false;
         }
       }
-      
+
       // Assigned users filter
       if (filters.assignedToUserIds?.isNotEmpty == true) {
         final assignedUserIds = [
@@ -321,22 +336,22 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
           task.assignedDriverId,
           task.assignedLibrarianId,
         ].whereType<String>().toList();
-        
-        if (!filters.assignedToUserIds!.any((userId) => 
-            assignedUserIds.contains(userId))) {
+
+        if (!filters.assignedToUserIds!
+            .any((userId) => assignedUserIds.contains(userId))) {
           return false;
         }
       }
-      
+
       return true;
     }).toList();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Scaffold(
       backgroundColor: theme.brightness == Brightness.dark
           ? theme.canvasColor
@@ -346,90 +361,95 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
         title: const Text('Welcome'),
         actions: [
           // Clear search button (only show when search is active)
-          Obx(() => _searchQuery.value.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  tooltip: 'Clear search',
-                  onPressed: () {
-                    _searchQuery.value = '';
-                    // Haptic feedback
-                    HapticFeedback.lightImpact();
-                  },
-                )
-              : const SizedBox.shrink(),
+          Obx(
+            () => _searchQuery.value.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    tooltip: 'Clear search',
+                    onPressed: () {
+                      _searchQuery.value = '';
+                      // Haptic feedback
+                      HapticFeedback.lightImpact();
+                    },
+                  )
+                : const SizedBox.shrink(),
           ),
-          
+
           // Search button with loading state
-          Obx(() => _isLoading.value
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.search),
-                  tooltip: 'Search tasks',
-                  onPressed: () async {
-                    try {
-                      final query = await showSearch<String>(
-                        context: context,
-                        delegate: TaskSearchDelegate(),
-                        query: _searchQuery.value,
-                      );
-                      
-                      if (query != null) {
-                        _searchQuery.value = query;
-                      }
-                    } catch (e) {
-                      _showErrorSnackbar('Search Error', 'Failed to perform search');
-                    }
-                  },
-                ),
-          ),
-          
-          // Filter button with active indicator
-          Obx(() => Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.filter_list),
-                tooltip: 'Filter tasks',
-                onPressed: _isLoading.value ? null : _showFilters,
-              ),
-              if (_filters.value.hasActiveFilters)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: colorScheme.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colorScheme.surface,
-                        width: 2,
+          Obx(
+            () => _isLoading.value
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
                       ),
                     ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.search),
+                    tooltip: 'Search tasks',
+                    onPressed: () async {
+                      try {
+                        final query = await showSearch<String>(
+                          context: context,
+                          delegate: TaskSearchDelegate(),
+                          query: _searchQuery.value,
+                        );
+
+                        if (query != null) {
+                          _searchQuery.value = query;
+                        }
+                      } catch (e) {
+                        if (!mounted) return;
+                        _showErrorSnackbar(
+                            'Search Error', 'Failed to perform search');
+                      }
+                    },
                   ),
-                ),
-            ],
-          )),
-          
-          // Export button with loading state
-          Obx(() => _isLoading.value
-              ? const SizedBox.shrink()
-              : IconButton(
-                  icon: const Icon(Icons.ios_share),
-                  tooltip: 'Export tasks',
-                  onPressed: _exportTasks,
-                ),
           ),
-          
+
+          // Filter button with active indicator
+          Obx(() => Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    tooltip: 'Filter tasks',
+                    onPressed: _isLoading.value ? null : _showFilters,
+                  ),
+                  if (_filters.value.hasActiveFilters)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: colorScheme.error,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: colorScheme.surface,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              )),
+
+          // Export button with loading state
+          Obx(
+            () => _isLoading.value
+                ? const SizedBox.shrink()
+                : IconButton(
+                    icon: const Icon(Icons.ios_share),
+                    tooltip: 'Export tasks',
+                    onPressed: _exportTasks,
+                  ),
+          ),
+
           const SizedBox(width: 8),
         ],
       ),
@@ -452,19 +472,24 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
                   const SliverToBoxAdapter(
                     child: DailyTaskStatsCard(),
                   ),
-                  
+
                   // Archive stats card
                   SliverToBoxAdapter(
                     child: Obx(() {
                       final hasError = _archiveStatsError.value.isNotEmpty;
-                      final hasData = _archiveStats.isNotEmpty && !_isLoading.value && !hasError;
-                      
+                      final hasData = _archiveStats.isNotEmpty &&
+                          !_isLoading.value &&
+                          !hasError;
+
                       return AnimatedSwitcher(
                         duration: AppDurations.mediumAnimation,
                         child: ArchiveStatsCard(
                           key: ValueKey(_showArchived.value),
-                          totalArchived: hasData ? _archiveStats['totalArchived'] ?? 0 : 0,
-                          archivedThisMonth: hasData ? _archiveStats['archivedThisMonth'] ?? 0 : 0,
+                          totalArchived:
+                              hasData ? _archiveStats['totalArchived'] ?? 0 : 0,
+                          archivedThisMonth: hasData
+                              ? _archiveStats['archivedThisMonth'] ?? 0
+                              : 0,
                           onToggleArchive: () => _showArchived.toggle(),
                           showArchived: _showArchived.value,
                           isLoading: _isLoading.value,
@@ -473,58 +498,62 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
                       );
                     }),
                   ),
-                  
+
                   // Error message if any
-                  Obx(() => _taskError.value.isNotEmpty
-                      ? SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: colorScheme.errorContainer,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Failed to load tasks',
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      color: colorScheme.onErrorContainer,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _taskError.value,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onErrorContainer.withValues(alpha: 0.8),
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton.icon(
-                                    onPressed: _refreshData,
-                                    icon: const Icon(Icons.refresh, size: 16),
-                                    label: const Text('Retry'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: colorScheme.error,
-                                      foregroundColor: colorScheme.onError,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
+                  Obx(
+                    () => _taskError.value.isNotEmpty
+                        ? SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.errorContainer,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Failed to load tasks',
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
+                                        color: colorScheme.onErrorContainer,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      textStyle: theme.textTheme.labelLarge,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _taskError.value,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onErrorContainer
+                                            .withAlpha(8),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ElevatedButton.icon(
+                                      onPressed: _refreshData,
+                                      icon: const Icon(Icons.refresh, size: 16),
+                                      label: const Text('Retry'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: colorScheme.error,
+                                        foregroundColor: colorScheme.onError,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        textStyle: theme.textTheme.labelLarge,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        )
-                      : const SliverToBoxAdapter(),
+                          )
+                        : const SliverToBoxAdapter(),
                   ),
-                  
+
                   // Task list
                   SliverFillRemaining(
                     child: TabBarView(
@@ -541,7 +570,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
                           scrollController: _scrollController,
                           onError: (error) => _taskError.value = error,
                         ),
-                        
+
                         // Completed tasks
                         TaskListView(
                           key: const ValueKey('completed_tasks'),
@@ -552,7 +581,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
                           scrollController: _scrollController,
                           onError: (error) => _taskError.value = error,
                         ),
-                        
+
                         // Pending tasks
                         TaskListView(
                           key: const ValueKey('pending_tasks'),
@@ -570,7 +599,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen> wit
               ),
             ),
           ),
-          
+
           // Bottom navigation bar
           LibrarianNavbar(
             tabController: _tabController,

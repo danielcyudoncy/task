@@ -100,12 +100,12 @@ class TaskReviewsList extends StatelessWidget {
                                         task.removeReview(reviewerId);
                                         Navigator.pop(context);
                                       },
-                                      child: const Text('Delete'),
                                       style: TextButton.styleFrom(
                                         foregroundColor: Theme.of(context)
                                             .colorScheme
                                             .error,
                                       ),
+                                      child: const Text('Delete'),
                                     ),
                                   ],
                                 ),

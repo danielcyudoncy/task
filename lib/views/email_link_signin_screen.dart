@@ -187,7 +187,7 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
                                   'Please confirm your email address to complete the sign-in process.',
                                   style: textTheme.bodyMedium?.copyWith(
                                     fontSize: 14.sp,
-                                    color: textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                    color: textTheme.bodyMedium?.color?.withAlpha(7),
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -214,7 +214,7 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
-                                        color: colorScheme.outline.withOpacity(0.5),
+                                        color: colorScheme.outline.withAlpha(5),
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
