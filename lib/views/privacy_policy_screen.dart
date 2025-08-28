@@ -79,7 +79,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(height: 1, color: _getTextColor(context).withAlpha(3), thickness: 1),
+            Divider(height: 1, color: _getTextColor(context), thickness: 1),
             
             // Content
             Expanded(
@@ -96,7 +96,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 20),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: colorScheme.secondary.withAlpha(1),
+                          color: colorScheme.secondary,
                         ),
                         child: Icon(
                           Icons.privacy_tip_outlined,
@@ -127,14 +127,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             "Effective Date: 12/08/2025",
                             style: GoogleFonts.raleway(
                               fontSize: 14.sp,
-                              color: (isDark ? colorScheme.onSurface : colorScheme.primary).withAlpha(7),
+                              color: (isDark ? colorScheme.onSurface : colorScheme.primary),
                             ),
                           ),
                           Text(
                             "Last Updated: 12/08/2025",
                             style: GoogleFonts.raleway(
                               fontSize: 14.sp,
-                              color: (isDark ? colorScheme.onSurface : colorScheme.primary).withAlpha(7),
+                              color: (isDark ? colorScheme.onSurface : colorScheme.primary),
                             ),
                           ),
                         ],
@@ -303,10 +303,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: colorScheme.secondary.withAlpha(1),
+                        color: colorScheme.secondary,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: colorScheme.secondary.withAlpha(3),
+                          color: colorScheme.secondary,
                           width: 1,
                         ),
                       ),
@@ -325,7 +325,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                                 "Email: danieludoncy@gmail.com",
                                 style: GoogleFonts.raleway(
                                   fontSize: 14.sp,
-                                  color: isDark ? colorScheme.onSurface : colorScheme.primary,
+                                  color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -344,7 +344,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                                 "Developer: Daniel Udoncy",
                                 style: GoogleFonts.raleway(
                                   fontSize: 14.sp,
-                                  color: isDark ? colorScheme.onSurface : colorScheme.primary,
+                                  color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -384,7 +384,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           content,
           style: GoogleFonts.raleway(
             fontSize: 14.sp,
-            color: (isDark ? colorScheme.onSurface : colorScheme.primary).withAlpha(8),
+            color: (isDark ? colorScheme.onSurface : colorScheme.primary),
             height: 1.5,
           ),
         ),
@@ -428,7 +428,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   item,
                   style: GoogleFonts.raleway(
                     fontSize: 14.sp,
-                    color: (isDark ? colorScheme.onSurface : colorScheme.primary).withAlpha(8),
+                    color: (isDark ? colorScheme.onSurface : colorScheme.primary),
                     height: 1.4,
                   ),
                 ),
@@ -463,7 +463,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   item,
                   style: GoogleFonts.raleway(
                     fontSize: 14.sp,
-                    color: (isDark ? colorScheme.onSurface : colorScheme.primary).withAlpha(8),
+                    color: (isDark ? colorScheme.onSurface : colorScheme.primary),
                     height: 1.4,
                   ),
                 ),
@@ -483,7 +483,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           content,
           style: GoogleFonts.raleway(
             fontSize: 14.sp,
-            color: (isDark ? colorScheme.onSurface : colorScheme.primary).withAlpha(8),
+            color: (isDark ? colorScheme.onSurface : colorScheme.primary),
             height: 1.5,
           ),
         ),
