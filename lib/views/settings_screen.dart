@@ -212,7 +212,7 @@ class SettingsScreen extends StatelessWidget {
                           subtitle: Text(
                             "Force reset theme to light mode",
                             style: TextStyle(
-                              color: textColor.withOpacity(0.7),
+                              color: textColor,
                               fontSize: 13,
                             ),
                           ),
