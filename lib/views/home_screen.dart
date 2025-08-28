@@ -399,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 // UserNavBar at the bottom, outside scrollable area
-                const UserNavBar(
+                 UserNavBar(
                   currentIndex: 0, // Home screen is index 0
                 ),
               ],

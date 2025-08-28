@@ -29,7 +29,7 @@ import 'package:task/views/notification_fix_screen.dart';
 import 'package:task/views/email_link_signin_screen.dart';
 import 'package:task/views/app_lock_screen.dart';
 import 'package:task/widgets/save_success_screen.dart';
-
+import 'package:task/views/performance/performance_screen.dart';
 
 class AppRoutes {
   static final routes = [
@@ -219,6 +219,14 @@ class AppRoutes {
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 300),
     ),
-
+    GetPage(
+      name: "/performance",
+      page: () => const PerformanceScreen(),
+      middlewares: [
+        AuthMiddleware(),
+        ProfileCompleteMiddleware(),
+      ],
+      transition: Transition.fadeIn,
+    ),
   ];
 }

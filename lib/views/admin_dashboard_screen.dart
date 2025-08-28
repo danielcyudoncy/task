@@ -318,7 +318,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ),
           ),
         ),
-        bottomNavigationBar: const UserNavBar(currentIndex: 0),
+        bottomNavigationBar:  UserNavBar(currentIndex: 0),
       );
     });
   }
