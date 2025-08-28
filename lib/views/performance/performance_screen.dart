@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:task/views/performance/user_performance_details_screen.dart';
 import '../../controllers/auth_controller.dart';
 
 class PerformanceScreen extends StatefulWidget {
@@ -154,12 +155,14 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   }
 
   void _showPerformanceDetails(BuildContext context, String userId, String userName) {
-    showDialog(
-      context: context,
-      builder: (context) => PerformanceDetailsDialog(
-        userId: userId,
-        userName: userName,
-        currentQuarter: currentQuarter,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserPerformanceDetailsScreen(
+          userId: userId,
+          userName: userName,
+          quarter: currentQuarter,
+        ),
       ),
     );
   }
