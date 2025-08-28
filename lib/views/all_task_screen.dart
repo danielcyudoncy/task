@@ -250,7 +250,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const UserNavBar(currentIndex: 1),
+      bottomNavigationBar:  UserNavBar(currentIndex: 1),
     );
   }
 }

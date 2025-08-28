@@ -2,24 +2,54 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:task/controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
 
 class UserNavBar extends StatelessWidget {
   final int currentIndex;
+  final AuthController _authController = Get.find<AuthController>();
 
-  const UserNavBar({super.key, this.currentIndex = 0});
+  UserNavBar({super.key, this.currentIndex = 0});
 
   void _onTap(int index) {
-    if (index == 0) {
-      Get.toNamed('/profile');
-    } else if (index == 1) {
-      Get.toNamed('/all-tasks');
+    // Adjust index based on available tabs
+    final availableTabs = _getAvailableTabs();
+    if (index < availableTabs.length) {
+      final route = availableTabs[index]['route'];
+      Get.toNamed(route);
     }
+  }
+
+  List<Map<String, dynamic>> _getAvailableTabs() {
+    final role = _authController.userRole.value.toString().trim();
+    print('Current user role: "$role"'); // Debug log with quotes to check for whitespace
+    
+    final tabs = [
+      {'icon': Icons.person, 'title': 'Profile', 'route': '/profile'},
+      {'icon': Icons.list, 'title': 'Tasks', 'route': '/all-tasks'},
+    ];
+
+    // Add Performance tab only for specific roles
+    final allowedRoles = ['Admin', 'Assignment Editor', 'Head of Department'];
+    final shouldShowPerformanceTab = allowedRoles.contains(role);
+    
+    print('Should show Performance tab: $shouldShowPerformanceTab');
+    
+    if (shouldShowPerformanceTab) {
+      tabs.add({'icon': Icons.assessment, 'title': 'Performance', 'route': '/performance'});
+    }
+
+    print('Final tabs: ${tabs.map((t) => t['title']).toList()}');
+    return tabs;
   }
 
   @override
   Widget build(BuildContext context) {
     final isLightMode = Theme.of(context).brightness == Brightness.light;
+    final availableTabs = _getAvailableTabs();
+    
+    // Adjust the current index based on available tabs
+    final adjustedIndex = currentIndex < availableTabs.length ? currentIndex : 0;
 
     return ConvexAppBar(
       style: TabStyle.react,
@@ -27,12 +57,11 @@ class UserNavBar extends StatelessWidget {
       activeColor: AppColors.primaryColor,
       color: Colors.grey,
       elevation: 12,
-      initialActiveIndex: currentIndex,
+      initialActiveIndex: adjustedIndex,
       onTap: _onTap,
-      items: const [
-        TabItem(icon: Icons.person, title: 'Profile'),
-        TabItem(icon: Icons.list, title: 'All Tasks'),
-      ],
+      items: availableTabs.map((tab) => 
+        TabItem(icon: tab['icon'] as IconData, title: tab['title'] as String)
+      ).toList(),
     );
   }
 }

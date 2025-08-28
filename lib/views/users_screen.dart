@@ -228,7 +228,7 @@ class UserScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const UserNavBar(currentIndex: 2),
+      bottomNavigationBar:  UserNavBar(currentIndex: 2),
     );
   }
 }

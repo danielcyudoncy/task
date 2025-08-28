@@ -131,7 +131,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
         onPressed: () => _showAddTaskDialog(context),
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: const UserNavBar(currentIndex: 1),
+      bottomNavigationBar:  UserNavBar(currentIndex: 1),
     );
   }
 
