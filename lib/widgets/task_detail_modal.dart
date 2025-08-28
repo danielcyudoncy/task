@@ -146,7 +146,7 @@ class TaskDetailModal extends StatelessWidget {
                         task.description,
                         style: textTheme.bodyLarge?.copyWith(
                           color: mainText,
-                          fontSize: 16.sp,
+                          fontSize: 14.sp,
                           height: 1.5,
                         ),
                       ),
@@ -318,7 +318,7 @@ class TaskDetailModal extends StatelessWidget {
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
-              fontSize: 16.sp,
+              fontSize: 14.sp,
             ),
           ),
           const SizedBox(height: 12),
@@ -364,7 +364,7 @@ class TaskDetailModal extends StatelessWidget {
               value,
               style: textTheme.bodyMedium?.copyWith(
                 color: valueColor ?? colorScheme.onSurface,
-                fontSize: 14.sp,
+                fontSize: 12.sp,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
