@@ -1,3 +1,4 @@
+// views/performance/user_performance_details_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,16 +11,12 @@ class UserPerformanceDetailsScreen extends StatefulWidget {
   final String userName;
   final int quarter;
 
-  
-
   const UserPerformanceDetailsScreen({
     super.key,
     required this.userId,
     required this.userName,
     required this.quarter,
   });
-
-  
 
   @override
   State<UserPerformanceDetailsScreen> createState() => _UserPerformanceDetailsScreenState();
@@ -51,289 +48,449 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
   };
 
   @override
+  void initState() {
+    super.initState();
+    // Refresh performance data when screen loads
+    _performanceController.refreshData();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final quarterDates = _quarterDates[widget.quarter]!;
     final dateFormat = DateFormat('MMM d, y');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.userName}\'s Q${widget.quarter} Performance'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              // Refresh data
-              setState(() {});
+    return DefaultTextStyle(
+      style: DefaultTextStyle.of(context).style,
+      child: Scaffold(
+        appBar: AppBar(
+          title: FutureBuilder<DocumentSnapshot>(
+            future: _firestore.collection('users').doc(widget.userId).get(),
+            builder: (context, snapshot) {
+              debugPrint('FutureBuilder state: ${snapshot.connectionState}');
+              debugPrint('User ID: ${widget.userId}');
+              debugPrint('Widget username: ${widget.userName}');
+              
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Text('Loading...');
+              }
+              
+              if (snapshot.hasError) {
+                debugPrint('Error: ${snapshot.error}');
+                return Text('${widget.userName}\'s Q${widget.quarter} Performance');
+              }
+              
+              if (!snapshot.hasData || !snapshot.data!.exists) {
+                debugPrint('No user data found for ID: ${widget.userId}');
+                return Text('${widget.userName}\'s Q${widget.quarter} Performance');
+              }
+              
+              final userData = snapshot.data!.data() as Map<String, dynamic>?;
+              debugPrint('User data: $userData');
+              
+              final displayName = userData?['displayName']?.toString();
+              debugPrint('Display name from DB: $displayName');
+              
+              final userName = displayName?.isNotEmpty == true ? displayName : widget.userName;
+              return Text('$userName\'s Q${widget.quarter} Performance');
             },
           ),
-        ],
-      ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: _firestore.collection('users').doc(widget.userId).snapshots(),
-        builder: (context, userSnapshot) {
-          if (userSnapshot.hasError) {
-            return Center(child: Text('Error: ${userSnapshot.error}'));
-          }
-
-          if (userSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-          final userRole = userData['role'] ?? 'No Role';
-          final photoUrl = userData['photoUrl'] as String?;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // User Info Card
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundImage: photoUrl != null
-                              ? NetworkImage(photoUrl)
-                              : null,
-                          child: photoUrl == null
-                              ? const Icon(Icons.person, size: 40)
-                              : null,
-                        ),
-                        const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.userName,
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                            Text(userRole),
-                            Text(
-                              'Q${widget.quarter} ${quarterDates['start']!.year}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            Text(
-                              '${dateFormat.format(quarterDates['start']!)} - ${dateFormat.format(quarterDates['end']!)}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Performance Overview
-                Text(
-                  'Performance Overview',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                _buildPerformanceOverview(),
-
-                const SizedBox(height: 24),
-                
-                // Task Statistics
-                Text(
-                  'Task Statistics',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                _buildTaskStatistics(),
-
-                const SizedBox(height: 24),
-                
-                // Recent Activity
-                Text(
-                  'Recent Activity',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                _buildRecentActivity(),
-
-                const SizedBox(height: 24),
-              ],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                setState(() {});
+                _performanceController.refreshData();
+              },
             ),
-          );
-        },
+            if (_authController.canAssignTask)
+              IconButton(
+                icon: const Icon(Icons.assignment),
+                onPressed: () {
+                  Get.toNamed('/assign-task', arguments: {'userId': widget.userId});
+                },
+              ),
+          ],
+        ),
+        body: FutureBuilder<DocumentSnapshot>(
+          future: _firestore.collection('users').doc(widget.userId).get(),
+          builder: (context, userSnapshot) {
+            if (userSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (userSnapshot.hasError) {
+              return _buildErrorWidget('Error loading user data: ${userSnapshot.error}');
+            }
+
+            if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+              return const Center(
+                child: Text('User data not found'),
+              );
+            }
+
+            final userData = userSnapshot.data!.data() as Map<String, dynamic>? ?? {};
+            final String displayName = userData['displayName'] ?? widget.userName;
+            final String userRole = userData['role']?.toString().toUpperCase() ?? 'NO ROLE';
+            final String? photoUrl = userData['photoUrl'] as String?;
+            final String? email = userData['email'] as String?;
+            final String? phone = userData['phone'] as String?;
+
+            return StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('tasks')
+                  .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(_quarterDates[widget.quarter]!['start']!))
+                  .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(_quarterDates[widget.quarter]!['end']!))
+                  .snapshots(),
+              builder: (context, taskSnapshot) {
+                if (taskSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (taskSnapshot.hasError) {
+                  return _buildErrorWidget('Error loading tasks: ${taskSnapshot.error}');
+                }
+
+                // Filter tasks for this user
+                final assignmentFields = [
+                  'assignedReporterId',
+                  'assignedCameramanId',
+                  'assignedDriverId',
+                  'assignedLibrarianId',
+                ];
+
+                final allTasks = taskSnapshot.hasData ? taskSnapshot.data!.docs : <QueryDocumentSnapshot>[];
+                final userTasks = allTasks.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return assignmentFields.any((field) {
+                    final assignedUserId = data[field] as String?;
+                    return assignedUserId == widget.userId;
+                  }) || data['assignedTo'] == widget.userId;
+                }).toList();
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // User Info Card
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Theme.of(context).primaryColor.withAlpha(10),
+                                backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                                    ? NetworkImage(photoUrl) as ImageProvider<Object>?
+                                    : null,
+                                child: photoUrl == null || photoUrl.isEmpty
+                                    ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                                    : null,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        userRole,
+                                        style: TextStyle(
+                                          color: Theme.of(context).primaryColor,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    if (email != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        email,
+                                        style: Theme.of(context).textTheme.bodySmall,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                    if (phone != null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        phone,
+                                        style: Theme.of(context).textTheme.bodySmall,
+                                      ),
+                                    ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Q${widget.quarter} ${quarterDates['start']!.year}',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${dateFormat.format(quarterDates['start']!)} - ${dateFormat.format(quarterDates['end']!)}',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Performance Overview
+                      Text(
+                        'Performance Overview',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildPerformanceOverview(userTasks),
+
+                      const SizedBox(height: 24),
+                      
+                      // Task Statistics
+                      Text(
+                        'Task Statistics',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildTaskStatistics(userTasks),
+
+                      const SizedBox(height: 24),
+                      
+                      // Recent Activity
+                      Text(
+                        'Recent Activity',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildRecentActivity(userTasks),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildPerformanceOverview() {
+  Widget _buildPerformanceOverview(List<QueryDocumentSnapshot> tasks) {
+    // Get user performance data from controller if available
+    final userPerformanceData = _performanceController.userPerformanceData
+        .firstWhereOrNull((user) => user['userId'] == widget.userId);
+
+    final completedTasks = tasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'Completed';
+    }).toList();
+
+    final completionRate = tasks.isNotEmpty 
+        ? (completedTasks.length / tasks.length) * 100.0 
+        : 0.0;
+    final performanceScore = _calculatePerformanceScore(tasks);
+
+    // Use performance grade from controller if available
+    final performanceGrade = userPerformanceData?['performanceGrade'] ?? 
+        _calculatePerformanceGrade(completionRate);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: _firestore
-              .collection('tasks')
-              .where('assignedTo', isEqualTo: widget.userId)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            }
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final tasks = snapshot.data!.docs;
-            final completedTasks = tasks.where((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return data['status'] == 'Completed';
-            }).length;
-
-            final completionRate = tasks.isNotEmpty ? (completedTasks / tasks.length) * 100.0 : 0.0;
-            final performanceScore = _calculatePerformanceScore(tasks);
-
-            return Column(
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatistic('Total Tasks', '${tasks.length}'),
-                    _buildStatistic('Completed', '$completedTasks'),
-                    _buildStatistic('Completion Rate', '${completionRate.toStringAsFixed(1)}%'),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                LinearProgressIndicator(
-                  value: completionRate / 100,
-                  minHeight: 10,
-                  borderRadius: BorderRadius.circular(5),
-                  color: _getPerformanceColor(completionRate),
-                ),
-                const SizedBox(height: 8),
+                _buildStatistic('Total Tasks', '${tasks.length}'),
+                _buildStatistic('Completed', '${completedTasks.length}'),
+                _buildStatistic('Completion Rate', '${completionRate.toStringAsFixed(1)}%'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            LinearProgressIndicator(
+              value: tasks.isNotEmpty ? (completionRate / 100) : 0.0,
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(5),
+              color: _getPerformanceColor(completionRate),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Text(
                   'Performance Score: ${performanceScore.toStringAsFixed(1)}/10',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getGradeColor(performanceGrade),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Grade: $performanceGrade',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTaskStatistics() {
+  Widget _buildTaskStatistics(List<QueryDocumentSnapshot> userTasks) {
+    // Calculate task statistics from the provided userTasks
+
+    final completedTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'Completed';
+    }).toList();
+
+    final inProgressTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'In Progress';
+    }).toList();
+
+    final pendingTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'Pending' || data?['status'] == 'Assigned';
+    }).toList();
+
+    final overdueTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      DateTime? dueDate;
+      try {
+        final dueDateValue = data?['dueDate'];
+        if (dueDateValue is Timestamp) {
+          dueDate = dueDateValue.toDate();
+        } else if (dueDateValue is String) {
+          dueDate = DateTime.tryParse(dueDateValue);
+        }
+      } catch (e) {
+        dueDate = null;
+      }
+      final status = data?['status'] as String?;
+      return dueDate != null && 
+             status != 'Completed' && 
+             dueDate.isBefore(DateTime.now());
+    }).toList();
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: _firestore
-              .collection('tasks')
-              .where('assignedTo', isEqualTo: widget.userId)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            }
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final tasks = snapshot.data!.docs;
-            final completedTasks = tasks.where((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return data['status'] == 'Completed';
-            }).toList();
-
-            final inProgressTasks = tasks.where((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return data['status'] == 'In Progress';
-            }).toList();
-
-            final pendingTasks = tasks.where((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return data['status'] == 'Pending' || data['status'] == 'Assigned';
-            }).toList();
-
-            final overdueTasks = tasks.where((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final dueDate = (data['dueDate'] as Timestamp?)?.toDate();
-              final status = data['status'] as String?;
-              return dueDate != null && 
-                     status != 'Completed' && 
-                     dueDate.isBefore(DateTime.now());
-            }).toList();
-
-            return Column(
-              children: [
-                _buildStatisticRow('Completed', completedTasks.length, tasks.length, Colors.green),
-                _buildStatisticRow('In Progress', inProgressTasks.length, tasks.length, Colors.blue),
-                _buildStatisticRow('Pending', pendingTasks.length, tasks.length, Colors.orange),
-                _buildStatisticRow('Overdue', overdueTasks.length, tasks.length, Colors.red),
-              ],
-            );
-          },
+        child: Column(
+          children: [
+            _buildStatisticRow('Completed', completedTasks.length, userTasks.length, Colors.green),
+            _buildStatisticRow('In Progress', inProgressTasks.length, userTasks.length, Colors.blue),
+            _buildStatisticRow('Pending', pendingTasks.length, userTasks.length, Colors.orange),
+            _buildStatisticRow('Overdue', overdueTasks.length, userTasks.length, Colors.red),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildRecentActivity() {
+  Widget _buildRecentActivity(List<QueryDocumentSnapshot> userTasks) {
+    // Display recent activity from the provided userTasks
+
+    if (userTasks.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Center(child: Text('No recent activity found')),
+        ),
+      );
+    }
+
+    // Sort tasks by updatedAt in descending order
+    final sortedTasks = List<QueryDocumentSnapshot>.from(userTasks);
+    sortedTasks.sort((a, b) {
+      final aData = a.data() as Map<String, dynamic>;
+      final bData = b.data() as Map<String, dynamic>;
+      
+      DateTime aUpdatedAt = DateTime(1970);
+      DateTime bUpdatedAt = DateTime(1970);
+      
+      try {
+        final aValue = aData['updatedAt'];
+        if (aValue is Timestamp) {
+          aUpdatedAt = aValue.toDate();
+        } else if (aValue is String) {
+          aUpdatedAt = DateTime.tryParse(aValue) ?? DateTime(1970);
+        }
+      } catch (e) {
+        aUpdatedAt = DateTime(1970);
+      }
+      
+      try {
+        final bValue = bData['updatedAt'];
+        if (bValue is Timestamp) {
+          bUpdatedAt = bValue.toDate();
+        } else if (bValue is String) {
+          bUpdatedAt = DateTime.tryParse(bValue) ?? DateTime(1970);
+        }
+      } catch (e) {
+        bUpdatedAt = DateTime(1970);
+      }
+      
+      return bUpdatedAt.compareTo(aUpdatedAt);
+    });
+
     return Card(
-      child: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('tasks')
-            .where('assignedTo', isEqualTo: widget.userId)
-            .orderBy('updatedAt', descending: true)
-            .limit(5)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text('Error: ${snapshot.error}'),
-            );
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final tasks = snapshot.data!.docs;
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: sortedTasks.length,
+        itemBuilder: (context, index) {
+          final task = sortedTasks[index];
+          final data = task.data() as Map<String, dynamic>? ?? {};
+          final title = data['title'] as String? ?? 'No Title';
+          final status = data['status'] as String? ?? 'Unknown';
+          DateTime? updatedAt;
+           try {
+             final updatedAtValue = data['updatedAt'];
+             if (updatedAtValue is Timestamp) {
+               updatedAt = updatedAtValue.toDate();
+             } else if (updatedAtValue is String) {
+               updatedAt = DateTime.tryParse(updatedAtValue);
+             }
+           } catch (e) {
+             updatedAt = null;
+           }
           
-          if (tasks.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text('No recent activity found.'),
-            );
-          }
-
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              final data = task.data() as Map<String, dynamic>;
-              final title = data['title'] as String? ?? 'No Title';
-              final status = data['status'] as String? ?? 'Unknown';
-              final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
-              
-              return ListTile(
-                title: Text(title),
-                subtitle: Text('Status: $status'),
-                trailing: Text(
-                  updatedAt != null 
-                    ? DateFormat('MMM d, y').format(updatedAt)
-                    : 'N/A',
-                ),
-                onTap: () {
-                  // Navigate to task details if needed
-                  // Get.to(() => TaskDetailsScreen(taskId: task.id));
-                },
-              );
-            },
+          return ListTile(
+            title: Text(title),
+            subtitle: Text('Status: $status'),
+            trailing: Text(
+              updatedAt != null 
+                ? DateFormat('MMM d, y').format(updatedAt)
+                : 'N/A',
+            ),
           );
         },
       ),
@@ -381,7 +538,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
           const SizedBox(height: 4),
           LinearProgressIndicator(
             value: count / (total == 0 ? 1 : total),
-            backgroundColor: color.withOpacity(0.2),
+            backgroundColor: color.withAlpha(20),
             color: color,
             minHeight: 6,
             borderRadius: BorderRadius.circular(3),
@@ -400,66 +557,121 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
     for (final task in tasks) {
       final data = task.data() as Map<String, dynamic>;
       final status = data['status'] as String? ?? '';
-      final dueDate = (data['dueDate'] as Timestamp?)?.toDate();
-      final completedAt = (data['completedAt'] as Timestamp?)?.toDate();
+      DateTime? dueDate;
+      DateTime? completedAt;
+      
+      try {
+        final dueDateValue = data['dueDate'];
+        if (dueDateValue is Timestamp) {
+          dueDate = dueDateValue.toDate();
+        } else if (dueDateValue is String) {
+          dueDate = DateTime.tryParse(dueDateValue);
+        }
+      } catch (e) {
+        dueDate = null;
+      }
+      
+      try {
+        final completedAtValue = data['completedAt'];
+        if (completedAtValue is Timestamp) {
+          completedAt = completedAtValue.toDate();
+        } else if (completedAtValue is String) {
+          completedAt = DateTime.tryParse(completedAtValue);
+        }
+      } catch (e) {
+        completedAt = null;
+      }
       
       // Base score based on status
       int taskScore = 0;
       
-      switch (status.toLowerCase()) {
-        case 'completed':
+      switch (status) {
+        case 'Completed':
           taskScore = 10; // Full points for completed tasks
-          
-          // Bonus for early completion, penalty for late completion
-          if (dueDate != null && completedAt != null) {
-            if (completedAt.isBefore(dueDate)) {
-              taskScore += 2; // Bonus for early completion
-            } else if (completedAt.isAfter(dueDate)) {
-              taskScore -= 3; // Penalty for late completion
-            }
-          }
           break;
-          
-        case 'in progress':
-          taskScore = 5; // Half points for in-progress tasks
-          
-          // Check if task is approaching deadline
-          if (dueDate != null) {
-            final daysUntilDue = dueDate.difference(DateTime.now()).inDays;
-            if (daysUntilDue < 0) {
-              taskScore -= 2; // Penalty for overdue tasks
-            } else if (daysUntilDue <= 2) {
-              taskScore += 1; // Small bonus for tasks due soon
-            }
-          }
+        case 'In Progress':
+          taskScore = 7; // 70% for in-progress tasks
           break;
-          
-        case 'pending':
-        case 'assigned':
-          taskScore = 2; // Minimal points for pending/assigned tasks
-          
-          // Check if task is overdue
-          if (dueDate != null && DateTime.now().isAfter(dueDate)) {
-            taskScore = 0; // No points for overdue tasks
-          }
+        case 'Pending':
+        case 'Assigned':
+          taskScore = 3; // 30% for pending/assigned tasks
           break;
-          
         default:
-          taskScore = 0;
+          taskScore = 0; // No points for other statuses
       }
       
-      // Ensure score is within bounds
+      // Bonus points for early completion
+      if (status == 'Completed' && dueDate != null && completedAt != null) {
+        if (completedAt.isBefore(dueDate)) {
+          taskScore += 2; // 2 bonus points for early completion
+        } else if (completedAt.isAfter(dueDate)) {
+          taskScore = (taskScore * 0.8).round(); // 20% penalty for late completion
+        }
+      }
+      
+      // Ensure score is within 0-10 range
       taskScore = taskScore.clamp(0, 10);
       totalScore += taskScore;
     }
     
-    // Calculate average score out of 10
-    return (totalScore / tasks.length).clamp(0.0, 10.0);
+    // Calculate final score as a percentage of max possible score
+    final double finalScore = (totalScore / maxPossibleScore) * 10;
+    return finalScore;
   }
 
   Color _getPerformanceColor(double percentage) {
     if (percentage >= 80) return Colors.green;
     if (percentage >= 50) return Colors.orange;
     return Colors.red;
+  }
+
+  Color _getGradeColor(String grade) {
+    switch (grade) {
+      case 'A+':
+      case 'A':
+        return Colors.green;
+      case 'B+':
+      case 'B':
+        return Colors.blue;
+      case 'C+':
+      case 'C':
+        return Colors.orange;
+      case 'D':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _calculatePerformanceGrade(double completionRate) {
+    if (completionRate >= 90) return 'A+';
+    if (completionRate >= 80) return 'A';
+    if (completionRate >= 70) return 'B+';
+    if (completionRate >= 60) return 'B';
+    if (completionRate >= 50) return 'C+';
+    if (completionRate >= 40) return 'C';
+    return 'D';
+  }
+
+  Widget _buildErrorWidget(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 48),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Colors.red),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => setState(() {}),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
   }
 }

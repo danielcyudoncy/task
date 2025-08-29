@@ -1,3 +1,4 @@
+// views/performance/performance_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -155,6 +156,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   }
 
   void _showPerformanceDetails(BuildContext context, String userId, String userName) {
+    final currentQuarter = (DateTime.now().month - 1) ~/ 3 + 1;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -174,11 +176,11 @@ class PerformanceDetailsDialog extends StatefulWidget {
   final int currentQuarter;
 
   const PerformanceDetailsDialog({
-    Key? key,
+    super.key,
     required this.userId,
     required this.userName,
     required this.currentQuarter,
-  }) : super(key: key);
+  });
 
   @override
   State<PerformanceDetailsDialog> createState() => _PerformanceDetailsDialogState();
@@ -276,7 +278,7 @@ class _PerformanceDetailsDialogState extends State<PerformanceDetailsDialog> {
               Text(e.value, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
-        )).toList(),
+        )),
       ],
     );
   }

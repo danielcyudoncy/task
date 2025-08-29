@@ -6,8 +6,6 @@ import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/utils/devices/app_devices.dart';
 import '../controllers/auth_controller.dart';
-import '../utils/snackbar_utils.dart';
-import 'package:task/service/biometric_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,12 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthController _auth = Get.find();
-  final BiometricService _biometricService = BiometricService();
 
   // Safe snackbar method
-  void _safeSnackbar(String title, String message) {
-    SnackbarUtils.showSnackbar(title, message);
-  }
 
   @override
   void initState() {
@@ -54,20 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _biometricLogin() async {
-    if (!await _biometricService.canCheckBiometrics()) {
-      _safeSnackbar('Error', 'Biometric authentication is not available on this device.');
-      return;
-    }
-    final authenticated = await _biometricService.authenticate(reason: 'Please authenticate to login');
-    if (!mounted) return;
-    
-    if (authenticated) {
-      _submit(context);
-    } else {
-      _safeSnackbar('Error', 'Biometric authentication failed.');
-    }
-  }
 
 
   @override
@@ -317,6 +297,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                   return _auth.isLoading.value
                                       ? const Center(child: CircularProgressIndicator())
                                       : ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFF2F80ED),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16)),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 15),
+                                          ),
                                           // Using theme's default button styling
                                           onPressed: () {
                                             Get.find<SettingsController>().triggerFeedback();
@@ -407,7 +397,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: Text(
                                         'create_account'.tr,
                                         style: textTheme.bodyMedium?.copyWith(
-                                          color: colorScheme.secondary,
+                                          color: colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -440,24 +430,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         
                        
-                        const SizedBox(height: 12),
-
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.fingerprint),
-                          label: Text('login_with_fingerprint'.tr),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.secondary,
-                            foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                          ),
-                          onPressed: () async {
-                            Get.find<SettingsController>().triggerFeedback();
-                            _biometricLogin();
-                          },
-                        ),
+                      
                        
                       ],
                     ),

@@ -140,7 +140,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           decoration: InputDecoration(
                             hintText: 'Search tasks...',
                             prefixIcon: Icon(Icons.search,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: Theme.of(context).colorScheme.onPrimary,
                                 size: isTablet ? 24 : 20),
                             filled: true,
                             fillColor:
