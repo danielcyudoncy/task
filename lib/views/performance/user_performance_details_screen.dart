@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/performance_controller.dart';
+import 'package:task/controllers/theme_controller.dart';
 
 class UserPerformanceDetailsScreen extends StatefulWidget {
   final String userId;
@@ -26,6 +27,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PerformanceController _performanceController = Get.find<PerformanceController>();
   final AuthController _authController = Get.find<AuthController>();
+  final ThemeController _themeController = Get.find<ThemeController>();
   
   // Quarter date ranges
   final Map<int, Map<String, DateTime>> _quarterDates = {
@@ -71,7 +73,10 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
               debugPrint('Widget username: ${widget.userName}');
               
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Text('Loading...');
+                return Text(
+                  'Loading...',
+                  style: TextStyle(color: _getAccentTextColor(context)),
+                );
               }
               
               if (snapshot.hasError) {
@@ -123,8 +128,11 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
             }
 
             if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-              return const Center(
-                child: Text('User data not found'),
+              return Center(
+                child: Text(
+                  'User data not found',
+                  style: TextStyle(color: _getAccentTextColor(context)),
+                ),
               );
             }
 
@@ -174,13 +182,14 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                     children: [
                       // User Info Card
                       Card(
+                        color: _getCardBackgroundColor(context),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
                             children: [
                               CircleAvatar(
-                                radius: 40,
-                                backgroundColor: Theme.of(context).primaryColor.withAlpha(10),
+                                radius: 30,
+                                backgroundColor: _getAvatarBackgroundColor(context),
                                 backgroundImage: photoUrl != null && photoUrl.isNotEmpty
                                     ? NetworkImage(photoUrl) as ImageProvider<Object>?
                                     : null,
@@ -197,6 +206,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                                       displayName,
                                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                         fontWeight: FontWeight.bold,
+                                        color: _getAccentTextColor(context),
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -205,13 +215,13 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                        color: _getRoleBadgeBackgroundColor(context),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
                                         userRole,
                                         style: TextStyle(
-                                          color: Theme.of(context).primaryColor,
+                                          color: _getRoleBadgeTextColor(context),
                                           fontWeight: FontWeight.w500,
                                           fontSize: 12,
                                         ),
@@ -221,7 +231,9 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                                       const SizedBox(height: 4),
                                       Text(
                                         email,
-                                        style: Theme.of(context).textTheme.bodySmall,
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: _getAccentTextColor(context),
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -237,13 +249,15 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                                     Text(
                                       'Q${widget.quarter} ${quarterDates['start']!.year}',
                                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Theme.of(context).primaryColor,
+                                        color: _getAccentTextColor(context),
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                     Text(
                                       '${dateFormat.format(quarterDates['start']!)} - ${dateFormat.format(quarterDates['end']!)}',
-                                      style: Theme.of(context).textTheme.bodySmall,
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: _getAccentTextColor(context),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -257,7 +271,9 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                       // Performance Overview
                       Text(
                         'Performance Overview',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: _getPerformanceOverviewHeaderColor(context),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       _buildPerformanceOverview(userTasks),
@@ -267,7 +283,9 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                       // Task Statistics
                       Text(
                         'Task Statistics',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: _getTaskStatisticsHeaderColor(context),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       _buildTaskStatistics(userTasks),
@@ -277,7 +295,9 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                       // Recent Activity
                       Text(
                         'Recent Activity',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: _getRecentActivityHeaderColor(context),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       _buildRecentActivity(userTasks),
@@ -314,6 +334,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
         _calculatePerformanceGrade(completionRate);
 
     return Card(
+      color: _getCardBackgroundColor(context),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -339,7 +360,9 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
               children: [
                 Text(
                   'Performance Score: ${performanceScore.toStringAsFixed(1)}/10',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: _getPerformanceOverviewTextColor(context),
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -401,6 +424,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
     }).toList();
 
     return Card(
+      color: _getCardBackgroundColor(context),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -419,10 +443,16 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
     // Display recent activity from the provided userTasks
 
     if (userTasks.isEmpty) {
-      return const Card(
+      return Card(
+        color: _getCardBackgroundColor(context),
         child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Center(child: Text('No recent activity found')),
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Text(
+              'No recent activity found',
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
+            ),
+          ),
         ),
       );
     }
@@ -462,6 +492,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
     });
 
     return Card(
+      color: _getCardBackgroundColor(context),
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -484,12 +515,19 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
            }
           
           return ListTile(
-            title: Text(title),
-            subtitle: Text('Status: $status'),
+            title: Text(
+              title,
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
+            ),
+            subtitle: Text(
+              'Status: $status',
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
+            ),
             trailing: Text(
               updatedAt != null 
                 ? DateFormat('MMM d, y').format(updatedAt)
                 : 'N/A',
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
             ),
           );
         },
@@ -504,11 +542,14 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
           value,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
+            color: _getAccentTextColor(context),
           ),
         ),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: _getAccentTextColor(context),
+          ),
         ),
       ],
     );
@@ -527,18 +568,22 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
             children: [
               Text(
                 '$label: $count',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: _getTaskStatisticsTextColor(context),
+                ),
               ),
               Text(
                 '${percentage.toStringAsFixed(1)}%',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: _getTaskStatisticsTextColor(context),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           LinearProgressIndicator(
             value: count / (total == 0 ? 1 : total),
-            backgroundColor: color.withAlpha(20),
+            backgroundColor: _getStatisticBarColor(context, color),
             color: color,
             minHeight: 6,
             borderRadius: BorderRadius.circular(3),
@@ -658,12 +703,19 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 48),
+          Icon(
+            Icons.error_outline, 
+            color: _themeController.isDarkMode.value ? Colors.red[300]! : Colors.red, 
+            size: 48,
+          ),
           const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.red),
+            style: TextStyle(
+              fontSize: 16, 
+              color: _getAccentTextColor(context),
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -673,5 +725,74 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
         ],
       ),
     );
+  }
+
+  // Theme-aware color methods
+   Color _getCardBackgroundColor(BuildContext context) {
+      return _themeController.isDarkMode.value
+          ? const Color(0xFF2D2D2D) // Gradient grey for dark mode
+          : const Color(0xFF002060); // Specific dark blue for light mode
+    }
+
+  Color _getAvatarBackgroundColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Theme.of(context).primaryColor.withValues(alpha: 0.3)
+         : Colors.white;
+   }
+
+  Color _getRoleBadgeBackgroundColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Theme.of(context).primaryColor
+         : Colors.white.withValues(alpha: 0.9);
+   }
+
+  Color _getRoleBadgeTextColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Colors.white
+         : const Color(0xFF002060);
+   }
+
+  Color _getAccentTextColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Colors.white
+         : Colors.white;
+   }
+
+  // Colors for section headers (on white/light backgrounds)
+  Color _getPerformanceOverviewHeaderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : const Color(0xFF002060);
+  }
+
+  Color _getTaskStatisticsHeaderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : const Color(0xFF002060);
+  }
+
+  Color _getRecentActivityHeaderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : const Color(0xFF002060);
+  }
+
+  // Colors for text inside cards (on dark blue backgrounds)
+  Color _getPerformanceOverviewTextColor(BuildContext context) {
+    return Colors.white;
+  }
+
+  Color _getTaskStatisticsTextColor(BuildContext context) {
+    return Colors.white;
+  }
+
+  Color _getRecentActivityTextColor(BuildContext context) {
+    return Colors.white;
+  }
+
+  Color _getStatisticBarColor(BuildContext context, Color baseColor) {
+    return _themeController.isDarkMode.value
+        ? baseColor.withValues(alpha: 0.8)
+        : baseColor.withValues(alpha: 0.2);
   }
 }
