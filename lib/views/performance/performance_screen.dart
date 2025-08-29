@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:task/views/performance/user_performance_details_screen.dart';
 import '../../controllers/auth_controller.dart';
+import '../../controllers/theme_controller.dart';
 
 class PerformanceScreen extends StatefulWidget {
   const PerformanceScreen({super.key});
@@ -15,6 +16,7 @@ class PerformanceScreen extends StatefulWidget {
 
 class _PerformanceScreenState extends State<PerformanceScreen> {
   final AuthController _authController = Get.find<AuthController>();
+  final ThemeController _themeController = Get.find<ThemeController>();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Get current quarter
@@ -94,7 +96,12 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: TextStyle(color: _getTitleTextColor(context)),
+              ),
+            );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -102,7 +109,12 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No users found'));
+            return Center(
+              child: Text(
+                'No users found',
+                style: TextStyle(color: _getTitleTextColor(context)),
+              ),
+            );
           }
 
           final users = snapshot.data!.docs;
@@ -115,7 +127,9 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     'Welcome, ${_authController.currentUser?.email ?? 'User'},',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: _getTitleTextColor(context),
+                    ),
                   ),
                 ),
               Expanded(
@@ -130,18 +144,41 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
 
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: _getCardBackgroundColor(context),
                       child: ListTile(
                         leading: CircleAvatar(
+                          backgroundColor: _getAvatarBackgroundColor(context),
                           backgroundImage: photoUrl != null
                               ? NetworkImage(photoUrl)
                               : null,
                           child: photoUrl == null
-                              ? Text(fullName.isNotEmpty ? fullName[0].toUpperCase() : '?')
+                              ? Text(
+                                  fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
+                                  style: TextStyle(
+                                    color: _getAvatarTextColor(context),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
                               : null,
                         ),
-                        title: Text(fullName),
-                        subtitle: Text(role),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        title: Text(
+                          fullName,
+                          style: TextStyle(
+                            color: _getTitleTextColor(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          role,
+                          style: TextStyle(
+                            color: _getSubtitleTextColor(context),
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: _getIconColor(context),
+                        ),
                         onTap: () => _showPerformanceDetails(context, user.id, fullName),
                       ),
                     );
@@ -154,6 +191,43 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
       ),
     );
   }
+
+  Color _getCardBackgroundColor(BuildContext context) {
+      return _themeController.isDarkMode.value
+          ? const Color(0xFF2D2D2D) // Gradient grey for dark mode
+          : const Color(0xFF002060); // Specific dark blue for light mode
+    }
+ 
+   Color _getAvatarBackgroundColor(BuildContext context) {
+      return _themeController.isDarkMode.value
+    ? Theme.of(context).primaryColor.withValues(alpha: 0.3)
+    : Colors.white.withValues(alpha: 0.2);
+
+    }
+
+  Color _getAvatarTextColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Colors.white
+         : const Color(0xFF002060);
+   }
+
+  Color _getTitleTextColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Colors.white
+         : Colors.white;
+   }
+
+  Color _getSubtitleTextColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Colors.white70
+         : Colors.white70;
+   }
+
+  Color _getIconColor(BuildContext context) {
+     return _themeController.isDarkMode.value
+         ? Colors.white70
+         : Colors.white70;
+   }
 
   void _showPerformanceDetails(BuildContext context, String userId, String userName) {
     final currentQuarter = (DateTime.now().month - 1) ~/ 3 + 1;
