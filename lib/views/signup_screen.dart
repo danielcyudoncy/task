@@ -265,6 +265,16 @@ class SignUpScreen extends StatelessWidget {
                                     : SizedBox(
                                         width: double.infinity,
                                         child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFF2F80ED),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16)),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 15),
+                                          ),
                                           // Using theme's default button styling
                                           onPressed: () => _signUp(context),
                                           child: Text(
@@ -335,7 +345,7 @@ class SignUpScreen extends StatelessWidget {
                                     child: Text(
                                       'sign_in'.tr,
                                       style: textTheme.bodyMedium?.copyWith(
-                                        color: colorScheme.secondary,
+                                        color: colorScheme.onSurface,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'raleway',
                                       ),
