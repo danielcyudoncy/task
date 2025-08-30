@@ -1,9 +1,9 @@
 // views/performance/user_performance_details_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/performance_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
 
@@ -26,7 +26,6 @@ class UserPerformanceDetailsScreen extends StatefulWidget {
 class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PerformanceController _performanceController = Get.find<PerformanceController>();
-  final AuthController _authController = Get.find<AuthController>();
   final ThemeController _themeController = Get.find<ThemeController>();
   
   // Quarter date ranges
@@ -68,9 +67,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
           title: FutureBuilder<DocumentSnapshot>(
             future: _firestore.collection('users').doc(widget.userId).get(),
             builder: (context, snapshot) {
-              debugPrint('FutureBuilder state: ${snapshot.connectionState}');
-              debugPrint('User ID: ${widget.userId}');
-              debugPrint('Widget username: ${widget.userName}');
+              
               
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Text(
@@ -80,23 +77,22 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
               }
               
               if (snapshot.hasError) {
-                debugPrint('Error: ${snapshot.error}');
+                
                 return Text('${widget.userName}\'s Q${widget.quarter} Performance');
               }
               
               if (!snapshot.hasData || !snapshot.data!.exists) {
-                debugPrint('No user data found for ID: ${widget.userId}');
+                
                 return Text('${widget.userName}\'s Q${widget.quarter} Performance');
               }
               
               final userData = snapshot.data!.data() as Map<String, dynamic>?;
-              debugPrint('User data: $userData');
+             
               
-              final displayName = userData?['displayName']?.toString();
-              debugPrint('Display name from DB: $displayName');
+              userData?['displayName']?.toString();
+             
               
-              final userName = displayName?.isNotEmpty == true ? displayName : widget.userName;
-              return Text('$userName\'s Q${widget.quarter} Performance');
+              return Center(child: Text('Q${widget.quarter} Performance'));
             },
           ),
           actions: [
@@ -107,13 +103,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                 _performanceController.refreshData();
               },
             ),
-            if (_authController.canAssignTask)
-              IconButton(
-                icon: const Icon(Icons.assignment),
-                onPressed: () {
-                  Get.toNamed('/assign-task', arguments: {'userId': widget.userId});
-                },
-              ),
+            
           ],
         ),
         body: FutureBuilder<DocumentSnapshot>(
@@ -216,14 +206,14 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: _getRoleBadgeBackgroundColor(context),
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         userRole,
                                         style: TextStyle(
                                           color: _getRoleBadgeTextColor(context),
                                           fontWeight: FontWeight.w500,
-                                          fontSize: 12,
+                                          fontSize: 12.sp,
                                         ),
                                       ),
                                     ),
@@ -272,7 +262,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                       Text(
                         'Performance Overview',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: _getPerformanceOverviewHeaderColor(context),
+                          color: _getPerformanceOverviewHeaderColor(context), fontFamily: 'Raleway'
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -284,7 +274,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                       Text(
                         'Task Statistics',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: _getTaskStatisticsHeaderColor(context),
+                          color: _getTaskStatisticsHeaderColor(context), fontFamily: 'Raleway'
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -297,6 +287,7 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                         'Recent Activity',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: _getRecentActivityHeaderColor(context),
+                          fontFamily: 'Raleway',
                         ),
                       ),
                       const SizedBox(height: 8),
