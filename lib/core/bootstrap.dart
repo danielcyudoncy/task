@@ -14,19 +14,20 @@ import 'package:task/service/export_service.dart';
 import '../my_app.dart';
 
 // --- Ensure all your controllers and services are imported ---
-import 'package:task/controllers/admin_controller.dart';
 import 'package:task/controllers/app_lock_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/chat_controller.dart';
 import 'package:task/controllers/manage_users_controller.dart';
 import 'package:task/controllers/notification_controller.dart';
 import 'package:task/controllers/privacy_controller.dart';
+import 'package:task/controllers/quarterly_transition_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/user_controller.dart';
-
 import 'package:task/controllers/wallpaper_controller.dart';
+import 'package:task/controllers/admin_controller.dart';
+import 'package:task/service/quarterly_transition_service.dart';
 import 'package:task/firebase_options.dart';
 
 import 'package:task/service/cloud_function_user_deletion_service.dart';
@@ -126,10 +127,11 @@ Future<void> bootstrapApp() async {
     final audioPlayer = await _initializeAudioPlayer();
     debugPrint("🚀 BOOTSTRAP: Audio player initialized");
     
-    // Initialize controllers
-    debugPrint("🚀 BOOTSTRAP: Initializing controllers");
-    Get.put(ThemeController(), permanent: true);
-    Get.put(SettingsController(audioPlayer), permanent: true);
+    // Initialize services
+    debugPrint("🚀 BOOTSTRAP: Initializing services");
+    await _initializeService(() => AuthController(), 'AuthController');
+    await _initializeService(() => ThemeController(), 'ThemeController');
+    await _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService');
     
     // Initialize other services with proper error handling
     await _initializeService<FirebaseStorageService>(
@@ -200,16 +202,28 @@ Future<void> bootstrapApp() async {
     debugPrint('🚀 BOOTSTRAP: Putting remaining controllers...');
     debugPrint('🚀 BOOTSTRAP: Putting AppLockController');
     Get.put(AppLockController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting AdminController');
-    Get.put(AdminController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting UserController');
-    Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting PresenceService');
-    Get.put(PresenceService(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting ChatController');
-    Get.put(ChatController(), permanent: true);
+    debugPrint('🚀 BOOTSTRAP: Putting ThemeController');
+    Get.put(ThemeController(), permanent: true);
+    debugPrint('🚀 BOOTSTRAP: Putting SettingsController');
+    Get.put(SettingsController(audioPlayer), permanent: true);
+    
+    // Initialize QuarterlyTransitionController
+    debugPrint("🚀 BOOTSTRAP: Initializing QuarterlyTransitionController");
+    Get.put(QuarterlyTransitionController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting TaskController');
     Get.put(TaskController(), permanent: true);
+    
+    debugPrint('🚀 BOOTSTRAP: Putting UserController');
+    Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
+    
+    debugPrint('🚀 BOOTSTRAP: Putting PresenceService');
+    Get.put(PresenceService(), permanent: true);
+    
+    debugPrint('🚀 BOOTSTRAP: Putting AdminController');
+    Get.put(AdminController(), permanent: true);
+    
+    debugPrint('🚀 BOOTSTRAP: Putting ChatController');
+    Get.put(ChatController(), permanent: true);
     
     // Initialize services that depend on controllers
     await _initializeService<BulkOperationsService>(
@@ -226,6 +240,10 @@ Future<void> bootstrapApp() async {
     Get.put(PrivacyController(), permanent: true);
     debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
     Get.put(WallpaperController(), permanent: true);
+    
+    // Initialize QuarterlyTransitionService
+    debugPrint('🚀 BOOTSTRAP: Initializing QuarterlyTransitionService');
+    await _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService');
 
     debugPrint('🚀 BOOTSTRAP: All controllers initialized successfully');
     
@@ -259,7 +277,7 @@ Future<void> bootstrapApp() async {
   }
 }
 
-Future<void> _initializeService<T extends GetxService>(
+Future<void> _initializeService<T>(
   T Function() create, 
   String serviceName
 ) async {
