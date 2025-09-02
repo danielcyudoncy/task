@@ -119,7 +119,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 
                 return PopScope(
                   canPop: false,
-                  onPopInvoked: (didPop) async {
+                  onPopInvokedWithResult: (didPop, result) async {
                     if (didPop) return;
                     final shouldExit = await _showExitConfirmationDialog();
                     if (shouldExit) {

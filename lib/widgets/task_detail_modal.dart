@@ -134,6 +134,10 @@ class TaskDetailModal extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
+                    // Completion Comments
+                    _buildCompletionComments(context),
+                    const SizedBox(height: 16),
+
                     // Description
                     Container(
                       width: double.infinity,
@@ -261,12 +265,12 @@ class TaskDetailModal extends StatelessWidget {
                       ],
                     ),
 
-                    // Comments (if available)
-                    if (task.comments.isNotEmpty) ...[
+                    // Comments (if available and task is not approved)
+                    if (task.comments.isNotEmpty && task.approvalStatus?.toLowerCase() != 'approved') ...[
                       const SizedBox(height: 16),
                       _buildDetailSection(
                         context,
-                        'Comments (${task.comments.length})',
+                        'Pending Comments (${task.comments.length})',
                         task.comments
                             .map((comment) => Container(
                                   width: double.infinity,
@@ -275,6 +279,10 @@ class TaskDetailModal extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     color: colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: colorScheme.errorContainer.withOpacity(0.5),
+                                      width: 1,
+                                    ),
                                   ),
                                   child: Text(
                                     comment,
@@ -325,6 +333,75 @@ class TaskDetailModal extends StatelessWidget {
           ...children,
         ],
       ),
+    );
+  }
+
+  Widget _buildCompletionComments(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    
+    // Check if there are any completion info entries
+    if (task.reportCompletionInfo.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    // Get the first completion info entry
+    final completionInfo = task.reportCompletionInfo.values.first;
+    
+    return _buildDetailSection(
+      context,
+      'Completion Details',
+      [
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (completionInfo.comments != null && 
+                  completionInfo.comments!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Text(
+                    completionInfo.comments!,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              if (completionInfo.videoEditorName != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'Video Editor: ${completionInfo.videoEditorName}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+              if (completionInfo.airTime != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    'Aired: ${completionInfo.airTime!.toLocal()}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

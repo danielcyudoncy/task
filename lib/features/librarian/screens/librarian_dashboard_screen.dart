@@ -226,6 +226,7 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen>
         );
         return;
       }
+      if (!mounted) return;
 
       // Store theme data before async operation
       final theme = Theme.of(context);

@@ -1,3 +1,4 @@
+// controllers/quarterly_transition_controller.dart
 import 'package:get/get.dart';
 import '../service/quarterly_transition_service.dart';
 
@@ -29,7 +30,6 @@ class QuarterlyTransitionController extends GetxService {
         // You could show a notification or update UI here if needed
       }
     } catch (e) {
-      print('Error in quarterly transition check: $e');
       // Handle error appropriately
     } finally {
       isProcessing.value = false;
@@ -54,7 +54,6 @@ class QuarterlyTransitionController extends GetxService {
       _currentQuarterYear.value = _quarterlyService.getCurrentQuarterYearString();
       return true;
     } catch (e) {
-      print('Error forcing quarter transition: $e');
       return false;
     } finally {
       isProcessing.value = false;

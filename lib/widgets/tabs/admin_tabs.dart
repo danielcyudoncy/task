@@ -1,6 +1,7 @@
 // widgets/tabs/admin_tabs.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../controllers/admin_controller.dart';
 import '../../controllers/auth_controller.dart';
@@ -71,7 +72,7 @@ class TasksTab extends StatelessWidget {
           Text(
             'No tasks available',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 18.sp,
               fontWeight: FontWeight.w600,
               color: Colors.grey[600],
             ),
@@ -80,7 +81,7 @@ class TasksTab extends StatelessWidget {
           Text(
             'Tasks will appear here when created',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 14.sp,
               color: Colors.grey[500],
             ),
           ),
@@ -139,7 +140,7 @@ class TasksTab extends StatelessWidget {
                       child: Text(
                         title,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
@@ -160,7 +161,7 @@ class TasksTab extends StatelessWidget {
                         status,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onPrimary,
-                          fontSize: 11,
+                          fontSize: 11.sp,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -171,8 +172,8 @@ class TasksTab extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 24,
-                      height: 24,
+                      width: 24.w,
+                      height: 24.h,
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
@@ -185,7 +186,7 @@ class TasksTab extends StatelessWidget {
                           creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 12,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -196,7 +197,7 @@ class TasksTab extends StatelessWidget {
                       child: Text(
                         'Created by $creatorName',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 12.sp,
                           color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -215,7 +216,7 @@ class TasksTab extends StatelessWidget {
                         priority,
                         style: TextStyle(
                           color: _getPriorityColor(priority),
-                          fontSize: 10,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -248,7 +249,7 @@ class TasksTab extends StatelessWidget {
                           foregroundColor: Theme.of(context).colorScheme.onPrimary,
                           side: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          textStyle: const TextStyle(fontSize: 12),
+                          textStyle:  TextStyle(fontSize: 12.sp),
                           backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
                         ),
                       ),
@@ -537,7 +538,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
           Text(
             'No pending approvals',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 18.sp,
               fontWeight: FontWeight.w600,
               color: Colors.grey[600],
             ),
@@ -546,7 +547,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
           Text(
             'Tasks requiring approval will appear here',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 14.sp,
               color: Colors.grey[500],
             ),
           ),
@@ -632,7 +633,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                       child: Text(
                         title,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
@@ -653,7 +654,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                         priority,
                         style: TextStyle(
                           color: _getPriorityColor(priority),
-                          fontSize: 10,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -664,8 +665,8 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                 Row(
                   children: [
                     Container(
-                      width: 24,
-                      height: 24,
+                      width: 24.w,
+                      height: 24.h,
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
@@ -678,7 +679,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                           creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 12,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -692,7 +693,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                           Text(
                             creatorName,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w500,
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
@@ -701,7 +702,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                           Text(
                             category,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 10.sp,
                               color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -721,7 +722,7 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                         Text(
                           dateStr,
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 10.sp,
                             color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
                           ),
                           overflow: TextOverflow.ellipsis,
