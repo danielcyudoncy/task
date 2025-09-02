@@ -15,10 +15,45 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _textOpacityAnimation;
   @override
   void initState() {
     super.initState();
+    
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Interval(0.0, 0.5, curve: Curves.easeIn),
+    ));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Interval(0.0, 0.5, curve: Curves.easeOutBack),
+    ));
+
+    _textOpacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Interval(0.5, 0.8, curve: Curves.easeIn),
+    ));
+
+    _controller.forward();
     Timer(const Duration(seconds: 3), () async {
       try {
         
@@ -98,30 +133,42 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Logo with rounded corners - responsive sizing
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16.r),
-                child: Image.asset(
-                  AppIcons.logo,
-                  width: logoSize,
-                  height: logoSize,
-                  fit: BoxFit.contain,
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: Image.asset(
+                      AppIcons.logo,
+                      width: logoSize,
+                      height: logoSize,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(height: orientation == Orientation.portrait ? 6.h : 4.h),
-              Text(
-                'Informing the Nigerian People'.tr,
-                style: textTheme.headlineSmall?.copyWith(
-                  color: colorScheme.onPrimary,
-                  fontFamily: 'Raleway',
-                  fontSize: orientation == Orientation.portrait ? 16.sp : 14.sp,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+              SizedBox(height: orientation == Orientation.portrait ? 8.h : 6.h),
+              FadeTransition(
+                opacity: _textOpacityAnimation,
+                child: Text(
+                  'Informing the Nigerian People'.tr,
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: colorScheme.onPrimary,
+                    fontFamily: 'Raleway',
+                    fontSize: orientation == Orientation.portrait ? 16.sp : 14.sp,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
               SizedBox(height: orientation == Orientation.portrait ? 16.h : 12.h),
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
+              FadeTransition(
+                opacity: _textOpacityAnimation,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
+                ),
               ),
             ],
           ),
