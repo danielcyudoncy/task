@@ -22,7 +22,7 @@ class UserNavBar extends StatelessWidget {
 
   List<Map<String, dynamic>> _getAvailableTabs() {
     final role = _authController.userRole.value.toString().trim();
-    print('Current user role: "$role"'); // Debug log with quotes to check for whitespace
+    // Debug log with quotes to check for whitespace
     
     final tabs = [
       {'icon': Icons.person, 'title': 'Profile', 'route': '/profile'},
@@ -33,13 +33,11 @@ class UserNavBar extends StatelessWidget {
     final allowedRoles = ['Admin', 'Assignment Editor', 'Head of Department'];
     final shouldShowPerformanceTab = allowedRoles.contains(role);
     
-    print('Should show Performance tab: $shouldShowPerformanceTab');
     
     if (shouldShowPerformanceTab) {
       tabs.add({'icon': Icons.assessment, 'title': 'Performance', 'route': '/performance'});
     }
 
-    print('Final tabs: ${tabs.map((t) => t['title']).toList()}');
     return tabs;
   }
 

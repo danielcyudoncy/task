@@ -1,3 +1,4 @@
+// service/quarterly_transition_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
@@ -106,7 +107,7 @@ class QuarterlyTransitionService extends GetxService {
       batch.set(
         performanceRef,
         {
-          '${year}-Q$quarter': metrics,
+          '$year-Q$quarter': metrics,
           'last_updated': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),

@@ -1,5 +1,6 @@
 // widgets/ui_helpers.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class UIHelpers {
   /// Builds an empty state icon with consistent styling
@@ -97,7 +98,7 @@ class UIHelpers {
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 18.sp,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
@@ -123,7 +124,7 @@ class UIHelpers {
             child: Text(
               '$label:',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white70
@@ -135,7 +136,7 @@ class UIHelpers {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 14.sp,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
@@ -160,7 +161,7 @@ class UIHelpers {
       child: Text(
         tag,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 12.sp,
           color: tagColor,
           fontWeight: FontWeight.w500,
         ),
@@ -183,7 +184,7 @@ class UIHelpers {
       child: Text(
         priority.toUpperCase(),
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 10.sp,
           color: color,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
@@ -207,7 +208,7 @@ class UIHelpers {
       child: Text(
         status.toUpperCase(),
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 10.sp,
           color: color,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,

@@ -71,8 +71,8 @@ class UpdateService {
         // For Android, we'll use the in-app update mechanism directly
         // when the user opens the app next time
       }
-    } catch (e) {
-    }
+    // ignore: empty_catches
+    } catch (e) {}
   }
   
   /// Set update check frequency
