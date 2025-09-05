@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:task/views/performance/user_performance_details_screen.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/theme_controller.dart';
-import '../../controllers/quarterly_transition_controller.dart';
 
 class PerformanceScreen extends StatefulWidget {
   const PerformanceScreen({super.key});
@@ -18,11 +17,10 @@ class PerformanceScreen extends StatefulWidget {
 class _PerformanceScreenState extends State<PerformanceScreen> {
   final AuthController _authController = Get.find<AuthController>();
   final ThemeController _themeController = Get.find<ThemeController>();
-  final QuarterlyTransitionController _quarterlyController = Get.find<QuarterlyTransitionController>();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get current quarter from the controller
-  int get currentQuarter => _quarterlyController.getCurrentQuarter();
+  // Get current quarter
+  int get currentQuarter => (DateTime.now().month - 1) ~/ 3 + 1;
 
   @override
   void initState() {
@@ -127,31 +125,11 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
               if (_authController.currentUser != null)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome, ${_authController.currentUser?.email ?? 'User'},',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: _getTitleTextColor(context),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Obx(() => Text(
-                        'Current Quarter: Q${_quarterlyController.getCurrentQuarter()} ${DateTime.now().year}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _getSubtitleTextColor(context),
-                          fontStyle: FontStyle.italic,
-                        ),
-                      )),
-                      Obx(() => _quarterlyController.isProcessing.value
-                          ? const Padding(
-                              padding: EdgeInsets.only(top: 8.0),
-                              child: LinearProgressIndicator(),
-                            )
-                          : const SizedBox.shrink(),
-                      ),
-                    ],
+                  child: Text(
+                    'Welcome, ${_authController.currentUser?.email ?? 'User'},',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: _getTitleTextColor(context),
+                    ),
                   ),
                 ),
               Expanded(
@@ -170,7 +148,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: _getAvatarBackgroundColor(context),
-                          backgroundImage: photoUrl != null
+                          backgroundImage: photoUrl != null && photoUrl.isNotEmpty && Uri.tryParse(photoUrl)?.hasScheme == true
                               ? NetworkImage(photoUrl)
                               : null,
                           child: photoUrl == null

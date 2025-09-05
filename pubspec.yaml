@@ -90,6 +90,8 @@ dependencies:
   # In-app update dependencies
   in_app_update: ^4.2.3
   package_info_plus: ^8.0.2
+  animated_text_kit: ^4.2.2
+  flutter_native_splash: ^2.4.6
 
 
 dev_dependencies:
