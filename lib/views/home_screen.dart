@@ -370,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Theme.of(context).colorScheme.surface,
-                                      Theme.of(context).colorScheme.surfaceVariant
+Theme.of(context).colorScheme.surfaceContainerHighest
                                     ],
                                   )
                                 : LinearGradient(
@@ -378,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Theme.of(context).colorScheme.surface,
-                                      Theme.of(context).colorScheme.surfaceVariant
+Theme.of(context).colorScheme.surfaceContainerHighest
                                     ],
                                   ),
                             borderRadius: const BorderRadius.only(

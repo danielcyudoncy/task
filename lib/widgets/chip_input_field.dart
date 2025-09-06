@@ -42,8 +42,8 @@ class ChipInputField<T> extends StatefulWidget {
     this.onSubmitted,
   });
 
-  @override
-  _ChipInputFieldState<T> createState() => _ChipInputFieldState<T>();
+@override
+  State<ChipInputField<T>> createState() => _ChipInputFieldState<T>();
 }
 
 class _ChipInputFieldState<T> extends State<ChipInputField<T>> {

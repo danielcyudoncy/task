@@ -23,7 +23,7 @@ Future<String?> _getAccessToken() async {
     client.close();
     
     return accessToken;
-  } catch (e) {
+} catch (e) {
     if (kDebugMode) {
       print('❌ Error getting access token: $e');
     }
@@ -47,7 +47,7 @@ Future<void> sendTaskNotification(
         .get();
 
     final userData = userDoc.data();
-    if (userData == null || !userData.containsKey('fcmToken')) {
+if (userData == null || !userData.containsKey('fcmToken')) {
       if (kDebugMode) {
         print("⚠️ No FCM Token found for user: $assignedUserId");
       }
@@ -63,7 +63,7 @@ Future<void> sendTaskNotification(
     final String? accessToken = await _getAccessToken();
     final String? projectId = _getProjectId();
     
-    if (accessToken == null || projectId == null) {
+if (accessToken == null || projectId == null) {
       if (kDebugMode) {
         print("❌ Missing access token or project ID");
       }
@@ -102,16 +102,16 @@ Future<void> sendTaskNotification(
     );
 
     // ✅ Log the Response
-    if (response.statusCode == 200) {
-      if (kDebugMode) {
-        print("✅ Notification sent successfully to $assignedUserId");
+if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print("✅ Notification sent successfully to $assignedUserId");
+        }
+      } else {
+        if (kDebugMode) {
+          print(
+            "❌ Failed to send notification: ${response.statusCode} ${response.body}");
+        }
       }
-    } else {
-      if (kDebugMode) {
-        print(
-          "❌ Failed to send notification: ${response.statusCode} ${response.body}");
-      }
-    }
 
     // ✅ Store Notification in Firestore
     await FirebaseFirestore.instance
@@ -144,7 +144,7 @@ Future<void> sendReportCompletionNotification(
       final adminId = adminDoc.id;
       final fcmToken = adminData['fcmToken'] as String?;
 
-      if (fcmToken == null || fcmToken.isEmpty) {
+if (fcmToken == null || fcmToken.isEmpty) {
         if (kDebugMode) {
           print("⚠️ No FCM Token found for admin user: $adminId");
         }
@@ -155,7 +155,7 @@ Future<void> sendReportCompletionNotification(
       final String? accessToken = await _getAccessToken();
       final String? projectId = _getProjectId();
       
-      if (accessToken == null || projectId == null) {
+if (accessToken == null || projectId == null) {
         if (kDebugMode) {
           print("❌ Missing access token or project ID");
         }
@@ -197,16 +197,16 @@ Future<void> sendReportCompletionNotification(
       );
 
       // Log the Response
-      if (response.statusCode == 200) {
-        if (kDebugMode) {
-          print("✅ Report completion notification sent successfully to admin $adminId");
+if (response.statusCode == 200) {
+          if (kDebugMode) {
+            print("✅ Report completion notification sent successfully to admin $adminId");
+          }
+        } else {
+          if (kDebugMode) {
+            print(
+                "❌ Failed to send report completion notification to admin $adminId: ${response.statusCode} ${response.body}");
+          }
         }
-      } else {
-        if (kDebugMode) {
-          print(
-            "❌ Failed to send report completion notification to admin $adminId: ${response.statusCode} ${response.body}");
-        }
-      }
 
       // Store Notification in Firestore
       await FirebaseFirestore.instance
@@ -224,7 +224,7 @@ Future<void> sendReportCompletionNotification(
         "isRead": false,
       });
     }
-  } catch (e) {
+} catch (e) {
     if (kDebugMode) {
       print("❌ Error sending report completion notification: $e");
     }
@@ -243,7 +243,7 @@ Future<void> sendTaskApprovalNotification(
         .get();
 
     final userData = userDoc.data();
-    if (userData == null || !userData.containsKey('fcmToken')) {
+if (userData == null || !userData.containsKey('fcmToken')) {
       if (kDebugMode) {
         print("⚠️ No FCM Token found for user: $taskCreatorId");
       }
@@ -259,7 +259,7 @@ Future<void> sendTaskApprovalNotification(
     final String? accessToken = await _getAccessToken();
     final String? projectId = _getProjectId();
     
-    if (accessToken == null || projectId == null) {
+if (accessToken == null || projectId == null) {
       if (kDebugMode) {
         print("❌ Missing access token or project ID");
       }
@@ -317,16 +317,16 @@ Future<void> sendTaskApprovalNotification(
     );
 
     // ✅ Log the Response
-    if (response.statusCode == 200) {
-      if (kDebugMode) {
-        print("✅ Task approval notification sent successfully to $taskCreatorId");
+if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print("✅ Task approval notification sent successfully to $taskCreatorId");
+        }
+      } else {
+        if (kDebugMode) {
+          print(
+            "❌ Failed to send task approval notification: ${response.statusCode} ${response.body}");
+        }
       }
-    } else {
-      if (kDebugMode) {
-        print(
-          "❌ Failed to send task approval notification: ${response.statusCode} ${response.body}");
-      }
-    }
 
     // ✅ Store Notification in Firestore
     await FirebaseFirestore.instance
@@ -341,7 +341,7 @@ Future<void> sendTaskApprovalNotification(
       "isRead": false,
     });
   // ignore: empty_catches
-  } catch (e) {
+} catch (e) {
     if (kDebugMode) {
       print("❌ Error sending task approval notification: $e");
     }

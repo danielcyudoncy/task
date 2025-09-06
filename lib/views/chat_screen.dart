@@ -454,8 +454,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       return Center(
                           child: Text('say_hello'.tr,
                               style: TextStyle(
-                                  color: isDarkMode
-                                      ? colorScheme.onBackground
+color: isDarkMode
+                                      ? colorScheme.onSurface
                                       : colorScheme.onPrimary)));
                     }
                     return ListView.builder(
@@ -604,7 +604,7 @@ class _MessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isMe
               ? colorScheme.secondary
-              : (isDark ? colorScheme.surfaceVariant : Colors.white),
+              : (isDark ? colorScheme.surfaceContainerHighest : Colors.white),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -711,7 +711,8 @@ class _MessageInputField extends StatelessWidget {
       child: Material(
         elevation: 6,
         borderRadius: BorderRadius.circular(28),
-        color: isDark ? colorScheme.surfaceVariant : Colors.white,
+color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
+
         child: Row(
           children: [
             Expanded(

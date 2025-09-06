@@ -5,7 +5,7 @@ import '../controllers/auth_controller.dart';
 
 class ProfileCompleteMiddleware extends GetMiddleware {
   @override
-  int? priority = 1;
+  int? get priority => 1;
 
   @override
   RouteSettings? redirect(String? route) {

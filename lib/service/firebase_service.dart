@@ -12,7 +12,7 @@ class FirebaseService {
   Future<DocumentSnapshot?> getUserData(String uid) async {
     try {
       return await _firestore.collection("users").doc(uid).get();
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print("Error fetching user data for UID $uid: $e");
       }
@@ -24,7 +24,7 @@ class FirebaseService {
   Future<void> saveUserData(String uid, Map<String, dynamic> userData) async {
     try {
       await _firestore.collection("users").doc(uid).set(userData);
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print("Error saving user data for UID $uid: $e");
       }
@@ -36,7 +36,7 @@ class FirebaseService {
   Future<void> updateUserData(String uid, Map<String, dynamic> updates) async {
     try {
       await _firestore.collection("users").doc(uid).update(updates);
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print("Error updating user data for UID $uid: $e");
       }
@@ -47,7 +47,7 @@ class FirebaseService {
   // ✅ Delete User (Admin Only)
   Future<void> deleteUser(String userId) async {
     try {
-      await _firestore.collection("users").doc(userId).delete();
+await _firestore.collection("users").doc(userId).delete();
       if (kDebugMode) {
         print("User with ID $userId deleted successfully.");
       }
@@ -66,7 +66,7 @@ class FirebaseService {
           .collection("tasks")
           .where("createdBy", isEqualTo: userId)
           .snapshots();
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print("Error fetching tasks for user ID $userId: $e");
       }
@@ -78,7 +78,7 @@ class FirebaseService {
   Stream<QuerySnapshot> getAllTasks() {
     try {
       return _firestore.collection("tasks").snapshots();
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print("Error fetching all tasks: $e");
       }
@@ -93,7 +93,7 @@ class FirebaseService {
       taskData["taskId"] = taskId;
       taskData["timestamp"] = FieldValue.serverTimestamp(); // ✅ Add timestamp
       await _firestore.collection("tasks").doc(taskId).set(taskData);
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print("Error creating task: $e");
       }
@@ -106,9 +106,6 @@ class FirebaseService {
     try {
       await _firestore.collection("tasks").doc(taskId).update(updates);
     } catch (e) {
-      if (kDebugMode) {
-        print("Error updating task with ID $taskId: $e");
-      }
       rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }
@@ -122,9 +119,6 @@ class FirebaseService {
           .doc(taskId)
           .update({roleField: userId});
     } catch (e) {
-      if (kDebugMode) {
-        print("Error assigning task with ID $taskId to user ID $userId: $e");
-      }
       rethrow; // Rethrow error to handle it at a higher level if needed
     }
   }

@@ -103,7 +103,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                   ),
                   onPressed: () async {
                     await _wallpaperController.setWallpaper('');
-                    if (!mounted) return;
+if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Wallpaper removed!')),
                     );
@@ -128,8 +128,9 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
               itemBuilder: (context, index) {
                 final color = _solidColors[index];
                 // Convert color to a hex string for storage
-                final hexString =
-                    '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+final argb = color.toARGB32();
+                final rgb = (argb & 0x00FFFFFF);
+                final hexString = '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
                 return GestureDetector(
                   onTap: () => _updateWallpaper(hexString),
                   child: Container(
