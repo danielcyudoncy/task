@@ -119,9 +119,9 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final theme = Theme.of(context);
 
-    final isDark = theme.brightness == Brightness.dark;
+final isDark = theme.brightness == Brightness.dark;
     final backgroundColor =
-        isDark ? theme.colorScheme.surfaceVariant : theme.colorScheme.primary;
+        isDark ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.primary;
 
     if (currentUserId == null) {
       return const Scaffold(
