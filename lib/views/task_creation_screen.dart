@@ -191,8 +191,9 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
         while (taskController.isLoading.value) {
           await Future.delayed(const Duration(milliseconds: 100));
         }
-        // Dismiss loading dialog
-        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+// Dismiss loading dialog
+        if (!context.mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
         // Clear form on success
         _titleController.clear();
         _descriptionController.clear();
@@ -214,8 +215,9 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           Get.offAllNamed('/home');
         }
       } catch (e) {
-        // Dismiss loading dialog if error
-        if (mounted) Navigator.of(context, rootNavigator: true).pop();
+// Dismiss loading dialog if error
+        if (!context.mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
         debugPrint('Error creating task: $e');
         Get.snackbar('Error', 'Failed to create task: $e');
       }

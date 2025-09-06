@@ -84,10 +84,10 @@ class DailyTaskNotificationService extends GetxService {
         todayAssignedCount.value = assignedTodayCount;
         _previousAssignedCount = assignedTodayCount;
       },
-      onError: (error) {
-        if (kDebugMode) {
-          print('Error listening to assigned tasks: $error');
-        }
+onError: (error) {
+          if (kDebugMode) {
+            print('Error listening to assigned tasks: $error');
+          }
       },
     );
     
@@ -130,10 +130,10 @@ class DailyTaskNotificationService extends GetxService {
         todayCompletedCount.value = completedTodayCount;
         _previousCompletedCount = completedTodayCount;
       },
-      onError: (error) {
-        if (kDebugMode) {
-          print('Error listening to completed tasks: $error');
-        }
+onError: (error) {
+          if (kDebugMode) {
+            print('Error listening to completed tasks: $error');
+          }
       },
     );
     
@@ -198,10 +198,10 @@ class DailyTaskNotificationService extends GetxService {
         
         todayPendingCount.value = pendingTodayCount;
       },
-      onError: (error) {
-        if (kDebugMode) {
-          print('Error listening to pending tasks: $error');
-        }
+onError: (error) {
+          if (kDebugMode) {
+            print('Error listening to pending tasks: $error');
+          }
       },
     );
   }
@@ -320,7 +320,7 @@ class DailyTaskNotificationService extends GetxService {
       }
       
       return tasks;
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print('Error getting tasks assigned to user today: $e');
       }
@@ -374,7 +374,7 @@ class DailyTaskNotificationService extends GetxService {
       }
       
       return weeklyData;
-    } catch (e) {
+} catch (e) {
       if (kDebugMode) {
         print('Error getting weekly summary: $e');
       }
