@@ -59,11 +59,11 @@ bool get isBootstrapComplete => _isBootstrapComplete;
 
 Future<void> bootstrapApp() async {
   try {
-    debugPrint("🚀 BOOTSTRAP: Starting app initialization");
+    
     
     // Ensure Flutter bindings are initialized
     WidgetsFlutterBinding.ensureInitialized();
-    debugPrint("🚀 BOOTSTRAP: WidgetsFlutterBinding initialized");
+    
     
     // Set preferred orientations
     await SystemChrome.setPreferredOrientations([
@@ -74,24 +74,22 @@ Future<void> bootstrapApp() async {
     // Initialize error handling
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
-      debugPrint('🚨 FLUTTER ERROR: ${details.exception}');
-      debugPrint('🚨 STACK TRACE: ${details.stack}');
+     
     };
     
     // Set uncaught error handler
     PlatformDispatcher.instance.onError = (error, stack) {
-      debugPrint('🚨 UNCAUGHT ERROR: $error');
-      debugPrint('🚨 STACK TRACE: $stack');
+      
       return true;
     };
 
     // Load environment variables
-    debugPrint("🚀 BOOTSTRAP: Loading environment variables");
+    
     await dotenv.load(fileName: "assets/.env");
-    debugPrint("🚀 BOOTSTRAP: Environment variables loaded");
+    
 
     // Initialize Firebase
-    debugPrint("🚀 BOOTSTRAP: Initializing Firebase");
+    
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -100,32 +98,32 @@ Future<void> bootstrapApp() async {
     if (useEmulator) {
       useFirebaseEmulator(emulatorHost);
     }
-    debugPrint("🚀 BOOTSTRAP: Firebase initialized");
+    
     
     // Initialize Firebase services
-    debugPrint("🚀 BOOTSTRAP: Verifying Firebase services");
+    
     await _verifyFirebaseServices();
-    debugPrint("🚀 BOOTSTRAP: Firebase services verified");
+    
     
     // Initialize Firebase Messaging Service
-    debugPrint("🚀 BOOTSTRAP: Initializing Firebase Messaging Service");
+    
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     final firebaseMessagingService = FirebaseMessagingService();
     await firebaseMessagingService.initialize();
     Get.put(firebaseMessagingService, permanent: true);
-    debugPrint("🚀 BOOTSTRAP: Firebase Messaging Service initialized");
+    
 
     // Initialize other services
-    debugPrint("🚀 BOOTSTRAP: Initializing SQLite TaskService");
+    
     final taskService = TaskService();
     await taskService.initialize();
     Get.put(taskService, permanent: true);
-    debugPrint("🚀 BOOTSTRAP: SQLite TaskService initialized");
+    
 
     // Initialize audio player
-    debugPrint("🚀 BOOTSTRAP: Initializing audio player");
+    
     final audioPlayer = await _initializeAudioPlayer();
-    debugPrint("🚀 BOOTSTRAP: Audio player initialized");
+    
     
     // Initialize services
     debugPrint("🚀 BOOTSTRAP: Initializing services");
@@ -192,37 +190,34 @@ Future<void> bootstrapApp() async {
       'AccessControlService',
     );
     
-    debugPrint("🚀 BOOTSTRAP: Services initialized, now initializing controllers");
+    
     
     // Initialize controllers that depend on services
-    debugPrint('🚀 BOOTSTRAP: Putting AuthController...');
+    
     Get.put(AuthController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: AuthController put successfully');
-
-    debugPrint('🚀 BOOTSTRAP: Putting remaining controllers...');
-    debugPrint('🚀 BOOTSTRAP: Putting AppLockController');
+    
     Get.put(AppLockController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting ThemeController');
+    
     Get.put(ThemeController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting SettingsController');
+    
     Get.put(SettingsController(audioPlayer), permanent: true);
     
     // Initialize QuarterlyTransitionController
-    debugPrint("🚀 BOOTSTRAP: Initializing QuarterlyTransitionController");
+    
     Get.put(QuarterlyTransitionController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting TaskController');
+    
     Get.put(TaskController(), permanent: true);
     
-    debugPrint('🚀 BOOTSTRAP: Putting UserController');
+    
     Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
     
-    debugPrint('🚀 BOOTSTRAP: Putting PresenceService');
+    
     Get.put(PresenceService(), permanent: true);
     
-    debugPrint('🚀 BOOTSTRAP: Putting AdminController');
+    
     Get.put(AdminController(), permanent: true);
     
-    debugPrint('🚀 BOOTSTRAP: Putting ChatController');
+    
     Get.put(ChatController(), permanent: true);
     
     // Initialize services that depend on controllers
@@ -231,40 +226,39 @@ Future<void> bootstrapApp() async {
       'BulkOperationsService',
     );
     
-    debugPrint("🚀 BOOTSTRAP: All services and controllers initialized successfully");
-    debugPrint('🚀 BOOTSTRAP: Putting ManageUsersController');
+    
     Get.put(ManageUsersController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting NotificationController');
+   
     Get.put(NotificationController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting PrivacyController');
+    
     Get.put(PrivacyController(), permanent: true);
-    debugPrint('🚀 BOOTSTRAP: Putting WallpaperController');
+    
     Get.put(WallpaperController(), permanent: true);
     
     // Initialize QuarterlyTransitionService
-    debugPrint('🚀 BOOTSTRAP: Initializing QuarterlyTransitionService');
+   
     await _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService');
 
-    debugPrint('🚀 BOOTSTRAP: All controllers initialized successfully');
+    
     
     // Mark app as ready for snackbars
     SnackbarUtils.markAppAsReady();
-    debugPrint('🚀 BOOTSTRAP: App marked as ready for snackbars');
+    
     
     // Mark bootstrap as complete
     _isBootstrapComplete = true;
-    debugPrint('🚀 BOOTSTRAP: Bootstrap marked as complete');
+    
     
     // Ensure widgets are properly initialized
     WidgetsFlutterBinding.ensureInitialized();
     
     // Run the app
     runApp(const MyApp());
-    debugPrint('🚀 BOOTSTRAP: App launched successfully');
+   
     
-  } catch (e, stack) {
-    debugPrint('🚨 CRITICAL ERROR during bootstrap: $e');
-    debugPrint('🚨 STACK TRACE: $stack');
+  } catch (e) {
+    
+    
     
     // Show error UI if bootstrap fails
     runApp(MaterialApp(
@@ -282,15 +276,14 @@ Future<void> _initializeService<T>(
   String serviceName
 ) async {
   try {
-    debugPrint("🚀 BOOTSTRAP: Initializing $serviceName");
+    
     final service = create();
     // Simply put the service into GetX without calling any methods
     // Most GetxService implementations don't need explicit initialization
     Get.put<T>(service, permanent: true);
-    debugPrint("✅ $serviceName initialized successfully");
-  } catch (e, stack) {
-    debugPrint('❌ Failed to initialize $serviceName: $e');
-    debugPrint('Stack trace: $stack');
+    
+  } catch (e) {
+   
     rethrow;
   }
 }
@@ -314,8 +307,9 @@ Future<AudioPlayer> _initializeAudioPlayer() async {
         ),
       ),
     );
+  // ignore: empty_catches
   } catch (e) {
-    debugPrint('⚠️ Audio context setup error: $e');
+    
   }
   return player;
 }
@@ -331,7 +325,7 @@ Future<void> _verifyFirebaseServices() async {
     // --- CORRECTED: Only one call is needed ---
     await rtdb.ref('.info/connected').once();
   } catch (e) {
-    debugPrint("⚠️ Firebase check failed: $e");
+    
     throw Exception(
       'Firebase service verification failed: $e\nPlease check your internet connection or Firebase configuration.',
     );
@@ -348,5 +342,5 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     );
   }
   
-  debugPrint("Handling background message: ${message.messageId}");
+  
 }

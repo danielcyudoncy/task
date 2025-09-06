@@ -280,7 +280,7 @@ class TaskDetailModal extends StatelessWidget {
                                     color: colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: colorScheme.errorContainer.withOpacity(0.5),
+color: colorScheme.errorContainer.withValues(alpha: 0.5),
                                       width: 1,
                                     ),
                                   ),

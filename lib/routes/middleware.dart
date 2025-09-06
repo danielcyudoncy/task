@@ -5,7 +5,7 @@ import '../controllers/auth_controller.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override
-  int? priority = 0;
+  int? get priority => 0;
 
   @override
   RouteSettings? redirect(String? route) {

@@ -10,9 +10,10 @@ void main() {
   // Mock SharedPreferences for testing
   SharedPreferences.setMockInitialValues({});
   
-  // Mock package_info_plus plugin
-  const MethodChannel('dev.fluttercommunity.plus/package_info')
-      .setMockMethodCallHandler((MethodCall methodCall) async {
+// Mock package_info_plus plugin
+  const channel = MethodChannel('dev.fluttercommunity.plus/package_info');
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
     if (methodCall.method == 'getAll') {
       return <String, dynamic>{
         'appName': 'Test App',

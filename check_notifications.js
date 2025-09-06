@@ -12,20 +12,18 @@ async function checkNotifications() {
     // Get all users
     const usersSnapshot = await db.collection('users').get();
     
-    for (const userDoc of usersSnapshot.docs) {
-      console.log(`\n=== User: ${userDoc.id} ===`);
-      
+for (const userDoc of usersSnapshot.docs) {
+        console.log(`\n=== User: ${userDoc.id} ===`);
       // Get notifications for this user
       const notificationsSnapshot = await db
         .collection('users')
         .doc(userDoc.id)
         .collection('notifications')
         .get();
-      
+
       console.log(`Total notifications: ${notificationsSnapshot.docs.length}`);
-      
       notificationsSnapshot.docs.forEach((notifDoc, index) => {
-        const data = notifDoc.data();
+const data = notifDoc.data();
         console.log(`\nNotification ${index + 1}:`);
         console.log(`  ID: ${notifDoc.id}`);
         console.log(`  Type: ${data.type}`);

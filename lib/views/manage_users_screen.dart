@@ -27,7 +27,7 @@ class ManageUsersScreen extends StatelessWidget {
 
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text(
           'Manage Users',
