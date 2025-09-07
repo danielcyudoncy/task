@@ -530,7 +530,7 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedStatus,
+                              initialValue: _selectedStatus,
                               decoration: const InputDecoration(
                                 labelText: 'New Status',
                                 border: OutlineInputBorder(),

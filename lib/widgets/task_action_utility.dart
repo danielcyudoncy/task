@@ -37,7 +37,7 @@ class TaskActions {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: status,
+                initialValue: status,
                 decoration: const InputDecoration(labelText: "Status"),
                 items: ['Pending', 'In Progress', 'Completed']
                     .map((String value) => DropdownMenuItem(

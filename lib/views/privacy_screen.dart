@@ -154,7 +154,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.thirdPartyServices.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleThirdPartyServices,
                         ),
                       ],
@@ -187,7 +187,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.locationServices.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleLocationServices,
                         ),
                       ],
@@ -220,7 +220,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.adPreferences.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleAdPreferences,
                         ),
                       ],
@@ -282,7 +282,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.twoFactorAuth.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleTwoFactorAuth,
                         ),
                       ],

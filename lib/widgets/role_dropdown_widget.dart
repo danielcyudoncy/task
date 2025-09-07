@@ -22,7 +22,7 @@ Widget buildRoleDropdown(AuthController controller) {
       borderRadius: BorderRadius.circular(12),
     ),
     child: Obx(() => DropdownButtonFormField<String>(
-          value: controller.userRole.value.isEmpty ? null : controller.userRole.value,
+          initialValue: controller.userRole.value.isEmpty ? null : controller.userRole.value,
           onChanged: (newValue) {
             controller.userRole.value = newValue!;
           },
