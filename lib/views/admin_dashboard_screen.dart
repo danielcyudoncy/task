@@ -80,7 +80,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         final data = userDoc.data()!;
         final name = data['fullName'] ?? userId;
         final role = data['role'] ?? "Unknown";
-        userCache[userId] = {"name": name, "role": role};
+        final imageUrl = data['imageUrl'] ?? "";
+        userCache[userId] = {"name": name, "role": role, "imageUrl": imageUrl};
         WidgetsBinding.instance.addPostFrameCallback((_) => refresh());
         return {"name": name, "role": role};
       }

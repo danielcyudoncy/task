@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:task/controllers/performance_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
 
@@ -180,12 +181,24 @@ class _UserPerformanceDetailsScreenState extends State<UserPerformanceDetailsScr
                               CircleAvatar(
                                 radius: 30,
                                 backgroundColor: _getAvatarBackgroundColor(context),
-                                backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                                    ? NetworkImage(photoUrl) as ImageProvider<Object>?
-                                    : null,
-                                child: photoUrl == null || photoUrl.isEmpty
-                                    ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                                    : null,
+                                child: photoUrl != null && photoUrl.isNotEmpty
+                                    ? ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: photoUrl,
+                                          width: 60,
+                                          height: 60,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => const CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                          errorWidget: (context, url, error) => const Icon(
+                                            Icons.person,
+                                            size: 40,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(Icons.person, size: 40, color: Colors.grey),
                               ),
                               const SizedBox(width: 16),
                               Expanded(

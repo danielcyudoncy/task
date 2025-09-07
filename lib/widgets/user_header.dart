@@ -1,4 +1,5 @@
 // widgets/user_header.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -63,29 +64,55 @@ class UserHeader extends StatelessWidget {
                               width: 2,
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: isPortrait ? 20.sp : 16.sp,
-                            backgroundColor: Colors.white,
-                            backgroundImage:
-                                authController.profilePic.value.isNotEmpty
-                                    ? NetworkImage(authController.profilePic.value)
-                                    : null,
-                            child: authController.profilePic.value.isEmpty
-                                ? Text(
+                          child: authController.profilePic.value.isNotEmpty
+                              ? ClipOval(
+                                  child: CachedNetworkImage(
+                                    imageUrl: authController.profilePic.value,
+                                    width: (isPortrait ? 20.sp : 16.sp) * 2,
+                                    height: (isPortrait ? 20.sp : 16.sp) * 2,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => CircleAvatar(
+                                      radius: isPortrait ? 20.sp : 16.sp,
+                                      backgroundColor: Colors.white,
+                                      child: Text(
+                                        authController.fullName.value.isNotEmpty
+                                            ? authController.fullName.value[0].toUpperCase()
+                                            : '?',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => CircleAvatar(
+                                      radius: isPortrait ? 20.sp : 16.sp,
+                                      backgroundColor: Colors.white,
+                                      child: Text(
+                                        authController.fullName.value.isNotEmpty
+                                            ? authController.fullName.value[0].toUpperCase()
+                                            : '?',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : CircleAvatar(
+                                  radius: isPortrait ? 20.sp : 16.sp,
+                                  backgroundColor: Colors.white,
+                                  child: Text(
                                     authController.fullName.value.isNotEmpty
-                                        ? authController.fullName.value[0]
-                                            .toUpperCase()
+                                        ? authController.fullName.value[0].toUpperCase()
                                         : '?',
                                     style: TextStyle(
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
+                                      color: Theme.of(context).colorScheme.primary,
                                       fontSize: isPortrait ? 20.sp : 16.sp,
                                       fontFamily: 'Raleway',
                                       fontWeight: FontWeight.bold,
                                     ),
-                                  )
-                                : null,
-                          ),
+                                  ),
+                                ),
+                          
                         );
                       }),
                       Positioned(

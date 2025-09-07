@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:task/controllers/settings_controller.dart';
 
 import 'package:task/widgets/app_drawer.dart';
@@ -180,23 +181,39 @@ class _HomeScreenState extends State<HomeScreen>
                                       child: CircleAvatar(
                                         radius: isPortrait ? 20.sp : 16.sp,
                                         backgroundColor: Colors.white,
-                                        backgroundImage: profilePic.isNotEmpty
-                                            ? NetworkImage(profilePic)
-                                            : null,
-                                        child: profilePic.isEmpty
-                                            ? Text(
+                                        child: profilePic.isNotEmpty
+                                            ? ClipOval(
+                                                child: CachedNetworkImage(
+                                                  imageUrl: profilePic,
+                                                  width: isPortrait ? 40.sp : 32.sp,
+                                                  height: isPortrait ? 40.sp : 32.sp,
+                                                  fit: BoxFit.cover,
+                                                  placeholder: (context, url) => CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                  ),
+                                                  errorWidget: (context, url, error) => Text(
+                                                    fullName.isNotEmpty
+                                                        ? fullName[0].toUpperCase()
+                                                        : '?',
+                                                    style: TextStyle(
+                                                      color: Theme.of(context).colorScheme.primary,
+                                                      fontSize: isPortrait ? 20.sp : 16.sp,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : Text(
                                                 fullName.isNotEmpty
                                                     ? fullName[0].toUpperCase()
                                                     : '?',
                                                 style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .primary,
+                                                  color: Theme.of(context).colorScheme.primary,
                                                   fontSize: isPortrait ? 20.sp : 16.sp,
                                                   fontWeight: FontWeight.bold,
                                                 ),
-                                              )
-                                            : null,
+                                              ),
                                       ),
                                     );
                                   }),

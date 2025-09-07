@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:task/views/wallpaper_screen.dart';
@@ -370,11 +371,29 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: CircleAvatar(
                         radius: 18,
                         backgroundColor: Colors.white,
-                        backgroundImage: widget.receiverAvatar.isNotEmpty
-                            ? NetworkImage(widget.receiverAvatar)
-                            : null,
-                        child: widget.receiverAvatar.isEmpty
-                            ? Text(
+                        child: widget.receiverAvatar.isNotEmpty
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: widget.receiverAvatar,
+                                  width: 36,
+                                  height: 36,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colorScheme.primary,
+                                  ),
+                                  errorWidget: (context, url, error) => Text(
+                                    widget.receiverName.isNotEmpty
+                                        ? widget.receiverName[0].toUpperCase()
+                                        : '?',
+                                    style: TextStyle(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Text(
                                 widget.receiverName.isNotEmpty
                                     ? widget.receiverName[0].toUpperCase()
                                     : '?',
@@ -382,8 +401,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   color: colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                 ),
-                              )
-                            : null,
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),

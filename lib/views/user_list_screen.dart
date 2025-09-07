@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:task/views/chat_screen.dart';
 
 class UserListScreen extends StatefulWidget {
@@ -104,14 +105,25 @@ class _UserListScreenState extends State<UserListScreen> {
                           ),
                         ),
                         child: CircleAvatar(
-                          backgroundImage: userAvatar != null && userAvatar.isNotEmpty
-                              ? NetworkImage(userAvatar)
-                              : null,
-                          child: (userAvatar == null || userAvatar.isEmpty)
-                              ? Text(
-                                  userName.isNotEmpty ? userName[0] : '?',
+                          child: (userAvatar != null && userAvatar.isNotEmpty)
+                              ? ClipOval(
+                                  child: CachedNetworkImage(
+                                    imageUrl: userAvatar,
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                    errorWidget: (context, url, error) => Text(
+                                      userName.isNotEmpty ? userName[0] : '?',
+                                    ),
+                                  ),
                                 )
-                              : null,
+                              : Text(
+                                  userName.isNotEmpty ? userName[0] : '?',
+                                ),
                         ),
                       ),
                       title: Text(userName),
