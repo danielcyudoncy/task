@@ -18,13 +18,13 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace 'com.example.task'
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.example.task"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         

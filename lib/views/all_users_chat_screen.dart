@@ -1,5 +1,6 @@
 // views/all_users_chat_screen.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -280,24 +281,47 @@ final isDark = theme.brightness == Brightness.dark;
                                     width: 2,
                                   ),
                                 ),
-                                child: CircleAvatar(
-                                  radius: 24.r,
-                                  backgroundImage: avatar.isNotEmpty
-                                      ? NetworkImage(avatar)
-                                      : null,
-                                  child: avatar.isEmpty
-                                      ? Text(
-                                          name.isNotEmpty
-                                              ? name[0].toUpperCase()
-                                              : '?',
+                                child: avatar.isNotEmpty
+                                    ? ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: avatar,
+                                          width: 48.r,
+                                          height: 48.r,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => CircleAvatar(
+                                            radius: 24.r,
+                                            child: Text(
+                                              name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                              style: TextStyle(
+                                                color: theme.colorScheme.onSurface,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) => CircleAvatar(
+                                            radius: 24.r,
+                                            child: Text(
+                                              name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                              style: TextStyle(
+                                                color: theme.colorScheme.onSurface,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : CircleAvatar(
+                                        radius: 24.r,
+                                        child: Text(
+                                          name.isNotEmpty ? name[0].toUpperCase() : '?',
                                           style: TextStyle(
                                             color: theme.colorScheme.onSurface,
                                             fontWeight: FontWeight.bold,
                                           ),
-                                        )
-                                      : null,
+                                        ),
+                                      ),
                                 ),
-                              ),
+                              
                               if (isOnline)
                                 Positioned(
                                   bottom: 0,

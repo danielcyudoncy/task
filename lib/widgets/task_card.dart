@@ -1,6 +1,7 @@
 // widgets/task_card.dart
 // DEPRECATED: Do not use this widget for displaying tasks. Use TaskCardWidget with Task objects instead.
 // widgets/task_card.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -108,29 +109,54 @@ class TaskCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: CircleAvatar(
-                          radius: isLargeScreen ? 25 : 18,
-                          backgroundColor: avatarBg,
-                          backgroundImage: (creatorAvatar != null && creatorAvatar.isNotEmpty && 
-                              (creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://')))
-                              ? NetworkImage(creatorAvatar)
-                              : null,
-                          child: (creatorAvatar == null || creatorAvatar.isEmpty || 
-                              !(creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://')))
-                              ? Text(
-                                  (creatorName.isNotEmpty ? creatorName[0] : "?")
-                                      .toUpperCase(),
-                                  style: TextStyle(
-                                    color: accent,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: isLargeScreen
-                                        ? 20.sp * textScale
-                                        : 15.sp * textScale,
+                        child: (creatorAvatar != null && creatorAvatar.isNotEmpty && 
+                            (creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://')))
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                  imageUrl: creatorAvatar,
+                                  width: (isLargeScreen ? 25 : 18) * 2,
+                                  height: (isLargeScreen ? 25 : 18) * 2,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => CircleAvatar(
+                                    radius: isLargeScreen ? 25 : 18,
+                                    backgroundColor: avatarBg,
+                                    child: Text(
+                                      (creatorName.isNotEmpty ? creatorName[0] : "?").toUpperCase(),
+                                      style: TextStyle(
+                                        color: accent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                )
-                              : null,
+                                  errorWidget: (context, url, error) => CircleAvatar(
+                                    radius: isLargeScreen ? 25 : 18,
+                                    backgroundColor: avatarBg,
+                                    child: Text(
+                                      (creatorName.isNotEmpty ? creatorName[0] : "?").toUpperCase(),
+                                      style: TextStyle(
+                                        color: accent,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : CircleAvatar(
+                                radius: isLargeScreen ? 25 : 18,
+                                backgroundColor: avatarBg,
+                                child: Text(
+                                  (creatorName.isNotEmpty ? creatorName[0] : "?").toUpperCase(),
+                                  style: TextStyle(
+                                     color: accent,
+                                     fontWeight: FontWeight.bold,
+                                     fontSize: isLargeScreen
+                                         ? 20.sp * textScale
+                                         : 15.sp * textScale,
+                                   ),
+                                 ),
+                               ),
                         ),
-                      ),
+                      
                       SizedBox(width: isLargeScreen ? 20 : 12),
                       Expanded(
                         child: Text(

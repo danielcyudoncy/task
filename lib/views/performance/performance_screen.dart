@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:task/views/performance/user_performance_details_screen.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/theme_controller.dart';
@@ -21,6 +23,21 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
 
   // Get current quarter
   int get currentQuarter => (DateTime.now().month - 1) ~/ 3 + 1;
+
+  // Method to refresh images by clearing cache
+  void _refreshImages() {
+    // Clear cached network images
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+    
+    // Clear CachedNetworkImage cache
+    DefaultCacheManager().emptyCache();
+    
+    // Force rebuild to reload images
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
@@ -54,17 +71,21 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
           onPressed: () => Get.back(),
         ),
         actions: [
+          // Refresh button to clear image cache
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshImages,
+            tooltip: 'Refresh Images',
+          ),
           // Show user email and sign out button
           if (_authController.currentUser != null)
             PopupMenuButton<String>(
-              icon: CircleAvatar(
-                backgroundImage: _authController.currentUser?.photoURL != null
-                    ? NetworkImage(_authController.currentUser!.photoURL!)
-                    : null,
-                child: _authController.currentUser?.photoURL == null
-                    ? Text(_authController.currentUser?.email?[0].toUpperCase() ?? 'U')
-                    : null,
-              ),
+              icon: Obx(() => _buildCachedAvatar(
+                imageUrl: _authController.currentUser?.photoURL,
+                fallbackText: _authController.currentUser?.email?[0].toUpperCase() ?? 'U',
+                backgroundColor: Theme.of(context).primaryColor,
+                textColor: Colors.white,
+              )),
               onSelected: (value) {
                 if (value == 'logout') {
                   _signOut();
@@ -146,20 +167,11 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       color: _getCardBackgroundColor(context),
                       child: ListTile(
-                        leading: CircleAvatar(
+                        leading: _buildCachedAvatar(
+                          imageUrl: photoUrl,
+                          fallbackText: fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
                           backgroundColor: _getAvatarBackgroundColor(context),
-                          backgroundImage: photoUrl != null && photoUrl.isNotEmpty && Uri.tryParse(photoUrl)?.hasScheme == true
-                              ? NetworkImage(photoUrl)
-                              : null,
-                          child: photoUrl == null
-                              ? Text(
-                                  fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
-                                  style: TextStyle(
-                                    color: _getAvatarTextColor(context),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : null,
+                          textColor: _getAvatarTextColor(context),
                         ),
                         title: Text(
                           fullName,
@@ -228,6 +240,53 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
          ? Colors.white70
          : Colors.white70;
    }
+
+  // Helper method to build cached network image avatar
+  Widget _buildCachedAvatar({
+    required String? imageUrl,
+    required String fallbackText,
+    required Color backgroundColor,
+    required Color textColor,
+    double radius = 20,
+  }) {
+    final bool hasValidUrl = imageUrl != null && 
+        imageUrl.isNotEmpty && 
+        Uri.tryParse(imageUrl)?.hasScheme == true;
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: backgroundColor,
+      child: hasValidUrl
+          ? ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                ),
+                errorWidget: (context, url, error) => Text(
+                  fallbackText,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: radius * 0.8,
+                  ),
+                ),
+              ),
+            )
+          : Text(
+              fallbackText,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: radius * 0.8,
+              ),
+            ),
+    );
+  }
 
   void _showPerformanceDetails(BuildContext context, String userId, String userName) {
     final currentQuarter = (DateTime.now().month - 1) ~/ 3 + 1;

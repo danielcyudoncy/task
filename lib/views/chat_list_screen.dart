@@ -1,5 +1,6 @@
 // views/chat_list_screen.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -148,11 +149,27 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               width: 2,
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: 26,
-                            backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
-                            child: avatar.isEmpty ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?') : null,
-                          ),
+                          child: avatar.isNotEmpty
+                              ? ClipOval(
+                                  child: CachedNetworkImage(
+                                    imageUrl: avatar,
+                                    width: 52,
+                                    height: 52,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => CircleAvatar(
+                                      radius: 26,
+                                      child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+                                    ),
+                                    errorWidget: (context, url, error) => CircleAvatar(
+                                      radius: 26,
+                                      child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+                                    ),
+                                  ),
+                                )
+                              : CircleAvatar(
+                                  radius: 26,
+                                  child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+                                ),
                         ),
                         const SizedBox(height: 4),
                         SizedBox(
@@ -362,11 +379,27 @@ class _ChatListScreenState extends State<ChatListScreen> {
               width: 2,
             ),
           ),
-          child: CircleAvatar(
-            radius: 24.r,
-            backgroundImage: userAvatar.isEmpty ? null : NetworkImage(userAvatar),
-            child: userAvatar.isEmpty ? Text(userName[0].toUpperCase()) : null,
-          ),
+          child: userAvatar.isNotEmpty
+              ? ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: userAvatar,
+                    width: 48.r,
+                    height: 48.r,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => CircleAvatar(
+                      radius: 24.r,
+                      child: Text(userName[0].toUpperCase()),
+                    ),
+                    errorWidget: (context, url, error) => CircleAvatar(
+                      radius: 24.r,
+                      child: Text(userName[0].toUpperCase()),
+                    ),
+                  ),
+                )
+              : CircleAvatar(
+                  radius: 24.r,
+                  child: Text(userName[0].toUpperCase()),
+                ),
         ),
         title: buildTitleRow(userName, pinned, unreadCount),
         subtitle: buildSubtitle(conversationId, lastMessage),
@@ -544,10 +577,24 @@ class ChatSearchDelegate extends SearchDelegate<String> {
                     width: 2,
                   ),
                 ),
-                child: CircleAvatar(
-                  backgroundImage: avatar.isEmpty ? null : NetworkImage(avatar),
-                  child: avatar.isEmpty ? Text(name[0].toUpperCase()) : null,
-                ),
+                child: avatar.isNotEmpty
+                    ? ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: avatar,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => CircleAvatar(
+                            child: Text(name[0].toUpperCase()),
+                          ),
+                          errorWidget: (context, url, error) => CircleAvatar(
+                            child: Text(name[0].toUpperCase()),
+                          ),
+                        ),
+                      )
+                    : CircleAvatar(
+                        child: Text(name[0].toUpperCase()),
+                      ),
               ),
               title: Text(name),
               onTap: () {

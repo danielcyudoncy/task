@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/widgets/empty_state_widget.dart';
 import 'package:task/widgets/assign_task_dialog.dart';
@@ -128,15 +129,33 @@ backgroundColor: theme.colorScheme.surface,
                                 backgroundColor: theme.brightness == Brightness.dark
                                     ? theme.colorScheme.primary
                                     : theme.colorScheme.onPrimary,
-                                backgroundImage: userPhoto.isNotEmpty ? NetworkImage(userPhoto) : null,
-                                child: userPhoto.isEmpty
-                                    ? Icon(
+                                child: userPhoto.isNotEmpty
+                                    ? ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: userPhoto,
+                                          width: 48,
+                                          height: 48,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                          errorWidget: (context, url, error) => Icon(
+                                            Icons.person,
+                                            color: theme.brightness == Brightness.dark
+                                                ? theme.colorScheme.onPrimary
+                                                : theme.colorScheme.primary,
+                                            size: 28,
+                                          ),
+                                        ),
+                                      )
+                                    : Icon(
                                         Icons.person,
                                         color: theme.brightness == Brightness.dark
                                             ? theme.colorScheme.onPrimary
                                             : theme.colorScheme.primary,
-                                        size: 28)
-                                     : null,
+                                        size: 28,
+                                      ),
                               ),
                               const SizedBox(width: 16),
                               // User info

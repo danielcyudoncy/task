@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../controllers/performance_controller.dart';
 import '../utils/themes/app_theme.dart';
 
@@ -512,15 +513,30 @@ class UserPerformanceTab extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 22.r,
                       backgroundColor: Colors.transparent,
-                      backgroundImage: (user['photoUrl'] != null && 
+                      child: (user['photoUrl'] != null && 
                           user['photoUrl'].toString().isNotEmpty && 
-                          user['photoUrl'] != 'null') 
-                          ? NetworkImage(user['photoUrl']) 
-                          : null,
-                      child: (user['photoUrl'] == null || 
-                              user['photoUrl'].toString().isEmpty || 
-                              user['photoUrl'] == 'null')
-                          ? Text(
+                          user['photoUrl'] != 'null')
+                          ? ClipOval(
+                              child: CachedNetworkImage(
+                                imageUrl: user['photoUrl'],
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                                errorWidget: (context, url, error) => Text(
+                                  user['userName']?.toString().isNotEmpty == true
+                                      ? user['userName'][0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Text(
                               user['userName']?.toString().isNotEmpty == true
                                   ? user['userName'][0].toUpperCase()
                                   : user['userEmail']?[0].toUpperCase() ?? '?',
@@ -529,8 +545,7 @@ class UserPerformanceTab extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.onPrimary,
                               ),
-                            )
-                          : null,
+                            ),
                     ),
                   ),
                   if (isTopPerformer && _shouldShowTrophy(user))
