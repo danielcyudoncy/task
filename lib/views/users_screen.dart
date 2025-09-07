@@ -42,7 +42,7 @@ class UserScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DropdownButtonFormField<String>(
-                      value: selectedTask.value.isEmpty
+                      initialValue: selectedTask.value.isEmpty
                           ? null
                           : selectedTask.value,
                       items: ["Task 1", "Task 2", "Task 3"].map((task) {
@@ -85,7 +85,7 @@ class UserScreen extends StatelessWidget {
                         );
                       }
                       return DropdownButtonFormField<String>(
-                        value: selectedUser.value.isEmpty
+                        initialValue: selectedUser.value.isEmpty
                             ? null
                             : selectedUser.value,
                         items: userController.allUsers.map((user) {
@@ -164,7 +164,7 @@ class UserScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value: selectedManagedUser.value.isEmpty
+                      initialValue: selectedManagedUser.value.isEmpty
                           ? null
                           : selectedManagedUser.value,
                       items: manageUsersController.usersList.map((user) {

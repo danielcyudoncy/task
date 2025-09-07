@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Added import
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/devices/app_devices.dart';
@@ -23,6 +24,36 @@ class _AppDrawerState extends State<AppDrawer> {
   bool _logoutHovered = false, _showCalendar = false;
   DateTime _focusedDay = DateTime.now();
   bool _isNavigating = false;
+
+  // Validate if the URL is a valid HTTP/HTTPS URL (from previous discussion)
+  bool _isValidUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    try {
+      final uri = Uri.parse(url);
+      return uri.scheme == 'http' || uri.scheme == 'https';
+    } catch (e) {
+      debugPrint('Invalid URL format: $url, error: $e');
+      return false;
+    }
+  }
+
+  // Helper for initials fallback
+  Widget _buildInitialsAvatar(double radius, String fullName) {
+    final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.white,
+      child: Text(
+        initial,
+        style: TextStyle(
+          fontSize: radius * 0.7,
+          fontFamily: 'Raleway',
+          color: Theme.of(context).primaryColor,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,26 +102,47 @@ class _AppDrawerState extends State<AppDrawer> {
                               width: 2,
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: isLandscape ? 30.r : 40.r,
-                            backgroundColor: Colors.white,
-                            backgroundImage: authController
-                                    .profilePic.value.isNotEmpty
-                                ? NetworkImage(authController.profilePic.value)
-                                : null,
-                            child: authController.profilePic.value.isEmpty
-                                ? Text(
-                                    authController.fullName.value.isNotEmpty
-                                        ? authController.fullName.value[0]
-                                            .toUpperCase()
-                                        : '?',
-                                    style: TextStyle(
-                                      fontSize: isLandscape ? 20.sp : 28.sp,
-                                      fontFamily: 'Raleway',
-                                      color: Theme.of(context).primaryColor,
+                          child: ClipOval(
+                            child: SizedBox(
+                              width: isLandscape ? 60.r : 80.r,
+                              height: isLandscape ? 60.r : 80.r,
+                              child: Obx(() {
+                                // Make reactive to controller changes
+                                final profilePic =
+                                    authController.profilePic.value;
+                                if (profilePic.isNotEmpty &&
+                                    _isValidUrl(profilePic)) {
+                                  return CachedNetworkImage(
+                                    imageUrl: profilePic,
+                                    placeholder: (context, url) =>
+                                        CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
                                     ),
-                                  )
-                                : null,
+                                    errorWidget: (context, url, error) {
+                                      debugPrint(
+                                          'Profile image error: $error for URL: $url');
+                                      return _buildInitialsAvatar(
+                                        isLandscape ? 30.r : 40.r,
+                                        authController.fullName.value,
+                                      );
+                                    },
+                                    imageBuilder: (context, imageProvider) =>
+                                        CircleAvatar(
+                                      radius: isLandscape ? 30.r : 40.r,
+                                      backgroundImage: imageProvider,
+                                      backgroundColor: Colors.white,
+                                    ),
+                                  );
+                                } else {
+                                  return _buildInitialsAvatar(
+                                    isLandscape ? 30.r : 40.r,
+                                    authController.fullName.value,
+                                  );
+                                }
+                              }),
+                            ),
                           ),
                         ),
                         SizedBox(width: isLandscape ? 12.w : 16.w),
@@ -114,7 +166,7 @@ class _AppDrawerState extends State<AppDrawer> {
                               Text(
                                 authController.currentUser?.email ?? '',
                                 style: TextStyle(
-                                    fontSize: isLandscape ? 12.sp : 10.sp, 
+                                    fontSize: isLandscape ? 12.sp : 10.sp,
                                     color: Colors.white70),
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 2,
@@ -129,7 +181,7 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
 
-            // Calendar toggle
+            // Calendar toggle (unchanged)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Card(
@@ -143,8 +195,8 @@ class _AppDrawerState extends State<AppDrawer> {
                     color:
                         _showCalendar ? Theme.of(context).primaryColor : null,
                   ),
-                  title:
-                      Text(_showCalendar ? 'hide_calendar'.tr : 'show_calendar'.tr),
+                  title: Text(
+                      _showCalendar ? 'hide_calendar'.tr : 'show_calendar'.tr),
                   onTap: () {
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _showCalendar = !_showCalendar);
@@ -153,7 +205,7 @@ class _AppDrawerState extends State<AppDrawer> {
               ),
             ),
 
-            // Calendar view
+            // Calendar view (unchanged)
             if (_showCalendar)
               Container(
                 height: screenHeight * 0.45,
@@ -183,8 +235,9 @@ class _AppDrawerState extends State<AppDrawer> {
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withAlpha((0.6 * 255).toInt()),
+                            color: Theme.of(context)
+                                .primaryColor
+                                .withAlpha((0.6 * 255).toInt()),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -197,31 +250,23 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
               ),
 
-            // Navigation tiles
+            // Navigation tiles (unchanged)
             Expanded(
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 children: [
-                  // ✅ Updated Home Tile with safe nav
                   _drawerTile(Icons.home_outlined, 'Home', () async {
-                    if (_isNavigating) return; // Prevent multiple navigation calls
-                    
+                    if (_isNavigating) return;
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _isNavigating = true);
-                    
                     Navigator.of(context).pop();
                     await Future.delayed(const Duration(milliseconds: 300));
-                    
-                    // Use safer navigation approach to avoid route conflicts
                     try {
-                      // Check current route to avoid unnecessary navigation
                       final currentRoute = Get.currentRoute;
                       if (currentRoute != '/admin-dashboard') {
-                        // Use replace instead of offAllNamed to avoid route removal conflicts
                         await Get.offNamed('/admin-dashboard');
                       }
                     } catch (e) {
-                      // Fallback navigation
                       Get.offAllNamed('/login');
                     } finally {
                       if (mounted) {
@@ -229,22 +274,17 @@ class _AppDrawerState extends State<AppDrawer> {
                       }
                     }
                   }),
-
                   _drawerTile(Icons.person_outline, 'Profile', () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
                     Get.toNamed('/profile');
                   }),
-
                   _drawerTile(Icons.chat_outlined, 'Chat Users', () async {
-                    if (_isNavigating) return; // Prevent multiple navigation calls
-                    
+                    if (_isNavigating) return;
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _isNavigating = true);
-                    
                     Navigator.of(context).pop();
                     await Future.delayed(const Duration(milliseconds: 200));
-                    
                     try {
                       await Get.toNamed('/all-users-chat');
                     } catch (e) {
@@ -255,25 +295,22 @@ class _AppDrawerState extends State<AppDrawer> {
                       }
                     }
                   }),
-
                   _drawerTile(Icons.settings_outlined, 'Settings', () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
                     Get.toNamed('/settings');
                   }),
-
                   _drawerTile(Icons.build_outlined, 'Fix Notifications', () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
                     Get.toNamed('/notification-fix');
                   }),
-
                   _buildDarkModeCard(isDark),
                 ],
               ),
             ),
 
-            // Logout button
+            // Logout button (unchanged)
             Padding(
               padding: EdgeInsets.all(16.w),
               child: MouseRegion(
@@ -292,7 +329,8 @@ class _AppDrawerState extends State<AppDrawer> {
                     ),
                     title: Text(
                       'Logout',
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
                     ),
                     onTap: _confirmLogout,
                   ),
@@ -305,6 +343,7 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
+  // Rest of the methods unchanged: _drawerTile, _buildDarkModeCard, _buildCompactThemeOptions, _getThemeIcon, _confirmLogout, ConcentricCirclePainter
   Widget _drawerTile(IconData icon, String label, VoidCallback onTap) {
     return Card(
       elevation: 3,
@@ -312,8 +351,6 @@ class _AppDrawerState extends State<AppDrawer> {
       child: ListTile(leading: Icon(icon), title: Text(label.tr), onTap: onTap),
     );
   }
-
-
 
   Widget _buildDarkModeCard(bool isDark) {
     final ThemeController themeController = Get.find<ThemeController>();
@@ -361,14 +398,20 @@ class _AppDrawerState extends State<AppDrawer> {
               margin: EdgeInsets.symmetric(horizontal: 2.w),
               padding: EdgeInsets.symmetric(vertical: 8.h),
               decoration: BoxDecoration(
-                color: isSelected 
-                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
+                color: isSelected
+                    ? Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.15)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8.r),
                 border: Border.all(
-                  color: isSelected 
+                  color: isSelected
                       ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                      : Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.3),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -377,19 +420,26 @@ class _AppDrawerState extends State<AppDrawer> {
                   Icon(
                     _getThemeIcon(mode),
                     size: 16.sp,
-                    color: isSelected 
+                    color: isSelected
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        : Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7),
                   ),
                   SizedBox(height: 2.h),
                   Text(
                     mode.displayName,
                     style: TextStyle(
                       fontSize: 10.sp,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected 
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          : Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -411,8 +461,6 @@ class _AppDrawerState extends State<AppDrawer> {
         return Icons.settings_system_daydream_outlined;
     }
   }
-
-
 
   Future<void> _confirmLogout() async {
     final confirm = await Get.dialog<bool>(

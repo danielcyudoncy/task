@@ -93,6 +93,7 @@ dependencies:
   animated_text_kit: ^4.2.2
   flutter_native_splash: ^2.4.6
   flutter_launcher_icons: ^0.14.4
+  cached_network_image: ^3.4.1
 
 
 dev_dependencies:

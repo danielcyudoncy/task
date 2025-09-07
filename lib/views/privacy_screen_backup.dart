@@ -1,4 +1,4 @@
-// views/privacy_screen.dart
+// views/privacy_screen_backup.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -127,7 +127,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.thirdPartyServices.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleThirdPartyServices,
                         ),
                       ],
@@ -160,7 +160,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.locationServices.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleLocationServices,
                         ),
                       ],
@@ -193,7 +193,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.adPreferences.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleAdPreferences,
                         ),
                       ],
@@ -255,7 +255,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         ),
                         Switch(
                           value: privacyController.twoFactorAuth.value,
-                          activeColor: colorScheme.secondary,
+                          activeThumbColor: colorScheme.secondary,
                           onChanged: privacyController.toggleTwoFactorAuth,
                         ),
                       ],

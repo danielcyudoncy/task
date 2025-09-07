@@ -112,7 +112,7 @@ class UpdateService {
               builder: (context, snapshot) {
                 final currentFrequency = snapshot.data ?? 'Weekly';
                 return DropdownButtonFormField<String>(
-                  value: currentFrequency,
+                  initialValue: currentFrequency,
                   decoration: const InputDecoration(
                     labelText: 'Check for updates',
                   ),

@@ -361,7 +361,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                             const SizedBox(height: 18),
                             // Priority Dropdown
                             DropdownButtonFormField<String>(
-                              value: _selectedPriority,
+                              initialValue: _selectedPriority,
                               decoration: InputDecoration(
                                 labelText: "Priority",
                                 prefixIcon: const Icon(Icons.flag_rounded),
@@ -479,7 +479,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    value: _selectedCategory,
+                                    initialValue: _selectedCategory,
                                     isExpanded: true,
                                     decoration: InputDecoration(
                                       labelText: "Category",

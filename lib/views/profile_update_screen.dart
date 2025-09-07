@@ -198,7 +198,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                         // Role Dropdown
                         Obx(
                           () => DropdownButtonFormField<String>(
-                            value: auth.selectedRole.value.isEmpty
+                            initialValue: auth.selectedRole.value.isEmpty
                                 ? null
                                 : auth.selectedRole.value,
                             items: auth.userRoles

@@ -76,7 +76,7 @@ class FilterBarWidget extends StatelessWidget {
               // Filter Status Dropdown
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: filterStatus,
+                  initialValue: filterStatus,
                   onChanged: onFilter,
                   style: TextStyle(
                     color: isLightMode ? Colors.black : Colors.white,
@@ -115,7 +115,7 @@ class FilterBarWidget extends StatelessWidget {
               // Sort Dropdown
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: sortBy,
+                  initialValue: sortBy,
                   onChanged: onSort,
                   style: TextStyle(
                     color: isLightMode ? Colors.black : Colors.white,

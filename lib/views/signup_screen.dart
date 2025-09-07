@@ -199,7 +199,7 @@ class SignUpScreen extends StatelessWidget {
 
                               // Role Dropdown
                               Obx(() => DropdownButtonFormField<String>(
-                                    value: authController
+                                    initialValue: authController
                                             .selectedRole.value.isEmpty
                                         ? null
                                         : authController.selectedRole.value,

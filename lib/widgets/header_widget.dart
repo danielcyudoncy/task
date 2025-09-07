@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Added import
 import '../../controllers/auth_controller.dart';
 import '../../controllers/notification_controller.dart';
 
@@ -14,6 +15,17 @@ class HeaderWidget extends StatelessWidget {
     required this.authController,
     required this.notificationController,
   });
+
+  // Validate if the URL is a valid HTTP/HTTPS URL
+  bool _isValidUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    try {
+      final uri = Uri.parse(url);
+      return uri.scheme == 'http' || uri.scheme == 'https';
+    } catch (e) {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,31 +45,8 @@ class HeaderWidget extends StatelessWidget {
               children: [
                 // Avatar
                 Obx(() {
-                  if (!Get.isRegistered<AuthController>()) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Theme.of(context).colorScheme.onPrimary
-                              : Theme.of(context).primaryColor,
-                          width: 2,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 20.sp,
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          '?',
-                          style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
+                  final profilePic = authController.profilePic.value;
+                  final fullName = authController.fullName.value;
                   return Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -68,29 +57,37 @@ class HeaderWidget extends StatelessWidget {
                         width: 2,
                       ),
                     ),
-                    child: CircleAvatar(
-                      radius: 20.sp,
-                      backgroundColor: Colors.white,
-                      backgroundImage:
-                          authController.profilePic.value.isNotEmpty
-                              ? NetworkImage(authController.profilePic.value)
-                              : null,
-                      child: authController.profilePic.value.isEmpty
-                          ? Text(
-                              authController.fullName.value.isNotEmpty
-                                  ? authController.fullName.value[0].toUpperCase()
-                                  : '?',
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
+                    child: ClipOval(
+                      child: SizedBox(
+                        width: 40.sp, // 2 * radius for consistent sizing
+                        height: 40.sp,
+                        child: profilePic.isNotEmpty && _isValidUrl(profilePic)
+                            ? CachedNetworkImage(
+                                imageUrl: profilePic,
+                                placeholder: (context, url) =>
+                                    CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    _buildInitialsAvatar(
+                                  context,
+                                  fullName,
+                                ),
+                                imageBuilder: (context, imageProvider) =>
+                                    CircleAvatar(
+                                  radius: 20.sp,
+                                  backgroundImage: imageProvider,
+                                  backgroundColor: Colors.white,
+                                ),
+                              )
+                            : _buildInitialsAvatar(context, fullName),
+                      ),
                     ),
                   );
                 }),
-
                 // Notification Badge
                 Positioned(
                   right: -4,
@@ -128,7 +125,6 @@ class HeaderWidget extends StatelessWidget {
             ),
           ],
         ),
-
         // Greeting and Email
         Padding(
           padding: EdgeInsets.only(left: 16.w, top: 8.h),
@@ -157,6 +153,23 @@ class HeaderWidget extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  // Helper for initials fallback
+  Widget _buildInitialsAvatar(BuildContext context, String fullName) {
+    final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
+    return CircleAvatar(
+      radius: 20.sp,
+      backgroundColor: Colors.white,
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: Theme.of(context).primaryColor,
+          fontSize: 20.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Added for CachedNetworkImage
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/dashboard_utils.dart';
 import '../../controllers/admin_controller.dart';
@@ -24,6 +25,17 @@ class AssignTaskDialog extends StatefulWidget {
 class _AssignTaskDialogState extends State<AssignTaskDialog> {
   String? selectedTaskTitle;
 
+  // Validate if the URL is a valid HTTP/HTTPS URL
+  bool _isValidUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    try {
+      final uri = Uri.parse(url);
+      return uri.scheme == 'http' || uri.scheme == 'https';
+    } catch (e) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -31,50 +43,15 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     final primaryColor = theme.colorScheme.primary;
     final assignableTasks = widget.adminController.taskSnapshotDocs.where((task) {
       final completed = (task['status'] ?? '').toString().toLowerCase() == 'completed';
-      
-      // Check if task has been approved by admin
       final approvalStatus = task['approvalStatus']?.toString().toLowerCase();
       final isApproved = approvalStatus == 'approved';
-      
-      // Also check legacy fields for backward compatibility
       final legacyApproved = (task['approved'] ?? false) == true || (task['isApproved'] ?? false) == true;
       final finalApproved = isApproved || legacyApproved;
-      
-      // Check if both reporter and cameraman are assigned
       final hasReporter = task['assignedReporterId'] != null && task['assignedReporterId'].toString().isNotEmpty;
       final hasCameraman = task['assignedCameramanId'] != null && task['assignedCameramanId'].toString().isNotEmpty;
       final fullyAssigned = hasReporter && hasCameraman;
-      
-      // Debug logging for task assignment filtering
-      final taskTitle = task['title'] ?? 'Unknown Task';
-      debugPrint('=== ASSIGN TASK DIALOG FILTERING ===');
-      debugPrint('Task: $taskTitle');
-      debugPrint('Status: ${task['status']}');
-      debugPrint('Completed: $completed');
-      debugPrint('ApprovalStatus field: ${task['approvalStatus']}');
-      debugPrint('Approved field (legacy): ${task['approved']}');
-      debugPrint('IsApproved field (legacy): ${task['isApproved']}');
-      debugPrint('IsApproved from approvalStatus: $isApproved');
-      debugPrint('LegacyApproved: $legacyApproved');
-      debugPrint('Final approved: $finalApproved');
-      debugPrint('AssignedReporterId: ${task['assignedReporterId']}');
-      debugPrint('AssignedCameramanId: ${task['assignedCameramanId']}');
-      debugPrint('HasReporter: $hasReporter');
-      debugPrint('HasCameraman: $hasCameraman');
-      debugPrint('FullyAssigned: $fullyAssigned');
-      final isAssignable = finalApproved && !completed && !fullyAssigned;
-      debugPrint('Final isAssignable: $isAssignable');
-      debugPrint('=====================================');
-      
-      // Task is available if it's approved, not completed and not fully assigned (missing reporter or cameraman)
-      return isAssignable;
+      return finalApproved && !completed && !fullyAssigned;
     }).toList();
-    
-    debugPrint('=== ASSIGN TASK DIALOG SUMMARY ===');
-    debugPrint('Total tasks in snapshot: ${widget.adminController.taskSnapshotDocs.length}');
-    debugPrint('Assignable tasks count: ${assignableTasks.length}');
-    debugPrint('Assignable task titles: ${assignableTasks.map((t) => t['title']).toList()}');
-    debugPrint('===================================');
 
     return Dialog(
       backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
@@ -120,200 +97,195 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                           topRight: Radius.circular(24),
                         ),
                       ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8E8E8),
-                            borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8E8E8),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.assignment_turned_in,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.assignment_turned_in,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Assign Task",
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                ),
-                              ),
-                              if (widget.user != null) ...[
-                                const SizedBox(height: 4),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  "to ${widget.user?['fullName'] ?? widget.user?['fullname'] ?? ''}",
-                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                  "Assign Task",
+                                  style: theme.textTheme.titleLarge?.copyWith(
                                     color: Colors.white,
-                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
                                   ),
+                                ),
+                                if (widget.user != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "to ${widget.user?['fullName'] ?? widget.user?['fullname'] ?? ''}",
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Task Selection Section
+                          Text(
+                            "Select Task",
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Modern Dropdown
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: selectedTaskTitle != null
+                                    ? primaryColor
+                                    : (isDark ? const Color(0xFF4A4A4A) : const Color(0xFFE0E0E0)),
+                                width: selectedTaskTitle != null ? 2 : 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: selectedTaskTitle != null
+                                      ? const Color(0xFF9E9E9E)
+                                      : const Color(0xFFF5F5F5),
+                                  blurRadius: selectedTaskTitle != null ? 15 : 10,
+                                  offset: const Offset(0, 4),
                                 ),
                               ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Task Selection Section
-                        Text(
-                          "Select Task",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Modern Dropdown
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: selectedTaskTitle != null 
-                                  ? primaryColor
-                                  : (isDark ? const Color(0xFF4A4A4A) : const Color(0xFFE0E0E0)),
-                              width: selectedTaskTitle != null ? 2 : 1.5,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: selectedTaskTitle != null 
-                                    ? const Color(0xFF9E9E9E)
-                                    : const Color(0xFFF5F5F5),
-                                blurRadius: selectedTaskTitle != null ? 15 : 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              isExpanded: true,
-                              value: selectedTaskTitle,
-                              menuMaxHeight: 200,
-                              dropdownColor: isDark ? const Color(0xFF2A2A3E) : Colors.white,
-                              hint: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.task_alt,
-                                      color: isDark ? Colors.white54 : Colors.grey.shade600,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        "Select task",
-                                        style: TextStyle(
-                                          color: isDark ? Colors.white54 : Colors.grey.shade600,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: selectedTaskTitle,
+                                menuMaxHeight: 200,
+                                dropdownColor: isDark ? const Color(0xFF2A2A3E) : Colors.white,
+                                hint: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.task_alt,
+                                        color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                        size: 20,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              icon: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE3F2FD),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.keyboard_arrow_down,
-                                  color: primaryColor,
-                                  size: 20,
-                                ),
-                              ),
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: isDark ? Colors.white : Colors.black87,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              items: assignableTasks.map((task) {
-                                final title = task['title'] ?? '';
-                                final creatorName = (task['creatorName'] ?? task['creator'] ?? '').toString();
-                                final description = task['description'] ?? '';
-                                final dueDate = task['dueDate'];
-                                
-                                return DropdownMenuItem<String>(
-                                  value: title,
-                                  child: _buildTaskItem(
-                                    context,
-                                    task,
-                                    title,
-                                    creatorName,
-                                    description,
-                                    dueDate,
-                                    isDark,
-                                    primaryColor,
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          "Select task",
+                                          style: TextStyle(
+                                            color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  setState(() => selectedTaskTitle = val);
-                                });
-                              },
+                                ),
+                                icon: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE3F2FD),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: primaryColor,
+                                    size: 20,
+                                  ),
+                                ),
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: isDark ? Colors.white : Colors.black87,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                items: assignableTasks.map((task) {
+                                  final title = task['title'] ?? '';
+                                  final creatorName = (task['creatorName'] ?? task['creator'] ?? '').toString();
+                                  final description = task['description'] ?? '';
+                                  final dueDate = task['dueDate'];
+                                  return DropdownMenuItem<String>(
+                                    value: title,
+                                    child: _buildTaskItem(
+                                      context,
+                                      task,
+                                      title,
+                                      creatorName,
+                                      description,
+                                      dueDate,
+                                      isDark,
+                                      primaryColor,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    setState(() => selectedTaskTitle = val);
+                                  });
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Action Buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildButton(
-                                context,
-                                "Cancel",
-                                Icons.close,
-                                isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                                isDark ? Colors.white : Colors.black87,
-                                () => Get.back(),
-                                isOutlined: true,
+                          const SizedBox(height: 32),
+                          // Action Buttons
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildButton(
+                                  context,
+                                  "Cancel",
+                                  Icons.close,
+                                  isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                                  isDark ? Colors.white : Colors.black87,
+                                  () => Get.back(),
+                                  isOutlined: true,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildButton(
-                                context,
-                                "Assign",
-                                Icons.check_circle,
-                                primaryColor,
-                                Colors.white,
-                                () => _handleAssignTask(assignableTasks),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildButton(
+                                  context,
+                                  "Assign",
+                                  Icons.check_circle,
+                                  primaryColor,
+                                  Colors.white,
+                                  () => _handleAssignTask(assignableTasks),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
                 ),
+              ),
       ),
     );
   }
@@ -330,7 +302,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isDark 
+                colors: isDark
                     ? [Colors.grey.shade800, Colors.grey.shade700]
                     : [Colors.grey.shade100, Colors.grey.shade200],
               ),
@@ -401,29 +373,60 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       ),
       child: Row(
         children: [
-          // Creator Avatar
-          Container(
+          // Creator Avatar with CachedNetworkImage
+          SizedBox(
             width: 20,
             height: 20,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primaryColor, primaryColor.withAlpha((0.7 * 255).round())],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                getCreatorInitials(task),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 9,
-                ),
-              ),
-            ),
+            child: task['creatorPhotoUrl'] != null && _isValidUrl(task['creatorPhotoUrl'])
+                ? CachedNetworkImage(
+                    imageUrl: task['creatorPhotoUrl'],
+                    placeholder: (context, url) => const CircularProgressIndicator(
+                      strokeWidth: 1,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                    errorWidget: (context, url, error) => Center(
+                      child: Text(
+                        getCreatorInitials(task),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ),
+                    imageBuilder: (context, imageProvider) => Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [primaryColor, primaryColor.withAlpha((0.7 * 255).round())],
+                        ),
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [primaryColor, primaryColor.withAlpha((0.7 * 255).round())],
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        getCreatorInitials(task),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(width: 6),
-          
           // Task Title
           Expanded(
             child: Text(
@@ -437,7 +440,6 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
               maxLines: 1,
             ),
           ),
-          
           // Status Icon
           Container(
             padding: const EdgeInsets.all(1),
@@ -484,10 +486,10 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
           ),
         ],
       ),
-              child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
           onTap: () {
             Get.find<SettingsController>().triggerFeedback();
             onPressed();
@@ -539,7 +541,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     final userId = widget.user?['uid'] ?? widget.user?['id'];
     if (userId == null) {
       Get.snackbar(
-        "Error", 
+        "Error",
         "User ID is missing",
         backgroundColor: Colors.red,
         colorText: Colors.white,

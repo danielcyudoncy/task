@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Added import
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/snackbar_utils.dart';
@@ -21,6 +22,17 @@ class ImagePickerWidget extends StatelessWidget {
     this.iconSize = 40,
   });
 
+  // Validate if the URL is a valid HTTP/HTTPS URL
+  bool _isValidUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    try {
+      final uri = Uri.parse(url);
+      return uri.scheme == 'http' || uri.scheme == 'https';
+    } catch (e) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -28,6 +40,7 @@ class ImagePickerWidget extends StatelessWidget {
         GestureDetector(
           onTap: () => _handleImageSelection(context),
           child: Obx(() {
+            final profilePic = controller.profilePic.value;
             return Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -38,16 +51,28 @@ class ImagePickerWidget extends StatelessWidget {
                   width: 2,
                 ),
               ),
-              child: CircleAvatar(
-                radius: radius,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: controller.profilePic.value.isNotEmpty
-                    ? NetworkImage(controller.profilePic.value)
-                    : null,
-                child: controller.profilePic.value.isEmpty
-                    ? Icon(Icons.camera_alt,
-                        size: iconSize, color: AppColors.primaryColor)
-                    : null,
+              child: ClipOval(
+                child: SizedBox(
+                  width: radius * 2, // Ensure consistent sizing
+                  height: radius * 2,
+                  child: profilePic.isNotEmpty && _isValidUrl(profilePic)
+                      ? CachedNetworkImage(
+                          imageUrl: profilePic,
+                          placeholder: (context, url) => CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryColor,
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => _buildFallbackAvatar(context),
+                          imageBuilder: (context, imageProvider) => CircleAvatar(
+                            radius: radius,
+                            backgroundImage: imageProvider,
+                            backgroundColor: Colors.grey[200],
+                          ),
+                        )
+                      : _buildFallbackAvatar(context),
+                ),
               ),
             );
           }),
@@ -63,7 +88,7 @@ class ImagePickerWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child:  Text(
+          child: Text(
             'Change Photo',
             style: TextStyle(
               color: AppColors.black,
@@ -75,47 +100,65 @@ class ImagePickerWidget extends StatelessWidget {
     );
   }
 
+  // Fallback avatar (camera icon or initials)
+  Widget _buildFallbackAvatar(BuildContext context) {
+    // Option 1: Keep camera icon as in original
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.grey[200],
+      child: Icon(
+        Icons.camera_alt,
+        size: iconSize,
+        color: AppColors.primaryColor,
+      ),
+    );
+
+    // Option 2: Use initials for consistency with AppDrawer/HeaderWidget (uncomment to use)
+    /*
+    final fullName = controller.fullName.value;
+    final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : '?';
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.grey[200],
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: AppColors.primaryColor,
+          fontSize: iconSize * 0.8,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+    */
+  }
+
   Future<void> _handleImageSelection(BuildContext context) async {
     try {
-      debugPrint("ImagePickerWidget: Starting image selection");
       final XFile? pickedImage = await _showImagePickerDialog(context);
       if (pickedImage != null) {
-        debugPrint("ImagePickerWidget: Image selected - ${pickedImage.name}");
-        
         if (kIsWeb) {
           // For web, read as bytes
           try {
-            debugPrint("ImagePickerWidget: Reading image as bytes for web");
             final bytes = await pickedImage.readAsBytes();
-            debugPrint("ImagePickerWidget: Image bytes read successfully, size: ${bytes.length}");
             await controller.uploadProfilePictureFromBytes(bytes, pickedImage.name);
           } catch (e) {
-            debugPrint("ImagePickerWidget: Failed to read image bytes: $e");
             SnackbarUtils.showSnackbar("Error", "Failed to read image: ${e.toString()}");
           }
         } else {
           // For mobile, use File
           try {
-            debugPrint("ImagePickerWidget: Processing image file for mobile");
             final File imageFile = File(pickedImage.path);
             if (await imageFile.exists()) {
-              final fileSize = await imageFile.length();
-              debugPrint("ImagePickerWidget: Image file exists, size: $fileSize bytes");
               await controller.uploadProfilePicture(imageFile);
             } else {
-              debugPrint("ImagePickerWidget: Selected image file doesn't exist");
               SnackbarUtils.showSnackbar("Error", "Selected image doesn't exist");
             }
           } catch (e) {
-            debugPrint("ImagePickerWidget: Failed to process image file: $e");
             SnackbarUtils.showSnackbar("Error", "Failed to process image: ${e.toString()}");
           }
         }
-      } else {
-        debugPrint("ImagePickerWidget: No image selected");
       }
     } catch (e) {
-      debugPrint("ImagePickerWidget: Failed to select image: $e");
       SnackbarUtils.showSnackbar("Error", "Failed to select image: ${e.toString()}");
     }
   }
@@ -125,7 +168,7 @@ class ImagePickerWidget extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Center(child: Text('Pick an image')),
+          title: const Center(child: Text('Pick an image')),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             TextButton(
@@ -143,7 +186,6 @@ class ImagePickerWidget extends StatelessWidget {
                     Get.back(result: picked);
                   }
                 } catch (e) {
-                  debugPrint("ImagePickerWidget: Gallery picker error: $e");
                   if (context.mounted && Navigator.of(context).canPop()) {
                     Navigator.of(context).pop();
                   } else {
@@ -159,37 +201,37 @@ class ImagePickerWidget extends StatelessWidget {
                 ),
               ),
             ),
-            if (!kIsWeb) TextButton(
-              onPressed: () async {
-                try {
-                  final XFile? picked = await ImagePicker().pickImage(
-                    source: ImageSource.camera,
-                    maxWidth: 800,
-                    maxHeight: 800,
-                    imageQuality: 85,
-                  );
-                  if (context.mounted && Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop(picked);
-                  } else {
-                    Get.back(result: picked);
+            if (!kIsWeb)
+              TextButton(
+                onPressed: () async {
+                  try {
+                    final XFile? picked = await ImagePicker().pickImage(
+                      source: ImageSource.camera,
+                      maxWidth: 800,
+                      maxHeight: 800,
+                      imageQuality: 85,
+                    );
+                    if (context.mounted && Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop(picked);
+                    } else {
+                      Get.back(result: picked);
+                    }
+                  } catch (e) {
+                    if (context.mounted && Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      Get.back();
+                    }
                   }
-                } catch (e) {
-                  debugPrint("ImagePickerWidget: Camera picker error: $e");
-                  if (context.mounted && Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  } else {
-                    Get.back();
-                  }
-                }
-              },
-              child: Text(
-                'Camera',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w600,
+                },
+                child: Text(
+                  'Camera',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
           ],
         );
       },
