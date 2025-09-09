@@ -5,12 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/features/librarian/screens/librarian_task_detail_screen.dart';
 import 'package:task/features/librarian/widgets/task_actions.dart';
 import 'package:task/theme/app_durations.dart';
-import 'package:task/controllers/task_controller.dart';
+import 'package:task/service/user_cache_service.dart';
 import 'package:task/widgets/approval_status_chip.dart';
 
 
@@ -570,22 +569,12 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
 
   String _getCreatorName() {
     try {
-      final taskController = Get.find<TaskController>();
-      
-      // Try to get the name from the user cache first
-      if (widget.task.createdById.isNotEmpty) {
-        final cachedName = taskController.userNameCache[widget.task.createdById];
-        if (cachedName != null && cachedName.isNotEmpty) {
-          return cachedName;
-        }
-      }
-      
-      // Fall back to the createdBy field
+      // Fall back to the createdBy field first
       if (widget.task.createdBy.isNotEmpty) {
         return widget.task.createdBy;
       }
       
-      // If both are empty, try to fetch the name directly from Firestore
+      // If createdBy is empty, try to fetch from cache asynchronously
       if (widget.task.createdById.isNotEmpty) {
         _fetchAndCacheUserName(widget.task.createdById);
         return 'Loading...';
@@ -601,30 +590,14 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
   
   Future<void> _fetchAndCacheUserName(String userId) async {
     try {
-      final taskController = Get.find<TaskController>();
+      final userCacheService = Get.find<UserCacheService>();
       
-      // Check if we already have this user in cache
-      if (taskController.userNameCache.containsKey(userId)) {
-        return;
-      }
+      // Fetch user name using cache service
+      final userName = await userCacheService.getUserName(userId);
       
-      // Fetch user data from Firestore
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      
-      if (userDoc.exists) {
-        final userData = userDoc.data() as Map<String, dynamic>;
-        final fullName = userData['fullName'] ?? 'Unknown';
-        
-        // Cache the name
-        taskController.userNameCache[userId] = fullName;
-        
-        // Trigger a rebuild to show the updated name
-        if (mounted) {
-          setState(() {});
-        }
+      // Trigger a rebuild to show the updated name
+      if (mounted && userName.isNotEmpty) {
+        setState(() {});
       }
     } catch (e) {
       debugPrint('Error fetching user name for $userId: $e');

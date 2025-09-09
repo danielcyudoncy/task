@@ -8,7 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:task/models/task_model.dart';
-import 'package:task/controllers/task_controller.dart';
+
 
 class PdfExportService extends GetxService {
   static PdfExportService get to => Get.find();
@@ -664,20 +664,12 @@ class PdfExportService extends GetxService {
   /// Gets the creator name for a task, preferring cached names over IDs
   String _getCreatorName(Task task) {
     try {
-      final taskController = Get.find<TaskController>();
-      
-      // 1. Check if we have a cached name
-      if (task.createdById.isNotEmpty &&
-          taskController.userNameCache.containsKey(task.createdById)) {
-        return taskController.userNameCache[task.createdById]!;
-      }
-
-      // 2. Fallback to createdBy field
+      // 1. Fallback to createdBy field first (synchronous)
       if (task.createdBy.isNotEmpty) {
         return task.createdBy;
       }
 
-      // 3. Final fallback
+      // 2. Final fallback
       return 'Unknown';
     } catch (e) {
       Get.log('Error getting creator name: $e');

@@ -17,6 +17,7 @@ import 'package:task/service/firebase_service.dart';
 import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
+import 'package:task/service/user_cache_service.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
@@ -230,57 +231,104 @@ class AuthController extends GetxController {
     }
   }
 
-  // Add retry logic in loadUserData()
-  Future<void> loadUserData() async {
-    debugPrint("AuthController: Starting loadUserData");
-    const maxRetries = 3;
-    int attempt = 0;
-
-    while (attempt < maxRetries) {
-      try {
-        debugPrint("AuthController: loadUserData attempt ${attempt + 1}");
-        if (_auth.currentUser == null) {
-          debugPrint("AuthController: No current user, returning");
-          return;
-        }
-
-        debugPrint("AuthController: Fetching user document for ${_auth.currentUser!.uid}");
-        final userDoc = await _firestore
-            .collection("users")
-            .doc(_auth.currentUser!.uid)
-            .get();
-
-        if (userDoc.exists) {
-          debugPrint("AuthController: User document exists, loading data");
-          final data = userDoc.data()!;
-          fullName.value = data['fullName'] ?? '';
-          profilePic.value = data['photoUrl'] ?? '';
-          phoneNumber.value = data['phoneNumber'] ?? '';
-          userRole.value = data['role'] ?? '';
-          setUserRole(userRole.value);
-          isProfileComplete.value = data['profileComplete'] ?? false;
-
-          userData.assignAll(data);
-          debugPrint("AuthController: User data loaded successfully");
-          debugPrint("AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
-          return; // Success
-        } else {
-          debugPrint("AuthController: User document does not exist for ${_auth.currentUser!.uid}");
-          resetUserData();
-          throw Exception("User document not found");
-        }
-      } catch (e) {
-        debugPrint("AuthController: loadUserData error on attempt ${attempt + 1}: $e");
-        attempt++;
-        if (attempt == maxRetries) {
-          debugPrint("AuthController: loadUserData failed after $maxRetries attempts, resetting user data");
-          resetUserData();
-          rethrow;
-        }
-        debugPrint("AuthController: Retrying loadUserData in 1 second");
-        await Future.delayed(const Duration(seconds: 1));
-      }
+  // Enhanced loadUserData with caching for better performance
+  Future<void> loadUserData({bool forceRefresh = false}) async {
+    debugPrint("AuthController: Starting loadUserData (forceRefresh: $forceRefresh)");
+    
+    if (_auth.currentUser == null) {
+      debugPrint("AuthController: No current user, returning");
+      return;
     }
+
+    try {
+      // Get UserCacheService instance
+      final userCacheService = Get.find<UserCacheService>();
+      
+      // First, try to load from cache for immediate UI update (optimistic UI)
+      if (!forceRefresh) {
+        final cachedData = await userCacheService.getCurrentUserData();
+        if (cachedData != null) {
+          debugPrint("AuthController: Loading cached user data for immediate UI update");
+          _updateUserDataFromMap(cachedData);
+          debugPrint("AuthController: Cached user data loaded successfully");
+          
+          // If cache is still valid, return early
+          if (userCacheService.lastUserDataUpdate != null &&
+              DateTime.now().difference(userCacheService.lastUserDataUpdate!) < const Duration(hours: 1)) {
+            debugPrint("AuthController: Cache is fresh, skipping Firebase fetch");
+            return;
+          }
+        }
+      }
+      
+      // Fetch fresh data from Firebase (with retry logic)
+      const maxRetries = 3;
+      int attempt = 0;
+      
+      while (attempt < maxRetries) {
+        try {
+          debugPrint("AuthController: Fetching fresh data from Firebase (attempt ${attempt + 1})");
+          
+          final userDoc = await _firestore
+              .collection("users")
+              .doc(_auth.currentUser!.uid)
+              .get();
+
+          if (userDoc.exists) {
+            debugPrint("AuthController: Fresh user document exists, updating data");
+            final data = userDoc.data()!;
+            
+            // Update local state
+            _updateUserDataFromMap(data);
+            
+            // Update cache with fresh data
+            await userCacheService.updateCurrentUserData(data);
+            
+            debugPrint("AuthController: Fresh user data loaded and cached successfully");
+            debugPrint("AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
+            return; // Success
+          } else {
+            debugPrint("AuthController: User document does not exist for ${_auth.currentUser!.uid}");
+            resetUserData();
+            throw Exception("User document not found");
+          }
+        } catch (e) {
+          debugPrint("AuthController: loadUserData error on attempt ${attempt + 1}: $e");
+          attempt++;
+          if (attempt == maxRetries) {
+            debugPrint("AuthController: loadUserData failed after $maxRetries attempts");
+            
+            // If we have cached data, use it as fallback
+            final cachedData = await userCacheService.getCurrentUserData();
+            if (cachedData != null) {
+              debugPrint("AuthController: Using cached data as fallback");
+              _updateUserDataFromMap(cachedData);
+              return;
+            }
+            
+            // No cached data available, reset and rethrow
+            resetUserData();
+            rethrow;
+          }
+          debugPrint("AuthController: Retrying loadUserData in 1 second");
+          await Future.delayed(const Duration(seconds: 1));
+        }
+      }
+    } catch (e) {
+      debugPrint("AuthController: Critical error in loadUserData: $e");
+      rethrow;
+    }
+  }
+  
+  // Helper method to update user data from a map
+  void _updateUserDataFromMap(Map<String, dynamic> data) {
+    fullName.value = data['fullName'] ?? '';
+    profilePic.value = data['photoUrl'] ?? '';
+    phoneNumber.value = data['phoneNumber'] ?? '';
+    userRole.value = data['role'] ?? '';
+    setUserRole(userRole.value);
+    isProfileComplete.value = data['profileComplete'] ?? false;
+    userData.assignAll(data);
   }
 
   void resetUserData() {
@@ -584,6 +632,16 @@ class AuthController extends GetxController {
         });
 
         profilePic.value = downloadUrl;
+        
+        // Update cache with new profile picture
+        try {
+          final userCacheService = Get.find<UserCacheService>();
+          await userCacheService.updateUserAvatar(user.uid, downloadUrl);
+          debugPrint("AuthController: Profile picture cache updated");
+        } catch (e) {
+          debugPrint("AuthController: Failed to update profile picture cache: $e");
+        }
+        
         debugPrint("AuthController: Profile picture updated successfully");
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
@@ -632,6 +690,16 @@ class AuthController extends GetxController {
         });
 
         profilePic.value = downloadUrl;
+        
+        // Update cache with new profile picture
+        try {
+          final userCacheService = Get.find<UserCacheService>();
+          await userCacheService.updateUserAvatar(user.uid, downloadUrl);
+          debugPrint("AuthController: Profile picture cache updated");
+        } catch (e) {
+          debugPrint("AuthController: Failed to update profile picture cache: $e");
+        }
+        
         debugPrint("AuthController: Profile picture updated successfully");
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
@@ -656,17 +724,35 @@ class AuthController extends GetxController {
     try {
       isLoading(true);
 
-      await _firebaseService.updateUserData(user.uid, {
+      final updatedData = {
         'fullName': fullNameController.text.trim(),
         'phoneNumber': phoneNumberController.text.trim(),
         'role': selectedRole.value,
         'profileComplete': true,
-      });
+      };
+      
+      await _firebaseService.updateUserData(user.uid, updatedData);
 
       fullName.value = fullNameController.text.trim();
       phoneNumber.value = phoneNumberController.text.trim();
       setUserRole(selectedRole.value);
       isProfileComplete.value = true;
+      
+      // Update cache with new profile data
+       try {
+         final userCacheService = Get.find<UserCacheService>();
+         await userCacheService.updateUserInfo(user.uid, fullName: fullNameController.text.trim());
+         
+         // Get current cached data and merge with updates
+         final currentCachedData = await userCacheService.getCurrentUserData() ?? {};
+         await userCacheService.updateCurrentUserData({
+           ...currentCachedData,
+           ...updatedData,
+         });
+         debugPrint("AuthController: Profile data cache updated");
+       } catch (e) {
+         debugPrint("AuthController: Failed to update profile data cache: $e");
+       }
 
       _safeSnackbar('Success', 'Profile updated successfully');
     } catch (e) {

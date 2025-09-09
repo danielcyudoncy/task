@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:task/controllers/task_controller.dart';
+
 import 'package:task/models/task_model.dart';
 import 'package:task/models/report_completion_info.dart';
+import 'package:task/service/user_cache_service.dart';
 import 'status_chip.dart';
 import 'approval_status_chip.dart';
 
@@ -105,7 +106,6 @@ class MinimalTaskCard extends StatelessWidget {
   }
 
   Widget _buildCreatorRow(BuildContext context) {
-    final creatorName = _getCreatorName();
     return Row(
       children: [
         Icon(
@@ -118,7 +118,7 @@ class MinimalTaskCard extends StatelessWidget {
         const SizedBox(width: 4),
         Expanded(
           child: Text(
-            'Created by: $creatorName',
+            'Created by: ${_getCreatorNameSync()}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: isDark
                       ? Colors.white70
@@ -133,26 +133,26 @@ class MinimalTaskCard extends StatelessWidget {
     );
   }
 
-  String _getCreatorName() {
+  String _getCreatorNameSync() {
     try {
-      final taskController = Get.find<TaskController>();
-
-      // 1. Check if we have a cached name
-      if (task.createdById.isNotEmpty &&
-          taskController.userNameCache.containsKey(task.createdById)) {
-        return taskController.userNameCache[task.createdById]!;
+      final userCacheService = Get.find<UserCacheService>();
+      
+      // First check if we have a cached name for the creator ID
+      if (task.createdById.isNotEmpty) {
+        final cachedName = userCacheService.getUserNameSync(task.createdById);
+        if (cachedName != 'Unknown User') {
+          return cachedName;
+        }
       }
-
-      // 2. Fallback to createdBy field
+      
+      // Fallback to createdBy field
       if (task.createdBy.isNotEmpty) {
         return task.createdBy;
       }
-
-      // 3. Final fallback
+      
       return 'Unknown';
     } catch (e) {
-      debugPrint('Error getting creator name: $e');
-      return task.createdBy;
+      return 'Unknown';
     }
   }
 
