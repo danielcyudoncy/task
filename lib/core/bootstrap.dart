@@ -48,6 +48,7 @@ import 'package:task/service/firebase_messaging_service.dart';
 import 'package:task/service/daily_task_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:task/utils/snackbar_utils.dart';
+import 'package:task/service/user_cache_service.dart';
 
 // --- Emulator/Production Switch ---
 const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
@@ -103,6 +104,23 @@ Future<void> bootstrapApp() async {
     // Initialize Firebase services
     
     await _verifyFirebaseServices();
+    
+    
+    // Initialize User Cache Service early for better performance
+    
+    final userCacheService = UserCacheService();
+    await userCacheService.initialize();
+    Get.put(userCacheService, permanent: true);
+    
+    // Pre-fetch all user names and avatars for immediate display
+    
+    try {
+      await userCacheService.preFetchAllUsers();
+      debugPrint('🚀 BOOTSTRAP: Pre-fetched user data for immediate display');
+    } catch (e) {
+      debugPrint('⚠️ BOOTSTRAP: Failed to pre-fetch user data: $e');
+      // Continue bootstrap even if pre-fetch fails
+    }
     
     
     // Initialize Firebase Messaging Service

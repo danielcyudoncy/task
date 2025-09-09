@@ -9,6 +9,7 @@ import './task_action_utility.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
+import '../service/user_cache_service.dart';
 
 
 class TaskCardWidget extends StatefulWidget {
@@ -28,6 +29,16 @@ class TaskCardWidget extends StatefulWidget {
 }
 
 class _TaskCardWidgetState extends State<TaskCardWidget> {
+  @override
+  void initState() {
+    super.initState();
+    // Trigger background refresh of user names
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshCreatorNameInBackground();
+      _refreshAssignedReporterNameInBackground();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -113,7 +124,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Created by: ${_getCreatorName()}',
+                      'Created by: ${_getCreatorNameSync()}',
                       style: TextStyle(
                         color: subTextColor,
                         fontSize: 12.sp,
@@ -125,7 +136,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                 const SizedBox(height: 10),
                 // Assigned Reporter
                 Text(
-                  'Assigned Reporter: ${_getAssignedReporterName()}',
+                  'Assigned Reporter: ${_getAssignedReporterNameSync()}',
                   style: TextStyle(
                     color: subTextColor,
                     fontSize: 13.sp,
@@ -134,23 +145,33 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                 ),
                 const SizedBox(height: 4),
                 // Assigned Cameraman
-                Text(
-                  'Assigned Cameraman: ${_getAssignedCameramanName()}',
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w400,
-                  ),
+                FutureBuilder<String>(
+                  future: _getAssignedCameramanName(),
+                  builder: (context, snapshot) {
+                    return Text(
+                      'Assigned Cameraman: ${snapshot.data ?? 'Loading...'}',
+                      style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 4),
                 // Assigned Driver
-                Text(
-                  'Assigned Driver: ${_getAssignedDriverName()}',
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w400,
-                  ),
+                FutureBuilder<String>(
+                  future: _getAssignedDriverName(),
+                  builder: (context, snapshot) {
+                    return Text(
+                      'Assigned Driver: ${snapshot.data ?? 'Loading...'}',
+                      style: TextStyle(
+                        color: subTextColor,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 4),
                 // Status
@@ -298,13 +319,23 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                 const SizedBox(height: 8),
                 Text('Tags: ${widget.task.tags.isNotEmpty ? widget.task.tags.join(', ') : 'None'}'),
                 const SizedBox(height: 8),
-                Text('Creator: ${_getCreatorName()}'),
+                Text('Creator: ${_getCreatorNameSync()}'),
                 const SizedBox(height: 8),
-                Text('Reporter: ${_getAssignedReporterName()}'),
+                Text('Reporter: ${_getAssignedReporterNameSync()}'),
                 const SizedBox(height: 8),
-                Text('Cameraman: ${_getAssignedCameramanName()}'),
+                FutureBuilder<String>(
+                  future: _getAssignedCameramanName(),
+                  builder: (context, snapshot) {
+                    return Text('Cameraman: ${snapshot.data ?? 'Loading...'}');
+                  },
+                ),
                 const SizedBox(height: 8),
-                Text('Driver: ${_getAssignedDriverName()}'),
+                FutureBuilder<String>(
+                  future: _getAssignedDriverName(),
+                  builder: (context, snapshot) {
+                    return Text('Driver: ${snapshot.data ?? 'Loading...'}');
+                  },
+                ),
                 const SizedBox(height: 16),
                 if (widget.task.comments.isNotEmpty) ...[
                   const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -472,14 +503,16 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     );
   }
 
-  String _getCreatorName() {
+  String _getCreatorNameSync() {
     try {
-      final taskController = Get.find<TaskController>();
+      final userCacheService = Get.find<UserCacheService>();
       
-      // Check if we have a cached name
-      if (widget.task.createdById.isNotEmpty &&
-          taskController.userNameCache.containsKey(widget.task.createdById)) {
-        return taskController.userNameCache[widget.task.createdById]!;
+      // First check if we have a cached name for the creator ID
+      if (widget.task.createdById.isNotEmpty) {
+        final cachedName = userCacheService.getUserNameSync(widget.task.createdById);
+        if (cachedName != 'Unknown User') {
+          return cachedName;
+        }
       }
       
       // Fallback to createdBy field
@@ -493,14 +526,31 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     }
   }
 
-  String _getAssignedReporterName() {
+  void _refreshCreatorNameInBackground() {
+    if (widget.task.createdById.isNotEmpty) {
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        userCacheService.getUserName(widget.task.createdById).then((name) {
+          if (mounted && name != 'Unknown User') {
+            setState(() {});
+          }
+        }).catchError((e) {
+          debugPrint('Error refreshing creator name: $e');
+        });
+      } catch (e) {
+        debugPrint('Error getting UserCacheService: $e');
+      }
+    }
+  }
+
+  String _getAssignedReporterNameSync() {
     try {
       if (widget.task.assignedReporterId == null) return 'Not Assigned';
-      final taskController = Get.find<TaskController>();
       
-      // Check cache first
-      if (taskController.userNameCache.containsKey(widget.task.assignedReporterId!)) {
-        return taskController.userNameCache[widget.task.assignedReporterId!]!;
+      final userCacheService = Get.find<UserCacheService>();
+      final cachedName = userCacheService.getUserNameSync(widget.task.assignedReporterId!);
+      if (cachedName != 'Unknown User') {
+        return cachedName;
       }
       
       // Fallback to task field
@@ -514,14 +564,32 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     }
   }
 
-  String _getAssignedCameramanName() {
+  void _refreshAssignedReporterNameInBackground() {
+    if (widget.task.assignedReporterId != null) {
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        userCacheService.getUserName(widget.task.assignedReporterId!).then((name) {
+          if (mounted && name != 'Unknown User') {
+            setState(() {});
+          }
+        }).catchError((e) {
+          debugPrint('Error refreshing reporter name: $e');
+        });
+      } catch (e) {
+        debugPrint('Error getting UserCacheService: $e');
+      }
+    }
+  }
+
+  Future<String> _getAssignedCameramanName() async {
     try {
       if (widget.task.assignedCameramanId == null) return 'Not Assigned';
-      final taskController = Get.find<TaskController>();
       
-      // Check cache first
-      if (taskController.userNameCache.containsKey(widget.task.assignedCameramanId!)) {
-        return taskController.userNameCache[widget.task.assignedCameramanId!]!;
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        return await userCacheService.getUserName(widget.task.assignedCameramanId!);
+      } catch (e) {
+        debugPrint('Error getting cameraman name: $e');
       }
       
       // Fallback to task field
@@ -535,14 +603,15 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     }
   }
 
-  String _getAssignedDriverName() {
+  Future<String> _getAssignedDriverName() async {
     try {
       if (widget.task.assignedDriverId == null) return 'Not Assigned';
-      final taskController = Get.find<TaskController>();
       
-      // Check cache first
-      if (taskController.userNameCache.containsKey(widget.task.assignedDriverId!)) {
-        return taskController.userNameCache[widget.task.assignedDriverId!]!;
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        return await userCacheService.getUserName(widget.task.assignedDriverId!);
+      } catch (e) {
+        debugPrint('Error getting driver name: $e');
       }
       
       // Fallback to task field
