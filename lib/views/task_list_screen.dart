@@ -1,10 +1,11 @@
 // views/task_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+
 import '../controllers/task_controller.dart';
 import '../controllers/auth_controller.dart';
-
+import '../service/user_cache_service.dart';
+import '../widgets/task_card_widget.dart';
 import '../widgets/user_nav_bar.dart';
 
 class TaskListScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class TaskListScreen extends StatefulWidget {
 class _TaskListScreenState extends State<TaskListScreen> {
   final TaskController taskController = Get.find<TaskController>();
   final AuthController authController = Get.find<AuthController>();
+  final UserCacheService userCacheService = Get.find<UserCacheService>();
 
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController tagsController = TextEditingController();
@@ -75,54 +77,11 @@ class _TaskListScreenState extends State<TaskListScreen> {
           itemCount: filteredTasks.length,
           itemBuilder: (context, index) {
             var task = filteredTasks[index];
-            final creatorName =
-                taskController.userNameCache[task.createdById] ?? 'Unknown';
-            final assignedReporterName = task.assignedReporterId != null
-                ? (taskController.userNameCache[task.assignedReporterId] ??
-                    'Unknown')
-                : 'None';
-            final assignedCameramanName = task.assignedCameramanId != null
-                ? (taskController.userNameCache[task.assignedCameramanId] ??
-                    'Unknown')
-                : 'None';
-            final assignedDriverName = task.assignedDriverId != null
-                ? (taskController.userNameCache[task.assignedDriverId] ??
-                    'Unknown')
-                : 'None';
 
-            return Card(
-              elevation: 3,
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: ListTile(
-                title: Text(task.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${'created_by'.tr}: $creatorName'),
-                    Text('${'assigned_reporter'.tr}: $assignedReporterName'),
-                    Text('${'assigned_cameraman'.tr}: $assignedCameramanName'),
-                    Text('${'assigned_driver'.tr}: $assignedDriverName'),
-                    Text('${'status'.tr}: ${task.status}'),
-                    Text(
-                        '${'due_date'.tr}: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
-                    Text('${'category'.tr}: ${task.category ?? 'N/A'}'),
-                    Text(
-                        '${'tags'.tr}: ${task.tags.isNotEmpty ? task.tags.join(', ') : 'N/A'}'),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildStatusIndicator(task.status),
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _showUpdateTaskDialog(context, task),
-                    ),
-                  ],
-                ),
-                onTap: () => _showUpdateTaskDialog(context, task),
-              ),
+            return TaskCardWidget(
+              task: task,
+              isCompleted: task.status == 'Completed',
+              isDark: false,
             );
           },
         );
@@ -135,100 +94,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  Widget _buildStatusIndicator(String status) {
-    Color statusColor = status == "Completed" ? Colors.green : Colors.orange;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: statusColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        status,
-        style:
-            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
 
-  void _showUpdateTaskDialog(BuildContext context, dynamic task) {
-    final TextEditingController titleController =
-        TextEditingController(text: task.title);
-    final TextEditingController descriptionController =
-        TextEditingController(text: task.description);
-    String currentStatus = task.status;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Update Task'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: currentStatus,
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ['Pending', 'In Progress', 'Completed']
-                      .map((String status) => DropdownMenuItem<String>(
-                            value: status,
-                            child: Text(status),
-                          ))
-                      .toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        currentStatus = newValue;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                taskController.updateTask(
-                  task.taskId,
-                  titleController.text,
-                  descriptionController.text,
-                  currentStatus,
-                );
-                Navigator.of(context).pop();
-              },
-              child: const Text('Update'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showAddTaskDialog(BuildContext context) {
     final TextEditingController titleController = TextEditingController();

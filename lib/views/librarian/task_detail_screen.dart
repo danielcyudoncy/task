@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
+
 import 'package:task/models/task_model.dart';
 import 'package:task/service/export_service.dart';
 import 'package:task/service/pdf_export_service.dart';
@@ -555,18 +556,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   String _getCreatorName() {
     try {
-      // 1. Check if we have a cached name
-      if (widget.task.createdById.isNotEmpty &&
-          _taskController.userNameCache.containsKey(widget.task.createdById)) {
-        return _taskController.userNameCache[widget.task.createdById]!;
-      }
-
-      // 2. Fallback to createdBy field
+      // 1. Fallback to createdBy field first (synchronous)
       if (widget.task.createdBy.isNotEmpty) {
         return widget.task.createdBy;
       }
 
-      // 3. Final fallback
+      // 2. Final fallback
       return 'Unknown';
     } catch (e) {
       debugPrint('Error getting creator name: $e');

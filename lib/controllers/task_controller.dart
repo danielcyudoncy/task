@@ -13,6 +13,7 @@ import 'package:task/service/firebase_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
 import 'package:task/service/fcm_service.dart';
+import 'package:task/service/user_cache_service.dart';
 
 
 class TaskController extends GetxController {
@@ -29,8 +30,7 @@ class TaskController extends GetxController {
   var isLoadingStats = false.obs;
   var isRefreshing = false.obs; // Added newTaskCount variable
 
-  final Map<String, String> userNameCache = {};
-  final Map<String, String> userAvatarCache = {};
+  // Using UserCacheService for better caching performance
   final Map<String, String> taskTitleCache = {};
 
   // Safe snackbar method
@@ -54,6 +54,29 @@ class TaskController extends GetxController {
     
     return '';
   }
+  
+  // Helper method to get user name using UserCacheService
+  Future<String> _getUserName(String userId) async {
+    try {
+      final userCacheService = Get.find<UserCacheService>();
+      return await userCacheService.getUserName(userId);
+    } catch (e) {
+      debugPrint('TaskController: Error getting user name for $userId: $e');
+      return 'Unknown User';
+    }
+  }
+  
+  // Helper method to get user avatar using UserCacheService
+  Future<String> _getUserAvatar(String userId) async {
+    try {
+      final userCacheService = Get.find<UserCacheService>();
+      final avatar = await userCacheService.getUserAvatar(userId);
+      return _validateAvatarUrl(avatar);
+    } catch (e) {
+      debugPrint('TaskController: Error getting user avatar for $userId: $e');
+      return authController.profilePic.value;
+    }
+  }
 
   // Pagination, filter, and search
   DocumentSnapshot? lastDocument;
@@ -76,7 +99,7 @@ class TaskController extends GetxController {
       if (Get.isRegistered<TaskController>()) {
         debugPrint('TaskController: Controller is registered, proceeding with initialization');
         await initializeCache();
-        await preFetchUserNames();
+        await _preFetchUsersWithCacheService();
         await loadInitialTasks();
         fetchTaskCounts();
         calculateNewTaskCount(); // Calculate new task count on init
@@ -140,8 +163,7 @@ class TaskController extends GetxController {
   // Save cache to local storage
   Future<void> saveCache() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString("userNameCache", jsonEncode(userNameCache));
-    prefs.setString("userAvatarCache", jsonEncode(userAvatarCache));
+    // Only save task title cache, user data is handled by UserCacheService
     prefs.setString("taskTitleCache", jsonEncode(taskTitleCache));
     prefs.setInt("cacheTimestamp", DateTime.now().millisecondsSinceEpoch);
   }
@@ -150,21 +172,8 @@ class TaskController extends GetxController {
   Future<void> loadCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userNameCacheString = prefs.getString("userNameCache");
-      final userAvatarCacheString = prefs.getString("userAvatarCache");
+      // Only load task title cache, user data is handled by UserCacheService
       final taskTitleCacheString = prefs.getString("taskTitleCache");
-      
-      if (userNameCacheString != null) {
-        final Map<String, dynamic> decoded = jsonDecode(userNameCacheString);
-        userNameCache.clear();
-        userNameCache.addAll(Map<String, String>.from(decoded));
-      }
-      
-      if (userAvatarCacheString != null) {
-        final Map<String, dynamic> decoded = jsonDecode(userAvatarCacheString);
-        userAvatarCache.clear();
-        userAvatarCache.addAll(Map<String, String>.from(decoded));
-      }
       
       if (taskTitleCacheString != null) {
         final Map<String, dynamic> decoded = jsonDecode(taskTitleCacheString);
@@ -176,28 +185,14 @@ class TaskController extends GetxController {
     }
   }
 
-  // Pre-fetch all user names and avatars and cache them
-  Future<void> preFetchUserNames() async {
+  // Pre-fetch all user names and avatars using UserCacheService
+  Future<void> _preFetchUsersWithCacheService() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      int? lastUpdate = prefs.getInt("cacheTimestamp");
-      if (lastUpdate != null &&
-          DateTime.now().millisecondsSinceEpoch - lastUpdate < 86400000) {
-        return;
-      }
-      QuerySnapshot usersSnapshot =
-          await FirebaseFirestore.instance.collection("users").get();
-      for (var doc in usersSnapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-        String uid = doc.id;
-        String fullName = data["fullName"] ?? "Unknown";
-        String photoUrl = _validateAvatarUrl(data["photoUrl"]);
-        userNameCache[uid] = fullName;
-        userAvatarCache[uid] = photoUrl;
-      }
-      saveCache();
+      final userCacheService = Get.find<UserCacheService>();
+      await userCacheService.preFetchAllUsers();
+      debugPrint('TaskController: Pre-fetched users using UserCacheService');
     } catch (e) {
-      // debugPrint("TaskController: Error in preFetchUserNames: $e");
+      debugPrint('TaskController: Error pre-fetching users: $e');
     }
   }
 
@@ -820,8 +815,9 @@ class TaskController extends GetxController {
         "title": title,
         "description": description,
         "createdBy": userId,
+        "createdById": userId,
         "createdByName": authController.fullName.value,
-        "creatorAvatar": _validateAvatarUrl(userAvatarCache[userId] ?? authController.profilePic.value),
+        "creatorAvatar": await _getUserAvatar(userId),
         "assignedReporterId": null,
         "assignedReporterName": null,
         "assignedCameramanId": null,
@@ -1004,21 +1000,7 @@ class TaskController extends GetxController {
       if (reportCompletionInfo != null) {
         try {
           // Get reporter's name from cache or fetch it
-          String reporterName = userNameCache[userId] ?? 'Unknown Reporter';
-          if (reporterName == 'Unknown Reporter') {
-            try {
-              final userDoc = await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(userId)
-                  .get();
-              if (userDoc.exists) {
-                reporterName = userDoc.data()?['fullName'] ?? 'Unknown Reporter';
-                userNameCache[userId] = reporterName; // Cache it
-              }
-            } catch (e) {
-              debugPrint('Error fetching reporter name: $e');
-            }
-          }
+          String reporterName = await _getUserName(userId);
           
           await sendReportCompletionNotification(
              taskId,

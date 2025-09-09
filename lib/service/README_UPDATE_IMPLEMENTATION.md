@@ -5,6 +5,7 @@ This guide explains how to implement and use the in-app update mechanism in your
 ## Overview
 
 The in-app update system provides:
+
 - **Android**: Google Play In-App Updates (immediate and flexible)
 - **iOS**: App Store redirect with custom dialogs
 - **Cross-platform**: Unified API and customizable UI
@@ -16,6 +17,7 @@ The in-app update system provides:
 ### 1. Dependencies
 
 The following dependencies are already added to `pubspec.yaml`:
+
 ```yaml
 dependencies:
   in_app_update: ^4.2.2        # Android in-app updates
@@ -111,11 +113,13 @@ IconButton(
 ### iOS Setup
 
 1. **App Store ID**: Update the App Store ID in `ios_update_service.dart`:
+
 ```dart
 static const String _appStoreId = 'YOUR_APP_STORE_ID';
 ```
 
-2. **URL Schemes**: Ensure `url_launcher` permissions in `ios/Runner/Info.plist`:
+2.**URL Schemes**: Ensure `url_launcher` permissions in `ios/Runner/Info.plist`:
+
 ```xml
 <key>LSApplicationQueriesSchemes</key>
 <array>
@@ -126,19 +130,16 @@ static const String _appStoreId = 'YOUR_APP_STORE_ID';
 ### Version Checking API
 
 Update the version checking endpoint in `version_service.dart`:
-```dart
-static const String _versionCheckUrl = 'https://your-api.com/version-check';
-```
+
+static const String _versionCheckUrl = '<https://your-api.com/version-check>';
 
 Expected API response:
-```json
 {
   "latest_version": "1.2.0",
   "minimum_version": "1.0.0",
   "force_update": false,
   "release_notes": "Bug fixes and improvements"
 }
-```
 
 ## Usage Examples
 
@@ -201,6 +202,7 @@ print('Auto update enabled: ${status['autoUpdateEnabled']}');
    - Test in-app update flow
 
 2. **Fake Update**:
+
    ```bash
    # Enable fake update for testing
    adb shell am start -n "com.google.android.fakestore/.MainActivity"
@@ -255,24 +257,28 @@ static int compareVersions(String version1, String version2) {
 ## Best Practices
 
 ### 1. Update Timing
+
 - Check for updates on app startup
 - Perform background checks when app resumes
 - Respect user preferences for frequency
 - Avoid interrupting critical user flows
 
 ### 2. User Experience
+
 - Use non-intrusive notifications for optional updates
 - Clearly communicate forced updates
 - Provide meaningful release notes
 - Allow users to postpone non-critical updates
 
 ### 3. Error Handling
+
 - Handle network failures gracefully
 - Provide fallback options
 - Log errors for debugging
 - Show user-friendly error messages
 
 ### 4. Testing Strategy
+
 - Test both immediate and flexible updates
 - Verify forced update scenarios
 - Test network failure cases
@@ -338,6 +344,7 @@ If you're migrating from an existing update system:
 ## Support
 
 For issues and questions:
+
 1. Check the troubleshooting section above
 2. Review the example implementation in `examples/update_integration_example.dart`
 3. Test with the provided example app
