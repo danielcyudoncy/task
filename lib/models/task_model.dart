@@ -228,7 +228,7 @@ class Task {
       parseDate(map['timestamp']) ?? DateTime.now(),
       map['assignedTo'],
       parseDate(map['assignmentTimestamp']),
-      map['createdBy'] ?? '', // This should be the user ID
+      map['createdById'] ?? map['createdBy'] ?? '', // Use createdById field for user ID
       map['assignedReporterId'],
       map['assignedCameramanId'],
       map['assignedDriverId'],

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
+import 'package:task/service/user_cache_service.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/features/librarian/widgets/task_actions.dart';
 import 'package:task/features/librarian/widgets/task_attachments_widget.dart';
@@ -463,11 +464,11 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
                     ),
                     if (_task.approvedBy != null) ...[
                       const Divider(height: 24),
-                      _buildDetailRow(
+                      _buildDetailRowWithWidget(
                         context,
                         icon: Icons.person_outline,
                         label: _task.isApproved ? 'Approved By' : 'Rejected By',
-                        value: _getApproverName(_task.approvedBy!),
+                        valueWidget: _buildAsyncUserName(_task.approvedBy!),
                       ),
                     ],
                     if (_task.approvalReason != null && _task.approvalReason!.isNotEmpty) ...[
@@ -702,9 +703,56 @@ class _LibrarianTaskDetailScreenState extends State<LibrarianTaskDetailScreen>
     );
   }
   
-  String _getApproverName(String userId) {
-    final TaskController taskController = Get.find<TaskController>();
-    return taskController.userNameCache[userId] ?? 'Unknown User';
+  Widget _buildDetailRowWithWidget(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Widget valueWidget,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              valueWidget,
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAsyncUserName(String userId) {
+    final userCacheService = Get.find<UserCacheService>();
+    return FutureBuilder<String>(
+      future: userCacheService.getUserName(userId),
+      builder: (context, snapshot) {
+        return Text(
+          snapshot.data ?? 'Loading...',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        );
+      },
+    );
   }
 
   Color _getStatusColor(String status) {
