@@ -78,7 +78,7 @@ class TaskActions {
     );
   }
 
-  static void deleteTask(dynamic task) async {
+  static Future<void> deleteTask(dynamic task) async {
     final taskController = Get.find<TaskController>();
     await taskController.deleteTask(task.taskId);
     SnackbarUtils.showSuccess("Task deleted");

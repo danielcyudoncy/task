@@ -4,13 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
-import '../widgets/task_review_dialog.dart';
 import './task_action_utility.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import '../service/user_cache_service.dart';
-
 
 class TaskCardWidget extends StatefulWidget {
   final Task task;
@@ -34,9 +32,332 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     super.initState();
     // Trigger background refresh of user names
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshCreatorNameInBackground();
-      _refreshAssignedReporterNameInBackground();
+      if (mounted) {
+        _refreshCreatorNameInBackground();
+        _refreshAssignedReporterNameInBackground();
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  String _getAssignedReporterNameSync() {
+    try {
+      if (widget.task.assignedReporterId == null) return 'Not Assigned';
+      
+      final userCacheService = Get.find<UserCacheService>();
+      final cachedName = userCacheService.getUserNameSync(widget.task.assignedReporterId!);
+      if (cachedName != 'Unknown User') {
+        return cachedName;
+      }
+      
+      // Fallback to task field
+      if (widget.task.assignedReporter != null && widget.task.assignedReporter!.isNotEmpty) {
+        return widget.task.assignedReporter!;
+      }
+      
+      return 'Unknown';
+    } catch (e) {
+      debugPrint('Error in _getAssignedReporterNameSync: $e');
+      return 'Unknown';
+    }
+  }
+
+  Future<String> _getAssignedCameramanName() async {
+    try {
+      if (widget.task.assignedCameramanId == null) return 'Not Assigned';
+      
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        final name = await userCacheService.getUserName(widget.task.assignedCameramanId!);
+        return name;
+      } catch (e) {
+        debugPrint('Error getting cameraman name: $e');
+        // Fallback to task field if available
+        if (widget.task.assignedCameraman != null && widget.task.assignedCameraman!.isNotEmpty) {
+          return widget.task.assignedCameraman!;
+        }
+        return 'Unknown';
+      }
+    } catch (e) {
+      debugPrint('Error in _getAssignedCameramanName: $e');
+      return 'Error';
+    }
+  }
+  
+  Future<String> _getAssignedDriverName() async {
+    try {
+      if (widget.task.assignedDriverId == null) return 'Not Assigned';
+      
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        final name = await userCacheService.getUserName(widget.task.assignedDriverId!);
+        return name;
+      } catch (e) {
+        debugPrint('Error getting driver name: $e');
+        // Fallback to task field if available
+        if (widget.task.assignedDriver != null && widget.task.assignedDriver!.isNotEmpty) {
+          return widget.task.assignedDriver!;
+        }
+        return 'Unknown';
+      }
+    } catch (e) {
+      debugPrint('Error in _getAssignedDriverName: $e');
+      return 'Error';
+    }
+  }
+
+  String _getCreatorNameSync() {
+    try {
+      if (widget.task.createdById.isEmpty) return 'Unknown';
+      
+      final userCacheService = Get.find<UserCacheService>();
+      final cachedName = userCacheService.getUserNameSync(widget.task.createdById);
+      if (cachedName != 'Unknown User') {
+        return cachedName;
+      }
+      
+      // Fallback to task field
+      if (widget.task.createdBy.isNotEmpty) {
+        return widget.task.createdBy;
+      }
+      
+      return 'Unknown';
+    } catch (e) {
+      debugPrint('Error in _getCreatorNameSync: $e');
+      return 'Unknown';
+    }
+  }
+
+  void _refreshCreatorNameInBackground() {
+    if (widget.task.createdById.isNotEmpty) {
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        userCacheService.getUserName(widget.task.createdById).then((name) {
+          if (mounted && name != 'Unknown User') {
+            setState(() {});
+          }
+        }).catchError((e) {
+          debugPrint('Error refreshing creator name: $e');
+        });
+      } catch (e) {
+        debugPrint('Error getting UserCacheService: $e');
+      }
+    }
+  }
+
+  void _refreshAssignedReporterNameInBackground() {
+    if (widget.task.assignedReporterId != null) {
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        userCacheService.getUserName(widget.task.assignedReporterId!).then((name) {
+          if (mounted && name != 'Unknown User') {
+            setState(() {});
+          }
+        }).catchError((e) {
+          debugPrint('Error refreshing reporter name: $e');
+        });
+      } catch (e) {
+        debugPrint('Error getting UserCacheService: $e');
+      }
+    }
+  }
+
+  Widget _buildCompleteBackground() {
+    return Container(
+      color: Colors.green[600],
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 20),
+      child: const Icon(
+        Icons.check_circle_outline,
+        color: Colors.white,
+        size: 32,
+      ),
+    );
+  }
+
+  Widget _buildDeleteBackground() {
+    return Container(
+      color: Colors.red[600],
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      child: const Icon(
+        Icons.delete_outline,
+        color: Colors.white,
+        size: 32,
+      ),
+    );
+  }
+
+  Future<bool?> _handleDismiss(BuildContext context, DismissDirection direction) async {
+    if (direction == DismissDirection.startToEnd) {
+      return await _showCompleteConfirmation(context);
+    } else {
+      return await _showDeleteConfirmation(context);
+    }
+  }
+
+  Future<void> _handleDismissed(DismissDirection direction) async {
+    if (direction == DismissDirection.startToEnd) {
+      await _markAsCompleted();
+    } else {
+      final confirmed = await _showDeleteConfirmation(context);
+      if (confirmed == true) {
+        await TaskActions.deleteTask(widget.task);
+      }
+    }
+  }
+
+  Future<void> _markAsCompleted() async {
+    try {
+      final taskController = Get.find<TaskController>();
+      await taskController.updateTaskStatus(
+        widget.task.taskId,
+        'Completed',
+      );
+      Get.snackbar(
+        'Success',
+        'Task marked as completed',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      debugPrint('Error marking task as completed: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to mark task as completed',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<bool?> _showCompleteConfirmation(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Complete Task'),
+          content: const Text('Are you sure you want to mark this task as completed?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: const Text('Complete'),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool?> _showDeleteConfirmation(BuildContext context) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Task'),
+          content: const Text('Are you sure you want to delete this task? This action cannot be undone.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showTaskDetails(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(widget.task.title),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Description: ${widget.task.description}'),
+                const SizedBox(height: 8),
+                Text('Status: ${widget.task.status}'),
+                const SizedBox(height: 8),
+                Text('Category: ${widget.task.category ?? 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Due Date: ${widget.task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(widget.task.dueDate!) : 'N/A'}'),
+                const SizedBox(height: 8),
+                Text('Tags: ${widget.task.tags.isNotEmpty ? widget.task.tags.join(', ') : 'None'}'),
+                const SizedBox(height: 8),
+                Text('Creator: ${_getCreatorNameSync()}'),
+                const SizedBox(height: 8),
+                Text('Reporter: ${_getAssignedReporterNameSync()}'),
+                const SizedBox(height: 8),
+                FutureBuilder<String>(
+                  future: _getAssignedCameramanName(),
+                  builder: (context, snapshot) {
+                    return Text('Cameraman: ${snapshot.data ?? 'Loading...'}');
+                  },
+                ),
+                const SizedBox(height: 8),
+                FutureBuilder<String>(
+                  future: _getAssignedDriverName(),
+                  builder: (context, snapshot) {
+                    return Text('Driver: ${snapshot.data ?? 'Loading...'}');
+                  },
+                ),
+                const SizedBox(height: 16),
+                if (widget.task.comments.isNotEmpty) ...[
+                  const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ...widget.task.comments.map((comment) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text('• $comment'),
+                  )),
+                ] else
+                  const Text('No comments available.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -59,23 +380,12 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     final Color textColor = widget.isDark ? Colors.white : Colors.white;
     final Color subTextColor = widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
 
-    // For debugging task details
-    colorScheme.outline.withAlpha((0.3 * 255).toInt());
-
-    // Debug prints for diagnosis
-    debugPrint(
-      'TaskCardWidget: taskId= [32m${widget.task.taskId} [0m, '
-      'dueDate= [32m${widget.task.dueDate} [0m, '
-      'category= [32m${widget.task.category} [0m, '
-      'tags= [32m${widget.task.tags} [0m'
-    );
-
     return Dismissible(
       key: ValueKey(widget.task.taskId),
       background: !widget.isCompleted ? _buildCompleteBackground() : Container(),
       secondaryBackground: _buildDeleteBackground(),
       confirmDismiss: (direction) => _handleDismiss(context, direction),
-      onDismissed: (direction) => _handleDismissed(direction),
+      onDismissed: _handleDismissed,
       child: GestureDetector(
         onTap: () => _showTaskDetails(context),
         child: Padding(
@@ -270,7 +580,11 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
                           if (isTaskOwner) {
-                            TaskActions.deleteTask(widget.task);
+                            _showDeleteConfirmation(context).then((confirmed) {
+                              if (confirmed == true) {
+                                TaskActions.deleteTask(widget.task);
+                              }
+                            });
                           }
                         },
                       ),
@@ -292,378 +606,5 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         ),
       ),
     );
-  }
-
-  void _showTaskDetails(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(widget.task.title),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Description: ${widget.task.description}'),
-                const SizedBox(height: 8),
-                Text('Status: ${widget.task.status}'),
-                const SizedBox(height: 8),
-                Text('Category: ${widget.task.category ?? 'N/A'}'),
-                const SizedBox(height: 8),
-                Text('Due Date: ${widget.task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(widget.task.dueDate!) : 'N/A'}'),
-                const SizedBox(height: 8),
-                Text('Tags: ${widget.task.tags.isNotEmpty ? widget.task.tags.join(', ') : 'None'}'),
-                const SizedBox(height: 8),
-                Text('Creator: ${_getCreatorNameSync()}'),
-                const SizedBox(height: 8),
-                Text('Reporter: ${_getAssignedReporterNameSync()}'),
-                const SizedBox(height: 8),
-                FutureBuilder<String>(
-                  future: _getAssignedCameramanName(),
-                  builder: (context, snapshot) {
-                    return Text('Cameraman: ${snapshot.data ?? 'Loading...'}');
-                  },
-                ),
-                const SizedBox(height: 8),
-                FutureBuilder<String>(
-                  future: _getAssignedDriverName(),
-                  builder: (context, snapshot) {
-                    return Text('Driver: ${snapshot.data ?? 'Loading...'}');
-                  },
-                ),
-                const SizedBox(height: 16),
-                if (widget.task.comments.isNotEmpty) ...[
-                  const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  ...widget.task.comments.map((comment) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text('• $comment'),
-                  )),
-                ] else
-                  const Text('No comments available.'),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              child: Text(
-                'Close',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildCompleteBackground() {
-    return Container(
-      color: Colors.green[600],
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.only(left: 20),
-      child: const Row(
-        children: [
-          Icon(Icons.check, color: Colors.white, size: 30),
-          SizedBox(width: 10),
-          Text(
-            'Complete',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDeleteBackground() {
-    return Container(
-      color: Colors.red[600],
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 20),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(
-            'Delete',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          SizedBox(width: 10),
-          Icon(Icons.delete, color: Colors.white, size: 30),
-        ],
-      ),
-    );
-  }
-
-  Future<bool?> _handleDismiss(BuildContext context, DismissDirection direction) async {
-    if (direction == DismissDirection.startToEnd && !widget.isCompleted) {
-      return await _showCompleteConfirmation(context);
-    } else if (direction == DismissDirection.endToStart) {
-      return await _showDeleteConfirmation(context);
-    }
-    return false;
-  }
-
-  void _handleDismissed(DismissDirection direction) {
-    if (direction == DismissDirection.startToEnd && !widget.isCompleted) {
-      _markAsCompleted();
-    } else if (direction == DismissDirection.endToStart) {
-      TaskActions.deleteTask(widget.task);
-    }
-  }
-
-  Future<bool?> _showCompleteConfirmation(BuildContext context) async {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Mark as Completed"),
-        content: Text("Are you sure you want to mark '${widget.task.title}' as completed?"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.find<SettingsController>().triggerFeedback();
-              Navigator.of(ctx).pop(false);
-            },
-            child: Text(
-              "Cancel", 
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.find<SettingsController>().triggerFeedback();
-              Navigator.of(ctx).pop(true);
-            },
-            child: Text(
-              "Complete", 
-              style: TextStyle(
-                      color: widget.isDark ? Colors.green[300] : Colors.green[700]
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<bool?> _showDeleteConfirmation(BuildContext context) async {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Delete Task"),
-        content: Text("Are you sure you want to delete '${widget.task.title}'? This action cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.find<SettingsController>().triggerFeedback();
-              Navigator.of(ctx).pop(false);
-            },
-            child: Text(
-              "Cancel", 
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.find<SettingsController>().triggerFeedback();
-              Navigator.of(ctx).pop(true);
-            },
-            child: Text(
-              "Delete", 
-              style: TextStyle(
-                      color: widget.isDark ? Colors.red[300] : Colors.red[600]
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getCreatorNameSync() {
-    try {
-      final userCacheService = Get.find<UserCacheService>();
-      
-      // First check if we have a cached name for the creator ID
-      if (widget.task.createdById.isNotEmpty) {
-        final cachedName = userCacheService.getUserNameSync(widget.task.createdById);
-        if (cachedName != 'Unknown User') {
-          return cachedName;
-        }
-      }
-      
-      // Fallback to createdBy field
-      if (widget.task.createdBy.isNotEmpty) {
-        return widget.task.createdBy;
-      }
-      
-      return 'Unknown';
-    } catch (e) {
-      return 'Unknown';
-    }
-  }
-
-  void _refreshCreatorNameInBackground() {
-    if (widget.task.createdById.isNotEmpty) {
-      try {
-        final userCacheService = Get.find<UserCacheService>();
-        userCacheService.getUserName(widget.task.createdById).then((name) {
-          if (mounted && name != 'Unknown User') {
-            setState(() {});
-          }
-        }).catchError((e) {
-          debugPrint('Error refreshing creator name: $e');
-        });
-      } catch (e) {
-        debugPrint('Error getting UserCacheService: $e');
-      }
-    }
-  }
-
-  String _getAssignedReporterNameSync() {
-    try {
-      if (widget.task.assignedReporterId == null) return 'Not Assigned';
-      
-      final userCacheService = Get.find<UserCacheService>();
-      final cachedName = userCacheService.getUserNameSync(widget.task.assignedReporterId!);
-      if (cachedName != 'Unknown User') {
-        return cachedName;
-      }
-      
-      // Fallback to task field
-      if (widget.task.assignedReporter != null && widget.task.assignedReporter!.isNotEmpty) {
-        return widget.task.assignedReporter!;
-      }
-      
-      return 'Unknown';
-    } catch (e) {
-      return 'Unknown';
-    }
-  }
-
-  void _refreshAssignedReporterNameInBackground() {
-    if (widget.task.assignedReporterId != null) {
-      try {
-        final userCacheService = Get.find<UserCacheService>();
-        userCacheService.getUserName(widget.task.assignedReporterId!).then((name) {
-          if (mounted && name != 'Unknown User') {
-            setState(() {});
-          }
-        }).catchError((e) {
-          debugPrint('Error refreshing reporter name: $e');
-        });
-      } catch (e) {
-        debugPrint('Error getting UserCacheService: $e');
-      }
-    }
-  }
-
-  Future<String> _getAssignedCameramanName() async {
-    try {
-      if (widget.task.assignedCameramanId == null) return 'Not Assigned';
-      
-      try {
-        final userCacheService = Get.find<UserCacheService>();
-        return await userCacheService.getUserName(widget.task.assignedCameramanId!);
-      } catch (e) {
-        debugPrint('Error getting cameraman name: $e');
-      }
-      
-      // Fallback to task field
-      if (widget.task.assignedCameraman != null && widget.task.assignedCameraman!.isNotEmpty) {
-        return widget.task.assignedCameraman!;
-      }
-      
-      return 'Unknown';
-    } catch (e) {
-      return 'Unknown';
-    }
-  }
-
-  Future<String> _getAssignedDriverName() async {
-    try {
-      if (widget.task.assignedDriverId == null) return 'Not Assigned';
-      
-      try {
-        final userCacheService = Get.find<UserCacheService>();
-        return await userCacheService.getUserName(widget.task.assignedDriverId!);
-      } catch (e) {
-        debugPrint('Error getting driver name: $e');
-      }
-      
-      // Fallback to task field
-      if (widget.task.assignedDriver != null && widget.task.assignedDriver!.isNotEmpty) {
-        return widget.task.assignedDriver!;
-      }
-      
-      return 'Unknown';
-    } catch (e) {
-      return 'Unknown';
-    }
-  }
-
-  void _markAsCompleted() async {
-    // Use the new multi-user completion system
-    TaskActions.completeTask(widget.task);
-    
-    // Show review dialog for admins and managers
-    final authController = Get.find<AuthController>();
-    final userRole = authController.userRole.value.toLowerCase();
-    final userId = authController.auth.currentUser?.uid;
-    
-    if (userId != null && _canShowReviewDialog(userRole)) {
-      // Wait a bit to show the review dialog after the completion snackbar
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => TaskReviewDialog(
-            task: widget.task,
-            reviewerId: userId,
-            reviewerRole: userRole,
-            onReviewSubmitted: () {
-              // Refresh the task list to show the new review
-              final taskController = Get.find<TaskController>();
-              taskController.refreshTasks();
-            },
-          ),
-        );
-      }
-    }
-  }
-
-  bool _canShowReviewDialog(String userRole) {
-    switch (userRole) {
-      case 'admin':
-      case 'assignment_editor':
-      case 'head_of_department':
-      case 'head_of_unit':
-        return true;
-      default:
-        return false;
-    }
   }
 }

@@ -21,6 +21,7 @@ class Task {
   late String title;
   late String description;
   late String createdBy;
+  String? createdByName;
   String? assignedReporter;
   String? assignedCameraman;
   String? assignedDriver;
@@ -141,7 +142,7 @@ class Task {
       this.assignedDriver,
       this.assignedLibrarian,
       this.status,
-      this.comments,
+      List<String>? comments,
       this.timestamp,
       this.assignedTo,
       this.assignmentTimestamp,
@@ -152,12 +153,12 @@ class Task {
       this.assignedLibrarianId,
       this.creatorAvatar,
       this.category,
-      this.tags,
+      List<String>? tags,
       this.dueDate,
       this.priority,
       {this.lastModified,
       this.syncStatus,
-      this.approvalStatus,
+      this.approvalStatus = 'pending',
       this.approvedBy,
       this.approvalTimestamp,
       this.approvalReason,
@@ -165,18 +166,19 @@ class Task {
       this.archivedBy,
       this.archiveReason,
       this.archiveLocation,
-      this.attachmentUrls = const [],
-      this.attachmentNames = const [],
-      this.attachmentTypes = const [],
-      this.attachmentSizes = const [],
+      List<String>? attachmentUrls,
+      List<String>? attachmentNames,
+      List<String>? attachmentTypes,
+      List<int>? attachmentSizes,
       this.lastAttachmentAdded,
-      this.completedByUserIds = const [],
-      this.userCompletionTimestamps = const {},
-      this.reportCompletionInfo = const {},
+      List<String>? completedByUserIds,
+      Map<String, DateTime>? userCompletionTimestamps,
       Map<String, String>? taskReviews,
       Map<String, double>? taskRatings,
       Map<String, DateTime>? reviewTimestamps,
-      Map<String, String>? reviewerRoles}) {
+      Map<String, String>? reviewerRoles,
+      Map<String, ReportCompletionInfo>? reportCompletionInfo,
+      this.createdByName}) {
     this.taskReviews = taskReviews ?? {};
     this.taskRatings = taskRatings ?? {};
     this.reviewTimestamps = reviewTimestamps ?? {};
@@ -216,9 +218,7 @@ class Task {
       taskId,
       map['title'] ?? '',
       map['description'] ?? '',
-      map['createdByName'] ??
-          map['createdBy'] ??
-          'Unknown', // Prefer createdByName
+      map['createdBy'] ?? 'Unknown',
       map['assignedReporterName'] ?? map['assignedReporter'],
       map['assignedCameramanName'] ?? map['assignedCameraman'],
       map['assignedDriverName'] ?? map['assignedDriver'],
@@ -253,7 +253,8 @@ class Task {
       attachmentTypes: _parseStringList(map['attachmentTypes']),
       attachmentSizes: _parseIntList(map['attachmentSizes']),
       lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
-      completedByUserIds: _parseStringList(map['completedByUserIds']));
+      completedByUserIds: _parseStringList(map['completedByUserIds']),
+      createdByName: map['createdByName']);
 
     // Parse and set other maps
     task.reportCompletionInfo = reportCompletionInfo;
