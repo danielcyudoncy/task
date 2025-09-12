@@ -569,7 +569,12 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
 
   String _getCreatorName() {
     try {
-      // Fall back to the createdBy field first
+      // First try to use the actual name if available
+      if (widget.task.createdByName != null && widget.task.createdByName!.isNotEmpty) {
+        return widget.task.createdByName!;
+      }
+      
+      // Fall back to the createdBy field (user ID) if name is not available
       if (widget.task.createdBy.isNotEmpty) {
         return widget.task.createdBy;
       }

@@ -9,6 +9,7 @@ import 'package:task/controllers/task_controller.dart';
 import 'package:task/models/task_model.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/fcm_service.dart';
+import 'package:task/service/enhanced_notification_service.dart';
 
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -607,6 +608,19 @@ class AdminController extends GetxController {
 
       // Send push notification via FCM
       await sendTaskNotification(userId, taskTitle);
+
+      // Show local in-app notification
+      try {
+        final enhancedNotificationService = Get.find<EnhancedNotificationService>();
+        enhancedNotificationService.showInfo(
+          title: 'Task Assigned',
+          message: 'Task "$taskTitle" has been assigned to $assignedName\nDue: ${DateFormat('yyyy-MM-dd – kk:mm').format(dueDate)}',
+          duration: const Duration(seconds: 5),
+        );
+      } catch (e) {
+        // Enhanced notification service might not be initialized
+        print('Could not show enhanced notification: $e');
+      }
 
       // Refresh dashboard/task data so UI updates
       await fetchDashboardData();

@@ -38,7 +38,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
       // Debug print to verify creator names
       for (var task in taskController.tasks) {
         debugPrint(
-            'Task ${task.title} - Creator: ${task.createdBy} (ID: ${task.createdById})');
+            'Task ${task.title} - Creator: ${task.createdByName ?? task.createdBy} (ID: ${task.createdById})');
       }
     });
     _searchController

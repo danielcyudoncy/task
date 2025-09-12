@@ -11,6 +11,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 // Removed Isar imports - using SQLite now
 import 'package:task/service/export_service.dart';
+import 'package:task/service/network_service.dart';
+import 'package:task/service/connectivity_service.dart';
+import 'package:task/service/error_handling_service.dart';
+import 'package:task/service/loading_state_service.dart';
+import 'package:task/service/offline_data_service.dart';
+import 'package:task/service/startup_optimization_service.dart';
+import 'package:task/utils/responsive_utils.dart';
+import 'package:task/service/intelligent_cache_service.dart';
+import 'package:task/service/cache_manager.dart';
+import 'package:task/service/cached_task_service.dart';
+import 'package:task/service/enhanced_notification_service.dart';
 import '../my_app.dart';
 
 // --- Ensure all your controllers and services are imported ---
@@ -208,7 +219,62 @@ Future<void> bootstrapApp() async {
       'AccessControlService',
     );
     
+    // Initialize new architecture services
+    await _initializeService<StartupOptimizationService>(
+      () => StartupOptimizationService(),
+      'StartupOptimizationService',
+    );
     
+    // Initialize ResponsiveController
+    await _initializeService<ResponsiveController>(
+      () => ResponsiveController(),
+      'ResponsiveController',
+    );
+    
+    await _initializeService<IntelligentCacheService>(
+      () => IntelligentCacheService(),
+      'IntelligentCacheService',
+    );
+    
+    await _initializeService<CacheManager>(
+      () => CacheManager(),
+      'CacheManager',
+    );
+    
+    await _initializeService<CachedTaskService>(
+      () => CachedTaskService(),
+      'CachedTaskService',
+    );
+    
+    await _initializeService<EnhancedNotificationService>(
+      () => EnhancedNotificationService(),
+      'EnhancedNotificationService',
+    );
+    
+    await _initializeService<NetworkService>(
+      () => NetworkService(),
+      'NetworkService',
+    );
+    
+    await _initializeService<ConnectivityService>(
+      () => ConnectivityService(),
+      'ConnectivityService',
+    );
+    
+    await _initializeService<ErrorHandlingService>(
+      () => ErrorHandlingService(),
+      'ErrorHandlingService',
+    );
+    
+    await _initializeService<LoadingStateService>(
+      () => LoadingStateService(),
+      'LoadingStateService',
+    );
+    
+    await _initializeService<OfflineDataService>(
+      () => OfflineDataService(),
+      'OfflineDataService',
+    );
     
     // Initialize controllers that depend on services
     
@@ -266,6 +332,12 @@ Future<void> bootstrapApp() async {
     // Mark bootstrap as complete
     _isBootstrapComplete = true;
     
+    // Execute startup optimization
+    try {
+      await StartupOptimizationService.to.executeStartup();
+    } catch (e) {
+      debugPrint('Startup optimization failed: $e');
+    }
     
     // Ensure widgets are properly initialized
     WidgetsFlutterBinding.ensureInitialized();

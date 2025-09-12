@@ -763,7 +763,7 @@ class SettingsScreen extends StatelessWidget {
                                       appLockController.isAppLocked.value =
                                           false;
                                       // Navigate back to appropriate screen based on user role
-                                      Get.find<AuthController>()
+                                      await Get.find<AuthController>()
                                           .navigateBasedOnRole();
                                     }
 
