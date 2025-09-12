@@ -14,6 +14,7 @@ import 'package:task/utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
 import 'package:task/service/fcm_service.dart';
 import 'package:task/service/user_cache_service.dart';
+import 'package:task/service/enhanced_notification_service.dart';
 
 
 class TaskController extends GetxController {
@@ -63,6 +64,20 @@ class TaskController extends GetxController {
     } catch (e) {
       debugPrint('TaskController: Error getting user name for $userId: $e');
       return 'Unknown User';
+    }
+  }
+
+  /// Populate missing createdByName field for a task
+  Future<void> _populateCreatedByName(Task task) async {
+    if (task.createdByName == null || task.createdByName!.isEmpty) {
+      try {
+        final creatorName = await _getUserName(task.createdById);
+        task.createdByName = creatorName;
+        debugPrint('_populateCreatedByName: Updated task ${task.taskId} createdByName to: $creatorName');
+      } catch (e) {
+        debugPrint('_populateCreatedByName: Error getting creator name for ${task.createdById}: $e');
+        task.createdByName = 'Unknown User';
+      }
     }
   }
   
@@ -126,13 +141,15 @@ class TaskController extends GetxController {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .listen(
-      (snapshot) {
+      (snapshot) async {
         debugPrint('TaskController: Real-time update received, ${snapshot.docs.length} tasks');
-        final updatedTasks = snapshot.docs.map((doc) {
+        final updatedTasks = await Future.wait(snapshot.docs.map((doc) async {
           final data = doc.data();
           data['taskId'] = doc.id;
-          return Task.fromMap(data);
-        }).toList();
+          final task = Task.fromMap(data);
+          await _populateCreatedByName(task);
+          return task;
+        }));
         
         // Update the tasks list
         tasks.assignAll(updatedTasks);
@@ -618,6 +635,19 @@ class TaskController extends GetxController {
 
       // Push notification
       await sendTaskNotification(userId, taskTitle);
+
+      // Show local in-app notification
+      try {
+        final enhancedNotificationService = Get.find<EnhancedNotificationService>();
+        enhancedNotificationService.showInfo(
+          title: 'Task Assigned',
+          message: 'Task "$taskTitle" has been assigned\nDescription: $taskDescription\nDue: $formattedDate',
+          duration: const Duration(seconds: 5),
+        );
+      } catch (e) {
+        // Enhanced notification service might not be initialized
+        print('Could not show enhanced notification: $e');
+      }
     } catch (e, stackTrace) {
       _logError('Error sending notification to user $userId', e, stackTrace);
     }
@@ -1365,11 +1395,13 @@ class TaskController extends GetxController {
         debugPrint('fetchRelevantTasksForUser: added assignedTo task ${doc.id}');
       }
       // Convert to Task objects
-      final relevantTasks = allDocs.entries.map((e) {
+      final relevantTasks = await Future.wait(allDocs.entries.map((e) async {
         final data = e.value;
         data['taskId'] = e.key;
-        return Task.fromMap(data);
-      }).toList();
+        final task = Task.fromMap(data);
+        await _populateCreatedByName(task);
+        return task;
+      }));
       debugPrint('fetchRelevantTasksForUser: final merged tasks count = ${relevantTasks.length}');
       tasks.assignAll(relevantTasks);
       errorMessage.value = '';
@@ -1397,13 +1429,14 @@ class TaskController extends GetxController {
       
       debugPrint('loadInitialTasks: Found ${snapshot.docs.length} tasks in Firebase');
       
-      final firebaseTasks = snapshot.docs.map((doc) {
+      final firebaseTasks = await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
+        await _populateCreatedByName(task);
         debugPrint('loadInitialTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         return task;
-      }).toList();
+      }));
       
       tasks.assignAll(firebaseTasks);
       tasks.refresh();
