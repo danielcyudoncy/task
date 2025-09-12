@@ -112,6 +112,11 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
 
   String _getCreatorNameSync() {
     try {
+      // First try to use the actual name if available
+      if (widget.task.createdByName != null && widget.task.createdByName!.isNotEmpty) {
+        return widget.task.createdByName!;
+      }
+      
       if (widget.task.createdById.isEmpty) return 'Unknown';
       
       final userCacheService = Get.find<UserCacheService>();
@@ -120,7 +125,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         return cachedName;
       }
       
-      // Fallback to task field
+      // Fallback to task field (user ID)
       if (widget.task.createdBy.isNotEmpty) {
         return widget.task.createdBy;
       }
