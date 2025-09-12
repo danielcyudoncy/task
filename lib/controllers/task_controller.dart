@@ -646,7 +646,6 @@ class TaskController extends GetxController {
         );
       } catch (e) {
         // Enhanced notification service might not be initialized
-        print('Could not show enhanced notification: $e');
       }
     } catch (e, stackTrace) {
       _logError('Error sending notification to user $userId', e, stackTrace);

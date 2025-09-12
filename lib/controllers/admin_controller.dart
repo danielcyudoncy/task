@@ -619,7 +619,6 @@ class AdminController extends GetxController {
         );
       } catch (e) {
         // Enhanced notification service might not be initialized
-        print('Could not show enhanced notification: $e');
       }
 
       // Refresh dashboard/task data so UI updates
