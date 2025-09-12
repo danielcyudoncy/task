@@ -124,8 +124,10 @@ if (response.statusCode == 200) {
       "timestamp": FieldValue.serverTimestamp(),
       "isRead": false,
     });
-  // ignore: empty_catches
   } catch (e) {
+    if (kDebugMode) {
+      print("❌ Error sending task notification: $e");
+    }
   }
 }
 

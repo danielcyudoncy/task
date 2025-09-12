@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           
           if (authController.isLoggedIn) {
             // User is logged in, navigate based on role
-            authController.navigateBasedOnRole();
+            await authController.navigateBasedOnRole();
 
           } else {
             // User is not logged in, go to login screen

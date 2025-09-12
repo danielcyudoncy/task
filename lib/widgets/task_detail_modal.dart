@@ -165,9 +165,9 @@ class TaskDetailModal extends StatelessWidget {
                         _buildDetailRow(
                             context,
                             'Created by',
-                            task.createdBy.isNotEmpty
-                                ? task.createdBy
-                                : 'Not assigned',
+                            task.createdByName?.isNotEmpty == true
+                                ? task.createdByName!
+                                : (task.createdBy.isNotEmpty ? task.createdBy : 'Not assigned'),
                             Icons.person_outline),
                         if (task.category != null && task.category!.isNotEmpty)
                           _buildDetailRow(context, 'Category', task.category!,
