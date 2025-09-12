@@ -144,7 +144,9 @@ class TaskDetailDialog {
                 getUserNameAndRole(creatorId, () => setState(() {}));
               });
             }
-            final creatorName = userInfo?["name"] ?? 'Unknown';
+            // First try to get createdByName from the task document, then fall back to userCache
+            final doc = Get.find<AdminController>().taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
+            final creatorName = doc?['createdByName'] ?? userInfo?["name"] ?? 'Unknown';
             final creatorRole = userInfo?["role"] ?? "Unknown";
             final taskStatus = _getTaskStatus(title, context);
             

@@ -197,8 +197,8 @@ class AuthController extends GetxController {
         if (!isProfileComplete.value) {
           Get.offAllNamed("/profile-update");
         } else {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            navigateBasedOnRole();
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            await navigateBasedOnRole();
           });
         }
       } else {
@@ -378,7 +378,15 @@ class AuthController extends GetxController {
   }
 
   // Simplified navigateBasedOnRole method
-  void navigateBasedOnRole() {
+  Future<void> navigateBasedOnRole() async {
+    // Ensure role is loaded before navigation
+    int attempts = 0;
+    while (userRole.value.isEmpty && attempts < 10) {
+      debugPrint("AuthController: Waiting for user role to load in navigateBasedOnRole (attempt ${attempts + 1})");
+      await Future.delayed(const Duration(milliseconds: 200));
+      attempts++;
+    }
+    
     final role = userRole.value;
     debugPrint("Navigating based on role: $role");
     
@@ -393,6 +401,7 @@ class AuthController extends GetxController {
                role == "Driver") {
       Get.offAllNamed('/home');
     } else {
+      debugPrint("AuthController: No valid role found ($role), navigating to login");
       Get.offAllNamed('/login');
     }
   }
@@ -464,7 +473,7 @@ class AuthController extends GetxController {
         userRole.value = role;
         
         // Navigate based on the user's role
-        navigateBasedOnRole();
+        await navigateBasedOnRole();
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
@@ -823,12 +832,19 @@ class AuthController extends GetxController {
       debugPrint("AuthController: Current route before navigation: ${Get.currentRoute}");
       
       // Use a post-frame callback to ensure navigation happens after the current build phase
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!isProfileComplete.value) {
           debugPrint("AuthController: Navigating to profile update");
           Get.offAllNamed("/profile-update");
         } else {
-          debugPrint("AuthController: Profile is complete, navigating based on role");
+          // Ensure role is loaded before navigation
+          int attempts = 0;
+          while (userRole.value.isEmpty && attempts < 10) {
+            debugPrint("AuthController: Waiting for user role to load (attempt ${attempts + 1})");
+            await Future.delayed(const Duration(milliseconds: 200));
+            attempts++;
+          }
+          debugPrint("AuthController: Profile is complete, navigating based on role: ${userRole.value}");
           final role = userRole.value;
           if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
             debugPrint("AuthController: Navigating to admin-dashboard");
@@ -956,11 +972,19 @@ class AuthController extends GetxController {
           debugPrint("Presence setting failed: $e");
         }
         
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (!isProfileComplete.value) {
             Get.offAllNamed("/profile-update");
           } else {
-            navigateBasedOnRole();
+            // Ensure role is loaded before navigation
+            int attempts = 0;
+            while (userRole.value.isEmpty && attempts < 10) {
+              debugPrint("AuthController: Waiting for user role to load (attempt ${attempts + 1})");
+              await Future.delayed(const Duration(milliseconds: 200));
+              attempts++;
+            }
+            debugPrint("AuthController: Role loaded: ${userRole.value}, navigating...");
+            await navigateBasedOnRole();
           }
         });
       }

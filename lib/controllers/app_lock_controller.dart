@@ -198,13 +198,13 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   
   // Biometric authentication removed
   
-  void _unlockApp() {
+  void _unlockApp() async {
     debugPrint('Unlocking app');
     isAppLocked.value = false;
     _lastAuthTime = DateTime.now();
     
     // Navigate back to appropriate screen based on user role
-    _authController.navigateBasedOnRole();
+    await _authController.navigateBasedOnRole();
   }
   
   Future<void> setPin(String pin) async {

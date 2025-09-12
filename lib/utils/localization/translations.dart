@@ -50,6 +50,73 @@ class AppTranslations extends Translations {
       'info': 'Information',
       'unknown': 'Unknown',
       
+      // Error Messages
+      'network_error_message': 'Please check your internet connection and try again.',
+      'firebase_error_message': 'Service temporarily unavailable. Please try again later.',
+      'authentication_error_message': 'Authentication failed. Please log in again.',
+      'permission_denied_message': 'You don\'t have permission to perform this action.',
+      'validation_error_message': 'Please check your input and try again.',
+      'unknown_error_message': 'Something went wrong. Please try again.',
+      'service_unavailable_message': 'Service is currently unavailable. Please try again later.',
+      'no_internet_connection': 'No internet connection available.',
+      
+      // Error Titles
+      'network_error_title': 'Connection Error',
+      'service_error_title': 'Service Error',
+      'auth_error_title': 'Authentication Error',
+      'permission_error_title': 'Permission Denied',
+      'validation_error_title': 'Invalid Input',
+      'error_title': 'Error',
+      'success_title': 'Success',
+      
+      // Network Status
+      'network_offline_message': 'You are now offline. Some features may be limited.',
+      'network_online_message': 'Connection restored. All features are available.',
+      'network_required_message': 'This feature requires an internet connection.',
+      'network_status_online': 'Online',
+      'network_status_offline': 'Offline',
+      'network_status_poor': 'Poor Connection',
+      'network_status_unknown': 'Unknown',
+      'connection_type_wifi': 'Wi-Fi',
+      'connection_type_mobile': 'Mobile Data',
+      'connection_type_ethernet': 'Ethernet',
+      'connection_type_none': 'No Connection',
+      'connection_type_unknown': 'Unknown',
+      
+      // Offline and Sync
+      'sync_requires_network': 'Sync requires an internet connection',
+      'sync_completed': 'Data synchronized successfully',
+      'offline_mode_message': 'You are in offline mode. Changes will sync when online.',
+      
+      // Startup
+      'startup_initializing': 'Initializing application...',
+      'startup_loading_user_data': 'Loading user data...',
+      'startup_preparing_interface': 'Preparing interface...',
+      'startup_almost_ready': 'Almost ready...',
+      
+      // Error Boundary
+      'error_boundary_message': 'Something went wrong. Please try again.',
+      'widget_error': 'Widget Error',
+      'widget_error_message': 'This component failed to load properly.',
+      'item_error': 'Item Error',
+      'item_error_message': 'This item could not be displayed.',
+      'loading_failed': 'Loading Failed',
+      'loading_failed_message': 'Failed to load content. Please try again.',
+      'error_details': 'Error Details',
+      'details': 'Details',
+      'retry': 'Retry',
+      'close': 'Close',
+      
+      // Responsive design
+      'mobile_view': 'Mobile View',
+      'tablet_view': 'Tablet View',
+      'desktop_view': 'Desktop View',
+      'responsive_layout': 'Responsive Layout',
+      'adaptive_navigation': 'Adaptive Navigation',
+      'screen_size': 'Screen Size',
+      'orientation_portrait': 'Portrait',
+      'orientation_landscape': 'Landscape',
+      
       // Navigation
       'home': 'Home',
       'profile': 'Profile',
@@ -200,6 +267,16 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Assignment Editor',
       'head_of_department': 'Head of Department',
       'head_of_unit': 'Head of Unit',
+      
+      // Responsive design
+      'mobile_view': 'Vue Mobile',
+      'tablet_view': 'Vue Tablette',
+      'desktop_view': 'Vue Bureau',
+      'responsive_layout': 'Mise en page responsive',
+      'adaptive_navigation': 'Navigation adaptative',
+      'screen_size': 'Taille d\'écran',
+      'orientation_portrait': 'Portrait',
+      'orientation_landscape': 'Paysage',
     },
     'fr_FR': {
       // Settings Screen
@@ -551,6 +628,16 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Editan aiki',
       'head_of_department': 'Shugaban sashe',
       'head_of_unit': 'Shugaban rukuni',
+      
+      // Responsive design
+      'mobile_view': 'Kallon wayar hannu',
+      'tablet_view': 'Kallon tablet',
+      'desktop_view': 'Kallon desktop',
+      'responsive_layout': 'Tsarin mai amsa',
+      'adaptive_navigation': 'Navigation mai daidaitawa',
+      'screen_size': 'Girman allo',
+      'orientation_portrait': 'Tsaye',
+      'orientation_landscape': 'Kwance',
     },
     'yo_NG': {
       // Settings Screen
@@ -707,6 +794,16 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Olùtúnṣe iṣẹ́',
       'head_of_department': 'Olùṣàkóso ẹ̀ka',
       'head_of_unit': 'Olùṣàkóso ìdílé',
+      
+      // Responsive design
+      'mobile_view': 'Wiwo foonu',
+      'tablet_view': 'Wiwo tablet',
+      'desktop_view': 'Wiwo desktop',
+      'responsive_layout': 'Eto idahun',
+      'adaptive_navigation': 'Lilọ kiri ti o yipada',
+      'screen_size': 'Iwọn iboju',
+      'orientation_portrait': 'Dide',
+      'orientation_landscape': 'Dubulẹ',
     },
     'ig_NG': {
       // Settings Screen
@@ -865,6 +962,16 @@ class AppTranslations extends Translations {
       'assignment_editor': 'Onye nchịkọta ọrụ',
       'head_of_department': 'Onye isi ngalaba',
       'head_of_unit': 'Onye isi nkeji',
+      
+      // Responsive design
+      'mobile_view': 'Nlele ekwentị',
+      'tablet_view': 'Nlele tablet',
+      'desktop_view': 'Nlele desktop',
+      'responsive_layout': 'Nhazi nzaghachi',
+      'adaptive_navigation': 'Njem mgbanwe',
+      'screen_size': 'Nha ihuenyo',
+      'orientation_portrait': 'Kwụ ọtọ',
+      'orientation_landscape': 'Dina ala',
     },
   };
 }
