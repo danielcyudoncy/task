@@ -69,15 +69,22 @@ class TaskController extends GetxController {
 
   /// Populate missing createdByName field for a task
   Future<void> _populateCreatedByName(Task task) async {
+    debugPrint('_populateCreatedByName: Checking task ${task.taskId}, current createdByName: ${task.createdByName}');
     if (task.createdByName == null || task.createdByName!.isEmpty) {
       try {
         final creatorName = await _getUserName(task.createdById);
         task.createdByName = creatorName;
         debugPrint('_populateCreatedByName: Updated task ${task.taskId} createdByName to: $creatorName');
+        // Trigger UI update after updating the name
+        tasks.refresh();
       } catch (e) {
         debugPrint('_populateCreatedByName: Error getting creator name for ${task.createdById}: $e');
         task.createdByName = 'Unknown User';
+        // Trigger UI update even on error
+        tasks.refresh();
       }
+    } else {
+      debugPrint('_populateCreatedByName: Task ${task.taskId} already has createdByName: ${task.createdByName}');
     }
   }
   

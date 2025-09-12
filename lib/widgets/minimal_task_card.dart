@@ -135,9 +135,14 @@ class MinimalTaskCard extends StatelessWidget {
 
   String _getCreatorNameSync() {
     try {
+      // First try to use the actual name if available
+      if (task.createdByName != null && task.createdByName!.isNotEmpty) {
+        return task.createdByName!;
+      }
+      
       final userCacheService = Get.find<UserCacheService>();
       
-      // First check if we have a cached name for the creator ID
+      // Then check if we have a cached name for the creator ID
       if (task.createdById.isNotEmpty) {
         final cachedName = userCacheService.getUserNameSync(task.createdById);
         if (cachedName != 'Unknown User') {
@@ -145,7 +150,7 @@ class MinimalTaskCard extends StatelessWidget {
         }
       }
       
-      // Fallback to createdBy field
+      // Fallback to createdBy field (user ID)
       if (task.createdBy.isNotEmpty) {
         return task.createdBy;
       }
