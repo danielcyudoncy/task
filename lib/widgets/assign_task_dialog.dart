@@ -222,7 +222,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                 ),
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   color: isDark ? Colors.white : Colors.black87,
-                                  fontSize: 16,
+                                  fontSize: 16.sp,
                                   fontWeight: FontWeight.w500,
                                 ),
                                 borderRadius: BorderRadius.circular(16),
