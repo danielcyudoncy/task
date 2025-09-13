@@ -7,11 +7,14 @@ class PerformanceController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // Observable variables
-  var isLoading = false.obs;
-  var userPerformanceData = <Map<String, dynamic>>[].obs;
-  var totalUsers = 0.obs;
-  var averageCompletionRate = 0.0.obs;
-  var topPerformers = <Map<String, dynamic>>[].obs;
+  final isLoading = false.obs;
+  final userPerformanceData = <Map<String, dynamic>>[].obs;
+  final totalUsers = 0.obs;
+  final averageCompletionRate = 0.0.obs;
+  // New metrics
+  final averageCompletionRateWeighted = 0.0.obs;
+  final averageCompletionRateExcludingZero = 0.0.obs;
+  final topPerformers = <Map<String, dynamic>>[].obs;
   
   @override
   void onInit() {
@@ -41,8 +44,7 @@ class PerformanceController extends GetxController {
         return Task.fromMap(data);
       }).toList();
       
-      List<Map<String, dynamic>> performanceList = [];
-      double totalCompletionRate = 0.0;
+      final performanceList = <Map<String, dynamic>>[];
       
       for (var userDoc in users) {
         final userData = userDoc.data();
@@ -51,13 +53,13 @@ class PerformanceController extends GetxController {
         final userRole = userData['role'] ?? 'Unknown';
         final userEmail = userData['email'] ?? '';
         
-        // Skip librarians from performance tracking
-        if (userRole == 'Librarian') {
+        // Skip librarians and admins from performance tracking
+        if (userRole == 'Librarian' || userRole == 'Admin') {
           continue;
         }
         
         // Calculate user performance metrics
-        final userMetrics = await _calculateUserMetrics(userId, tasks);
+        final userMetrics = _calculateUserMetrics(userId, userName, tasks);
         
         final performanceData = {
           'userId': userId,
@@ -76,35 +78,62 @@ class PerformanceController extends GetxController {
         };
         
         performanceList.add(performanceData);
-        totalCompletionRate += userMetrics['completionRate'];
       }
       
       // Sort by completion rate for top performers
-      performanceList.sort((a, b) => b['completionRate'].compareTo(a['completionRate']));
+      performanceList.sort((a, b) =>
+          (b['completionRate'] as double).compareTo(a['completionRate'] as double));
+
+      // Compute alternative averages
+      final withAssigned = performanceList.where((u) => (u['totalAssignedTasks'] as int) > 0).toList();
+      final totalAssignedAll = withAssigned.fold<int>(0, (acc, u) => acc + (u['totalAssignedTasks'] as int));
+      final totalCompletedAll = withAssigned.fold<int>(0, (acc, u) => acc + (u['completedTasks'] as int));
+      final weightedAvg = totalAssignedAll > 0 ? (totalCompletedAll / totalAssignedAll) * 100.0 : 0.0;
+      final meanExcludingZero = withAssigned.isNotEmpty
+          ? withAssigned.fold<double>(0.0, (acc, u) => acc + (u['completionRate'] as double)) / withAssigned.length
+          : 0.0;
       
       userPerformanceData.value = performanceList;
-      averageCompletionRate.value = performanceList.isNotEmpty ? totalCompletionRate / performanceList.length : 0.0;
+      // Expose both new metrics
+      averageCompletionRateWeighted.value = weightedAvg;
+      averageCompletionRateExcludingZero.value = meanExcludingZero;
+      // Backwards-compatible default now uses weighted average
+      averageCompletionRate.value = weightedAvg;
       topPerformers.value = performanceList.take(5).toList();
       
-    // ignore: empty_catches
-    } catch (e) {
+        } catch (e, stackTrace) {
+      Get.log('PerformanceController: fetchUserPerformanceData error: $e', isError: true);
+      Get.log(stackTrace.toString(), isError: true);
     } finally {
       isLoading.value = false;
     }
   }
   
-  Future<Map<String, dynamic>> _calculateUserMetrics(String userId, List<Task> allTasks) async {
+  Map<String, dynamic> _calculateUserMetrics(String userId, String userName, List<Task> allTasks) {
+    // Constants for quarter-based marking
+    const int quarterDays = 90;
+    const double percentPerDay = 100.0 / quarterDays; // ≈ 1.111...% per day
+
     // Filter tasks assigned to this user (excluding librarian assignments)
     final assignedTasks = allTasks.where((task) => 
       task.assignedReporterId == userId ||
       task.assignedCameramanId == userId ||
-      task.assignedDriverId == userId
+      task.assignedDriverId == userId ||
+      // Legacy/general assignment fallback
+      task.assignedTo == userId ||
+      // Name-based fallbacks (older records stored names instead of IDs)
+      (task.assignedReporter != null && task.assignedReporter == userName) ||
+      (task.assignedCameraman != null && task.assignedCameraman == userName) ||
+      (task.assignedDriver != null && task.assignedDriver == userName)
     ).toList();
     
     // Filter completed tasks by this user
-    final completedTasks = assignedTasks.where((task) => 
-      task.completedByUserIds.contains(userId) == true
-    ).toList();
+    final completedTasks = assignedTasks.where((task) {
+      final completedByUser = task.completedByUserIds.contains(userId);
+      // Fallback for legacy data: overall completed implies completion for assigned users
+      final overallCompleted = task.status.toLowerCase() == 'completed';
+      return completedByUser || overallCompleted;
+    }).toList();
     
     // Filter in-progress tasks (assigned but not completed by this user)
     final inProgressTasks = assignedTasks.where((task) => 
@@ -123,6 +152,24 @@ class PerformanceController extends GetxController {
     final totalInProgress = inProgressTasks.length;
     final totalOverdue = overdueTasks.length;
     final completionRate = totalAssigned > 0 ? (totalCompleted / totalAssigned) * 100 : 0.0;
+
+    // Quarter-based mark per completed task = daysRemainingInQuarter * (100/90)
+    // If no dueDate, treat remaining days as 0 (no mark) to avoid inflating scores.
+    double sumTaskMarks = 0.0;
+    for (final task in completedTasks) {
+      final due = task.dueDate; // using due date as the end target within quarter
+      if (due != null) {
+        // Days remaining: if completion time available, compare completion to quarter end approximation.
+        // Approximate a 90-day quarter window ending at due date; earlier completion => more remaining days.
+        final completionTime = task.userCompletionTimestamps[userId] ?? task.timestamp;
+        final daysElapsed = completionTime.difference(task.timestamp).inDays;
+        final daysRemaining = quarterDays - daysElapsed;
+        final clampedRemaining = daysRemaining.clamp(0, quarterDays);
+        final taskMark = clampedRemaining * percentPerDay;
+        sumTaskMarks += taskMark;
+      }
+    }
+    final double quarterMark = totalCompleted > 0 ? sumTaskMarks / totalCompleted : 0.0;
     
     // Calculate average completion time
     double averageCompletionTime = 0.0;
@@ -160,6 +207,9 @@ class PerformanceController extends GetxController {
       'completionRate': completionRate,
       'averageCompletionTime': averageCompletionTime,
       'recentActivity': recentCompletedTasks,
+      // Quarter scoring outputs
+      'quarterMark': quarterMark, // average per-task mark for this user
+      'sumTaskMarks': sumTaskMarks, // sum of marks for all completed tasks
     };
   }
   
