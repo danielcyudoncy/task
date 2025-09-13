@@ -10,6 +10,7 @@ import 'package:task/models/task_model.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/fcm_service.dart';
 import 'package:task/service/enhanced_notification_service.dart';
+import 'package:task/service/user_cache_service.dart';
 
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -95,6 +96,24 @@ class AdminController extends GetxController {
         data['id'] = doc.id;
         return data;
       }).toList();
+
+      // Enrich with creatorName using global cache (persists across navigation)
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        for (final data in allDocs) {
+          final creatorId = (data['createdById'] ?? data['createdBy'] ?? '').toString();
+          if (creatorId.isNotEmpty) {
+            final name = userCacheService.getUserNameSync(creatorId);
+            if (name != 'Unknown User') {
+              data['createdByName'] = name;
+              data['creatorName'] = name;
+            }
+          }
+        }
+      } catch (e) {
+        // If cache service not available, skip enrichment.
+      }
+
       taskSnapshotDocs.assignAll(allDocs);
 
       pendingTaskTitles.clear();

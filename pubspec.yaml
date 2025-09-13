@@ -82,6 +82,7 @@ dependencies:
   local_auth: ^2.1.7
   rxdart: ^0.28.0
   sqflite: ^2.3.0
+  sqflite_common_ffi_web: ^0.4.4
   path: ^1.8.3
   infinite_scroll_pagination: ^5.1.0
   share_plus: ^11.0.0

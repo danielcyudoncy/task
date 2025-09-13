@@ -12,7 +12,7 @@ import '../report_completion_dialog.dart';
 import '../ui_helpers.dart';
 
 
-class TasksTab extends StatelessWidget {
+class TasksTab extends StatefulWidget {
   final Map<String, Map<String, String>> userCache;
   final Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole;
   final Function(String) showTaskDetailDialog;
@@ -27,6 +27,11 @@ class TasksTab extends StatelessWidget {
   });
 
   @override
+  State<TasksTab> createState() => _TasksTabState();
+}
+
+class _TasksTabState extends State<TasksTab> {
+  @override
   Widget build(BuildContext context) {
     final AdminController adminController = Get.find<AdminController>();
 
@@ -37,7 +42,7 @@ class TasksTab extends StatelessWidget {
         );
       }
 
-      final tasks = taskType == 'completed' 
+      final tasks = widget.taskType == 'completed' 
           ? adminController.completedTaskTitles
           : adminController.pendingTaskTitles;
       if (tasks.isEmpty) {
@@ -92,7 +97,12 @@ class TasksTab extends StatelessWidget {
 
   Widget _buildTaskCard(BuildContext context, String title, Map<String, dynamic>? doc) {
     final creatorId = doc?['createdBy'] ?? 'Unknown';
-    final userInfo = userCache[creatorId];
+    final userInfo = widget.userCache[creatorId];
+    if (userInfo == null && creatorId != 'Unknown') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.getUserNameAndRole(creatorId, () => setState(() {}));
+      });
+    }
     final creatorName = userInfo?["name"] ?? 'Unknown';
     final status = doc?['status'] ?? 'Unknown';
     final priority = doc?['priority'] ?? 'Medium';
@@ -103,7 +113,7 @@ class TasksTab extends StatelessWidget {
     final currentUserId = authController.auth.currentUser?.uid;
     final userRole = authController.userRole.value;
     final isAssignedUser = _isUserAssignedToTask(doc, currentUserId);
-    final canCompleteTask = taskType == 'pending' && isAssignedUser && currentUserId != null;
+    final canCompleteTask = widget.taskType == 'pending' && isAssignedUser && currentUserId != null;
     
     // Debug logging
 
@@ -116,7 +126,7 @@ class TasksTab extends StatelessWidget {
       color: Theme.of(context).primaryColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => showTaskDetailDialog(title),
+        onTap: () => widget.showTaskDetailDialog(title),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),

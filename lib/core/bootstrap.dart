@@ -60,6 +60,7 @@ import 'package:task/service/daily_task_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/user_cache_service.dart';
+import 'db_factory_stub.dart' if (dart.library.html) 'db_factory_web.dart';
 
 // --- Emulator/Production Switch ---
 const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
@@ -75,6 +76,8 @@ Future<void> bootstrapApp() async {
     
     // Ensure Flutter bindings are initialized
     WidgetsFlutterBinding.ensureInitialized();
+    // Configure database factory (web uses FFI web)
+    configureDbFactory();
     
     
     // Set preferred orientations

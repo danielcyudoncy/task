@@ -119,8 +119,15 @@ class OfflineDataService extends GetxService {
   
   Future<void> _initializeDatabase() async {
     try {
-      final databasesPath = await getDatabasesPath();
-      final path = join(databasesPath, 'offline_data.db');
+      // Compute database path depending on platform
+      String path;
+      if (kIsWeb) {
+        // On web, use a simple database name. Storage is handled by IndexedDB.
+        path = 'offline_data.db';
+      } else {
+        final databasesPath = await getDatabasesPath();
+        path = join(databasesPath, 'offline_data.db');
+      }
       
       _database = await openDatabase(
         path,
