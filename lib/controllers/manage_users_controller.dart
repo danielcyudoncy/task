@@ -26,6 +26,7 @@ class ManageUsersController extends GetxController {
   var isHovered = <bool>[].obs;
   final int usersLimit = 15;
   var isOrdered = false.obs;
+  var assignedTasks = <String, List<String>>{}.obs;
 
   late ScrollController _scrollController;
   ScrollController get scrollController => _scrollController;
@@ -84,7 +85,7 @@ class ManageUsersController extends GetxController {
       QuerySnapshot snapshot = await query.get();
 
       if (snapshot.docs.isNotEmpty) {
-        final newUsers = snapshot.docs.map((doc) {
+        final newUsers = await Future.wait(snapshot.docs.map((doc) async {
           final data = doc.data() as Map<String, dynamic>;
           final photoUrl = data['photoUrl'] ??
               data['photoURL'] ??
@@ -93,6 +94,13 @@ class ManageUsersController extends GetxController {
               data['avatarUrl'] ??
               data['avatar_url'] ??
               '';
+
+          final assignedTasksSnapshot =
+              await doc.reference.collection('assignedTasks').get();
+          final taskIds =
+              assignedTasksSnapshot.docs.map((taskDoc) => taskDoc.id).toList();
+          assignedTasks[doc.id] = taskIds;
+
           return {
             'uid': doc.id,
             'id': doc.id,
@@ -101,13 +109,18 @@ class ManageUsersController extends GetxController {
             'role': data['role'] ?? 'No Role',
             'email': data['email'] ?? 'No Email',
             'photoUrl': photoUrl,
+            'hasTask': taskIds.isNotEmpty,
           };
-        }).where((user) => user['role'] != 'Librarian').toList();
+        }));
+
+        final filteredNewUsers = newUsers
+            .where((user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
+            .toList();
 
         if (isNextPage && !fetchAll) {
-          usersList.addAll(newUsers);
+          usersList.addAll(filteredNewUsers);
         } else {
-          usersList.value = newUsers;
+          usersList.value = filteredNewUsers;
         }
 
         filteredUsersList.assignAll(usersList);
@@ -260,9 +273,9 @@ class ManageUsersController extends GetxController {
     
     // First apply role filter
     if (selectedRole.value == 'All') {
-      baseList = usersList.where((user) => user['role'] != 'Librarian').toList();
+      baseList = usersList.where((user) => user['role'] != 'Librarian' && user['role'] != 'Admin').toList();
     } else {
-      baseList = usersList.where((user) => user['role'] == selectedRole.value && user['role'] != 'Librarian').toList();
+      baseList = usersList.where((user) => user['role'] == selectedRole.value && user['role'] != 'Librarian' && user['role'] != 'Admin').toList();
     }
     
     // Then apply search filter on the role-filtered list

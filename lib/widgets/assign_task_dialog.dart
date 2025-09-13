@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Added for CachedNetworkImage
+import 'package:task/controllers/manage_users_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/widgets/dashboard_utils.dart';
 import '../../controllers/admin_controller.dart';
@@ -556,23 +557,38 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       orElse: () => <String, dynamic>{},
     );
 
+    final String taskDescription = selectedTaskDoc['description'] ?? '';
     final String taskId = selectedTaskDoc['id'] ?? selectedTaskDoc['taskId'];
-    final String taskDescription = selectedTaskDoc['description'] ?? "";
+
     final DateTime dueDate = (selectedTaskDoc['dueDate'] is Timestamp)
         ? (selectedTaskDoc['dueDate'] as Timestamp).toDate()
-        : DateTime.tryParse(selectedTaskDoc['dueDate']?.toString() ?? "") ?? DateTime.now();
+        : DateTime.tryParse(selectedTaskDoc['dueDate']?.toString() ?? "") ??
+            DateTime.now();
+
+    // Close the dialog immediately for a responsive UI
+    Get.back();
 
     try {
       await widget.adminController.assignTaskToUser(
         userId: userId,
-        assignedName: widget.user?['fullName'] ?? widget.user?['fullname'] ?? '',
+        assignedName:
+            widget.user?['fullName'] ?? widget.user?['fullname'] ?? '',
         taskTitle: selectedTaskTitle!,
         taskDescription: taskDescription,
         dueDate: dueDate,
         taskId: taskId,
       );
-      
-      Get.back();
+
+      // Manually refresh the user list to reflect the new task status
+      final manageUsersController = Get.find<ManageUsersController>();
+      final userIndex = manageUsersController.usersList
+          .indexWhere((u) => (u['uid'] ?? u['id']) == userId);
+      if (userIndex != -1) {
+        manageUsersController.usersList[userIndex]['hasTask'] = true;
+        // Re-apply filters to update filteredUsersList and trigger UI refresh
+        manageUsersController.searchUsers(manageUsersController.currentSearchQuery.value);
+      }
+
       Get.snackbar(
         "Success",
         "Task assigned to ${widget.user?['fullName'] ?? widget.user?['fullname'] ?? ''}",

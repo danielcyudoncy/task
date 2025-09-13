@@ -114,10 +114,19 @@ backgroundColor: theme.colorScheme.surface,
                       final userRole = user['role'] ?? 'Unknown';
                       final userPhoto = user['photoUrl'] ?? '';
                       final isCurrentUser = userId == currentUserId;
-                      return Card(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 2,
-                        color: theme.brightness == Brightness.dark
+                      final hasTask = user['hasTask'] ?? false;
+                      return InkWell(
+                        onTap: () => showDialog(
+                          context: context,
+                          builder: (context) => AssignTaskDialog(
+                              user: user,
+                              adminController: Get.find<AdminController>()),
+                        ),
+                        child: Card(
+                          shape:
+                              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 2,
+                          color: theme.brightness == Brightness.dark
                             ? theme.colorScheme.surface
                             : AppColors.primaryColor,
                         child: Padding(
@@ -187,7 +196,8 @@ backgroundColor: theme.colorScheme.surface,
                                               label: const Text('You'),
                                               backgroundColor: theme.brightness == Brightness.dark
                                                   ? theme.colorScheme.secondary
-                                                  : theme.colorScheme.onPrimary.withValues(alpha: 0.18),
+                                                  : theme.colorScheme.onPrimary
+                                                      .withAlpha(45),
                                               labelStyle: TextStyle(
                                                 color: theme.brightness == Brightness.dark
                                                     ? theme.colorScheme.onSecondary
@@ -197,6 +207,14 @@ backgroundColor: theme.colorScheme.surface,
                                               visualDensity: VisualDensity.compact,
                                             ),
                                           ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 6.0),
+                                          child: Icon(
+                                            hasTask ? Icons.check_circle : Icons.cancel,
+                                            color: hasTask ? Colors.green : Colors.red,
+                                            size: 16,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 6),
@@ -264,7 +282,7 @@ backgroundColor: theme.colorScheme.surface,
                             ],
                           ),
                         ),
-                      );
+                      ));
                     },
                   );
                 },
