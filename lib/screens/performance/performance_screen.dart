@@ -1,11 +1,11 @@
-// views/performance/performance_screen.dart
+// screens/performance/performance_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:task/views/performance/user_performance_details_screen.dart';
+import 'package:task/screens/performance/user_performance_details_screen.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/theme_controller.dart';
 
