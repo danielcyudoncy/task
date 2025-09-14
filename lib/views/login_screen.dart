@@ -65,7 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
             height: double.infinity,
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? Theme.of(context).canvasColor
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
                   : Theme.of(context).colorScheme.primary,
             ),
             child: SafeArea(
@@ -327,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // Divider with text
                                 Row(
                                   children: [
-                                    const Expanded(child: Divider()),
+                                    const Expanded(child: Divider(color: Colors.white)),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8),
@@ -338,7 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                       ),
                                     ),
-                                    const Expanded(child: Divider()),
+                                    const Expanded(child: Divider(color: Colors.white)),
                                   ],
                                 ),
 

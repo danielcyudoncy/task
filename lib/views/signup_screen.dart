@@ -34,8 +34,9 @@ class SignUpScreen extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).canvasColor
+         color: Theme.of(context).brightness == Brightness.dark
+              ? [Colors.grey[900]!, Colors.grey[800]!]
+                  .reduce((value, element) => value)
               : Theme.of(context).colorScheme.primary,
         ),
 
@@ -210,17 +211,27 @@ class SignUpScreen extends StatelessWidget {
                                       prefixIcon:
                                           const Icon(Icons.person_outline),
                                       filled: true,
-                                      fillColor:
-                                          theme.brightness == Brightness.light
-                                              ? Colors.grey[200]
-                                              : Colors.grey[800],
+                                      fillColor: theme.brightness ==
+                                              Brightness.light
+                                          ? Colors.grey[200]
+                                          : Colors
+                                              .grey[800], // ✅ Field background
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide.none,
                                       ),
                                     ),
-                                    dropdownColor: colorScheme.surface,
-                                    style: textTheme.bodyMedium,
+                                    dropdownColor: theme.brightness ==
+                                            Brightness.dark
+                                        ? Colors.grey[
+                                            800] // ✅ Dropdown menu background
+                                        : Colors
+                                            .white, // ✅ Light mode stays white
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: theme.brightness == Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black87, // ✅ Text contrast
+                                    ),
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
                                         return 'please_select_role'.tr;
@@ -238,6 +249,7 @@ class SignUpScreen extends StatelessWidget {
                                       );
                                     }).toList(),
                                   )),
+
                               SizedBox(height: 20.h),
 
                               // Sign Up Button
@@ -292,14 +304,14 @@ class SignUpScreen extends StatelessWidget {
 
                               Row(
                                 children: [
-                                  const Expanded(child: Divider()),
+                                  const Expanded(child: Divider(color: Colors.white)),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8),
                                     child: Text('or_sign_up_with'.tr,
                                         style: textTheme.bodyMedium),
                                   ),
-                                  const Expanded(child: Divider()),
+                                  const Expanded(child: Divider(color: Colors.white)),
                                 ],
                               ),
                               SizedBox(height: 16.h),
@@ -390,16 +402,24 @@ class SignUpScreen extends StatelessWidget {
     Widget? suffixIcon,
   }) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
-      style: theme.textTheme.bodyMedium,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: colorScheme.onSurface, // ✅ Ensure text is visible
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon),
+        hintStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.brightness == Brightness.dark
+              ? Colors.white70 // ✅ White hint in dark mode
+              : Colors.black54, // ✅ Dark grey hint in light mode
+        ),
+        prefixIcon: Icon(icon, color: colorScheme.onSurface),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: theme.brightness == Brightness.light
@@ -412,6 +432,7 @@ class SignUpScreen extends StatelessWidget {
       ),
     );
   }
+
 
   void _signUp(BuildContext context) {
     AppDevices.hideKeyboard(context);

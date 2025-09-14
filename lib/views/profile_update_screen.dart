@@ -4,8 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import '../controllers/auth_controller.dart';
-import 'package:task/utils/constants/app_icons.dart';
-import 'package:task/utils/constants/app_colors.dart';
+// import 'package:task/utils/constants/app_icons.dart';
 import '../widgets/image_picker_widget.dart';
 
 class ProfileUpdateScreen extends StatefulWidget {
@@ -42,8 +41,9 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         height: double.infinity,
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).canvasColor
-              : Theme.of(context).colorScheme.primary,
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
+                  : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -62,13 +62,13 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 ),
                 SizedBox(height: 8.h),
 
-                // App logo
-                Image.asset(
-                  AppIcons.logo,
-                  width: 80.w,
-                  height: 80.h,
-                ),
-                SizedBox(height: 24.h),
+                // // App logo
+                // Image.asset(
+                //   AppIcons.logo,
+                //   width: 80.w,
+                //   height: 80.h,
+                // ),
+                // SizedBox(height: 24.h),
 
                 // Form Card
                 Container(
@@ -247,7 +247,8 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                                   height: 48.h,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryColor,
+                                      backgroundColor: const Color(0xFF2F80ED),
+                                      foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12.r),
                                       ),

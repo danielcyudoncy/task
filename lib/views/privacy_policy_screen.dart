@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
+import 'package:task/utils/constants/app_icons.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -12,13 +13,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
   // Get dynamic background color based on theme mode
   Color _getBackgroundColor(BuildContext context) {
     final themeController = Get.find<ThemeController>();
-    final colorScheme = Theme.of(context).colorScheme;
+    
     
     switch (themeController.currentThemeMode.value) {
       case AppThemeMode.light:
         return Colors.white;
       case AppThemeMode.dark:
-        return colorScheme.primary; // App primary blue for dark mode
+        return Colors.grey[900]!; // App primary blue for dark mode
       case AppThemeMode.system:
         return themeController.isSystemDark.value 
             ? const Color(0xFF424242) // Gray for system dark
@@ -90,21 +91,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   children: [
                     // Header
                     Center(
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        margin: const EdgeInsets.only(bottom: 20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: colorScheme.secondary,
+                          child: Image.asset(
+                            AppIcons
+                                .logo, // make sure AppIcons.logo points to your logo path
+                            width: 80.w,
+                            height: 80.h,
+                          ),
                         ),
-                        child: Icon(
-                          Icons.privacy_tip_outlined,
-                          size: 40.sp,
-                          color: colorScheme.secondary,
-                        ),
-                      ),
-                    ),
+                        const SizedBox(height: 20),
+
                     
                     // Title
                     Center(
