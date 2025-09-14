@@ -372,8 +372,32 @@ class IntelligentCacheService extends GetxService {
     
     // Try to decode as JSON for complex types
     try {
-      return jsonDecode(data.toString()) as T;
+      final decoded = jsonDecode(data.toString());
+      
+      // Handle List<Map<String, dynamic>> specifically
+      if (T.toString().contains('List<Map<String, dynamic>>')) {
+        if (decoded is List) {
+          return decoded.cast<Map<String, dynamic>>() as T;
+        }
+      }
+      
+      // Handle other List types
+      if (T.toString().startsWith('List<')) {
+        if (decoded is List) {
+          return decoded as T;
+        }
+      }
+      
+      // Handle Map types
+      if (T.toString().startsWith('Map<')) {
+        if (decoded is Map) {
+          return decoded as T;
+        }
+      }
+      
+      return decoded as T;
     } catch (e) {
+      debugPrint('IntelligentCacheService: Deserialization error for type $T: $e');
       return data as T?;
     }
   }

@@ -11,6 +11,7 @@ class ArchiveStatsCard extends StatelessWidget {
   final bool showArchived;
   final bool isLoading;
   final String? error;
+  final VoidCallback? onTotalArchivedTap;
   
   const ArchiveStatsCard({
     super.key,
@@ -20,6 +21,7 @@ class ArchiveStatsCard extends StatelessWidget {
     required this.showArchived,
     this.isLoading = false,
     this.error,
+    this.onTotalArchivedTap,
   });
 
   @override
@@ -162,9 +164,10 @@ class ArchiveStatsCard extends StatelessWidget {
         _buildStatItem(
           context: context,
           label: 'Total Archived',
-          value: totalArchived,
+          value: showArchived ? totalArchived : null,
           icon: Icons.archive_outlined,
           color: colorScheme.primary,
+          onTap: onTotalArchivedTap,
         ),
         const SizedBox(width: 16),
         _buildStatItem(
@@ -181,34 +184,39 @@ class ArchiveStatsCard extends StatelessWidget {
   Widget _buildStatItem({
     required BuildContext context,
     required String label,
-    required int value,
+    required int? value,
     required IconData icon,
     required Color color,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            if (!isDark) ...[
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          height: 100, // Fixed height to ensure both cards are the same size
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              if (!isDark) ...[
+                BoxShadow(
+                  color: colorScheme.shadow.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ],
-          ],
-        ),
+          ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -248,10 +256,10 @@ class ArchiveStatsCard extends StatelessWidget {
             
             // Value
             Text(
-              value.toString(),
+              value?.toString() ?? '---',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+                color: value != null ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
                 height: 1.1,
               ),
               maxLines: 1,
@@ -259,7 +267,7 @@ class ArchiveStatsCard extends StatelessWidget {
             ),
             
             // Subtle trend indicator (example - could be dynamic based on data)
-            if (label == 'This Month' && value > 0)
+            if (label == 'This Month' && value != null && value > 0)
               Padding(
                 padding: const EdgeInsets.only(top: 4.0),
                 child: Row(
@@ -283,6 +291,7 @@ class ArchiveStatsCard extends StatelessWidget {
                 ),
               ),
           ],
+        ),
         ),
       ),
     );

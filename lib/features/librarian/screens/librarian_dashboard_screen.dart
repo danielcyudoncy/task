@@ -18,6 +18,7 @@ import 'package:task/features/librarian/widgets/task_search_delegate.dart';
 import 'package:task/service/export_service.dart';
 import 'package:task/service/archive_service.dart';
 import 'package:task/models/task_model.dart';
+import 'package:task/features/librarian/screens/archived_tasks_screen.dart';
 
 class LibrarianDashboardScreen extends StatefulWidget {
   const LibrarianDashboardScreen({super.key});
@@ -496,6 +497,13 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen>
                           showArchived: _showArchived.value,
                           isLoading: _isLoading.value,
                           error: hasError ? _archiveStatsError.value : null,
+                          onTotalArchivedTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ArchivedTasksScreen(),
+                              ),
+                            );
+                          },
                         ),
                       );
                     }),
