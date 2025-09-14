@@ -354,9 +354,10 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark
-          ? theme.canvasColor
-          : colorScheme.primary,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? [Colors.grey[900]!, Colors.grey[800]!]
+              .reduce((value, element) => value)
+          : Theme.of(context).colorScheme.primary,
       drawer: const LibrarianAppDrawer(),
       appBar: AppBar(
         title: const Text('Welcome'),
