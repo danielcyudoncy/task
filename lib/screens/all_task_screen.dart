@@ -1,4 +1,4 @@
-// views/all_task_screen.dart
+// screens/all_task_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
@@ -139,8 +139,11 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: 'Search tasks...',
+                            hintStyle: TextStyle(
+                              color: isDark ? Colors.grey[300] : Colors.grey[600],
+                            ),
                             prefixIcon: Icon(Icons.search,
-                                color: Theme.of(context).colorScheme.onPrimary,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
                                 size: isTablet ? 24 : 20),
                             filled: true,
                             fillColor:
@@ -157,6 +160,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           ),
                           style: TextStyle(
                             fontSize: isTablet ? 16 : 14,
+                            color: isDark ? Colors.white : Colors.black,
                           ),
                         ),
                       ),

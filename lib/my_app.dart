@@ -8,7 +8,7 @@ import 'package:task/routes/app_routes.dart';
 import 'package:task/utils/themes/app_theme.dart';
 import 'package:task/controllers/theme_controller.dart';
 import 'package:task/controllers/app_lock_controller.dart';
-import 'package:task/views/app_lock_screen.dart';
+import 'package:task/screens/app_lock_screen.dart';
 import 'utils/localization/app_localizations.dart';
 import 'utils/localization/translations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
