@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/models/task_model.dart';
@@ -125,20 +126,20 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
           width: 1,
         ),
       ),
-      child: const Padding(
+      child:  Padding(
         padding: EdgeInsets.all(16.0),
         child: Row(
           children: [
             SizedBox(
-              width: 24,
-              height: 24,
+              width: 24.w,
+              height: 24.h,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
             SizedBox(width: 16),
             Expanded(
               child: Text(
                 'Loading task details...',
-                style:  TextStyle(fontSize: 14),
+                style:  TextStyle(fontSize: 14.sp),
               ),
             ),
           ],
@@ -209,7 +210,7 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                         SizedBox(width: 14.w),
                         ApprovalStatusChip(
                           approvalStatus: widget.task.approvalStatus,
                         ),
@@ -611,15 +612,17 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard> with SingleTicker
   
   Color _getStatusColor(String status) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     switch (status.toLowerCase()) {
       case 'completed':
-        return colorScheme.secondary;
+        return isDark ? Colors.green[400]! : Colors.green[700]!;
       case 'in progress':
-        return colorScheme.primary;
+        return isDark ? Colors.blue[400]! : Colors.blue[700]!;
       case 'pending':
-        return colorScheme.tertiary;
+        return isDark ? Colors.orange[400]! : Colors.orange[700]!;
       case 'archived':
-        return colorScheme.outline;
+        return isDark ? Colors.grey[400]! : Colors.grey[600]!;
       default:
         return colorScheme.onSurfaceVariant;
     }
