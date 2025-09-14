@@ -1020,8 +1020,24 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
+      // Preserve current uid for targeted cache clearing
+      final String? uid = _auth.currentUser?.uid;
+
       // 1. First reset local state immediately
       resetUserData();
+
+      // 1b. Clear any cached user data to avoid cross-user leakage
+      try {
+        if (Get.isRegistered<UserCacheService>()) {
+          final cache = Get.find<UserCacheService>();
+          if (uid != null) {
+            await cache.clearUserCache(uid);
+          }
+          await cache.clearCache();
+        }
+      } catch (e) {
+        debugPrint("AuthController: Failed clearing user cache during logout: $e");
+      }
 
       // 2. Then handle presence and auth signout
       await Future.wait([
@@ -1042,8 +1058,44 @@ class AuthController extends GetxController {
   }
 
   Future<void> signOut() async {
-    await FirebaseAuth.instance.signOut();
-    Get.offAllNamed('/onboarding');
+    try {
+      isLoading.value = true;
+
+      // Preserve current uid for targeted cache clearing
+      final String? uid = _auth.currentUser?.uid;
+
+      // Reset local observable state immediately
+      resetUserData();
+
+      // Clear any cached user data to avoid cross-user leakage
+      try {
+        if (Get.isRegistered<UserCacheService>()) {
+          final cache = Get.find<UserCacheService>();
+          if (uid != null) {
+            await cache.clearUserCache(uid);
+          }
+          await cache.clearCache();
+        }
+      } catch (e) {
+        debugPrint("AuthController: Failed clearing user cache during signOut: $e");
+      }
+
+      // Presence offline and Firebase sign out in parallel
+      await Future.wait([
+        _handlePresence(false),
+        _auth.signOut(),
+      ]);
+
+      // Give a tiny buffer to let listeners settle
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Navigate to login and mark that it was from logout to bypass middleware loops
+      Get.offAllNamed('/login', arguments: {'fromLogout': true});
+    } catch (e) {
+      _safeSnackbar('Error', 'Sign out failed: ${e.toString()}');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> deleteAccount() async {

@@ -93,8 +93,9 @@ class _HomeScreenState extends State<HomeScreen>
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Theme.of(context).canvasColor
+             color: Theme.of(context).brightness == Brightness.dark
+                ? [Colors.grey[900]!, Colors.grey[800]!]
+                    .reduce((value, element) => value)
                 : Theme.of(context).colorScheme.primary,
           ),
           child: SafeArea(
