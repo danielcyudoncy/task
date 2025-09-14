@@ -26,13 +26,13 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   // Get dynamic background color based on theme mode
   Color _getBackgroundColor(BuildContext context) {
     final themeController = Get.find<ThemeController>();
-    final colorScheme = Theme.of(context).colorScheme;
+    
     
     switch (themeController.currentThemeMode.value) {
       case AppThemeMode.light:
         return Colors.white;
       case AppThemeMode.dark:
-        return colorScheme.primary; // App primary blue for dark mode
+        return Colors.grey[900]!; // App primary blue for dark mode
       case AppThemeMode.system:
         return themeController.isSystemDark.value 
             ? const Color(0xFF424242) // Gray for system dark
@@ -65,7 +65,10 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       backgroundColor: _getBackgroundColor(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: colorScheme.primary,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
+                  : Theme.of(context).colorScheme.primary,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
           onPressed: () {
@@ -78,7 +81,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           style: TextStyle(
             fontFamily: 'raleway',
             color: colorScheme.onPrimary,
-            fontSize: 30.sp,
+            fontSize: 24.sp,
             fontWeight: FontWeight.w700,
           ),
         ),

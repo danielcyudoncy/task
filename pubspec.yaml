@@ -165,6 +165,7 @@ flutter:
     - assets/images/tv-logos/newsroom_africa.png
     - assets/images/tv-logos/tvcnews.jpg
     - assets/images/tv-logos/
+    
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

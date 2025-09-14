@@ -22,7 +22,10 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       key: _scaffoldKey,
       drawer: const AppDrawer(),
-      backgroundColor: colorScheme.primary,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? [Colors.grey[900]!, Colors.grey[800]!]
+              .reduce((value, element) => value)
+          : Theme.of(context).colorScheme.primary,
       body: SafeArea(
         child: Obx(() {
           final fullName = authController.fullName.value;
@@ -368,7 +371,7 @@ class ProfileScreen extends StatelessWidget {
                           icon: const Icon(Icons.logout, color: Colors.white),
                           label: Text("log_out".tr,
                               style: TextStyle(
-                  fontSize: 18, 
+                  fontSize: 18.sp, 
                   color: Theme.of(context).colorScheme.onPrimary
                 )),
                           onPressed: () {
@@ -394,7 +397,8 @@ class ProfileScreen extends StatelessWidget {
                               color: Colors.white),
                           label: Text("delete_account".tr,
                               style: TextStyle(
-                  fontSize: 18, 
+                  fontSize: 18.sp, 
+                  fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onPrimary
                 )),
                           onPressed: () async {

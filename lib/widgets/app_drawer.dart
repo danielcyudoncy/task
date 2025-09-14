@@ -343,7 +343,7 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
-  // Rest of the methods unchanged: _drawerTile, _buildDarkModeCard, _buildCompactThemeOptions, _getThemeIcon, _confirmLogout, ConcentricCirclePainter
+  
   Widget _drawerTile(IconData icon, String label, VoidCallback onTap) {
     return Card(
       elevation: 3,
@@ -463,20 +463,66 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   Future<void> _confirmLogout() async {
+    final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
+
     final confirm = await Get.dialog<bool>(
       AlertDialog(
-        title: Text('confirm_logout'.tr),
-        content: Text('are_you_sure'.tr),
+        backgroundColor: Theme.of(Get.context!).colorScheme.surface,
+        title: Center(
+          child: Text(
+            'confirm_logout'.tr,
+            style: TextStyle(
+              color: Theme.of(Get.context!).colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        content: Text(
+          'are_you_sure'.tr,
+          style: TextStyle(
+            color:
+                Theme.of(Get.context!).colorScheme.onSurface.withValues(alpha: .8),
+                 fontSize: 14.sp,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
-              onPressed: () => Get.back(result: false),
-              child: Text('cancel'.tr)),
+            onPressed: () => Get.back(result: false),
+            child: Text(
+              'cancel'.tr,
+              style: TextStyle(
+                color:
+                    isDark ? Colors.white : Theme.of(Get.context!).primaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
           ElevatedButton(
-              onPressed: () => Get.back(result: true),
-              child: Text('logout'.tr)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white
+                  : Theme.of(Get.context!).colorScheme.error,
+              foregroundColor: isDark ? Colors.black : Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () => Get.back(result: true),
+            child: Text(
+              'logout'.tr,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );
+
     if (confirm == true) {
       await authController.signOut();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -484,6 +530,7 @@ class _AppDrawerState extends State<AppDrawer> {
       });
     }
   }
+
 }
 
 class ConcentricCirclePainter extends CustomPainter {
