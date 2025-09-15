@@ -399,10 +399,7 @@ class _AppDrawerState extends State<AppDrawer> {
               padding: EdgeInsets.symmetric(vertical: 8.h),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.15)
+                    ? Theme.of(context).colorScheme.primary
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8.r),
                 border: Border.all(
@@ -411,7 +408,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       : Theme.of(context)
                           .colorScheme
                           .outline
-                          .withValues(alpha: 0.3),
+                          .withValues(alpha:0.3),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -421,7 +418,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     _getThemeIcon(mode),
                     size: 16.sp,
                     color: isSelected
-                        ? Theme.of(context).colorScheme.primary
+                        ? Theme.of(context).colorScheme.onPrimary
                         : Theme.of(context)
                             .colorScheme
                             .onSurface
@@ -435,7 +432,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
                       color: isSelected
-                          ? Theme.of(context).colorScheme.primary
+                          ? Theme.of(context).colorScheme.onPrimary
                           : Theme.of(context)
                               .colorScheme
                               .onSurface
@@ -482,7 +479,7 @@ class _AppDrawerState extends State<AppDrawer> {
           'are_you_sure'.tr,
           style: TextStyle(
             color:
-                Theme.of(Get.context!).colorScheme.onSurface.withValues(alpha: .8),
+                Theme.of(Get.context!).colorScheme.onSurface.withValues(alpha: 0.8),
                  fontSize: 14.sp,
           ),
           textAlign: TextAlign.center,

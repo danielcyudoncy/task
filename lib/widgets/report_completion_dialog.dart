@@ -129,7 +129,7 @@ class _ReportCompletionDialogState extends State<ReportCompletionDialog> {
                       Navigator.of(context).pop();
                     }
                   },
-                  child: const Text('CANCEL'),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.grey)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -175,7 +175,7 @@ class _ReportCompletionDialogState extends State<ReportCompletionDialog> {
                       );
                     }
                   },
-                  child: const Text('SUBMIT'),
+                  child: const Text('SUBMIT', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
