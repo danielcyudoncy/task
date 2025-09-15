@@ -53,10 +53,12 @@ class TaskActions {
           ),
         ),
         actions: [
-          TextButton(style: TextButton.styleFrom(
-            foregroundColor: Colors.red,),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.onSurface,
+            ),
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text("Cancel",),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
             onPressed: () async {

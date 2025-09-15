@@ -527,7 +527,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('expired_entries_cleared'.tr),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -539,7 +539,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('error_clearing_expired'.tr),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -560,7 +560,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('cache_optimized'.tr),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
         
@@ -579,7 +579,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('error_optimizing_cache'.tr),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
         

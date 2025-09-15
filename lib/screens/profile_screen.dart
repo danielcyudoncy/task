@@ -325,8 +325,8 @@ class ProfileScreen extends StatelessWidget {
                                 'No Updates',
                                 'You are using the latest version of the app',
                                 snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: Colors.green,
-                                colorText: Colors.white,
+                                backgroundColor: Get.theme.colorScheme.primary,
+                                colorText: Get.theme.colorScheme.onPrimary,
                                 duration: const Duration(seconds: 3),
                               );
                             }
@@ -339,8 +339,8 @@ class ProfileScreen extends StatelessWidget {
                               'Update Check Failed',
                               'Unable to check for updates. Please try again later.',
                               snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.red,
-                              colorText: Colors.white,
+                              backgroundColor: Get.theme.colorScheme.error,
+                              colorText: Get.theme.colorScheme.onError,
                               duration: const Duration(seconds: 3),
                             );
                           }

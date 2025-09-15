@@ -724,10 +724,11 @@ class TaskController extends GetxController {
         }
       }
 
-      // Count tasks created by user
+      // Count tasks created by user (excluding completed tasks)
       var createdTasks = docs.where((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return data["createdBy"] == userId;
+        final status = (data["status"] ?? "").toString().toLowerCase();
+        return data["createdBy"] == userId && status != "completed";
       }).toList();
 
       totalTaskCreated.value = createdTasks.length;

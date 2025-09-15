@@ -316,6 +316,9 @@ Future<void> bootstrapApp() async {
     
     Get.put(ManageUsersController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
    
+    // Mark app as ready for snackbars BEFORE initializing controllers that might use them
+    SnackbarUtils.markAppAsReady();
+    
     Get.put(NotificationController(), permanent: true);
     
     Get.put(PrivacyController(), permanent: true);
@@ -325,11 +328,6 @@ Future<void> bootstrapApp() async {
     // Initialize QuarterlyTransitionService
    
     await _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService');
-
-    
-    
-    // Mark app as ready for snackbars
-    SnackbarUtils.markAppAsReady();
     
     
     // Mark bootstrap as complete

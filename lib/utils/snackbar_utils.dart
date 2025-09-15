@@ -51,6 +51,8 @@ class SnackbarUtils {
         message,
         snackPosition: snackPosition ?? SnackPosition.BOTTOM,
         duration: duration ?? const Duration(seconds: 3),
+        backgroundColor: Get.theme.colorScheme.primary,
+        colorText: Get.theme.colorScheme.onPrimary,
       );
     } catch (e) {
       debugPrint("Snackbar error: $e - $title: $message");
@@ -76,4 +78,4 @@ class SnackbarUtils {
   static void showInfo(String message) {
     showSnackbar("Info", message);
   }
-} 
+}

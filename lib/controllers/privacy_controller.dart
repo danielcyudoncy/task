@@ -371,6 +371,9 @@ class PrivacyController extends GetxController {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(Get.context!).colorScheme.onSurface,
+            ),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -378,6 +381,9 @@ class PrivacyController extends GetxController {
               Get.back();
               // You could optionally open device settings here
             },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(Get.context!).colorScheme.primary,
+            ),
             child: const Text('OK'),
           ),
         ],
@@ -783,9 +789,9 @@ class PrivacyController extends GetxController {
       'Success',
       message,
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green.withValues(alpha: 0.1),
-      colorText: Colors.green[700],
-      icon: const Icon(Icons.check_circle, color: Colors.green),
+      backgroundColor: Get.theme.colorScheme.primary,
+      colorText: Get.theme.colorScheme.onPrimary,
+      icon: Icon(Icons.check_circle, color: Get.theme.colorScheme.onPrimary),
       duration: const Duration(seconds: 3),
     );
   }
@@ -796,8 +802,8 @@ class PrivacyController extends GetxController {
       'Error',
       message,
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
+      backgroundColor: Get.theme.colorScheme.error,
+      colorText: Get.theme.colorScheme.onError,
     );
   }
 

@@ -100,7 +100,13 @@ class _TasksTabState extends State<TasksTab> {
     final userInfo = widget.userCache[creatorId];
     if (userInfo == null && creatorId != 'Unknown') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        widget.getUserNameAndRole(creatorId, () => setState(() {}));
+        if (mounted) {
+          widget.getUserNameAndRole(creatorId, () {
+            if (mounted) {
+              setState(() {});
+            }
+          });
+        }
       });
     }
     final creatorName = userInfo?["name"] ?? 'Unknown';
@@ -402,8 +408,8 @@ class _TasksTabState extends State<TasksTab> {
             "Success", 
             "Comment added successfully",
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
+            backgroundColor: Get.theme.colorScheme.primary,
+            colorText: Get.theme.colorScheme.onPrimary,
           );
         }
       } catch (e) {
@@ -468,9 +474,10 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
       await adminController.approveTask(taskId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task approved successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Task approved successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -479,7 +486,8 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error approving task: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -491,9 +499,10 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
       await adminController.rejectTask(taskId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task rejected successfully'),
-            backgroundColor: Colors.orange,
+          SnackBar(
+            content: const Text('Task rejected successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -502,7 +511,8 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error rejecting task: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }

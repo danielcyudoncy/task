@@ -227,8 +227,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         'Success',
         'Task marked as completed',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        backgroundColor: Get.theme.colorScheme.primary,
+        colorText: Get.theme.colorScheme.onPrimary,
       );
     } catch (e) {
       debugPrint('Error marking task as completed: $e');
@@ -236,8 +236,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         'Error',
         'Failed to mark task as completed',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
       );
     }
   }
@@ -251,12 +251,18 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
           content: const Text('Are you sure you want to mark this task as completed?'),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
               onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+              ),
+              child: const Text('Cancel'),
             ),
             TextButton(
-              child: const Text('Complete'),
               onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+              ),
+              child: const Text('Complete'),
             ),
           ],
         );
@@ -273,12 +279,18 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
           content: const Text('Are you sure you want to delete this task? This action cannot be undone.'),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
               onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+              ),
+              child: const Text('Cancel'),
             ),
             TextButton(
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
               onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Delete'),
             ),
           ],
         );

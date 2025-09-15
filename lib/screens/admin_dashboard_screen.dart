@@ -82,13 +82,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         final role = data['role'] ?? "Unknown";
         final imageUrl = data['imageUrl'] ?? "";
         userCache[userId] = {"name": name, "role": role, "imageUrl": imageUrl};
-        WidgetsBinding.instance.addPostFrameCallback((_) => refresh());
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            refresh();
+          }
+        });
         return {"name": name, "role": role};
       }
     // ignore: empty_catches
     } catch (e) {}
     userCache[userId] = {"name": userId, "role": "Unknown"};
-    WidgetsBinding.instance.addPostFrameCallback((_) => refresh());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        refresh();
+      }
+    });
     return {"name": userId, "role": "Unknown"};
   }
 

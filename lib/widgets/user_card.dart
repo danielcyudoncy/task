@@ -90,9 +90,17 @@ class _UserCardState extends State<UserCard> {
                     if (confirm == true) {
                       final success = await widget.controller.deleteUser(widget.user['id']);
                       if (success) {
-                        Get.snackbar('Success', 'User deleted successfully', snackPosition: SnackPosition.BOTTOM);
+                        Get.snackbar('Success', 'User deleted successfully', 
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Get.theme.colorScheme.primary,
+                          colorText: Get.theme.colorScheme.onPrimary,
+                        );
                       } else {
-                        Get.snackbar('Error', 'Failed to delete user', snackPosition: SnackPosition.BOTTOM);
+                        Get.snackbar('Error', 'Failed to delete user', 
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Get.theme.colorScheme.error,
+                          colorText: Get.theme.colorScheme.onError,
+                        );
                       }
                     }
                   },
@@ -117,7 +125,11 @@ class _UserCardState extends State<UserCard> {
                     if (value != null) {
                       await widget.controller.assignTaskToUser(widget.user['id'], value);
                       setState(() => showTaskDropdown = false);
-                      Get.snackbar('Success', 'Task assigned successfully', snackPosition: SnackPosition.BOTTOM);
+                      Get.snackbar('Success', 'Task assigned successfully', 
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Get.theme.colorScheme.primary,
+                        colorText: Get.theme.colorScheme.onPrimary,
+                      );
                     }
                   },
                 ),
