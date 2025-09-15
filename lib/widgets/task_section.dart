@@ -142,7 +142,7 @@ class TasksSection extends StatelessWidget {
                 t.assignedCameramanId == userId ||
                 t.assignedDriverId == userId ||
                 t.assignedLibrarianId == userId);
-            final isNotCompleted = t.status != "Completed";
+            final isNotCompleted = t.status.toLowerCase() != "completed";
             debugPrint('TasksSection: task ${t.taskId} - createdById=${t.createdById}, assignedTo=${t.assignedTo}, assignedReporterId=${t.assignedReporterId}, assignedCameramanId=${t.assignedCameramanId}, assignedDriverId=${t.assignedDriverId}, assignedLibrarianId=${t.assignedLibrarianId}, status=${t.status}, isRelevant=$isRelevant, isNotCompleted=$isNotCompleted');
             return isNotCompleted && isRelevant;
           }).toList();
@@ -176,7 +176,7 @@ class TasksSection extends StatelessWidget {
                 if (!isUserRelated) return false;
                 
                 // Check if task is truly completed using new multi-user logic
-                 if (t.status == "Completed") {
+                 if (t.status.toLowerCase() == "completed") {
                    // Use the helper property from Task model to check if all assigned users completed
                    return t.isCompletedByAllAssignedUsers;
                  }

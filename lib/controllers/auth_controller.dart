@@ -1048,8 +1048,14 @@ class AuthController extends GetxController {
       // 3. Ensure complete cleanup before navigation
       await Future.delayed(const Duration(milliseconds: 100));
 
-      // 4. Navigate with complete context reset
-      Get.offAllNamed("/login", arguments: {'fromLogout': true});
+      // 4. Navigate with complete context reset - use post frame callback for safety
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (Get.context != null) {
+          Get.offAllNamed("/login", arguments: {'fromLogout': true});
+        } else {
+          debugPrint("AuthController: No context available for navigation after logout");
+        }
+      });
     } catch (e) {
       _safeSnackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
@@ -1089,8 +1095,14 @@ class AuthController extends GetxController {
       // Give a tiny buffer to let listeners settle
       await Future.delayed(const Duration(milliseconds: 100));
 
-      // Navigate to login and mark that it was from logout to bypass middleware loops
-      Get.offAllNamed('/login', arguments: {'fromLogout': true});
+      // Navigate to login and mark that it was from logout to bypass middleware loops - use post frame callback for safety
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (Get.context != null) {
+          Get.offAllNamed('/login', arguments: {'fromLogout': true});
+        } else {
+          debugPrint("AuthController: No context available for navigation after signOut");
+        }
+      });
     } catch (e) {
       _safeSnackbar('Error', 'Sign out failed: ${e.toString()}');
     } finally {

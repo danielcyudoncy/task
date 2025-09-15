@@ -93,6 +93,9 @@ class _TaskReviewDialogState extends State<TaskReviewDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+          ),
           child: const Text('Cancel'),
         ),
         ElevatedButton(

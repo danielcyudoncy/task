@@ -27,7 +27,12 @@ class NotificationController extends GetxController {
     // Delay notification fetching to ensure proper initialization
     Future.delayed(const Duration(milliseconds: 200), () {
       if (Get.isRegistered<NotificationController>()) {
-        fetchNotifications();
+        // Only fetch notifications if user is authenticated
+        if (FirebaseAuth.instance.currentUser != null) {
+          fetchNotifications();
+        } else {
+          debugPrint('NotificationController: User not authenticated, skipping notification fetch');
+        }
       }
     });
   }

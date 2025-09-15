@@ -563,7 +563,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('cache_cleared'.tr),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -575,7 +575,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('error_clearing_cache'.tr),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
