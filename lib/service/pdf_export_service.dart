@@ -664,12 +664,17 @@ class PdfExportService extends GetxService {
   /// Gets the creator name for a task, preferring cached names over IDs
   String _getCreatorName(Task task) {
     try {
-      // 1. Fallback to createdBy field first (synchronous)
+      // 1. First try to use the actual name if available
+      if (task.createdByName != null && task.createdByName!.isNotEmpty) {
+        return task.createdByName!;
+      }
+
+      // 2. Fallback to createdBy field (user ID) if name is not available
       if (task.createdBy.isNotEmpty) {
         return task.createdBy;
       }
 
-      // 2. Final fallback
+      // 3. Final fallback
       return 'Unknown';
     } catch (e) {
       Get.log('Error getting creator name: $e');
