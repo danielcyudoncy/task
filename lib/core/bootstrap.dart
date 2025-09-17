@@ -60,6 +60,7 @@ import 'package:task/service/daily_task_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/user_cache_service.dart';
+import 'package:task/service/biometric_service.dart';
 import 'db_factory_stub.dart' if (dart.library.html) 'db_factory_web.dart';
 
 // --- Emulator/Production Switch ---
@@ -278,6 +279,12 @@ Future<void> bootstrapApp() async {
     await _initializeService<OfflineDataService>(
       () => OfflineDataService(),
       'OfflineDataService',
+    );
+    
+    // Initialize BiometricService early for app lock functionality
+    await _initializeService<BiometricService>(
+      () => BiometricService(),
+      'BiometricService',
     );
     
     // Initialize controllers that depend on services

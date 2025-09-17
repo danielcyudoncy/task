@@ -192,8 +192,10 @@ class _AppLockScreenState extends State<AppLockScreen> {
                   itemCount: 12,
                   itemBuilder: (context, index) {
                     if (index == 9) {
-                      // Empty space instead of biometric
-                      return const SizedBox.shrink();
+                      // Biometric button (if available)
+                      return Obx(() => _appLockController.canUseBiometric
+                        ? _buildBiometricButton(colorScheme, isTablet)
+                        : const SizedBox.shrink());
                     } else if (index == 10) {
                       // Number 0
                       return _buildNumberButton(
@@ -306,5 +308,48 @@ class _AppLockScreenState extends State<AppLockScreen> {
         ),
       ),
     );
+  }
+  
+  Widget _buildBiometricButton(ColorScheme colorScheme, bool isTablet) {
+    return Obx(() {
+      final canUseBiometric = _appLockController.canUseBiometric;
+      debugPrint('AppLockScreen: Building biometric button, canUseBiometric = $canUseBiometric');
+      
+      if (!canUseBiometric) {
+        debugPrint('AppLockScreen: Biometric not available, showing empty container');
+        return const SizedBox.shrink();
+      }
+
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isLoading.value ? null : () async {
+            debugPrint('AppLockScreen: Biometric button tapped');
+            Get.find<SettingsController>().triggerFeedback();
+            await _appLockController.unlockWithBiometric();
+          },
+          borderRadius: BorderRadius.circular(isTablet ? 40 : 32),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+              color: colorScheme.primary.withValues(alpha: 0.1),
+            ),
+            child: Center(
+              child: Icon(
+                _appLockController.biometricIcon,
+                size: isTablet ? 28.sp : 24.sp,
+                color: isLoading.value 
+                  ? colorScheme.onSurface.withValues(alpha: 0.3)
+                  : colorScheme.primary,
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 }
