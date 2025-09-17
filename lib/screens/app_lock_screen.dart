@@ -1,4 +1,4 @@
-// views/app_lock_screen.dart
+// screens/app_lock_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -71,7 +71,10 @@ class _AppLockScreenState extends State<AppLockScreen> {
     final isTablet = AppDevices.isTablet(context);
     
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+       backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
+                  : Theme.of(context).colorScheme.primary,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(isTablet ? 32.0 : 24.0),
