@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:task/models/task_model.dart';
+import 'package:task/service/pdf_export_service.dart';
 
 
 enum ExportFormat {
@@ -285,19 +286,21 @@ class ExportService extends GetxService {
       // Add task data
       for (final task in tasks) {
         final tags = task.tags.join('; ');
-        csvContent.writeln('''
-"${_escapeCsvField(task.title)}",
-"${_escapeCsvField(task.description)}",
-"${_escapeCsvField(task.status)}",
-"${_escapeCsvField(task.category ?? '')}",
-"${_escapeCsvField(task.assignedReporter ?? '')}",
-"${_escapeCsvField(task.assignedCameraman ?? '')}",
-"${_escapeCsvField(task.assignedDriver ?? '')}",
-"${_escapeCsvField(task.assignedLibrarian ?? '')}",
-"${task.timestamp.toIso8601String()}",
-"${task.dueDate?.toIso8601String() ?? ''}",
-"${task.archivedAt?.toIso8601String() ?? ''}",
-"${_escapeCsvField(tags)}"''');
+        final row = [
+          _escapeCsvField(task.title),
+          _escapeCsvField(task.description),
+          _escapeCsvField(task.status),
+          _escapeCsvField(task.category ?? ''),
+          _escapeCsvField(task.assignedReporter ?? ''),
+          _escapeCsvField(task.assignedCameraman ?? ''),
+          _escapeCsvField(task.assignedDriver ?? ''),
+          _escapeCsvField(task.assignedLibrarian ?? ''),
+          task.timestamp.toIso8601String(),
+          task.dueDate?.toIso8601String() ?? '',
+          task.archivedAt?.toIso8601String() ?? '',
+          _escapeCsvField(tags),
+        ];
+        csvContent.writeln(row.join(','));
       }
       
       // Create file
@@ -331,11 +334,29 @@ class ExportService extends GetxService {
     }
   }
 
-  /// Export tasks to PDF format (placeholder - needs implementation)
+  /// Export tasks to PDF format
   Future<File> exportToPdf(List<Task> tasks, {String? fileName}) async {
-    // For now, export as CSV since PDF export requires additional dependencies
-    // This can be implemented later with packages like pdf or printing
-    return exportToCsv(tasks, fileName: fileName?.replaceAll('.pdf', '.csv'));
+    try {
+      // Use the dedicated PDF export service for proper PDF generation
+      final pdfExportService = Get.find<PdfExportService>();
+      final pdfPath = await pdfExportService.exportTasksToPdf(tasks, title: 'Tasks Export');
+      
+      // If a custom filename is provided, rename the file
+      if (fileName != null) {
+        final directory = await getTemporaryDirectory();
+        final newFile = File('${directory.path}/$fileName');
+        final originalFile = File(pdfPath);
+        await originalFile.copy(newFile.path);
+        await originalFile.delete();
+        return newFile;
+      }
+      
+      return File(pdfPath);
+    } catch (e) {
+      debugPrint('Error exporting to PDF: $e');
+      // Fallback to CSV if PDF export fails
+      return exportToCsv(tasks, fileName: fileName?.replaceAll('.pdf', '.csv'));
+    }
   }
 
   /// Share file using share_plus package (legacy method)
