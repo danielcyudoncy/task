@@ -1,4 +1,4 @@
-// views/all_users_chat_screen.dart
+// screens/all_users_chat_screen.dart
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -120,7 +120,7 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final theme = Theme.of(context);
 
-final isDark = theme.brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
     final backgroundColor =
         isDark ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.primary;
 
@@ -155,7 +155,10 @@ final isDark = theme.brightness == Brightness.dark;
           child: Column(
             children: [
               AppBar(
-                backgroundColor: theme.colorScheme.primary,
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
+                  : Theme.of(context).colorScheme.primary,
                 elevation: 1,
                 leading: IconButton(
                   icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),

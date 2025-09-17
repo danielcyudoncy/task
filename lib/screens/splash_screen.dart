@@ -1,4 +1,4 @@
-// views/splash_screen.dart
+// screens/splash_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -131,8 +131,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         height: double.infinity,
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).canvasColor
-              : Theme.of(context).colorScheme.primary,
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
+                  : Theme.of(context).colorScheme.primary,
         ),
         child: Center(
           child: Column(

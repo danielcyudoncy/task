@@ -1,4 +1,4 @@
-// views/manage_users_screen.dart
+// screens/manage_users_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -28,13 +28,19 @@ class ManageUsersScreen extends StatelessWidget {
 
 
     return Scaffold(
-backgroundColor: theme.colorScheme.surface,
+backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
+                  : Theme.of(context).colorScheme.primary,
       appBar: AppBar(
         title: const Text(
           'Manage Users',
           style: TextStyle(fontSize: AppSizes.titleNormal, fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: theme.colorScheme.primary,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? [Colors.grey[900]!, Colors.grey[800]!]
+                      .reduce((value, element) => value)
+                  : Theme.of(context).colorScheme.primary,
         elevation: 0,
       ),
       body: Column(
@@ -68,13 +74,13 @@ backgroundColor: theme.colorScheme.surface,
                                           items: <String>['All', 'Admin', 'Reporter', 'Cameraman', 'Driver']
                       .map((role) => DropdownMenuItem(
                             value: role,
-                            child: Text(role, style: TextStyle(color: theme.colorScheme.onSurface)),
+                            child: Text(role, style: TextStyle(color: theme.colorScheme.onPrimary)),
                           ))
                       .toList(),
                   onChanged: (role) => manageUsersController.filterByRole(role),
                   underline: const SizedBox(),
                   style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
-                  dropdownColor: theme.colorScheme.surface,
+                  dropdownColor: theme.colorScheme.primary,
                 )),
               ],
             ),
