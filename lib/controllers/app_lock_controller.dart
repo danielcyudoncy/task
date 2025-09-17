@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/service/biometric_service.dart';
 
 class AppLockController extends GetxController with WidgetsBindingObserver {
   static AppLockController get to => Get.find<AppLockController>();
   final AuthController _authController = Get.find<AuthController>();
+  final BiometricService _biometricService = Get.find<BiometricService>();
   
   // Observable variables
   final RxBool isAppLocked = false.obs;
@@ -92,17 +94,24 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   
   void _handleAppPaused(AppLifecycleState currentState) {
     if (isAppLockEnabled.value && _authController.currentUser != null) {
+      // Check if we're within the grace period after authentication
+      if (_lastAuthTime != null) {
+        final timeSinceAuth = DateTime.now().difference(_lastAuthTime!);
+        if (timeSinceAuth.inSeconds < gracePeriodSeconds) {
+          debugPrint(
+              'AppLockController: Within grace period on pause (${gracePeriodSeconds - timeSinceAuth.inSeconds}s remaining), not locking');
+          return;
+        }
+      }
+
       _backgroundTime = DateTime.now();
-      debugPrint('App went to background (state: $currentState) at: $_backgroundTime');
-      
+      debugPrint(
+          'App went to background (state: $currentState) at: $_backgroundTime');
+
       // Lock immediately when app is minimized for enhanced security
-      if (currentState == AppLifecycleState.paused || currentState == AppLifecycleState.hidden) {
-        debugPrint('App minimized - locking immediately for security');
+      if (_lastLifecycleState == AppLifecycleState.resumed) {
+        debugPrint('App is no longer in the foreground, locking.');
         _lockApp();
-      } else if (_lastLifecycleState == AppLifecycleState.resumed) {
-        debugPrint('App transitioned from active to background - starting lock timer');
-      } else if (_lastLifecycleState == AppLifecycleState.inactive) {
-        debugPrint('App moved from inactive to paused/hidden');
       }
     }
   }
@@ -198,6 +207,68 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   
   // Biometric authentication removed
   
+  /// Unlock app using biometric authentication
+  Future<void> unlockWithBiometric() async {
+    try {
+      debugPrint('AppLockController: Attempting biometric unlock');
+      
+      // Check if biometric is enabled
+      if (!isBiometricEnabled.value) {
+        debugPrint('AppLockController: Biometric authentication is disabled');
+        Get.snackbar(
+          'Biometric Disabled',
+          'Biometric authentication is disabled. Please enable it in settings or use PIN.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+      
+      // Attempt biometric authentication
+      final authenticated = await _biometricService.authenticate(
+        reason: 'Please authenticate to unlock the app',
+        biometricOnly: false, // Allow fallback to device PIN if needed
+      );
+      
+      if (authenticated) {
+        debugPrint('AppLockController: Biometric authentication successful');
+        _unlockApp();
+      } else {
+        debugPrint('AppLockController: Biometric authentication failed');
+        // Error handling is done in BiometricService
+      }
+    } catch (e) {
+      debugPrint('AppLockController: Error during biometric unlock: $e');
+      Get.snackbar(
+        'Authentication Error',
+        'An error occurred during biometric authentication. Please try again or use PIN.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+  
+  /// Check if biometric authentication is available and enabled
+  bool get canUseBiometric {
+    final biometricAvailable = _biometricService.isBiometricAvailable.value;
+    final biometricEnabled = isBiometricEnabled.value;
+    
+    debugPrint('AppLockController: canUseBiometric check:');
+    debugPrint('  - biometricAvailable: $biometricAvailable');
+    debugPrint('  - biometricEnabled: $biometricEnabled');
+    debugPrint('  - result: ${biometricEnabled && biometricAvailable}');
+    
+    return biometricEnabled && biometricAvailable;
+  }
+  
+  /// Get biometric icon for UI display
+  IconData get biometricIcon => _biometricService.getBiometricIcon();
+  
+  /// Get biometric type string for UI display
+  String get biometricTypeString => _biometricService.getBiometricTypeString();
+  
   void _unlockApp() async {
     debugPrint('Unlocking app');
     isAppLocked.value = false;
@@ -252,12 +323,16 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       final prefs = await SharedPreferences.getInstance();
       
       isAppLockEnabled.value = prefs.getBool('app_lock_enabled') ?? true;
-      isBiometricEnabled.value = prefs.getBool('biometric_enabled') ?? true;
+      isBiometricEnabled.value = prefs.getBool('biometric_enabled') ?? true; // Enable by default
       appPin.value = prefs.getString('app_pin') ?? '';
       hasSetPin.value = appPin.value.isNotEmpty;
       isUsingDefaultPin.value = prefs.getBool('is_using_default_pin') ?? true;
       
-      debugPrint('App lock settings loaded');
+      debugPrint('AppLockController: Settings loaded:');
+      debugPrint('  - isAppLockEnabled: ${isAppLockEnabled.value}');
+      debugPrint('  - isBiometricEnabled: ${isBiometricEnabled.value}');
+      debugPrint('  - hasSetPin: ${hasSetPin.value}');
+      debugPrint('  - isUsingDefaultPin: ${isUsingDefaultPin.value}');
     } catch (e) {
       debugPrint('Error loading app lock settings: $e');
     }
