@@ -187,6 +187,7 @@ Future<void> bootstrapApp() async {
     await _initializeService<PdfExportService>(
       () => PdfExportService(),
       'PdfExportService',
+      needsInitialization: true,
     );
     
     await _initializeService<VersionControlService>(
@@ -364,13 +365,21 @@ Future<void> bootstrapApp() async {
 
 Future<void> _initializeService<T>(
   T Function() create, 
-  String serviceName
-) async {
+  String serviceName, {
+  bool needsInitialization = false,
+}) async {
   try {
     
     final service = create();
-    // Simply put the service into GetX without calling any methods
-    // Most GetxService implementations don't need explicit initialization
+    
+    // Call initialize method if the service needs it
+    if (needsInitialization && service is GetxService) {
+      if (service.runtimeType.toString() == 'PdfExportService') {
+        await (service as dynamic).initialize();
+      }
+    }
+    
+    // Put the service into GetX
     Get.put<T>(service, permanent: true);
     
   } catch (e) {
