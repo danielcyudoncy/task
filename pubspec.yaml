@@ -80,6 +80,8 @@ dependencies:
   flutter_staggered_grid_view: ^0.7.0
   auto_size_text: ^3.0.0
   local_auth: ^2.1.7
+  local_auth_android: ^1.0.40
+  local_auth_darwin: ^1.0.4
   rxdart: ^0.28.0
   sqflite: ^2.3.0
   sqflite_common_ffi_web: ^0.4.4
