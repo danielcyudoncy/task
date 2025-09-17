@@ -93,6 +93,13 @@ class PresenceService extends GetxService {
         return;
       }
       
+      // Check if user is still authenticated
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        Get.log('PresenceService: User not authenticated, skipping disconnect handler');
+        return;
+      }
+      
       await _userStatusRef!.onDisconnect().update({
         'status': 'offline',
         'lastSeen': ServerValue.timestamp,
@@ -100,6 +107,11 @@ class PresenceService extends GetxService {
       Get.log('PresenceService: Disconnect handler set up successfully');
     } catch (e) {
       Get.log('Failed to setup disconnect handler: $e', isError: true);
+      // Don't throw error for permission issues - just continue without disconnect handler
+      if (!e.toString().contains('permission') && !e.toString().contains('denied')) {
+        // Only log non-permission errors as actual errors
+        Get.log('PresenceService: Non-permission error in disconnect handler: $e', isError: true);
+      }
     }
   }
 
@@ -114,6 +126,14 @@ class PresenceService extends GetxService {
       return;
     }
 
+    // Check if user is still authenticated
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || currentUser.uid != _currentUserId) {
+      Get.log('PresenceService: User not authenticated or UID mismatch, skipping setOnline');
+      _status.value = 'offline';
+      return;
+    }
+
     try {
       Get.log('PresenceService: Setting user online...');
       await _userStatusRef!.update({
@@ -125,7 +145,13 @@ class PresenceService extends GetxService {
       Get.log('PresenceService: User set to online successfully');
     } catch (e) {
       Get.log('Failed to set online status: $e', isError: true);
-      _status.value = 'error';
+      // Don't set status to error for permission issues - just stay offline
+      if (e.toString().contains('permission') || e.toString().contains('denied')) {
+        Get.log('PresenceService: Permission denied, staying offline silently');
+        _status.value = 'offline';
+      } else {
+        _status.value = 'error';
+      }
     }
   }
 
@@ -140,6 +166,14 @@ class PresenceService extends GetxService {
       return;
     }
 
+    // Check if user is still authenticated
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      Get.log('PresenceService: User not authenticated, skipping setOffline');
+      _status.value = 'offline';
+      return;
+    }
+
     try {
       Get.log('PresenceService: Setting user offline...');
       await _userStatusRef!.update({
@@ -150,7 +184,13 @@ class PresenceService extends GetxService {
       Get.log('PresenceService: User set to offline successfully');
     } catch (e) {
       Get.log('Failed to set offline status: $e', isError: true);
-      _status.value = 'error';
+      // Don't set status to error for permission issues - just stay offline
+      if (e.toString().contains('permission') || e.toString().contains('denied')) {
+        Get.log('PresenceService: Permission denied, staying offline silently');
+        _status.value = 'offline';
+      } else {
+        _status.value = 'error';
+      }
     }
   }
 
