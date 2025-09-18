@@ -18,7 +18,19 @@ class _AppLockScreenState extends State<AppLockScreen> {
   final TextEditingController _pinController = TextEditingController();
   final RxString enteredPin = ''.obs;
   final RxBool isLoading = false.obs;
-  
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger biometric check on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_appLockController.canUseBiometric) {
+        debugPrint('AppLockScreen: Automatically triggering biometric unlock.');
+        _appLockController.unlockWithBiometric();
+      }
+    });
+  }
+
   @override
   void dispose() {
     _pinController.dispose();
