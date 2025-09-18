@@ -13,11 +13,12 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   // Observable variables
   final RxBool isAppLocked = false.obs;
   final RxBool isAppLockEnabled = true.obs;
-  final RxBool isBiometricEnabled = false.obs;  // Disabled by default
+  final RxBool isBiometricEnabled = false.obs; // Disabled by default
   final RxString appPin = ''.obs;
   final RxBool hasSetPin = false.obs;
   final RxBool isUsingDefaultPin = true.obs;
-  
+  final RxBool _isAuthenticating = false.obs;
+
   // Default PIN for first-time users
   static const String defaultPin = '0000';
   
@@ -67,7 +68,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     debugPrint('App lifecycle state changed from $_lastLifecycleState to $state');
-    
+
     // Only process state changes if this is a meaningful transition
     if (_lastLifecycleState != state) {
       switch (state) {
@@ -93,6 +94,11 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   }
   
   void _handleAppPaused(AppLifecycleState currentState) {
+    if (_isAuthenticating.value) {
+      debugPrint(
+          'AppLockController: Authentication in progress, ignoring pause.');
+      return;
+    }
     if (isAppLockEnabled.value && _authController.currentUser != null) {
       // Check if we're within the grace period after authentication
       if (_lastAuthTime != null) {
@@ -209,9 +215,14 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   
   /// Unlock app using biometric authentication
   Future<void> unlockWithBiometric() async {
+    if (_isAuthenticating.value) {
+      debugPrint('AppLockController: Authentication already in progress.');
+      return;
+    }
     try {
+      _isAuthenticating.value = true;
       debugPrint('AppLockController: Attempting biometric unlock');
-      
+
       // Check if biometric is enabled
       if (!isBiometricEnabled.value) {
         debugPrint('AppLockController: Biometric authentication is disabled');
@@ -224,13 +235,13 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
         );
         return;
       }
-      
+
       // Attempt biometric authentication
       final authenticated = await _biometricService.authenticate(
         reason: 'Please authenticate to unlock the app',
         biometricOnly: false, // Allow fallback to device PIN if needed
       );
-      
+
       if (authenticated) {
         debugPrint('AppLockController: Biometric authentication successful');
         _unlockApp();
@@ -247,9 +258,11 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+    } finally {
+      _isAuthenticating.value = false;
     }
   }
-  
+
   /// Check if biometric authentication is available and enabled
   bool get canUseBiometric {
     final biometricAvailable = _biometricService.isBiometricAvailable.value;
