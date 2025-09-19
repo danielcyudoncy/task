@@ -53,7 +53,10 @@ class UserNavBar extends StatelessWidget {
       style: TabStyle.react,
       backgroundColor: isLightMode ? AppColors.white : AppColors.black,
       activeColor: AppColors.primaryColor,
-      color: Colors.grey,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? [Colors.white, Colors.grey[800]!]
+              .reduce((value, element) => value)
+          : Theme.of(context).colorScheme.primary,
       elevation: 12,
       initialActiveIndex: adjustedIndex,
       onTap: _onTap,

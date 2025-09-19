@@ -30,7 +30,7 @@ class LibrarianNavbar extends StatelessWidget {
         return ConvexAppBar(
           style: TabStyle.react,
           backgroundColor: colorScheme.surface,
-          activeColor: colorScheme.primary,
+          activeColor: colorScheme.onPrimary,
           color: colorScheme.onSurfaceVariant,
           elevation: 12,
           initialActiveIndex: tabController.index,
