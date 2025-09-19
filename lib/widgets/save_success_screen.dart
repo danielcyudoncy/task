@@ -35,7 +35,8 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
         height: double.infinity,
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Theme.of(context).canvasColor
+              ? [Colors.grey[900]!, Colors.grey[800]!]
+                  .reduce((value, element) => value)
               : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
@@ -87,7 +88,7 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                         Icon(
                           Icons.check_circle,
                           size: 100,
-                          color: colorScheme.primary,
+                          color: colorScheme.onPrimary,
                         ),
                         const SizedBox(height: 24),
                         Text(

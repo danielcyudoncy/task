@@ -61,7 +61,7 @@ class AuthController extends GetxController {
   final phoneNumberController = TextEditingController();
   final passwordController = TextEditingController();
 
-  final List<String> userRoles = [
+    final List<String> userRoles = [
     "Reporter",
     "Cameraman",
     "Driver",
@@ -69,7 +69,15 @@ class AuthController extends GetxController {
     "Assignment Editor",
     "Head of Department",
     "Head of Unit",
-    "Admin"
+    "Admin",
+    "News Director",
+    "Assistant News Director",
+    "Producer",
+    "Anchor",
+    "Business Reporter",
+    "Political Reporter",
+    "Digital Reporter",
+    "Web Producer"
   ];
   bool get isLoggedIn => currentUser != null;
 
@@ -147,10 +155,12 @@ class AuthController extends GetxController {
 
   bool get canAssignTask {
     final role = userData['role'];
-    return role == 'Admin' ||
+        return role == 'Admin' ||
         role == 'Assignment Editor' ||
         role == 'Head of Department' ||
-        role == 'Head of Unit';
+        role == 'Head of Unit' ||
+        role == 'News Director' ||
+        role == 'Assistant News Director';
   }
 
   void goToHome() {
@@ -390,18 +400,27 @@ class AuthController extends GetxController {
     final role = userRole.value;
     debugPrint("Navigating based on role: $role");
     
-    if (role == "Admin" || 
-        role == "Assignment Editor" || 
-        role == "Head of Department") {
+        if (role == "Admin" ||
+        role == "Assignment Editor" ||
+        role == "Head of Department" ||
+        role == "News Director" ||
+        role == "Assistant News Director") {
       Get.offAllNamed('/admin-dashboard');
     } else if (role == "Librarian") {
       Get.offAllNamed('/librarian-dashboard');
-    } else if (role == "Reporter" || 
-               role == "Cameraman" || 
-               role == "Driver") {
+    } else if (role == "Reporter" ||
+        role == "Cameraman" ||
+        role == "Driver" ||
+        role == "Producer" ||
+        role == "Anchor" ||
+        role == "Business Reporter" ||
+        role == "Political Reporter" ||
+        role == "Digital Reporter" ||
+        role == "Web Producer") {
       Get.offAllNamed('/home');
     } else {
-      debugPrint("AuthController: No valid role found ($role), navigating to login");
+      debugPrint(
+          "AuthController: No valid role found ($role), navigating to login");
       Get.offAllNamed('/login');
     }
   }

@@ -9,7 +9,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-// Removed Isar imports - using SQLite now
 import 'package:task/service/export_service.dart';
 import 'package:task/service/network_service.dart';
 import 'package:task/service/connectivity_service.dart';
@@ -23,8 +22,6 @@ import 'package:task/service/cache_manager.dart';
 import 'package:task/service/cached_task_service.dart';
 import 'package:task/service/enhanced_notification_service.dart';
 import '../my_app.dart';
-
-// --- Ensure all your controllers and services are imported ---
 import 'package:task/controllers/app_lock_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/chat_controller.dart';
@@ -71,21 +68,44 @@ const String emulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST', def
 bool _isBootstrapComplete = false;
 bool get isBootstrapComplete => _isBootstrapComplete;
 
+void _updateStatusBarColor() {
+  final themeController = Get.find<ThemeController>();
+  final isDark = themeController.isCurrentlyDark;
+
+  SystemChrome.setSystemUIOverlayStyle(
+    SystemUiOverlayStyle(
+      statusBarColor: isDark ? Colors.grey[900] : Colors.white, // Background color
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark, // Icon color
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light, // For iOS
+    ),
+  );
+}
+
 Future<void> bootstrapApp() async {
   try {
-    
-    
     // Ensure Flutter bindings are initialized
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Initialize ThemeController first
+    Get.put(ThemeController(), permanent: true);
+
     // Configure database factory (web uses FFI web)
     configureDbFactory();
-    
     
     // Set preferred orientations
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+
+    // Set initial status bar color based on current theme
+    _updateStatusBarColor();
+
+    // Listen to theme changes to update status bar color
+    final themeController = Get.find<ThemeController>();
+    ever(themeController.isDarkMode, (_) {
+      _updateStatusBarColor();
+    });
     
     // Initialize error handling
     FlutterError.onError = (FlutterErrorDetails details) {

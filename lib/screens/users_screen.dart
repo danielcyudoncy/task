@@ -1,4 +1,4 @@
-// views/users_screen.dart
+// screens/users_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/widgets/user_nav_bar.dart';
