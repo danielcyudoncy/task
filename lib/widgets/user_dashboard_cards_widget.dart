@@ -28,7 +28,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cardColor = Color(0xFF357088);
+    const cardColor = Color(0xFF003080);
     final orientation = MediaQuery.of(context).orientation;
     final screenWidth = AppDevices.getScreenWidth(context);
     AppDevices.isTablet(context);
