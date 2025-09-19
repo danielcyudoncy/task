@@ -137,20 +137,20 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
             Icon(
               Icons.archive_outlined,
               size: 64,
-              color: colorScheme.onSurfaceVariant,
+              color: colorScheme.onPrimary,
             ),
             const SizedBox(height: 16),
             Text(
               'No Archived Tasks',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: colorScheme.onPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Tasks that are archived will appear here',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+                color: colorScheme.onPrimary,
               ),
               textAlign: TextAlign.center,
             ),
