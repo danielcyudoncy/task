@@ -1,4 +1,4 @@
-// views/onboarding_screen.dart
+// screens/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -15,9 +15,10 @@ class OnboardingScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: isDark 
-          ? theme.canvasColor
-          : theme.colorScheme.primary,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? [Colors.grey[900]!, Colors.grey[800]!]
+              .reduce((value, element) => value)
+          : Theme.of(context).colorScheme.primary,
       body: SafeArea(
         child: Column(
           children: [
