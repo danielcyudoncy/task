@@ -71,23 +71,25 @@ class AppTheme {
   );
 
   static ThemeData darkTheme = _baseTheme(
-    brightness: Brightness.dark,
-    primaryColor: _primaryBlue,
-    secondaryColor: _secondaryBlue,
-    background: _darkSurfaceVariant,
-    onBackground: Colors.white,
-    surface: _primaryBlue,
-    onSurface: Colors.white,
-    surfaceVariant: _darkSurfaceVariant,
-    onSurfaceVariant: _warning, // Silver color for contrast
-    primaryContainer: _accent1,
-    onPrimaryContainer: Colors.white,
-    dividerColor: _warning.withAlpha(5), // Silver with opacity
-    hintColor: _warning.withAlpha(7),
-    appBarBackgroundColor: _primaryBlue,
-    inputFillColor: _darkSurfaceVariant,
-    textColor: Colors.white,
-    isDark: true,
+  brightness: Brightness.dark,
+  primaryColor: _primaryBlue,
+  secondaryColor: _secondaryBlue,
+  background: _darkSurfaceVariant,
+  onBackground: Colors.white,
+  surface: _primaryBlue,
+  onSurface: Colors.white,
+  surfaceVariant: _darkSurfaceVariant,
+  onSurfaceVariant: _warning, // Silver color for contrast
+  primaryContainer: _accent1,
+  onPrimaryContainer: Colors.white,
+  dividerColor: _warning.withAlpha(5), // Silver with opacity
+  hintColor: _warning.withAlpha(7),
+  appBarBackgroundColor: _primaryBlue,
+  inputFillColor: _darkSurfaceVariant,
+  textColor: Colors.white,
+  isDark: true,
+  // Custom dialog background for dark mode
+  // Removed invalid parameter 'dialogBackgroundColor'
   );
 
   static ThemeData _baseTheme({
@@ -146,6 +148,9 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           fontSize: 20.sp,
         ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
