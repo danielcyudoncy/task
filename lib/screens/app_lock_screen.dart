@@ -81,12 +81,17 @@ class _AppLockScreenState extends State<AppLockScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isTablet = AppDevices.isTablet(context);
-    
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Keep original background logic
+    final backgroundColor = isDark
+        ? [Colors.grey[900]!, Colors.grey[800]!].reduce((value, element) => value)
+        : colorScheme.primary;
+    // Use high-contrast foreground color for light mode
+    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final secondaryForegroundColor = isDark ? colorScheme.onSurface.withValues(alpha: 0.7) : colorScheme.onPrimary.withValues(alpha: 0.7);
+    final outlineColor = isDark ? colorScheme.outline.withValues(alpha: 0.3) : colorScheme.onPrimary.withValues(alpha: 0.3);
     return Scaffold(
-       backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.grey[900]!, Colors.grey[800]!]
-                      .reduce((value, element) => value)
-                  : Theme.of(context).colorScheme.primary,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(isTablet ? 32.0 : 24.0),
@@ -97,20 +102,18 @@ class _AppLockScreenState extends State<AppLockScreen> {
               Icon(
                 Icons.lock_outline,
                 size: isTablet ? 80.sp : 60.sp,
-                color: colorScheme.onPrimary,
+                color: foregroundColor,
               ),
               SizedBox(height: isTablet ? 24 : 16),
-              
               Text(
                 'App Locked',
                 style: TextStyle(
                   fontSize: isTablet ? 28.sp : 24.sp,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+                  color: foregroundColor,
                   fontFamily: 'Raleway',
                 ),
               ),
-              
               SizedBox(height: isTablet ? 12 : 8),
               
               Obx(() => Column(
@@ -119,7 +122,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                     'Enter your PIN to unlock',
                     style: TextStyle(
                       fontSize: isTablet ? 16.sp : 14.sp,
-                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: secondaryForegroundColor,
                       fontFamily: 'Raleway',
                     ),
                   ),
@@ -136,7 +139,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                         color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: colorScheme.primary.withValues(alpha: 0.3),
+                          color: outlineColor,
                         ),
                       ),
                       child: Column(
@@ -146,7 +149,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                             style: TextStyle(
                               fontSize: isTablet ? 14.sp : 12.sp,
                               fontWeight: FontWeight.w600,
-                              color: colorScheme.primary,
+                              color: foregroundColor,
                               fontFamily: 'Raleway',
                             ),
                           ),
@@ -155,7 +158,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                             'Please change this in Settings after unlocking',
                             style: TextStyle(
                               fontSize: isTablet ? 12.sp : 10.sp,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: secondaryForegroundColor,
                               fontFamily: 'Raleway',
                             ),
                             textAlign: TextAlign.center,
@@ -181,8 +184,8 @@ class _AppLockScreenState extends State<AppLockScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: isActive 
-                        ? colorScheme.primary 
-                        : colorScheme.outline.withValues(alpha: 0.3),
+                        ? foregroundColor
+                        : outlineColor,
                     ),
                   );
                 }),
@@ -254,6 +257,9 @@ class _AppLockScreenState extends State<AppLockScreen> {
     ColorScheme colorScheme,
     bool isTablet,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final outlineColor = isDark ? colorScheme.outline.withValues(alpha: 0.3) : colorScheme.onPrimary.withValues(alpha: 0.3);
     return Obx(() => Material(
       color: Colors.transparent,
       child: InkWell(
@@ -266,7 +272,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: colorScheme.outline.withValues(alpha: 0.3),
+              color: outlineColor,
               width: 1,
             ),
           ),
@@ -276,7 +282,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
               style: TextStyle(
                 fontSize: isTablet ? 24.sp : 20.sp,
                 fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
+                color: foregroundColor,
                 fontFamily: 'Raleway',
               ),
             ),
@@ -292,6 +298,9 @@ class _AppLockScreenState extends State<AppLockScreen> {
     required ColorScheme colorScheme,
     required bool isTablet,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final outlineColor = isDark ? colorScheme.outline.withValues(alpha: 0.3) : colorScheme.onPrimary.withValues(alpha: 0.3);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -304,7 +313,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: colorScheme.outline.withValues(alpha: 0.3),
+              color: outlineColor,
               width: 1,
             ),
           ),
@@ -313,8 +322,8 @@ class _AppLockScreenState extends State<AppLockScreen> {
               icon,
               size: isTablet ? 28.sp : 24.sp,
               color: onPressed == null 
-                ? colorScheme.onSurface.withValues(alpha: 0.3)
-                : colorScheme.primary,
+                ? foregroundColor.withValues(alpha: 0.3)
+                : foregroundColor,
             ),
           ),
         ),
@@ -323,15 +332,17 @@ class _AppLockScreenState extends State<AppLockScreen> {
   }
   
   Widget _buildBiometricButton(ColorScheme colorScheme, bool isTablet) {
+    final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
+    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final outlineColor = isDark ? colorScheme.primary.withValues(alpha: .5) : colorScheme.onPrimary.withValues(alpha: 0.5);
+    final fillColor = isDark ? colorScheme.primary.withValues(alpha: 0.1) : colorScheme.onPrimary.withValues(alpha: 0.1);
     return Obx(() {
       final canUseBiometric = _appLockController.canUseBiometric;
       debugPrint('AppLockScreen: Building biometric button, canUseBiometric = $canUseBiometric');
-      
       if (!canUseBiometric) {
         debugPrint('AppLockScreen: Biometric not available, showing empty container');
         return const SizedBox.shrink();
       }
-
       return Material(
         color: Colors.transparent,
         child: InkWell(
@@ -345,18 +356,18 @@ class _AppLockScreenState extends State<AppLockScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: colorScheme.primary.withValues(alpha: 0.5),
+                color: outlineColor,
                 width: 1.5,
               ),
-              color: colorScheme.primary.withValues(alpha: 0.1),
+              color: fillColor,
             ),
             child: Center(
               child: Icon(
                 _appLockController.biometricIcon,
                 size: isTablet ? 28.sp : 24.sp,
                 color: isLoading.value 
-                  ? colorScheme.onSurface.withValues(alpha: 0.3)
-                  : colorScheme.primary,
+                  ? foregroundColor.withValues(alpha: 0.3)
+                  : foregroundColor,
               ),
             ),
           ),
