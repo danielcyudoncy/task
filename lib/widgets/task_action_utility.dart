@@ -6,14 +6,24 @@ import 'package:task/controllers/auth_controller.dart';
 import 'package:task/models/report_completion_info.dart';
 import 'package:task/widgets/report_completion_dialog.dart';
 import 'package:task/utils/snackbar_utils.dart';
+import 'package:intl/intl.dart';
 
 class TaskActions {
   static void editTask(BuildContext context, dynamic task) {
-    final TextEditingController titleController =
-        TextEditingController(text: task.title);
-    final TextEditingController descriptionController =
-        TextEditingController(text: task.description);
+  final authController = Get.find<AuthController>();
+  final userRole = authController.userRole.value.toLowerCase();
+  final isAdmin = userRole == 'admin' || userRole == 'administrator' || userRole == 'superadmin';
+    final TextEditingController titleController = TextEditingController(text: task.title);
+    final TextEditingController descriptionController = TextEditingController(text: task.description);
+    final TextEditingController categoryController = TextEditingController(text: task.category ?? '');
+    final TextEditingController tagsController = TextEditingController(text: task.tags.join(', '));
+    final TextEditingController priorityController = TextEditingController(text: task.priority ?? '');
+    DateTime? dueDate = task.dueDate;
     String status = task.status ?? "Pending";
+    String assignedReporter = task.assignedReporter ?? '';
+    String assignedCameraman = task.assignedCameraman ?? '';
+    String assignedDriver = task.assignedDriver ?? '';
+    String assignedLibrarian = task.assignedLibrarian ?? '';
     final taskController = Get.find<TaskController>();
 
     showDialog(
@@ -36,6 +46,46 @@ class TaskActions {
                 maxLines: 5,
               ),
               const SizedBox(height: 12),
+              TextField(
+                controller: categoryController,
+                decoration: const InputDecoration(labelText: "Category"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: tagsController,
+                decoration: const InputDecoration(labelText: "Tags (comma separated)"),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: priorityController,
+                decoration: const InputDecoration(labelText: "Priority"),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(dueDate == null
+                        ? 'No due date selected'
+                        : 'Due: ${DateFormat('MMM dd, yyyy – HH:mm').format(dueDate!)}'),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: ctx,
+                        initialDate: dueDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        dueDate = picked;
+                        (ctx as Element).markNeedsBuild();
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: status,
                 decoration: const InputDecoration(labelText: "Status"),
@@ -49,6 +99,33 @@ class TaskActions {
                   if (newValue != null) status = newValue;
                 },
               ),
+              const SizedBox(height: 12),
+              if (isAdmin) ...[
+                TextField(
+                  decoration: const InputDecoration(labelText: "Assigned Reporter"),
+                  controller: TextEditingController(text: assignedReporter),
+                  onChanged: (val) => assignedReporter = val,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: const InputDecoration(labelText: "Assigned Cameraman"),
+                  controller: TextEditingController(text: assignedCameraman),
+                  onChanged: (val) => assignedCameraman = val,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: const InputDecoration(labelText: "Assigned Driver"),
+                  controller: TextEditingController(text: assignedDriver),
+                  onChanged: (val) => assignedDriver = val,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: const InputDecoration(labelText: "Assigned Librarian"),
+                  controller: TextEditingController(text: assignedLibrarian),
+                  onChanged: (val) => assignedLibrarian = val,
+                ),
+              ],
+              // Attachments and comments can be added here as needed
             ],
           ),
         ),
@@ -67,7 +144,9 @@ class TaskActions {
                 titleController.text,
                 descriptionController.text,
                 status,
+                // Add more fields to updateTask if needed
               );
+              // You may need to call a more complete update method to save all fields
               if (ctx.mounted) {
                 Navigator.of(ctx).pop();
               }
