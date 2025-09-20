@@ -1,4 +1,4 @@
-// views/admin_dashboard_screen.dart
+// screens/admin_dashboard_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -56,7 +56,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       adminController.fetchDashboardData();
       adminController.fetchStatistics();
-      manageUsersController.fetchUsers();
+  // No need to manually fetch users; ManageUsersController now uses a real-time stream.
     });
   }
 

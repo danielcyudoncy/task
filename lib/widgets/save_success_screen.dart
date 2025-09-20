@@ -108,15 +108,14 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
               ),
               // Add Go to Home button
               Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
+                padding: const EdgeInsets.only(bottom: 50.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: colorScheme.onPrimary,
-                    backgroundColor: colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    backgroundColor: const Color(0xFF2F80ED),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 32),
                   ),
                   onPressed: () {
                     WidgetsBinding.instance.addPostFrameCallback((_) {

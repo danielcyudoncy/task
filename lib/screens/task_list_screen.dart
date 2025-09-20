@@ -1,4 +1,4 @@
-// views/task_list_screen.dart
+// screens/task_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -48,7 +48,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
         String userId = authController.auth.currentUser?.uid ?? "";
 
         var filteredTasks = taskController.tasks.where((task) {
-          if (userRole == "Reporter") {
+          if (userRole == "Reporter" ||
+              userRole == "Producer" ||
+              userRole == "Anchor" ||
+              userRole == "Business Reporter" ||
+              userRole == "Political Reporter" ||
+              userRole == "Digital Reporter" ||
+              userRole == "Web Producer") {
             return task.assignedReporterId == userId ||
                 task.createdById == userId;
           } else if (userRole == "Cameraman") {

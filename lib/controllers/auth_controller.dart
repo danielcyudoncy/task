@@ -155,7 +155,7 @@ class AuthController extends GetxController {
 
   bool get canAssignTask {
     final role = userData['role'];
-        return role == 'Admin' ||
+    return role == 'Admin' ||
         role == 'Assignment Editor' ||
         role == 'Head of Department' ||
         role == 'Head of Unit' ||
@@ -167,11 +167,20 @@ class AuthController extends GetxController {
     final role = userRole.value;
     if (role == "Admin" ||
         role == "Assignment Editor" ||
-        role == "Head of Department") {
+        role == "Head of Department" ||
+        role == "Head of Unit") {
       Get.offAllNamed('/admin-dashboard');
     } else if (role == "Librarian") {
       Get.offAllNamed('/librarian-dashboard');
-    } else if (role == "Reporter" || role == "Cameraman" || role == "Driver") {
+    } else if (role == "Reporter" ||
+        role == "Cameraman" ||
+        role == "Driver" ||
+        role == "Producer" ||
+        role == "Anchor" ||
+        role == "Business Reporter" ||
+        role == "Political Reporter" ||
+        role == "Digital Reporter" ||
+        role == "Web Producer") {
       Get.offAllNamed('/home');
     } else {
       Get.offAllNamed('/login');
@@ -206,10 +215,13 @@ class AuthController extends GetxController {
         }
         if (!isProfileComplete.value) {
           Get.offAllNamed("/profile-update");
-        } else {
+        } else if (userRole.value.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             await navigateBasedOnRole();
           });
+        } else {
+          debugPrint("AuthController: Profile complete but userRole is empty, cannot navigate");
+          showSnackbar("Login Error", "Your user role is missing. Please contact support.");
         }
       } else {
         Get.offAllNamed("/login");
@@ -244,88 +256,40 @@ class AuthController extends GetxController {
   // Enhanced loadUserData with caching for better performance
   Future<void> loadUserData({bool forceRefresh = false}) async {
     debugPrint("AuthController: Starting loadUserData (forceRefresh: $forceRefresh)");
-    
     if (_auth.currentUser == null) {
       debugPrint("AuthController: No current user, returning");
       return;
     }
-
     try {
-      // Get UserCacheService instance
-      final userCacheService = Get.find<UserCacheService>();
-      
-      // First, try to load from cache for immediate UI update (optimistic UI)
-      if (!forceRefresh) {
-        final cachedData = await userCacheService.getCurrentUserData();
-        if (cachedData != null) {
-          debugPrint("AuthController: Loading cached user data for immediate UI update");
-          _updateUserDataFromMap(cachedData);
-          debugPrint("AuthController: Cached user data loaded successfully");
-          
-          // If cache is still valid, return early
-          if (userCacheService.lastUserDataUpdate != null &&
-              DateTime.now().difference(userCacheService.lastUserDataUpdate!) < const Duration(hours: 1)) {
-            debugPrint("AuthController: Cache is fresh, skipping Firebase fetch");
-            return;
-          }
-        }
-      }
-      
-      // Fetch fresh data from Firebase (with retry logic)
-      const maxRetries = 3;
-      int attempt = 0;
-      
-      while (attempt < maxRetries) {
-        try {
-          debugPrint("AuthController: Fetching fresh data from Firebase (attempt ${attempt + 1})");
-          
-          final userDoc = await _firestore
-              .collection("users")
-              .doc(_auth.currentUser!.uid)
-              .get();
-
-          if (userDoc.exists) {
-            debugPrint("AuthController: Fresh user document exists, updating data");
-            final data = userDoc.data()!;
-            
-            // Update local state
-            _updateUserDataFromMap(data);
-            
-            // Update cache with fresh data
-            await userCacheService.updateCurrentUserData(data);
-            
-            debugPrint("AuthController: Fresh user data loaded and cached successfully");
-            debugPrint("AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
-            return; // Success
-          } else {
-            debugPrint("AuthController: User document does not exist for ${_auth.currentUser!.uid}");
-            resetUserData();
-            throw Exception("User document not found");
-          }
-        } catch (e) {
-          debugPrint("AuthController: loadUserData error on attempt ${attempt + 1}: $e");
-          attempt++;
-          if (attempt == maxRetries) {
-            debugPrint("AuthController: loadUserData failed after $maxRetries attempts");
-            
-            // If we have cached data, use it as fallback
-            final cachedData = await userCacheService.getCurrentUserData();
-            if (cachedData != null) {
-              debugPrint("AuthController: Using cached data as fallback");
-              _updateUserDataFromMap(cachedData);
-              return;
-            }
-            
-            // No cached data available, reset and rethrow
-            resetUserData();
-            rethrow;
-          }
-          debugPrint("AuthController: Retrying loadUserData in 1 second");
-          await Future.delayed(const Duration(seconds: 1));
-        }
+      // Always fetch fresh data from Firestore before navigation
+      debugPrint("AuthController: Fetching fresh user data from Firestore");
+      final userDoc = await _firestore.collection("users").doc(_auth.currentUser!.uid).get();
+      if (userDoc.exists) {
+        debugPrint("AuthController: Fresh user document exists, updating data");
+        final data = userDoc.data()!;
+        _updateUserDataFromMap(data);
+        // Optionally update cache
+        final userCacheService = Get.find<UserCacheService>();
+        await userCacheService.updateCurrentUserData(data);
+        debugPrint("AuthController: Fresh user data loaded and cached successfully");
+        debugPrint("AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
+        return;
+      } else {
+        debugPrint("AuthController: User document does not exist for ${_auth.currentUser!.uid}");
+        resetUserData();
+        throw Exception("User document not found");
       }
     } catch (e) {
       debugPrint("AuthController: Critical error in loadUserData: $e");
+      // If we have cached data, use it as fallback
+      final userCacheService = Get.find<UserCacheService>();
+      final cachedData = await userCacheService.getCurrentUserData();
+      if (cachedData != null) {
+        debugPrint("AuthController: Using cached data as fallback");
+        _updateUserDataFromMap(cachedData);
+        return;
+      }
+      resetUserData();
       rethrow;
     }
   }
@@ -374,12 +338,13 @@ class AuthController extends GetxController {
       setUserRole(selectedRole.value);
       isProfileComplete.value = true;
 
-      debugPrint("AuthController: Profile completed successfully");
-      debugPrint("AuthController: User role: ${userRole.value}");
-      debugPrint("AuthController: Profile complete: ${isProfileComplete.value}");
-
-      // Show SaveSuccessScreen after profile completion
-      Get.toNamed('/save-success');
+        debugPrint("AuthController: Profile completed successfully");
+        debugPrint("AuthController: User role: ${userRole.value}");
+        debugPrint("AuthController: Profile complete: ${isProfileComplete.value}");
+        
+        // Load user data and navigate to correct dashboard
+        await loadUserData(forceRefresh: true);
+        await navigateBasedOnRole();
     } catch (e) {
       debugPrint("AuthController: Profile completion error: $e");
       _safeSnackbar("Error", "Failed to complete profile: ${e.toString()}");
@@ -392,19 +357,19 @@ class AuthController extends GetxController {
     // Ensure role is loaded before navigation
     int attempts = 0;
     while (userRole.value.isEmpty && attempts < 10) {
-      debugPrint("AuthController: Waiting for user role to load in navigateBasedOnRole (attempt ${attempts + 1})");
       await Future.delayed(const Duration(milliseconds: 200));
       attempts++;
     }
-    
+
     final role = userRole.value;
     debugPrint("Navigating based on role: $role");
-    
-        if (role == "Admin" ||
+
+    if (role == "Admin" ||
         role == "Assignment Editor" ||
         role == "Head of Department" ||
         role == "News Director" ||
-        role == "Assistant News Director") {
+        role == "Assistant News Director" ||
+        role == "Head of Unit") {
       Get.offAllNamed('/admin-dashboard');
     } else if (role == "Librarian") {
       Get.offAllNamed('/librarian-dashboard');
@@ -488,11 +453,12 @@ class AuthController extends GetxController {
           'createdAt': FieldValue.serverTimestamp(),
         });
         
-        // Update the local user role
-        userRole.value = role;
-        
-        // Navigate based on the user's role
-        await navigateBasedOnRole();
+  // Update the local user role
+  userRole.value = role;
+  // Load user data from Firestore to ensure userRole is set
+  await loadUserData(forceRefresh: true);
+  // Navigate based on the user's role
+  await navigateBasedOnRole();
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
@@ -513,7 +479,6 @@ class AuthController extends GetxController {
       isLoading(true);
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
-
       User? user = userCredential.user;
 
       if (user != null) {
@@ -859,29 +824,18 @@ class AuthController extends GetxController {
           // Ensure role is loaded before navigation
           int attempts = 0;
           while (userRole.value.isEmpty && attempts < 10) {
-            debugPrint("AuthController: Waiting for user role to load (attempt ${attempts + 1})");
+            debugPrint(
+                "AuthController: Waiting for user role to load (attempt ${attempts + 1})");
             await Future.delayed(const Duration(milliseconds: 200));
             attempts++;
           }
-          debugPrint("AuthController: Profile is complete, navigating based on role: ${userRole.value}");
-          final role = userRole.value;
-          if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
-            debugPrint("AuthController: Navigating to admin-dashboard");
-            Get.offAllNamed("/admin-dashboard");
-          } else if (role == "Librarian") {
-            debugPrint("AuthController: Navigating to librarian-dashboard");
-            Get.offAllNamed("/librarian-dashboard");
-          } else if (["Reporter", "Cameraman", "Driver"].contains(role)) {
-            debugPrint("AuthController: Navigating to home");
-            Get.offAllNamed("/home");
-          } else {
-            debugPrint("AuthController: Navigating to login (fallback)");
-            Get.offAllNamed("/login");
-          }
+          debugPrint(
+              "AuthController: Profile is complete, navigating based on role: ${userRole.value}");
+          await navigateBasedOnRole();
         }
       });
-      debugPrint("AuthController: Navigation logic completed");
     } on FirebaseAuthException catch (e) {
+      isLoading(false);
       debugPrint("AuthController: Firebase auth error: ${e.message}");
       _safeSnackbar("Error", _handleAuthError(e));
       rethrow;
@@ -1024,12 +978,35 @@ class AuthController extends GetxController {
   Future<void> assignTask(String taskId, String userId) async {
     try {
       isLoading.value = true;
-      await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
-        'assignedTo': userId,
+      final taskRef = FirebaseFirestore.instance.collection('tasks').doc(taskId);
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final taskSnapshot = await transaction.get(taskRef);
+
+        if (!taskSnapshot.exists) {
+          throw Exception("Task does not exist!");
+        }
+
+        List<dynamic> assignedUsers = taskSnapshot.data()?['assignedUsers'] ?? [];
+
+        if (assignedUsers.contains(userId)) {
+          _safeSnackbar("Info", "User is already assigned to this task.");
+          return;
+        }
+
+        if (assignedUsers.length >= 3) {
+          _safeSnackbar("Error", "This task has already been assigned to 3 users.");
+          return;
+        }
+
+        assignedUsers.add(userId);
+
+        transaction.update(taskRef, {'assignedUsers': assignedUsers});
       });
+
       _safeSnackbar("Success", "Task assigned successfully.");
     } catch (e) {
-      _safeSnackbar("Error", "Failed to assign task.");
+      _safeSnackbar("Error", "Failed to assign task: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
@@ -1234,26 +1211,13 @@ class AuthController extends GetxController {
       await _clearSavedEmail();
       
       // Navigate based on profile completion and role
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!isProfileComplete.value) {
           debugPrint("AuthController: Navigating to profile update");
           Get.offAllNamed("/profile-update");
         } else {
-          debugPrint("AuthController: Profile is complete, navigating based on role");
-          final role = userRole.value;
-          if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
-            debugPrint("AuthController: Navigating to admin-dashboard");
-            Get.offAllNamed("/admin-dashboard");
-          } else if (role == "Librarian") {
-            debugPrint("AuthController: Navigating to librarian-dashboard");
-            Get.offAllNamed("/librarian-dashboard");
-          } else if (["Reporter", "Cameraman", "Driver"].contains(role)) {
-            debugPrint("AuthController: Navigating to home");
-            Get.offAllNamed("/home");
-          } else {
-            debugPrint("AuthController: Navigating to login (fallback)");
-            Get.offAllNamed("/login");
-          }
+          // Navigate based on role
+          await navigateBasedOnRole();
         }
       });
     } on FirebaseAuthException catch (e) {

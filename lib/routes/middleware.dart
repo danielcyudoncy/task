@@ -46,7 +46,14 @@ class AuthMiddleware extends GetMiddleware {
 
     // If trying to access admin dashboard but not an admin role, redirect to appropriate screen
     if (route == '/admin-dashboard') {
-      if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+      if ([
+        "Admin",
+        "Assignment Editor",
+        "Head of Department",
+        "News Director",
+        "Assistant News Director",
+        "Head of Unit"
+      ].contains(role)) {
         debugPrint("AuthMiddleware: Allowing access to admin dashboard");
         return null;
       }

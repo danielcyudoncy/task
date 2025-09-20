@@ -288,12 +288,20 @@ class UserCacheService {
   }
   
   Future<void> _cacheCurrentUserData(Map<String, dynamic> userData) async {
-    _currentUserData = Map<String, dynamic>.from(userData);
+    // Convert Firestore Timestamp fields to ISO8601 strings for serialization
+    Map<String, dynamic> safeUserData = {};
+    userData.forEach((key, value) {
+      if (value is Timestamp) {
+        safeUserData[key] = value.toDate().toIso8601String();
+      } else {
+        safeUserData[key] = value;
+      }
+    });
+    _currentUserData = Map<String, dynamic>.from(safeUserData);
     _lastUserDataUpdate = DateTime.now();
-    
     final prefs = await SharedPreferences.getInstance();
     await Future.wait([
-      prefs.setString(_userDataKey, jsonEncode(userData)),
+      prefs.setString(_userDataKey, jsonEncode(safeUserData)),
       prefs.setString(_lastUpdateKey, _lastUserDataUpdate!.toIso8601String()),
       prefs.setString(_currentUserKey, _auth.currentUser?.uid ?? ''),
     ]);
