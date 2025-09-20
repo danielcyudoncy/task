@@ -30,7 +30,14 @@ class UserNavBar extends StatelessWidget {
     ];
 
     // Add Performance tab only for specific roles
-    final allowedRoles = ['Admin', 'Assignment Editor', 'Head of Department'];
+    final allowedRoles = [
+      'Admin',
+      'Assignment Editor',
+      'Head of Department',
+      'Head of Unit',
+      'News Director',
+      'Assistant News Director'
+    ];
     final shouldShowPerformanceTab = allowedRoles.contains(role);
     
     

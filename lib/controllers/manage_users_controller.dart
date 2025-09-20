@@ -21,12 +21,9 @@ class ManageUsersController extends GetxController {
   var selectedRole = 'All'.obs;
   var currentSearchQuery = ''.obs;
   var tasksList = <Map<String, dynamic>>[].obs;
-  DocumentSnapshot? lastDocument;
-  var hasMoreUsers = true.obs;
   var isHovered = <bool>[].obs;
-  final int usersLimit = 15;
-  var isOrdered = false.obs;
   var assignedTasks = <String, List<String>>{}.obs;
+  Stream<QuerySnapshot>? _usersStream;
 
   late ScrollController _scrollController;
   ScrollController get scrollController => _scrollController;
@@ -34,7 +31,7 @@ class ManageUsersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchUsers();
+    _initUsersStream();
     fetchTasks();
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
@@ -47,99 +44,52 @@ class ManageUsersController extends GetxController {
     super.onClose();
   }
 
-  Future<bool> fetchUsers(
-      {bool isNextPage = false, bool fetchAll = false}) async {
-    if (!hasMoreUsers.value || isLoading.value) return false;
-    bool ordered = false;
-
-    try {
+  void _initUsersStream() {
+    // Listen for real-time updates from Firestore
+    _usersStream = FirebaseFirestore.instance.collection('users').snapshots();
+    _usersStream!.listen((snapshot) async {
       isLoading.value = true;
-      Query query;
+      debugPrint('[ManageUsersController] Firestore user snapshot received: ${snapshot.docs.length} docs');
+      final newUsers = await Future.wait(snapshot.docs.map((doc) async {
+        final data = doc.data() as Map<String, dynamic>;
+        final photoUrl = data['photoUrl'] ??
+            data['photoURL'] ??
+            data['profilePic'] ??
+            data['profile_pic'] ??
+            data['avatarUrl'] ??
+            data['avatar_url'] ??
+            '';
 
-      try {
-        query =
-            FirebaseFirestore.instance.collection('users').orderBy('fullName');
-        await query.limit(1).get();
-        ordered = true;
-      } catch (_) {
-        try {
-          query = FirebaseFirestore.instance
-              .collection('users')
-              .orderBy('fullname');
-          await query.limit(1).get();
-          ordered = true;
-        } catch (_) {
-          query = FirebaseFirestore.instance.collection('users');
-        }
-      }
+        final assignedTasksSnapshot =
+            await doc.reference.collection('assignedTasks').get();
+        final taskIds =
+            assignedTasksSnapshot.docs.map((taskDoc) => taskDoc.id).toList();
+        assignedTasks[doc.id] = taskIds;
 
-      isOrdered.value = ordered;
+        debugPrint('[ManageUsersController] User loaded: id=${doc.id}, name=${data['fullName'] ?? data['fullname']}, role=${data['role']}');
 
-      if (!fetchAll) {
-        query = query.limit(usersLimit);
-        if (isNextPage && lastDocument != null) {
-          query = query.startAfterDocument(lastDocument!);
-        }
-      }
+        return {
+          'uid': doc.id,
+          'id': doc.id,
+          'fullName': data['fullName'] ?? data['fullname'] ?? 'Unknown User',
+          'fullname': data['fullName'] ?? data['fullname'] ?? 'Unknown User',
+          'role': data['role'] ?? 'No Role',
+          'email': data['email'] ?? 'No Email',
+          'photoUrl': photoUrl,
+          'hasTask': taskIds.isNotEmpty,
+        };
+      }));
 
-      QuerySnapshot snapshot = await query.get();
+      final filteredNewUsers = newUsers
+          .where((user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
+          .toList();
 
-      if (snapshot.docs.isNotEmpty) {
-        final newUsers = await Future.wait(snapshot.docs.map((doc) async {
-          final data = doc.data() as Map<String, dynamic>;
-          final photoUrl = data['photoUrl'] ??
-              data['photoURL'] ??
-              data['profilePic'] ??
-              data['profile_pic'] ??
-              data['avatarUrl'] ??
-              data['avatar_url'] ??
-              '';
-
-          final assignedTasksSnapshot =
-              await doc.reference.collection('assignedTasks').get();
-          final taskIds =
-              assignedTasksSnapshot.docs.map((taskDoc) => taskDoc.id).toList();
-          assignedTasks[doc.id] = taskIds;
-
-          return {
-            'uid': doc.id,
-            'id': doc.id,
-            'fullName': data['fullName'] ?? data['fullname'] ?? 'Unknown User',
-            'fullname': data['fullName'] ?? data['fullname'] ?? 'Unknown User',
-            'role': data['role'] ?? 'No Role',
-            'email': data['email'] ?? 'No Email',
-            'photoUrl': photoUrl,
-            'hasTask': taskIds.isNotEmpty,
-          };
-        }));
-
-        final filteredNewUsers = newUsers
-            .where((user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
-            .toList();
-
-        if (isNextPage && !fetchAll) {
-          usersList.addAll(filteredNewUsers);
-        } else {
-          usersList.value = filteredNewUsers;
-        }
-
-        filteredUsersList.assignAll(usersList);
-        isHovered.assignAll(List.filled(usersList.length, false));
-
-        if (!fetchAll) {
-          lastDocument = snapshot.docs.last;
-          if (snapshot.docs.length < usersLimit) hasMoreUsers.value = false;
-        }
-      } else {
-        hasMoreUsers.value = false;
-      }
-    } catch (e) {
-      _safeSnackbar('Error', 'Failed to fetch users: $e');
-    } finally {
+      debugPrint('[ManageUsersController] Filtered users count: ${filteredNewUsers.length}');
+      usersList.value = filteredNewUsers;
+      filteredUsersList.assignAll(usersList);
+      isHovered.assignAll(List.filled(usersList.length, false));
       isLoading.value = false;
-    }
-
-    return ordered;
+    });
   }
 
   Future<void> fetchTasks() async {
@@ -309,10 +259,7 @@ class ManageUsersController extends GetxController {
   }
 
   void _scrollListener() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      fetchUsers(isNextPage: true);
-    }
+    // Pagination is no longer needed; user list updates in real time via Firestore stream.
   }
 
   void filterByRole(String? role) {
