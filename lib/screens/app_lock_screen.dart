@@ -97,7 +97,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
               Icon(
                 Icons.lock_outline,
                 size: isTablet ? 80.sp : 60.sp,
-                color: colorScheme.primary,
+                color: colorScheme.onPrimary,
               ),
               SizedBox(height: isTablet ? 24 : 16),
               
