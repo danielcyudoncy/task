@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as dtp;
 import 'package:task/utils/constants/app_styles.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/utils/devices/app_devices.dart';
@@ -82,77 +83,88 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   }
 
   Future<void> _pickDate(BuildContext context) async {
-    DateTime initialDate = _selectedDate ?? DateTime.now();
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-              surface: Theme.of(context).colorScheme.surface,
-              onSurface: Theme.of(context).colorScheme.onSurface,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.white 
-                    : Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-          child: child!,
-        );
+  dtp.DatePicker.showDatePicker(
+      context,
+      showTitleActions: true,
+      minTime: DateTime.now(),
+      maxTime: DateTime(2100, 12, 31),
+      currentTime: _selectedDate ?? DateTime.now(),
+      theme: dtp.DatePickerTheme(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : Colors.white,
+        itemStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w600,
+        ),
+        doneStyle: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18.sp,
+          letterSpacing: 1.1,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          shadows: [Shadow(color: Colors.black26, blurRadius: 2)],
+        ),
+        cancelStyle: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontWeight: FontWeight.w500,
+          fontSize: 16.sp,
+        ),
+        containerHeight: 350,
+  // borderRadius not supported
+  itemHeight: 48.0,
+  titleHeight: 60.0,
+      ),
+      onConfirm: (picked) {
+        setState(() {
+          _selectedDate = picked;
+          _dateController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+        });
       },
     );
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        _dateController.text =
-            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-      });
-    }
   }
 
   Future<void> _pickTime(BuildContext context) async {
-    TimeOfDay initialTime = _selectedTime ?? TimeOfDay.now();
-    TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-              surface: Theme.of(context).colorScheme.surface,
-              onSurface: Theme.of(context).colorScheme.onSurface,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.white 
-                    : Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ),
-          child: child!,
-        );
+  dtp.DatePicker.showTimePicker(
+      context,
+      showTitleActions: true,
+      currentTime: _selectedTime != null
+          ? DateTime(0, 0, 0, _selectedTime!.hour, _selectedTime!.minute)
+          : DateTime.now(),
+      theme: dtp.DatePickerTheme(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : Colors.white,
+        itemStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w600,
+        ),
+        doneStyle: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18.sp,
+          letterSpacing: 1.1,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          shadows: [Shadow(color: Colors.black26, blurRadius: 2)],
+        ),
+        cancelStyle: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontWeight: FontWeight.w500,
+          fontSize: 16.sp,
+        ),
+        containerHeight: 350,
+  // borderRadius not supported
+  itemHeight: 48.0,
+  titleHeight: 60.0,
+      ),
+      onConfirm: (picked) {
+        setState(() {
+          _selectedTime = TimeOfDay(hour: picked.hour, minute: picked.minute);
+          final hour = (picked.hour % 12 == 0 ? 12 : picked.hour % 12).toString().padLeft(2, '0');
+          final minute = picked.minute.toString().padLeft(2, '0');
+          final period = picked.hour < 12 ? 'AM' : 'PM';
+          _timeController.text = "$hour:$minute $period";
+        });
       },
     );
-    if (picked != null) {
-      setState(() {
-        _selectedTime = picked;
-        final hour = picked.hourOfPeriod.toString().padLeft(2, '0');
-        final minute = picked.minute.toString().padLeft(2, '0');
-        final period = picked.period == DayPeriod.am ? 'AM' : 'PM';
-        _timeController.text = "$hour:$minute $period";
-      });
-    }
   }
 
   Future<void> _createTask(BuildContext context) async {
@@ -404,78 +416,83 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                             ),
                             const SizedBox(height: 16),
                             // Date and Time Picker Row
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Date Picker Field
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _dateController,
-                                    readOnly: true,
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontSize: 15.sp,
-                                      fontFamily: 'Raleway',
-                                    ),
-                                    decoration: InputDecoration(
-                                      labelText: "Due Date",
-                                      prefixIcon: const Icon(Icons.calendar_today_rounded),
-                                      labelStyle: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: colorScheme.onSurfaceVariant,
+                                Row(
+                                  children: [
+                                    // Date Picker Field
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _dateController,
+                                        readOnly: true,
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          fontSize: 15.sp,
+                                          fontFamily: 'Raleway',
+                                        ),
+                                        decoration: InputDecoration(
+                                          labelText: "Due Date",
+                                          prefixIcon: const Icon(Icons.calendar_today_rounded),
+                                          labelStyle: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                          filled: true,
+                                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                        ),
+                                        onTap: () => _pickDate(context),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return "Select date";
+                                          }
+                                          return null;
+                                        },
                                       ),
-                                      filled: true,
-                                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                                     ),
-                                    onTap: () => _pickDate(context),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return "Select date";
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Time Picker Field
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _timeController,
-                                    readOnly: true,
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontSize: 15.sp,
-                                      fontFamily: 'Raleway',
-                                    ),
-                                    decoration: InputDecoration(
-                                      labelText: "Time",
-                                      prefixIcon: const Icon(Icons.access_time_rounded),
-                                      labelStyle: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: colorScheme.onSurfaceVariant,
+                                    const SizedBox(width: 12),
+                                    // Time Picker Field
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _timeController,
+                                        readOnly: true,
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          fontSize: 15.sp,
+                                          fontFamily: 'Raleway',
+                                        ),
+                                        decoration: InputDecoration(
+                                          labelText: "Time",
+                                          prefixIcon: const Icon(Icons.access_time_rounded),
+                                          labelStyle: TextStyle(
+                                            fontSize: 14.sp,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ), 
+                                          filled: true,
+                                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                        ),
+                                        onTap: () => _pickTime(context),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return "Select time";
+                                          }
+                                          return null;
+                                        },
                                       ),
-                                      filled: true,
-                                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                                     ),
-                                    onTap: () => _pickTime(context),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return "Select time";
-                                      }
-                                      return null;
-                                    },
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),
