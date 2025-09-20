@@ -362,6 +362,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                             // Priority Dropdown
                             DropdownButtonFormField<String>(
                               initialValue: _selectedPriority,
+                              dropdownColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : null,
                               decoration: InputDecoration(
                                 labelText: "Priority",
                                 prefixIcon: const Icon(Icons.flag_rounded),
@@ -381,7 +382,12 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               items: _priorities
                                   .map((priority) => DropdownMenuItem(
                                         value: priority,
-                                        child: Text(priority),
+                                        child: Text(
+                                          priority,
+                                          style: TextStyle(
+                                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : null,
+                                          ),
+                                        ),
                                       ))
                                   .toList(),
                               onChanged: (value) {
@@ -480,24 +486,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     initialValue: _selectedCategory,
-                                    isExpanded: true,
-                                    decoration: InputDecoration(
-                                      labelText: "Category",
-                                      prefixIcon: const Icon(Icons.category_rounded),
-                                      filled: true,
-                                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                                      labelStyle: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
+                                    dropdownColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : null,
                                     items: _categories
                                         .map((category) => DropdownMenuItem<String>(
                                               value: category,
@@ -518,6 +507,22 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                               ),
                                             ))
                                         .toList(),
+                                    decoration: InputDecoration(
+                                      labelText: "Category",
+                                      
+                                      labelStyle: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      filled: true,
+                                      fillColor: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Color(0xFF232323)
+                                          : Color(0xFFF5F5F5),
+                                      
+                                      
+                                    ),
+                                    menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
                                     onChanged: (value) {
                                       setState(() {
                                         _selectedCategory = value;
