@@ -1,4 +1,4 @@
-// views/task_creation_screen.dart
+// screens/task_creation_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
@@ -599,7 +599,9 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                         padding: EdgeInsets.symmetric(
                                           vertical: 18.h,
                                         ),
-                                        backgroundColor: colorScheme.primary,
+                                        backgroundColor:
+                                            const Color(0xFF2F80ED),
+                                        foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(16),
                                         ),
