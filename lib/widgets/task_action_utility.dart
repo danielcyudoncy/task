@@ -12,18 +12,25 @@ class TaskActions {
   static void editTask(BuildContext context, dynamic task) {
     final authController = Get.find<AuthController>();
     final userRole = authController.userRole.value.toLowerCase();
-    final isAdmin = userRole == 'admin' || userRole == 'administrator' || userRole == 'superadmin';
+    final isAdmin = userRole == 'admin' ||
+        userRole == 'administrator' ||
+        userRole == 'superadmin';
     final currentUserId = authController.auth.currentUser?.uid;
     // Only allow edit if user is admin or creator
     if (!isAdmin && task.createdById != currentUserId) {
       SnackbarUtils.showError("You do not have permission to edit this task.");
       return;
     }
-    final TextEditingController titleController = TextEditingController(text: task.title);
-    final TextEditingController descriptionController = TextEditingController(text: task.description);
-    final TextEditingController categoryController = TextEditingController(text: task.category ?? '');
-    final TextEditingController tagsController = TextEditingController(text: task.tags.join(', '));
-    final TextEditingController priorityController = TextEditingController(text: task.priority ?? '');
+    final TextEditingController titleController =
+        TextEditingController(text: task.title);
+    final TextEditingController descriptionController =
+        TextEditingController(text: task.description);
+    final TextEditingController categoryController =
+        TextEditingController(text: task.category ?? '');
+    final TextEditingController tagsController =
+        TextEditingController(text: task.tags.join(', '));
+    final TextEditingController priorityController =
+        TextEditingController(text: task.priority ?? '');
     DateTime? dueDate = task.dueDate;
     String status = task.status ?? "Pending";
     String assignedReporter = task.assignedReporter ?? '';
@@ -59,7 +66,8 @@ class TaskActions {
               const SizedBox(height: 12),
               TextField(
                 controller: tagsController,
-                decoration: const InputDecoration(labelText: "Tags (comma separated)"),
+                decoration:
+                    const InputDecoration(labelText: "Tags (comma separated)"),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -77,11 +85,82 @@ class TaskActions {
                   IconButton(
                     icon: const Icon(Icons.calendar_today),
                     onPressed: () async {
+                      final theme = Theme.of(context);
+                      final isDarkMode = theme.brightness == Brightness.dark;
+
                       final picked = await showDatePicker(
                         context: ctx,
                         initialDate: dueDate ?? DateTime.now(),
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2100),
+                        builder: (context, child) {
+                          return Theme(
+                            data: theme.copyWith(
+                              colorScheme: isDarkMode
+                                  ? ColorScheme.dark(
+                                      primary: theme.colorScheme.primary,
+                                      onPrimary: theme.colorScheme.onPrimary,
+                                      surface: const Color(0xFF1E1E1E),
+                                      onSurface: Colors.white,
+                                      error: theme.colorScheme.error,
+                                      onError: theme.colorScheme.onError,
+                                      brightness: Brightness.dark,
+                                    )
+                                  : ColorScheme.light(
+                                      primary: theme.colorScheme.primary,
+                                      onPrimary: theme.colorScheme.onPrimary,
+                                      surface: Colors.white,
+                                      onSurface: Colors.black,
+                                      error: theme.colorScheme.error,
+                                      onError: theme.colorScheme.onError,
+                                      brightness: Brightness.light,
+                                    ),
+                              textTheme: theme.textTheme.copyWith(
+                                bodyMedium: TextStyle(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                                bodyLarge: TextStyle(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                                labelLarge: TextStyle(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                              dialogTheme: DialogThemeData(
+                                backgroundColor: isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
+                              ),
+                              appBarTheme: AppBarTheme(
+                                backgroundColor: isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
+                                foregroundColor:
+                                    isDarkMode ? Colors.white : Colors.black,
+                              ),
+                              buttonTheme: ButtonThemeData(
+                                textTheme: ButtonTextTheme.primary,
+                                colorScheme: isDarkMode
+                                    ? ColorScheme.dark(
+                                        primary: theme.colorScheme.primary,
+                                      )
+                                    : ColorScheme.light(
+                                        primary: theme.colorScheme.primary,
+                                      ),
+                              ),
+                              textButtonTheme: TextButtonThemeData(
+                                style: TextButton.styleFrom(
+                                  foregroundColor:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
                       );
                       if (picked != null) {
                         dueDate = picked;
@@ -108,25 +187,29 @@ class TaskActions {
               const SizedBox(height: 12),
               if (isAdmin) ...[
                 TextField(
-                  decoration: const InputDecoration(labelText: "Assigned Reporter"),
+                  decoration:
+                      const InputDecoration(labelText: "Assigned Reporter"),
                   controller: TextEditingController(text: assignedReporter),
                   onChanged: (val) => assignedReporter = val,
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  decoration: const InputDecoration(labelText: "Assigned Cameraman"),
+                  decoration:
+                      const InputDecoration(labelText: "Assigned Cameraman"),
                   controller: TextEditingController(text: assignedCameraman),
                   onChanged: (val) => assignedCameraman = val,
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  decoration: const InputDecoration(labelText: "Assigned Driver"),
+                  decoration:
+                      const InputDecoration(labelText: "Assigned Driver"),
                   controller: TextEditingController(text: assignedDriver),
                   onChanged: (val) => assignedDriver = val,
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  decoration: const InputDecoration(labelText: "Assigned Librarian"),
+                  decoration:
+                      const InputDecoration(labelText: "Assigned Librarian"),
                   controller: TextEditingController(text: assignedLibrarian),
                   onChanged: (val) => assignedLibrarian = val,
                 ),
@@ -177,28 +260,30 @@ class TaskActions {
       final authController = Get.find<AuthController>();
       final currentUserId = authController.auth.currentUser?.uid;
       final userRole = authController.userRole.value;
-      
+
       if (currentUserId == null) {
         SnackbarUtils.showError("User not authenticated");
         return;
       }
-      
-      debugPrint('CompleteTask - User Role: $userRole, CurrentUserId: $currentUserId');
+
+      debugPrint(
+          'CompleteTask - User Role: $userRole, CurrentUserId: $currentUserId');
       debugPrint('Task AssignedReporterId: ${task.assignedReporterId}');
-      
+
       // If user is a reporter, show completion dialog
       if (userRole == "Reporter" && task.assignedReporterId == currentUserId) {
         debugPrint('Showing ReportCompletionDialog for reporter');
         final result = await Get.dialog<ReportCompletionInfo>(
           ReportCompletionDialog(
             onComplete: (info) {
-              debugPrint('ReportCompletionDialog - onComplete called with info: ${info.toMap()}');
+              debugPrint(
+                  'ReportCompletionDialog - onComplete called with info: ${info.toMap()}');
               return Get.back(result: info);
             },
           ),
           barrierDismissible: false,
         );
-        
+
         if (result != null) {
           debugPrint('Submitting task completion with reporter info');
           await taskController.markTaskCompletedByUser(
@@ -206,13 +291,15 @@ class TaskActions {
             currentUserId,
             reportCompletionInfo: result,
           );
-          SnackbarUtils.showSuccess("Task marked as completed with report details");
+          SnackbarUtils.showSuccess(
+              "Task marked as completed with report details");
         } else {
           debugPrint('User cancelled completion dialog');
         }
       } else {
         debugPrint('Marking task as completed for non-reporter user');
-        await taskController.markTaskCompletedByUser(task.taskId, currentUserId);
+        await taskController.markTaskCompletedByUser(
+            task.taskId, currentUserId);
         SnackbarUtils.showSuccess("Task marked as completed");
       }
     } catch (e, stackTrace) {
