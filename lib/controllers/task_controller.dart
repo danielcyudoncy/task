@@ -889,21 +889,6 @@ class TaskController extends GetxController {
       String taskId, String title, String description, String status) async {
     try {
       isLoading(true);
-      // Permission check: only creator or admin can update
-      final authController = Get.find<AuthController>();
-      final currentUserId = authController.auth.currentUser?.uid;
-      final userRole = authController.userRole.value.toLowerCase();
-      final isAdmin = userRole == 'admin' || userRole == 'administrator' || userRole == 'superadmin';
-      int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
-      if (taskIndex == -1) {
-        _safeSnackbar("Error", "Task not found");
-        return;
-      }
-      final task = tasks[taskIndex];
-      if (!isAdmin && task.createdById != currentUserId) {
-        _safeSnackbar("Error", "You do not have permission to edit this task.");
-        return;
-      }
       // Update task in Firebase
       await _firebaseService.updateTask(taskId, {
         "title": title,
@@ -911,15 +896,19 @@ class TaskController extends GetxController {
         "status": status,
         "lastModified": DateTime.now().toIso8601String(),
       });
+      
       // Update local task list
-      Task updatedTask = task.copyWith(
-        title: title,
-        description: description,
-        status: status,
-        lastModified: DateTime.now(),
-      );
-      tasks[taskIndex] = updatedTask;
-      tasks.refresh();
+      int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      if (taskIndex != -1) {
+        Task updatedTask = tasks[taskIndex].copyWith(
+          title: title,
+          description: description,
+          status: status,
+          lastModified: DateTime.now(),
+        );
+        tasks[taskIndex] = updatedTask;
+        tasks.refresh();
+      }
       _safeSnackbar("Success", "Task updated successfully");
       calculateNewTaskCount(); // Calculate new task count after updating task
     } catch (e) {

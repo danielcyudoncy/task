@@ -1,7 +1,6 @@
 // widgets/task_card_widget.dart
 
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
@@ -40,12 +39,14 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
       if (widget.task.assignedReporterId == null) return 'Not Assigned';
 
       final userCacheService = Get.find<UserCacheService>();
-      final cachedName = userCacheService.getUserNameSync(widget.task.assignedReporterId!);
+      final cachedName =
+          userCacheService.getUserNameSync(widget.task.assignedReporterId!);
       if (cachedName != 'Unknown User') {
         return cachedName;
       }
 
-      if (widget.task.assignedReporter != null && widget.task.assignedReporter!.isNotEmpty) {
+      if (widget.task.assignedReporter != null &&
+          widget.task.assignedReporter!.isNotEmpty) {
         return widget.task.assignedReporter!;
       }
 
@@ -62,11 +63,13 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
 
       try {
         final userCacheService = Get.find<UserCacheService>();
-        final name = await userCacheService.getUserName(widget.task.assignedCameramanId!);
+        final name = await userCacheService
+            .getUserName(widget.task.assignedCameramanId!);
         return name;
       } catch (e) {
         debugPrint('Error getting cameraman name: $e');
-        if (widget.task.assignedCameraman != null && widget.task.assignedCameraman!.isNotEmpty) {
+        if (widget.task.assignedCameraman != null &&
+            widget.task.assignedCameraman!.isNotEmpty) {
           return widget.task.assignedCameraman!;
         }
         return 'Unknown';
@@ -83,11 +86,13 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
 
       try {
         final userCacheService = Get.find<UserCacheService>();
-        final name = await userCacheService.getUserName(widget.task.assignedDriverId!);
+        final name =
+            await userCacheService.getUserName(widget.task.assignedDriverId!);
         return name;
       } catch (e) {
         debugPrint('Error getting driver name: $e');
-        if (widget.task.assignedDriver != null && widget.task.assignedDriver!.isNotEmpty) {
+        if (widget.task.assignedDriver != null &&
+            widget.task.assignedDriver!.isNotEmpty) {
           return widget.task.assignedDriver!;
         }
         return 'Unknown';
@@ -100,14 +105,16 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
 
   String _getCreatorNameSync() {
     try {
-      if (widget.task.createdByName != null && widget.task.createdByName!.isNotEmpty) {
+      if (widget.task.createdByName != null &&
+          widget.task.createdByName!.isNotEmpty) {
         return widget.task.createdByName!;
       }
 
       if (widget.task.createdById.isEmpty) return 'Unknown';
 
       final userCacheService = Get.find<UserCacheService>();
-      final cachedName = userCacheService.getUserNameSync(widget.task.createdById);
+      final cachedName =
+          userCacheService.getUserNameSync(widget.task.createdById);
       if (cachedName != 'Unknown User') {
         return cachedName;
       }
@@ -144,7 +151,9 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     if (widget.task.assignedReporterId != null) {
       try {
         final userCacheService = Get.find<UserCacheService>();
-        userCacheService.getUserName(widget.task.assignedReporterId!).then((name) {
+        userCacheService
+            .getUserName(widget.task.assignedReporterId!)
+            .then((name) {
           if (mounted && name != 'Unknown User') {
             setState(() {});
           }
@@ -183,7 +192,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     );
   }
 
-  Future<bool?> _handleDismiss(BuildContext context, DismissDirection direction) async {
+  Future<bool?> _handleDismiss(
+      BuildContext context, DismissDirection direction) async {
     if (direction == DismissDirection.startToEnd) {
       return await _showCompleteConfirmation(context);
     } else {
@@ -234,7 +244,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Complete Task'),
-          content: const Text('Are you sure you want to mark this task as completed?'),
+          content: const Text(
+              'Are you sure you want to mark this task as completed?'),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -262,7 +273,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Delete Task'),
-          content: const Text('Are you sure you want to delete this task? This action cannot be undone.'),
+          content: const Text(
+              'Are you sure you want to delete this task? This action cannot be undone.'),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -305,9 +317,11 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                 const SizedBox(height: 8),
                 Text('Category: ${widget.task.category ?? 'N/A'}'),
                 const SizedBox(height: 8),
-                Text('Due Date: ${widget.task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(widget.task.dueDate!) : 'N/A'}'),
+                Text(
+                    'Due Date: ${widget.task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(widget.task.dueDate!) : 'N/A'}'),
                 const SizedBox(height: 8),
-                Text('Tags: ${widget.task.tags.isNotEmpty ? widget.task.tags.join(', ') : 'None'}'),
+                Text(
+                    'Tags: ${widget.task.tags.isNotEmpty ? widget.task.tags.join(', ') : 'None'}'),
                 const SizedBox(height: 8),
                 Text('Creator: ${_getCreatorNameSync()}'),
                 const SizedBox(height: 8),
@@ -328,12 +342,13 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                 ),
                 const SizedBox(height: 16),
                 if (widget.task.comments.isNotEmpty) ...[
-                  const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Comments:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   ...widget.task.comments.map((comment) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text('• $comment'),
-                  )),
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text('• $comment'),
+                      )),
                 ] else
                   const Text('No comments available.'),
               ],
@@ -343,11 +358,13 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               style: TextButton.styleFrom(
-                backgroundColor: Theme.of(dialogContext).colorScheme.primary.withAlpha(25),
+                backgroundColor:
+                    Theme.of(dialogContext).colorScheme.primary.withAlpha(25),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
               child: Text(
                 'Close',
@@ -371,24 +388,29 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     final currentUserId = authController.auth.currentUser?.uid;
     final isAdmin = authController.isAdmin.value;
     final isTaskOwner = widget.task.createdById == currentUserId;
-    final isAssignedUser =
-        widget.task.assignedReporterId == currentUserId ||
+    final isAssignedUser = widget.task.assignedReporterId == currentUserId ||
         widget.task.assignedCameramanId == currentUserId ||
         widget.task.assignedDriverId == currentUserId ||
-        (widget.task.assignedTo != null && currentUserId != null && widget.task.assignedTo!.contains(currentUserId));
-    
-    // Always allow task creators to manage their own tasks
+        (widget.task.assignedTo != null &&
+            currentUserId != null &&
+            widget.task.assignedTo!.contains(currentUserId));
+
+    // Simplified permission logic:
+    // Task creators can always manage their tasks
+    // Admins can manage all tasks
+    // Assigned users can manage their assigned tasks
     final canManageTask = isTaskOwner || isAdmin || isAssignedUser;
 
-    final Color cardColor = widget.isDark
-        ? const Color(0xFF1E1E1E)
-        : colorScheme.primary;
+    final Color cardColor =
+        widget.isDark ? const Color(0xFF1E1E1E) : colorScheme.primary;
     final Color textColor = widget.isDark ? Colors.white : Colors.white;
-    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
+    final Color subTextColor =
+        widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
 
     return Dismissible(
       key: ValueKey(widget.task.taskId),
-      background: !widget.isCompleted ? _buildCompleteBackground() : Container(),
+      background:
+          !widget.isCompleted ? _buildCompleteBackground() : Container(),
       secondaryBackground: _buildDeleteBackground(),
       confirmDismiss: (direction) => _handleDismiss(context, direction),
       onDismissed: _handleDismissed,
@@ -402,7 +424,9 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDark ? Colors.black.withAlpha(64) : Colors.black12,
+                  color: widget.isDark
+                      ? Colors.black.withAlpha(64)
+                      : Colors.black12,
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -413,7 +437,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.task.title, 
+                  widget.task.title,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: textColor,
@@ -547,7 +571,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                           ),
                           child: Text(
                             'Complete',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w600),
                           ),
                         ),
                       const SizedBox(width: 8),
@@ -566,7 +591,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       const SizedBox(width: 8),
                       IconButton(
                         icon: Icon(Icons.edit_note_rounded,
-                            color: widget.isDark ? Colors.white : Colors.white, size: 22),
+                            color: widget.isDark ? Colors.white : Colors.white,
+                            size: 22),
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
                           TaskActions.editTask(context, widget.task);
