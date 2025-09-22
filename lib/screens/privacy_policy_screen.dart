@@ -1,4 +1,4 @@
-// views/privacy_policy_screen.dart
+// screens/privacy_policy_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -317,7 +317,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                "Email: danieludoncy@gmail.com",
+                                "Email: danielcyudoncy@gmail.com",
                                 style: GoogleFonts.raleway(
                                   fontSize: 14.sp,
                                   color: isDark ? colorScheme.onSurface : colorScheme.onPrimary,

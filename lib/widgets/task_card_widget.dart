@@ -1,4 +1,5 @@
 // widgets/task_card_widget.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -30,53 +31,41 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
   @override
   void initState() {
     super.initState();
-    // Trigger background refresh of user names
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _refreshCreatorNameInBackground();
-        _refreshAssignedReporterNameInBackground();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
+    _refreshCreatorNameInBackground();
+    _refreshAssignedReporterNameInBackground();
   }
 
   String _getAssignedReporterNameSync() {
     try {
       if (widget.task.assignedReporterId == null) return 'Not Assigned';
-      
+
       final userCacheService = Get.find<UserCacheService>();
       final cachedName = userCacheService.getUserNameSync(widget.task.assignedReporterId!);
       if (cachedName != 'Unknown User') {
         return cachedName;
       }
-      
-      // Fallback to task field
+
       if (widget.task.assignedReporter != null && widget.task.assignedReporter!.isNotEmpty) {
         return widget.task.assignedReporter!;
       }
-      
+
       return 'Unknown';
     } catch (e) {
       debugPrint('Error in _getAssignedReporterNameSync: $e');
-      return 'Unknown';
+      return 'Error';
     }
   }
 
   Future<String> _getAssignedCameramanName() async {
     try {
       if (widget.task.assignedCameramanId == null) return 'Not Assigned';
-      
+
       try {
         final userCacheService = Get.find<UserCacheService>();
         final name = await userCacheService.getUserName(widget.task.assignedCameramanId!);
         return name;
       } catch (e) {
         debugPrint('Error getting cameraman name: $e');
-        // Fallback to task field if available
         if (widget.task.assignedCameraman != null && widget.task.assignedCameraman!.isNotEmpty) {
           return widget.task.assignedCameraman!;
         }
@@ -87,18 +76,17 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
       return 'Error';
     }
   }
-  
+
   Future<String> _getAssignedDriverName() async {
     try {
       if (widget.task.assignedDriverId == null) return 'Not Assigned';
-      
+
       try {
         final userCacheService = Get.find<UserCacheService>();
         final name = await userCacheService.getUserName(widget.task.assignedDriverId!);
         return name;
       } catch (e) {
         debugPrint('Error getting driver name: $e');
-        // Fallback to task field if available
         if (widget.task.assignedDriver != null && widget.task.assignedDriver!.isNotEmpty) {
           return widget.task.assignedDriver!;
         }
@@ -112,24 +100,22 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
 
   String _getCreatorNameSync() {
     try {
-      // First try to use the actual name if available
       if (widget.task.createdByName != null && widget.task.createdByName!.isNotEmpty) {
         return widget.task.createdByName!;
       }
-      
+
       if (widget.task.createdById.isEmpty) return 'Unknown';
-      
+
       final userCacheService = Get.find<UserCacheService>();
       final cachedName = userCacheService.getUserNameSync(widget.task.createdById);
       if (cachedName != 'Unknown User') {
         return cachedName;
       }
-      
-      // Fallback to task field (user ID)
+
       if (widget.task.createdBy.isNotEmpty) {
         return widget.task.createdBy;
       }
-      
+
       return 'Unknown';
     } catch (e) {
       debugPrint('Error in _getCreatorNameSync: $e');
@@ -301,12 +287,12 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
   void _showTaskDetails(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: Theme.of(dialogContext).colorScheme.surface,
           title: Text(widget.task.title),
           content: SingleChildScrollView(
             child: Column(
@@ -355,9 +341,9 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               style: TextButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                backgroundColor: Theme.of(dialogContext).colorScheme.primary.withAlpha(25),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -366,7 +352,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
               child: Text(
                 'Close',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(dialogContext).colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -381,21 +367,21 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final currentUserId = Get.find<AuthController>().auth.currentUser?.uid;
+    final authController = Get.find<AuthController>();
+    final currentUserId = authController.auth.currentUser?.uid;
+    final isAdmin = authController.isAdmin.value;
     final isTaskOwner = widget.task.createdById == currentUserId;
     final isAssignedUser =
-        widget.task.assignedReporterId == currentUserId ||
-        widget.task.assignedCameramanId == currentUserId ||
-        widget.task.assignedDriverId == currentUserId ||
-        widget.task.assignedLibrarianId == currentUserId ||
-        widget.task.assignedTo == currentUserId;
+    widget.task.assignedReporterId == currentUserId ||
+    widget.task.assignedCameramanId == currentUserId ||
+    widget.task.assignedDriverId == currentUserId ||
+    (widget.task.assignedTo != null && currentUserId != null && widget.task.assignedTo!.contains(currentUserId));
 
-    // Determine card colors based on dark mode
     final Color cardColor = widget.isDark
         ? const Color(0xFF1E1E1E)
         : colorScheme.primary;
     final Color textColor = widget.isDark ? Colors.white : Colors.white;
-    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
+    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.white.withOpacity(0.9);
 
     return Dismissible(
       key: ValueKey(widget.task.taskId),
@@ -413,7 +399,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: widget.isDark ? Colors.black.withAlpha((0.25 * 255).round()) : Colors.black12,
+                  color: widget.isDark ? Colors.black.withAlpha(64) : Colors.black12,
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -441,7 +427,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Creator info
                 Row(
                   children: [
                     Icon(
@@ -461,7 +446,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                // Assigned Reporter
                 Text(
                   'Assigned Reporter: ${_getAssignedReporterNameSync()}',
                   style: TextStyle(
@@ -471,7 +455,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                // Assigned Cameraman
                 FutureBuilder<String>(
                   future: _getAssignedCameramanName(),
                   builder: (context, snapshot) {
@@ -486,7 +469,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   },
                 ),
                 const SizedBox(height: 4),
-                // Assigned Driver
                 FutureBuilder<String>(
                   future: _getAssignedDriverName(),
                   builder: (context, snapshot) {
@@ -501,7 +483,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   },
                 ),
                 const SizedBox(height: 4),
-                // Status
                 Text(
                   'Status: ${widget.task.status}',
                   style: TextStyle(
@@ -511,7 +492,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                // Tags
                 if (widget.task.tags.isNotEmpty)
                   Text(
                     'Tags: ${widget.task.tags.join(', ')}',
@@ -522,7 +502,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                     ),
                   ),
                 const SizedBox(height: 4),
-                // Priority
                 if (widget.task.priority != null)
                   Text(
                     'Priority: ${widget.task.priority}',
@@ -533,7 +512,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                     ),
                   ),
                 const SizedBox(height: 4),
-                // Due Date
                 if (widget.task.dueDate != null)
                   Text(
                     'Due: ${DateFormat('MMM dd, yyyy – HH:mm').format(widget.task.dueDate!)}',
@@ -543,29 +521,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                const SizedBox(height: 8),
-                // Comments count
-                Row(
-                  children: [
-                    Icon(
-                      Icons.comment_outlined,
-                      size: 14,
-                      color: subTextColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Comments: ${widget.task.comments.length}',
-                      style: TextStyle(
-                        color: subTextColor,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                // Action buttons
-                if (isTaskOwner || isAssignedUser)
+                const SizedBox(height: 16),
+                if (isAdmin || isTaskOwner || isAssignedUser)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -596,19 +553,17 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                             color: Colors.red[400], size: 22.sp),
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
-                          if (isTaskOwner) {
-                            _showDeleteConfirmation(context).then((confirmed) {
-                              if (confirmed == true) {
-                                TaskActions.deleteTask(widget.task);
-                              }
-                            });
-                          }
+                          _showDeleteConfirmation(context).then((confirmed) {
+                            if (confirmed == true) {
+                              TaskActions.deleteTask(widget.task);
+                            }
+                          });
                         },
                       ),
                       const SizedBox(width: 8),
                       IconButton(
                         icon: Icon(Icons.edit_note_rounded,
-                            color: widget.isDark ? textColor : Colors.white, size: 22.sp),
+                            color: widget.isDark ? Colors.white : Colors.white, size: 22.sp),
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
                           TaskActions.editTask(context, widget.task);
