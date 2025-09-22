@@ -10,9 +10,15 @@ import 'package:intl/intl.dart';
 
 class TaskActions {
   static void editTask(BuildContext context, dynamic task) {
-  final authController = Get.find<AuthController>();
-  final userRole = authController.userRole.value.toLowerCase();
-  final isAdmin = userRole == 'admin' || userRole == 'administrator' || userRole == 'superadmin';
+    final authController = Get.find<AuthController>();
+    final userRole = authController.userRole.value.toLowerCase();
+    final isAdmin = userRole == 'admin' || userRole == 'administrator' || userRole == 'superadmin';
+    final currentUserId = authController.auth.currentUser?.uid;
+    // Only allow edit if user is admin or creator
+    if (!isAdmin && task.createdById != currentUserId) {
+      SnackbarUtils.showError("You do not have permission to edit this task.");
+      return;
+    }
     final TextEditingController titleController = TextEditingController(text: task.title);
     final TextEditingController descriptionController = TextEditingController(text: task.description);
     final TextEditingController categoryController = TextEditingController(text: task.category ?? '');

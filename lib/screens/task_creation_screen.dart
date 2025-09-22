@@ -219,13 +219,15 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           _selectedTime = null;
           _selectedCategory = null;
         });
-        // Navigate back to appropriate screen based on user role
-        final userRole = taskController.authController.userRole.value;
-        if (["Admin", "Assignment Editor", "Head of Department"].contains(userRole)) {
-          Get.offAllNamed('/admin-dashboard');
-        } else {
-          Get.offAllNamed('/home');
-        }
+          // Correct navigation logic after task creation
+          final userRole = taskController.authController.userRole.value;
+          if (["Admin", "Assignment Editor", "Head of Department", "Head of Unit", "News Director", "Assistant News Director"].contains(userRole)) {
+            Get.offAllNamed('/admin-dashboard');
+          } else if (userRole == "Librarian") {
+            Get.offAllNamed('/librarian-dashboard');
+          } else {
+            Get.offAllNamed('/home');
+          }
       } catch (e) {
 // Dismiss loading dialog if error
         if (!context.mounted) return;
@@ -503,7 +505,6 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     initialValue: _selectedCategory,
-                                    dropdownColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : null,
                                     items: _categories
                                         .map((category) => DropdownMenuItem<String>(
                                               value: category,

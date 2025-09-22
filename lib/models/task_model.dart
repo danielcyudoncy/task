@@ -43,29 +43,31 @@ class Task {
   String? priority;
   DateTime? lastModified;
   String? syncStatus;
-  
+
   // Approval system fields
   String? approvalStatus; // 'pending', 'approved', 'rejected'
   String? approvedBy; // Admin user ID who approved/rejected
   DateTime? approvalTimestamp;
   String? approvalReason; // Optional reason for approval/rejection
-  
+
   // Media & Document Attachments
   List<String> attachmentUrls = []; // URLs of uploaded files
   List<String> attachmentNames = []; // Original file names
-  List<String> attachmentTypes = []; // File types (image, document, video, etc.)
+  List<String> attachmentTypes =
+      []; // File types (image, document, video, etc.)
   List<int> attachmentSizes = []; // File sizes in bytes
   DateTime? lastAttachmentAdded;
-  
+
   // Archive related fields
   bool get isArchived => status.toLowerCase() == 'archived';
-  
+
   // Approval related fields
   bool get isApproved => approvalStatus?.toLowerCase() == 'approved';
   bool get isRejected => approvalStatus?.toLowerCase() == 'rejected';
-  bool get isPendingApproval => approvalStatus?.toLowerCase() == 'pending' || approvalStatus == null;
+  bool get isPendingApproval =>
+      approvalStatus?.toLowerCase() == 'pending' || approvalStatus == null;
   bool get canBeAssigned => isApproved; // Only approved tasks can be assigned
-  
+
   // Helper method to get all assigned user IDs
   List<String> get assignedUserIds {
     List<String> userIds = [];
@@ -83,27 +85,32 @@ class Task {
     }
     return userIds;
   }
-  
+
   // Helper method to check if all assigned users have completed the task
   bool get isCompletedByAllAssignedUsers {
     final assignedUsers = assignedUserIds;
     if (assignedUsers.isEmpty) return false;
-    
+
     // Check if all assigned users have marked the task as complete
     return assignedUsers.every((userId) => completedByUserIds.contains(userId));
   }
+
   DateTime? archivedAt;
   String? archivedBy;
   String? archiveReason;
-  String? archiveLocation; // Physical or digital location where the task is archived
-  
+  String?
+      archiveLocation; // Physical or digital location where the task is archived
+
   // Individual user completion tracking
-  List<String> completedByUserIds = []; // List of user IDs who have marked this task as complete
-  Map<String, DateTime> userCompletionTimestamps = {}; // Track when each user completed the task
-  
+  List<String> completedByUserIds =
+      []; // List of user IDs who have marked this task as complete
+  Map<String, DateTime> userCompletionTimestamps =
+      {}; // Track when each user completed the task
+
   // Report completion tracking
-  Map<String, ReportCompletionInfo> reportCompletionInfo = {}; // Reporter ID -> Completion Info
-  
+  Map<String, ReportCompletionInfo> reportCompletionInfo =
+      {}; // Reporter ID -> Completion Info
+
   // Task review system
   Map<String, String> taskReviews = {}; // Reviewer ID -> Review comment
   Map<String, double> taskRatings = {}; // Reviewer ID -> Rating (1-5)
@@ -190,20 +197,22 @@ class Task {
     String taskId = map['taskId'] ?? map['id']?.toString() ?? '';
     debugPrint(
         'fromMap creator data: createdBy=${map['createdBy']}, createdByName=${map['createdByName']}');
-        
+
     // Parse reportCompletionInfo
     Map<String, ReportCompletionInfo> reportCompletionInfo = {};
     if (map['reportCompletionInfo'] != null) {
       try {
         if (map['reportCompletionInfo'] is String) {
-          final decoded = jsonDecode(map['reportCompletionInfo']) as Map<String, dynamic>;
+          final decoded =
+              jsonDecode(map['reportCompletionInfo']) as Map<String, dynamic>;
           decoded.forEach((key, value) {
             if (value is Map<String, dynamic>) {
               reportCompletionInfo[key] = ReportCompletionInfo.fromMap(value);
             }
           });
         } else if (map['reportCompletionInfo'] is Map) {
-          (map['reportCompletionInfo'] as Map<String, dynamic>).forEach((key, value) {
+          (map['reportCompletionInfo'] as Map<String, dynamic>)
+              .forEach((key, value) {
             if (value is Map<String, dynamic>) {
               reportCompletionInfo[key] = ReportCompletionInfo.fromMap(value);
             }
@@ -215,70 +224,77 @@ class Task {
     }
 
     final task = Task.full(
-      taskId,
-      map['title'] ?? '',
-      map['description'] ?? '',
-      map['createdBy'] ?? 'Unknown',
-      map['assignedReporterName'] ?? map['assignedReporter'],
-      map['assignedCameramanName'] ?? map['assignedCameraman'],
-      map['assignedDriverName'] ?? map['assignedDriver'],
-      map['assignedLibrarian'],
-      map['status'] ?? '',
-      _parseStringList(map['comments']),
-      parseDate(map['timestamp']) ?? DateTime.now(),
-      map['assignedTo'],
-      parseDate(map['assignmentTimestamp']),
-      map['createdById'] ?? map['createdBy'] ?? '', // Use createdById field for user ID
-      map['assignedReporterId'],
-      map['assignedCameramanId'],
-      map['assignedDriverId'],
-      map['assignedLibrarianId'],
-      map['creatorAvatar'],
-      map['category'],
-      _parseStringList(map['tags']),
-      parseDate(map['dueDate']),
-      map['priority'],
-      lastModified: parseDate(map['lastModified']),
-      syncStatus: map['syncStatus'],
-      approvalStatus: map['approvalStatus'] ?? 'pending',
-      approvedBy: map['approvedBy'],
-      approvalTimestamp: parseDate(map['approvalTimestamp']),
-      approvalReason: map['approvalReason'],
-      archivedAt: parseDate(map['archivedAt']),
-      archivedBy: map['archivedBy'],
-      archiveReason: map['archiveReason'],
-      archiveLocation: map['archiveLocation'],
-      attachmentUrls: _parseStringList(map['attachmentUrls']),
-      attachmentNames: _parseStringList(map['attachmentNames']),
-      attachmentTypes: _parseStringList(map['attachmentTypes']),
-      attachmentSizes: _parseIntList(map['attachmentSizes']),
-      lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
-      completedByUserIds: _parseStringList(map['completedByUserIds']),
-      createdByName: map['createdByName']);
+        taskId,
+        map['title'] ?? '',
+        map['description'] ?? '',
+        map['createdBy'] ?? 'Unknown',
+        map['assignedReporterName'] ?? map['assignedReporter'],
+        map['assignedCameramanName'] ?? map['assignedCameraman'],
+        map['assignedDriverName'] ?? map['assignedDriver'],
+        map['assignedLibrarian'],
+        map['status'] ?? '',
+        _parseStringList(map['comments']),
+        parseDate(map['timestamp']) ?? DateTime.now(),
+        map['assignedTo'],
+        parseDate(map['assignmentTimestamp']),
+        map['createdById'] ??
+            map['createdBy'] ??
+            '', // Use createdById field for user ID
+        map['assignedReporterId'],
+        map['assignedCameramanId'],
+        map['assignedDriverId'],
+        map['assignedLibrarianId'],
+        map['creatorAvatar'],
+        map['category'],
+        _parseStringList(map['tags']),
+        parseDate(map['dueDate']),
+        map['priority'],
+        lastModified: parseDate(map['lastModified']),
+        syncStatus: map['syncStatus'],
+        approvalStatus: map['approvalStatus'] ?? 'pending',
+        approvedBy: map['approvedBy'],
+        approvalTimestamp: parseDate(map['approvalTimestamp']),
+        approvalReason: map['approvalReason'],
+        archivedAt: parseDate(map['archivedAt']),
+        archivedBy: map['archivedBy'],
+        archiveReason: map['archiveReason'],
+        archiveLocation: map['archiveLocation'],
+        attachmentUrls: _parseStringList(map['attachmentUrls']),
+        attachmentNames: _parseStringList(map['attachmentNames']),
+        attachmentTypes: _parseStringList(map['attachmentTypes']),
+        attachmentSizes: _parseIntList(map['attachmentSizes']),
+        lastAttachmentAdded: parseDate(map['lastAttachmentAdded']),
+        completedByUserIds: _parseStringList(map['completedByUserIds']),
+        createdByName: map['createdByName']);
 
     // Parse and set other maps
     task.reportCompletionInfo = reportCompletionInfo;
-    task.userCompletionTimestamps = _parseTimestampMap(map['userCompletionTimestamps']);
-    
+    task.userCompletionTimestamps =
+        _parseTimestampMap(map['userCompletionTimestamps']);
+
     // Parse review data
     if (map['taskReviews'] != null) {
-      task.taskReviews = Map<String, String>.from(jsonDecode(map['taskReviews']));
+      task.taskReviews =
+          Map<String, String>.from(jsonDecode(map['taskReviews']));
     }
     if (map['taskRatings'] != null) {
-      task.taskRatings = (jsonDecode(map['taskRatings']) as Map<String, dynamic>)
-          .map((k, v) => MapEntry(k, double.parse(v.toString())));
+      task.taskRatings =
+          (jsonDecode(map['taskRatings']) as Map<String, dynamic>)
+              .map((k, v) => MapEntry(k, double.parse(v.toString())));
     }
     if (map['reviewTimestamps'] != null) {
-      task.reviewTimestamps = (jsonDecode(map['reviewTimestamps']) as Map<String, dynamic>)
+      task.reviewTimestamps = (jsonDecode(map['reviewTimestamps'])
+              as Map<String, dynamic>)
           .map((k, v) => MapEntry(k, DateTime.fromMillisecondsSinceEpoch(v)));
     }
     if (map['reviewerRoles'] != null) {
-      task.reviewerRoles = Map<String, String>.from(jsonDecode(map['reviewerRoles']));
+      task.reviewerRoles =
+          Map<String, String>.from(jsonDecode(map['reviewerRoles']));
     }
 
     return task;
   }
-  
+
   // Create a copy of the task with updated fields
   Task copyWith({
     String? taskId,
@@ -366,13 +382,16 @@ class Task {
       attachmentTypes: attachmentTypes ?? List.from(this.attachmentTypes),
       attachmentSizes: attachmentSizes ?? List.from(this.attachmentSizes),
       lastAttachmentAdded: lastAttachmentAdded ?? this.lastAttachmentAdded,
-      completedByUserIds: completedByUserIds ?? List.from(this.completedByUserIds),
-      userCompletionTimestamps: userCompletionTimestamps ?? Map.from(this.userCompletionTimestamps),
+      completedByUserIds:
+          completedByUserIds ?? List.from(this.completedByUserIds),
+      userCompletionTimestamps:
+          userCompletionTimestamps ?? Map.from(this.userCompletionTimestamps),
       taskReviews: taskReviews ?? Map.from(this.taskReviews),
       taskRatings: taskRatings ?? Map.from(this.taskRatings),
       reviewTimestamps: reviewTimestamps ?? Map.from(this.reviewTimestamps),
       reviewerRoles: reviewerRoles ?? Map.from(this.reviewerRoles),
-      reportCompletionInfo: reportCompletionInfo ?? Map.from(this.reportCompletionInfo),
+      reportCompletionInfo:
+          reportCompletionInfo ?? Map.from(this.reportCompletionInfo),
     );
   }
 
@@ -394,8 +413,9 @@ class Task {
       'assignmentTimestamp': assignmentTimestamp?.millisecondsSinceEpoch,
       'createdById': createdById,
       'assignedReporterId': assignedReporterId,
-      'reportCompletionInfo': jsonEncode(Map.fromEntries(
-        reportCompletionInfo.entries.map((e) => MapEntry(e.key, e.value.toMap())))),
+      'reportCompletionInfo': jsonEncode(Map.fromEntries(reportCompletionInfo
+          .entries
+          .map((e) => MapEntry(e.key, e.value.toMap())))),
       'assignedCameramanId': assignedCameramanId,
       'assignedDriverId': assignedDriverId,
       'assignedLibrarianId': assignedLibrarianId,
@@ -421,10 +441,13 @@ class Task {
       'lastAttachmentAdded': lastAttachmentAdded?.millisecondsSinceEpoch,
       'completedByUserIds': jsonEncode(completedByUserIds),
       'taskReviews': jsonEncode(taskReviews),
-      'taskRatings': jsonEncode(taskRatings.map((k, v) => MapEntry(k, v.toString()))),
-      'reviewTimestamps': jsonEncode(reviewTimestamps.map((k, v) => MapEntry(k, v.millisecondsSinceEpoch))),
+      'taskRatings':
+          jsonEncode(taskRatings.map((k, v) => MapEntry(k, v.toString()))),
+      'reviewTimestamps': jsonEncode(reviewTimestamps
+          .map((k, v) => MapEntry(k, v.millisecondsSinceEpoch))),
       'reviewerRoles': jsonEncode(reviewerRoles),
-      'userCompletionTimestamps': jsonEncode(userCompletionTimestamps.map((key, value) => MapEntry(key, value.millisecondsSinceEpoch))),
+      'userCompletionTimestamps': jsonEncode(userCompletionTimestamps
+          .map((key, value) => MapEntry(key, value.millisecondsSinceEpoch))),
     }..removeWhere((key, value) => value == null);
   }
 
@@ -460,24 +483,81 @@ class Task {
     if (value is String) {
       try {
         final Map<String, dynamic> decoded = jsonDecode(value);
-        return decoded.map((key, value) => MapEntry(key, DateTime.fromMillisecondsSinceEpoch(value as int)));
+        return decoded.map((key, value) =>
+            MapEntry(key, DateTime.fromMillisecondsSinceEpoch(value as int)));
       } catch (e) {
         return {};
       }
     }
     if (value is Map) {
-      return Map<String, DateTime>.from(
-        value.map((key, value) => MapEntry(key.toString(), parseDate(value) ?? DateTime.now()))
-      );
+      return Map<String, DateTime>.from(value.map((key, value) =>
+          MapEntry(key.toString(), parseDate(value) ?? DateTime.now())));
     }
     return {};
+  }
+
+  // Permission methods for task creators
+  /// Checks if the given user is the creator of this task
+  bool isCreator(String userId) {
+    return userId == createdById;
+  }
+
+  /// Checks if the given user can edit this task
+  bool canEdit(String userId) {
+    return isCreator(userId);
+  }
+
+  /// Checks if the given user can delete this task
+  bool canDelete(String userId) {
+    return isCreator(userId);
+  }
+
+  /// Checks if the given user can mark this task as complete
+  bool canMarkComplete(String userId) {
+    // Creator can always mark their own task as complete
+    if (isCreator(userId)) return true;
+
+    // Assigned users can also mark the task as complete
+    return assignedUserIds.contains(userId);
+  }
+
+  /// Marks the task as complete for the given user
+  void markComplete(String userId) {
+    if (!canMarkComplete(userId)) {
+      throw Exception(
+          'User does not have permission to mark this task as complete');
+    }
+
+    // Add user to completed list if not already there
+    if (!completedByUserIds.contains(userId)) {
+      completedByUserIds.add(userId);
+      userCompletionTimestamps[userId] = DateTime.now();
+
+      // Update the last modified timestamp
+      lastModified = DateTime.now();
+    }
+  }
+
+  /// Unmarks the task as complete for the given user
+  void unmarkComplete(String userId) {
+    if (!canMarkComplete(userId)) {
+      throw Exception(
+          'User does not have permission to unmark this task as complete');
+    }
+
+    // Remove user from completed list
+    completedByUserIds.remove(userId);
+    userCompletionTimestamps.remove(userId);
+
+    // Update the last modified timestamp
+    lastModified = DateTime.now();
   }
 
   // Review system methods
   bool canUserReview(String userId, String userRole) {
     // Only allow one review per user
     if (taskReviews.containsKey(userId)) return false;
-    
+
     // Check if user has appropriate role
     switch (userRole.toLowerCase()) {
       case 'admin':
@@ -491,15 +571,16 @@ class Task {
   }
 
   // Add or update a review
-  void addReview(String reviewerId, String reviewerRole, String comment, double rating) {
+  void addReview(
+      String reviewerId, String reviewerRole, String comment, double rating) {
     if (!canUserReview(reviewerId, reviewerRole)) {
       throw Exception('User does not have permission to review this task');
     }
-    
+
     if (rating < 1 || rating > 5) {
       throw Exception('Rating must be between 1 and 5');
     }
-    
+
     taskReviews[reviewerId] = comment;
     taskRatings[reviewerId] = rating;
     reviewTimestamps[reviewerId] = DateTime.now();
@@ -524,11 +605,11 @@ class Task {
   // Calculate performance impact
   double calculatePerformanceImpact() {
     if (taskRatings.isEmpty) return 0;
-    
+
     // Weigh impact by reviewer roles
     double weightedImpact = 0;
     int totalWeight = 0;
-    
+
     for (var reviewerId in taskRatings.keys) {
       int weight = switch (reviewerRoles[reviewerId]?.toLowerCase()) {
         'admin' => 4,
@@ -537,11 +618,11 @@ class Task {
         'assignment_editor' => 2,
         _ => 1,
       };
-      
+
       weightedImpact += (taskRatings[reviewerId]! - 3) / 2 * weight;
       totalWeight += weight;
     }
-    
+
     return totalWeight > 0 ? weightedImpact / totalWeight : 0;
   }
 

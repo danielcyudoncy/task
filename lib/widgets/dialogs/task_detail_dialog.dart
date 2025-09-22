@@ -1,3 +1,4 @@
+// widgets/dialogs/task_detail_dialog.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -48,14 +49,14 @@ class TaskDetailDialog {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF9E9E9E),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                  spreadRadius: 0,
-                ),
-              ],
+              // boxShadow: [
+              //   BoxShadow(
+              //     color: const Color(0xFF9E9E9E),
+              //     blurRadius: 8,
+              //     offset: const Offset(0, 5),
+              //     spreadRadius: 0,
+              //   ),
+              // ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -110,7 +111,7 @@ class TaskDetailDialog {
             onPressed: () => Navigator.of(context).pop(),
             icon: Icon(
               Icons.close,
-              color: Theme.of(context).colorScheme.primary,
+              color: Theme.of(context).colorScheme.onPrimary,
               size: 24,
             ),
             style: IconButton.styleFrom(
@@ -306,8 +307,8 @@ class TaskDetailDialog {
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 40.w,
+                height: 40.h,
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(24),
