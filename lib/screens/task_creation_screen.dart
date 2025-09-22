@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
-import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as dtp;
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart'
+    as dtp;
 import 'package:task/utils/devices/app_devices.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../models/task_model.dart';
@@ -25,6 +26,8 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   final _timeController = TextEditingController();
   final _tagsController = TextEditingController();
   final _commentsController = TextEditingController();
+  final _customCategoryController =
+      TextEditingController(); // Added for custom category
   String? _selectedCategory;
   final List<String> _categories = [
     'Political',
@@ -55,11 +58,13 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     'Culture',
     'Politics',
     'HumanInterest',
+    'Others',
   ];
 
   String? _selectedPriority;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  bool _isOthersSelected = false; // Track if "Others" is selected
 
   final List<String> _priorities = ['Low', 'Medium', 'High', 'Normal'];
 
@@ -69,6 +74,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     if (widget.task != null) {
       _titleController.text = widget.task!.title;
       _descriptionController.text = widget.task!.description;
+
+      // Check if task has a custom category
+      if (widget.task!.category != null &&
+          !_categories.contains(widget.task!.category)) {
+        _selectedCategory = 'Others';
+        _customCategoryController.text = widget.task!.category!;
+        _isOthersSelected = true;
+      } else {
+        _selectedCategory = widget.task!.category;
+      }
+
       // ... populate other fields from the task object
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -84,20 +100,25 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     _timeController.dispose();
     _tagsController.dispose();
     _commentsController.dispose();
+    _customCategoryController.dispose(); // Dispose custom category controller
     super.dispose();
   }
 
   Future<void> _pickDate(BuildContext context) async {
-  dtp.DatePicker.showDatePicker(
+    dtp.DatePicker.showDatePicker(
       context,
       showTitleActions: true,
       minTime: DateTime.now(),
       maxTime: DateTime(2100, 12, 31),
       currentTime: _selectedDate ?? DateTime.now(),
       theme: dtp.DatePickerTheme(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF232323)
+            : Colors.white,
         itemStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
           fontSize: 20.sp,
           fontWeight: FontWeight.w600,
         ),
@@ -115,30 +136,34 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           fontSize: 16.sp,
         ),
         containerHeight: 350,
-  // borderRadius not supported
-  itemHeight: 48.0,
-  titleHeight: 60.0,
+        itemHeight: 48.0,
+        titleHeight: 60.0,
       ),
       onConfirm: (picked) {
         setState(() {
           _selectedDate = picked;
-          _dateController.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+          _dateController.text =
+              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
         });
       },
     );
   }
 
   Future<void> _pickTime(BuildContext context) async {
-  dtp.DatePicker.showTimePicker(
+    dtp.DatePicker.showTimePicker(
       context,
       showTitleActions: true,
       currentTime: _selectedTime != null
           ? DateTime(0, 0, 0, _selectedTime!.hour, _selectedTime!.minute)
           : DateTime.now(),
       theme: dtp.DatePickerTheme(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : Colors.white,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF232323)
+            : Colors.white,
         itemStyle: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
           fontSize: 20.sp,
           fontWeight: FontWeight.w600,
         ),
@@ -156,14 +181,15 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
           fontSize: 16.sp,
         ),
         containerHeight: 350,
-  // borderRadius not supported
-  itemHeight: 48.0,
-  titleHeight: 60.0,
+        itemHeight: 48.0,
+        titleHeight: 60.0,
       ),
       onConfirm: (picked) {
         setState(() {
           _selectedTime = TimeOfDay(hour: picked.hour, minute: picked.minute);
-          final hour = (picked.hour % 12 == 0 ? 12 : picked.hour % 12).toString().padLeft(2, '0');
+          final hour = (picked.hour % 12 == 0 ? 12 : picked.hour % 12)
+              .toString()
+              .padLeft(2, '0');
           final minute = picked.minute.toString().padLeft(2, '0');
           final period = picked.hour < 12 ? 'AM' : 'PM';
           _timeController.text = "$hour:$minute $period";
@@ -182,8 +208,18 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(child: CircularProgressIndicator()),
+          builder: (context) =>
+              const Center(child: CircularProgressIndicator()),
         );
+
+        // Determine the category to use
+        String? finalCategory = _selectedCategory;
+        if (_selectedCategory == 'Others') {
+          finalCategory = _customCategoryController.text.trim().isEmpty
+              ? null
+              : _customCategoryController.text.trim();
+        }
+
         await taskController.createTask(
           _titleController.text.trim(),
           _descriptionController.text.trim(),
@@ -197,10 +233,15 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                   _selectedTime!.minute,
                 )
               : null,
-          category: _selectedCategory,
-          tags: _tagsController.text.trim().split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
-          comments: _commentsController.text.trim().isNotEmpty 
-              ? _commentsController.text.trim() 
+          category: finalCategory,
+          tags: _tagsController.text
+              .trim()
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList(),
+          comments: _commentsController.text.trim().isNotEmpty
+              ? _commentsController.text.trim()
               : null,
         );
         debugPrint('createTask completed successfully');
@@ -208,7 +249,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
         while (taskController.isLoading.value) {
           await Future.delayed(const Duration(milliseconds: 100));
         }
-// Dismiss loading dialog
+        // Dismiss loading dialog
         if (!context.mounted) return;
         Navigator.of(context, rootNavigator: true).pop();
         // Clear form on success
@@ -218,23 +259,32 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
         _timeController.clear();
         _tagsController.clear();
         _commentsController.clear();
+        _customCategoryController.clear();
         setState(() {
           _selectedPriority = null;
           _selectedDate = null;
           _selectedTime = null;
           _selectedCategory = null;
+          _isOthersSelected = false;
         });
-          // Correct navigation logic after task creation
-          final userRole = taskController.authController.userRole.value;
-          if (["Admin", "Assignment Editor", "Head of Department", "Head of Unit", "News Director", "Assistant News Director"].contains(userRole)) {
-            Get.offAllNamed('/admin-dashboard');
-          } else if (userRole == "Librarian") {
-            Get.offAllNamed('/librarian-dashboard');
-          } else {
-            Get.offAllNamed('/home');
-          }
+        // Correct navigation logic after task creation
+        final userRole = taskController.authController.userRole.value;
+        if ([
+          "Admin",
+          "Assignment Editor",
+          "Head of Department",
+          "Head of Unit",
+          "News Director",
+          "Assistant News Director"
+        ].contains(userRole)) {
+          Get.offAllNamed('/admin-dashboard');
+        } else if (userRole == "Librarian") {
+          Get.offAllNamed('/librarian-dashboard');
+        } else {
+          Get.offAllNamed('/home');
+        }
       } catch (e) {
-// Dismiss loading dialog if error
+        // Dismiss loading dialog if error
         if (!context.mounted) return;
         Navigator.of(context, rootNavigator: true).pop();
         debugPrint('Error creating task: $e');
@@ -280,9 +330,13 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28),
                     ),
-                    color: Theme.of(context).colorScheme.surface, // Use theme surface color
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surface, // Use theme surface color
                     child: Container(
-                      width: isTablet ? 500.w : MediaQuery.of(context).size.width * 0.95,
+                      width: isTablet
+                          ? 500.w
+                          : MediaQuery.of(context).size.width * 0.95,
                       padding: EdgeInsets.symmetric(
                         vertical: 32.h,
                         horizontal: isTablet ? 36.w : 20.w,
@@ -319,13 +373,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                fillColor: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Color(0xFF232323)
+                                    : Color(0xFFF5F5F5),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
                                 ),
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 12),
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
@@ -346,19 +404,24 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               ),
                               decoration: InputDecoration(
                                 labelText: "Task Description",
-                                prefixIcon: const Icon(Icons.description_rounded),
+                                prefixIcon:
+                                    const Icon(Icons.description_rounded),
                                 labelStyle: TextStyle(
                                   fontSize: 14.sp,
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                fillColor: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Color(0xFF232323)
+                                    : Color(0xFFF5F5F5),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
                                 ),
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 12),
                               ),
                               maxLines: 3,
                               validator: (value) {
@@ -382,7 +445,10 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                             // Priority Dropdown
                             DropdownButtonFormField<String>(
                               initialValue: _selectedPriority,
-                              dropdownColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : null,
+                              dropdownColor: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color(0xFF232323)
+                                  : null,
                               decoration: InputDecoration(
                                 labelText: "Priority",
                                 prefixIcon: const Icon(Icons.flag_rounded),
@@ -391,13 +457,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                fillColor: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Color(0xFF232323)
+                                    : Color(0xFFF5F5F5),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
                                 ),
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 12),
                               ),
                               items: _priorities
                                   .map((priority) => DropdownMenuItem(
@@ -405,7 +475,11 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                         child: Text(
                                           priority,
                                           style: TextStyle(
-                                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : null,
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? Colors.white
+                                                    : null,
                                           ),
                                         ),
                                       ))
@@ -441,19 +515,26 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                         ),
                                         decoration: InputDecoration(
                                           labelText: "Due Date",
-                                          prefixIcon: const Icon(Icons.calendar_today_rounded),
+                                          prefixIcon: const Icon(
+                                              Icons.calendar_today_rounded),
                                           labelStyle: TextStyle(
                                             fontSize: 14.sp,
                                             color: colorScheme.onSurfaceVariant,
                                           ),
                                           filled: true,
-                                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                          fillColor:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Color(0xFF232323)
+                                                  : Color(0xFFF5F5F5),
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                             borderSide: BorderSide.none,
                                           ),
                                           isDense: true,
-                                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 12),
                                         ),
                                         onTap: () => _pickDate(context),
                                         validator: (value) {
@@ -477,19 +558,26 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                         ),
                                         decoration: InputDecoration(
                                           labelText: "Time",
-                                          prefixIcon: const Icon(Icons.access_time_rounded),
+                                          prefixIcon: const Icon(
+                                              Icons.access_time_rounded),
                                           labelStyle: TextStyle(
                                             fontSize: 14.sp,
                                             color: colorScheme.onSurfaceVariant,
-                                          ), 
+                                          ),
                                           filled: true,
-                                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                          fillColor:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Color(0xFF232323)
+                                                  : Color(0xFFF5F5F5),
                                           border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                             borderSide: BorderSide.none,
                                           ),
                                           isDense: true,
-                                          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 12),
                                         ),
                                         onTap: () => _pickTime(context),
                                         validator: (value) {
@@ -511,21 +599,33 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     initialValue: _selectedCategory,
-                                     dropdownColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : null,
+                                    dropdownColor:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? const Color(0xFF232323)
+                                            : null,
                                     items: _categories
-                                        .map((category) => DropdownMenuItem<String>(
+                                        .map((category) =>
+                                            DropdownMenuItem<String>(
                                               value: category,
                                               child: Container(
                                                 width: double.infinity,
                                                 constraints: BoxConstraints(
-                                                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                                  maxWidth:
+                                                      MediaQuery.of(context)
+                                                              .size
+                                                              .width *
+                                                          0.7,
                                                 ),
                                                 child: Text(
                                                   category,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   maxLines: isTablet ? 2 : 1,
                                                   style: TextStyle(
-                                                    fontSize: isTablet ? 14.sp : 13.sp,
+                                                    fontSize: isTablet
+                                                        ? 14.sp
+                                                        : 13.sp,
                                                     fontFamily: 'Raleway',
                                                   ),
                                                 ),
@@ -534,7 +634,6 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                         .toList(),
                                     decoration: InputDecoration(
                                       labelText: "Category",
-                                      
                                       labelStyle: TextStyle(
                                         fontSize: 14.sp,
                                         color: colorScheme.onSurfaceVariant,
@@ -544,20 +643,80 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                               Brightness.dark
                                           ? Color(0xFF232323)
                                           : Color(0xFFF5F5F5),
-                                      
-                                      
                                     ),
-                                    menuMaxHeight: MediaQuery.of(context).size.height * 0.4,
+                                    menuMaxHeight:
+                                        MediaQuery.of(context).size.height *
+                                            0.4,
                                     onChanged: (value) {
                                       setState(() {
                                         _selectedCategory = value;
+                                        _isOthersSelected = (value == 'Others');
+                                        // Clear custom category when switching away from "Others"
+                                        if (!_isOthersSelected) {
+                                          _customCategoryController.clear();
+                                        }
                                       });
                                     },
-                                    validator: (value) => value == null ? 'Please select a category' : null,
+                                    validator: (value) {
+                                      if (value == null) {
+                                        return 'Please select a category';
+                                      }
+                                      if (value == 'Others' &&
+                                          _customCategoryController.text
+                                              .trim()
+                                              .isEmpty) {
+                                        return 'Please specify the custom category';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                 ),
                               ],
                             ),
+                            // Custom Category Field (shown when "Others" is selected)
+                            if (_isOthersSelected)
+                              Column(
+                                children: [
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _customCategoryController,
+                                    style: TextStyle(
+                                      color: colorScheme.onSurface,
+                                      fontSize: 15.sp,
+                                      fontFamily: 'Raleway',
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: "Specify Category",
+                                      prefixIcon:
+                                          const Icon(Icons.edit_note_rounded),
+                                      labelStyle: TextStyle(
+                                        fontSize: 14.sp,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      filled: true,
+                                      fillColor: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Color(0xFF232323)
+                                          : Color(0xFFF5F5F5),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          vertical: 12, horizontal: 12),
+                                    ),
+                                    validator: (value) {
+                                      if (_isOthersSelected &&
+                                          (value == null ||
+                                              value.trim().isEmpty)) {
+                                        return 'Please specify the custom category';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                              ),
                             const SizedBox(height: 16),
                             // Tags/Keywords Field
                             TextFormField(
@@ -575,13 +734,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                fillColor: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Color(0xFF232323)
+                                    : Color(0xFFF5F5F5),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
                                 ),
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 12),
                               ),
                               maxLines: 2,
                               validator: (value) {
@@ -606,13 +769,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF232323) : Color(0xFFF5F5F5),
+                                fillColor: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Color(0xFF232323)
+                                    : Color(0xFFF5F5F5),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide.none,
                                 ),
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 12),
                               ),
                               maxLines: 3,
                               minLines: 2,
@@ -623,7 +790,8 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: Obx(() => taskController.isLoading.value
-                                  ? const Center(child: CircularProgressIndicator())
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
                                   : ElevatedButton(
                                       style: ElevatedButton.styleFrom(
                                         padding: EdgeInsets.symmetric(
@@ -633,7 +801,8 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                             const Color(0xFF2F80ED),
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
                                         ),
                                         elevation: 2,
                                       ),
