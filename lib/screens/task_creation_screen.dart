@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_controller.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as dtp;
-import 'package:task/utils/constants/app_styles.dart';
-import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/utils/devices/app_devices.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../models/task_model.dart';
 
 class TaskCreationScreen extends StatefulWidget {
-  const TaskCreationScreen({super.key});
+  final Task? task;
+  const TaskCreationScreen({super.key, this.task});
 
   @override
   State<TaskCreationScreen> createState() => _TaskCreationScreenState();
@@ -66,6 +66,11 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.task != null) {
+      _titleController.text = widget.task!.title;
+      _descriptionController.text = widget.task!.description;
+      // ... populate other fields from the task object
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       taskController.isLoading.value = false;
     });
@@ -247,6 +252,17 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          widget.task != null ? 'Edit Task' : 'Create Task',
+          style: TextStyle(color: colorScheme.onPrimary),
+        ),
+        backgroundColor: colorScheme.primary,
+      ),
       resizeToAvoidBottomInset: true,
       backgroundColor: Theme.of(context).colorScheme.primary,
       body: LayoutBuilder(
@@ -258,17 +274,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 32.0, bottom: 24.0),
-                    child: Text(
-                      "Create Task",
-                      style: AppStyles.sectionTitleStyle.copyWith(
-                        fontSize: isTablet ? AppSizes.titleLarge.sp : AppSizes.titleNormal.sp,
-                        color: colorScheme.onPrimary,
-                        fontFamily: 'raleway',
-                      ),
-                    ),
-                  ),
+                  SizedBox(height: 32.h),
                   Card(
                     elevation: 10,
                     shape: RoundedRectangleBorder(
@@ -505,6 +511,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     initialValue: _selectedCategory,
+                                     dropdownColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF232323) : null,
                                     items: _categories
                                         .map((category) => DropdownMenuItem<String>(
                                               value: category,

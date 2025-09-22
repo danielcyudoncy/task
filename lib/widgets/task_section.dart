@@ -65,25 +65,42 @@ class TasksSection extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () => Get.toNamed('/create-task'),
-            child: Container(
-              width: 34.w,
-              height: 34.h,
-              decoration: BoxDecoration(
-                color: colorScheme.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 34.w,
+                  height: 34.h,
+                  decoration: BoxDecoration(
+                    color:
+                          isDark ? colorScheme.onPrimary : colorScheme.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.primary.withValues(alpha: .5),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Icon(
-                Icons.add,
-                color: colorScheme.onPrimary,
-                size: 22.sp,
-              ),
+                  child: Icon(
+                    Icons.add,
+                    color:
+                          isDark ? colorScheme.primary : colorScheme.onPrimary,
+                    size: 22.sp,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'Add Task',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color:
+                          isDark ? colorScheme.onPrimary : colorScheme.primary
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -100,10 +117,10 @@ class TasksSection extends StatelessWidget {
       isScrollable: false,
       indicator: BoxDecoration(
         color: isDark ? colorScheme.onPrimary : colorScheme.primary,
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(18),
       ),
       indicatorSize: TabBarIndicatorSize.tab,
-      indicatorPadding: const EdgeInsets.symmetric(horizontal: 38, vertical: 8),
+      indicatorPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
       labelColor: isDark ? colorScheme.surface : AppColors.white,
       unselectedLabelColor: isDark ? colorScheme.onPrimary.withValues(alpha: 0.7) : AppColors.black,
       labelStyle: TextStyle(
