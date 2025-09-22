@@ -1,7 +1,7 @@
 // widgets/task_card_widget.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
@@ -372,16 +372,19 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     final isAdmin = authController.isAdmin.value;
     final isTaskOwner = widget.task.createdById == currentUserId;
     final isAssignedUser =
-    widget.task.assignedReporterId == currentUserId ||
-    widget.task.assignedCameramanId == currentUserId ||
-    widget.task.assignedDriverId == currentUserId ||
-    (widget.task.assignedTo != null && currentUserId != null && widget.task.assignedTo!.contains(currentUserId));
+        widget.task.assignedReporterId == currentUserId ||
+        widget.task.assignedCameramanId == currentUserId ||
+        widget.task.assignedDriverId == currentUserId ||
+        (widget.task.assignedTo != null && currentUserId != null && widget.task.assignedTo!.contains(currentUserId));
+    
+    // Always allow task creators to manage their own tasks
+    final canManageTask = isTaskOwner || isAdmin || isAssignedUser;
 
     final Color cardColor = widget.isDark
         ? const Color(0xFF1E1E1E)
         : colorScheme.primary;
     final Color textColor = widget.isDark ? Colors.white : Colors.white;
-    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.white.withOpacity(0.9);
+    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
 
     return Dismissible(
       key: ValueKey(widget.task.taskId),
@@ -422,7 +425,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   widget.task.description,
                   style: TextStyle(
                     color: subTextColor,
-                    fontSize: 13.sp,
+                    fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -439,7 +442,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       'Created by: ${_getCreatorNameSync()}',
                       style: TextStyle(
                         color: subTextColor,
-                        fontSize: 12.sp,
+                        fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -450,7 +453,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   'Assigned Reporter: ${_getAssignedReporterNameSync()}',
                   style: TextStyle(
                     color: subTextColor,
-                    fontSize: 13.sp,
+                    fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -462,7 +465,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       'Assigned Cameraman: ${snapshot.data ?? 'Loading...'}',
                       style: TextStyle(
                         color: subTextColor,
-                        fontSize: 13.sp,
+                        fontSize: 13,
                         fontWeight: FontWeight.w400,
                       ),
                     );
@@ -476,7 +479,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       'Assigned Driver: ${snapshot.data ?? 'Loading...'}',
                       style: TextStyle(
                         color: subTextColor,
-                        fontSize: 13.sp,
+                        fontSize: 13,
                         fontWeight: FontWeight.w400,
                       ),
                     );
@@ -487,7 +490,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   'Status: ${widget.task.status}',
                   style: TextStyle(
                     color: subTextColor,
-                    fontSize: 13.sp,
+                    fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -497,7 +500,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                     'Tags: ${widget.task.tags.join(', ')}',
                     style: TextStyle(
                       color: subTextColor,
-                      fontSize: 13.sp,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -507,7 +510,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                     'Priority: ${widget.task.priority}',
                     style: TextStyle(
                       color: subTextColor,
-                      fontSize: 13.sp,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -517,12 +520,12 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                     'Due: ${DateFormat('MMM dd, yyyy – HH:mm').format(widget.task.dueDate!)}',
                     style: TextStyle(
                       color: subTextColor,
-                      fontSize: 13.sp,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
                 const SizedBox(height: 16),
-                if (isAdmin || isTaskOwner || isAssignedUser)
+                if (canManageTask)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -536,7 +539,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                             backgroundColor: Colors.green[600],
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(
-                                horizontal: 16.w, vertical: 10.h),
+                                horizontal: 16, vertical: 10),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -544,13 +547,13 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                           ),
                           child: Text(
                             'Complete',
-                            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                           ),
                         ),
                       const SizedBox(width: 8),
                       IconButton(
                         icon: Icon(Icons.delete_outline_rounded,
-                            color: Colors.red[400], size: 22.sp),
+                            color: Colors.red[400], size: 22),
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
                           _showDeleteConfirmation(context).then((confirmed) {
@@ -563,7 +566,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       const SizedBox(width: 8),
                       IconButton(
                         icon: Icon(Icons.edit_note_rounded,
-                            color: widget.isDark ? Colors.white : Colors.white, size: 22.sp),
+                            color: widget.isDark ? Colors.white : Colors.white, size: 22),
                         onPressed: () {
                           Get.find<SettingsController>().triggerFeedback();
                           TaskActions.editTask(context, widget.task);
