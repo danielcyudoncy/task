@@ -59,12 +59,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         
         // Wait for bootstrap to complete
         while (!isBootstrapComplete) {
-          
-          await Future.delayed(const Duration(milliseconds: 100));
+          await Future.delayed(const Duration(milliseconds: 50)); // Faster polling
         }
-        
-        // Add a small delay to ensure all controllers are ready
-        await Future.delayed(const Duration(milliseconds: 1000));
+
+        // Reduced delay - only wait 200ms instead of 1000ms for better responsiveness
+        await Future.delayed(const Duration(milliseconds: 200));
         
         // Mark app as ready for snackbars before navigation
         if (Get.isRegistered<AuthController>()) {
@@ -86,8 +85,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           
           final authController = Get.find<AuthController>();
           
-          // Wait a bit for Firebase auth to initialize
-          await Future.delayed(const Duration(milliseconds: 500));
+          // Reduced wait time for Firebase auth to initialize
+          await Future.delayed(const Duration(milliseconds: 200));
           
           if (authController.isLoggedIn) {
             // User is logged in, navigate based on role

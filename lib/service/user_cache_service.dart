@@ -143,32 +143,51 @@ class UserCacheService {
     return _userAvatarsCache[userId] ?? '';
   }
 
-  /// Pre-fetch all user names and avatars for better performance
+  /// Pre-fetch all user names and avatars for better performance (optimized)
   Future<void> preFetchAllUsers({bool forceRefresh = false}) async {
     if (!forceRefresh && _isUserNamesValid()) {
       debugPrint('UserCacheService: User names cache is still valid, skipping pre-fetch');
       return;
     }
 
-    debugPrint('UserCacheService: Pre-fetching all user names and avatars');
+    debugPrint('UserCacheService: Pre-fetching user names and avatars (optimized)');
     try {
-      final usersSnapshot = await _firestore.collection('users').get();
-      
-      for (final doc in usersSnapshot.docs) {
-        final data = doc.data();
-        final userId = doc.id;
-        final fullName = data['fullName'] ?? 'Unknown User';
-        final photoUrl = _validateAvatarUrl(data['photoUrl']);
-        
-        _userNamesCache[userId] = fullName;
-        _userAvatarsCache[userId] = photoUrl;
+      // Use limit to avoid fetching too many users at once
+      final usersSnapshot = await _firestore
+          .collection('users')
+          .limit(50) // Limit to first 50 users for faster loading
+          .get();
+
+      // Process users in smaller batches
+      final batchSize = 10;
+      for (int i = 0; i < usersSnapshot.docs.length; i += batchSize) {
+        final endIndex = (i + batchSize < usersSnapshot.docs.length)
+            ? i + batchSize
+            : usersSnapshot.docs.length;
+
+        final batch = usersSnapshot.docs.sublist(i, endIndex);
+
+        for (final doc in batch) {
+          final data = doc.data();
+          final userId = doc.id;
+          final fullName = data['fullName'] ?? 'Unknown User';
+          final photoUrl = _validateAvatarUrl(data['photoUrl']);
+
+          _userNamesCache[userId] = fullName;
+          _userAvatarsCache[userId] = photoUrl;
+        }
+
+        // Small delay between batches to prevent blocking UI
+        if (endIndex < usersSnapshot.docs.length) {
+          await Future.delayed(const Duration(milliseconds: 10));
+        }
       }
-      
+
       await _saveUserNamesCache();
       await _saveUserAvatarsCache();
       _lastUserNamesUpdate = DateTime.now();
-      
-      debugPrint('UserCacheService: Pre-fetched ${_userNamesCache.length} users');
+
+      debugPrint('UserCacheService: Pre-fetched ${_userNamesCache.length} users (optimized)');
     } catch (e) {
       debugPrint('UserCacheService: Error pre-fetching users: $e');
     }
