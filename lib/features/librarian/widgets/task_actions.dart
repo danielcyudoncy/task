@@ -2,16 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/service/archive_service.dart';
 import 'package:task/service/export_service.dart';
 import 'package:task/theme/app_durations.dart';
 
-
 class TaskActions extends StatefulWidget {
   final Task task;
   final VoidCallback? onActionComplete;
-  
+
   const TaskActions({
     super.key,
     required this.task,
@@ -22,7 +21,8 @@ class TaskActions extends StatefulWidget {
   State<TaskActions> createState() => _TaskActionsState();
 }
 
-class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStateMixin {
+class _TaskActionsState extends State<TaskActions>
+    with SingleTickerProviderStateMixin {
   bool _isArchiving = false;
   bool _isExporting = false;
   late AnimationController _animationController;
@@ -50,7 +50,7 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return AnimatedBuilder(
       animation: _scaleAnimation,
       builder: (context, child) {
@@ -67,14 +67,14 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
             _buildArchiveButton()
           else
             _buildUnarchiveButton(),
-          
+
           // Export button
           _buildExportButton(theme, colorScheme),
         ],
       ),
     );
   }
-  
+
   Widget _buildArchiveButton() {
     return IconButton(
       icon: _isArchiving
@@ -86,7 +86,8 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
             )
-          : Icon(Icons.archive_outlined, color: Theme.of(context).colorScheme.onPrimary),
+          : Icon(Icons.archive_outlined,
+              color: Theme.of(context).colorScheme.onPrimary),
       tooltip: 'Archive Task',
       onPressed: _isArchiving
           ? null
@@ -97,7 +98,7 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
               ),
     );
   }
-  
+
   Widget _buildUnarchiveButton() {
     return IconButton(
       icon: _isArchiving
@@ -109,14 +110,15 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
             )
-          : Icon(Icons.unarchive_outlined, color: Theme.of(context).colorScheme.onPrimary),
+          : Icon(Icons.unarchive_outlined,
+              color: Theme.of(context).colorScheme.onPrimary),
       tooltip: 'Unarchive Task',
       onPressed: _isArchiving
           ? null
           : () => _unarchiveTask(widget.task, Get.find<ArchiveService>()),
     );
   }
-  
+
   Widget _buildExportButton(ThemeData theme, ColorScheme colorScheme) {
     return PopupMenuButton<String>(
       icon: _isExporting
@@ -128,7 +130,8 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
                 color: colorScheme.onPrimary,
               ),
             )
-          : Icon(Icons.ios_share, color: Theme.of(context).colorScheme.onPrimary),
+          : Icon(Icons.ios_share,
+              color: Theme.of(context).colorScheme.onPrimary),
       onCanceled: () {
         if (_isExporting) {
           // Prevent menu from closing when exporting
@@ -162,21 +165,21 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
       onSelected: (value) => _handleExport(value),
     );
   }
-  
+
   Future<void> _handleExport(String format) async {
     if (_isExporting) return;
-    
+
     try {
       setState(() => _isExporting = true);
-      
+
       // Haptic feedback
       HapticFeedback.lightImpact();
-      
+
       // Animate the tap
       await _animationController.forward();
-      
+
       final exportService = Get.find<ExportService>();
-      
+
       if (format == 'pdf') {
         final file = await exportService.exportToPdf([widget.task]);
         await exportService.shareFile(
@@ -192,7 +195,7 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
           text: 'Here is the exported task in CSV format.',
         );
       }
-      
+
       // Show success feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -223,13 +226,13 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
   }
 
   Future<void> _showArchiveDialog(
-    BuildContext context, 
-    Task task, 
+    BuildContext context,
+    Task task,
     ArchiveService archiveService,
   ) async {
     final reasonController = TextEditingController();
     final locationController = TextEditingController();
-    
+
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -274,23 +277,25 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
                 if (reasonController.text.trim().isEmpty) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please provide a reason for archiving')),
+                      const SnackBar(
+                          content:
+                              Text('Please provide a reason for archiving')),
                     );
                   }
                   return;
                 }
-                
+
                 Navigator.of(context).pop();
-                
+
                 try {
                   await archiveService.archiveTask(
                     taskId: task.taskId,
                     reason: reasonController.text.trim(),
-                    location: locationController.text.trim().isNotEmpty 
-                        ? locationController.text.trim() 
+                    location: locationController.text.trim().isNotEmpty
+                        ? locationController.text.trim()
                         : null,
                   );
-                  
+
                   if (widget.onActionComplete != null) {
                     widget.onActionComplete!();
                   }
@@ -309,18 +314,18 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
       },
     );
   }
-  
+
   Future<void> _unarchiveTask(Task task, ArchiveService archiveService) async {
     if (_isArchiving) return;
-    
+
     try {
       setState(() => _isArchiving = true);
-      
+
       // Haptic feedback
       HapticFeedback.lightImpact();
-      
+
       await archiveService.unarchiveTask(task.taskId);
-      
+
       // Show success feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -331,7 +336,7 @@ class _TaskActionsState extends State<TaskActions> with SingleTickerProviderStat
           ),
         );
       }
-      
+
       if (widget.onActionComplete != null) {
         widget.onActionComplete!();
       }

@@ -60,9 +60,7 @@ class ManageUsersDialog extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                       side: BorderSide(
-                        color: isDark
-                            ? Colors.grey[800]!
-                            : Colors.white,
+                        color: isDark ? Colors.grey[800]! : Colors.white,
                         width: 1,
                       ),
                     ),
@@ -82,10 +80,13 @@ class ManageUsersDialog extends StatelessWidget {
                         ),
                         child: CircleAvatar(
                           radius: 24,
-                          backgroundColor:
-                              isDark ? primaryBlue.withAlpha(128) : primaryBlue.withAlpha(204),
+                          backgroundColor: isDark
+                              ? primaryBlue.withAlpha(128)
+                              : primaryBlue.withAlpha(204),
                           child: Text(
-                            userName.isNotEmpty ? userName[0].toUpperCase() : "?",
+                            userName.isNotEmpty
+                                ? userName[0].toUpperCase()
+                                : "?",
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -119,7 +120,8 @@ class ManageUsersDialog extends StatelessWidget {
                                 color: theme.colorScheme.secondary,
                               ),
                               onPressed: () {
-                                Get.find<SettingsController>().triggerFeedback();
+                                Get.find<SettingsController>()
+                                    .triggerFeedback();
                                 onAssignTap(user);
                               },
                             ),

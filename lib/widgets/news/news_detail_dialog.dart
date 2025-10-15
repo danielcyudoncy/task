@@ -72,7 +72,10 @@ class NewsDetailDialog extends StatelessWidget {
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -116,20 +119,23 @@ class NewsDetailDialog extends StatelessWidget {
                     ),
                     SizedBox(height: 24.h),
                     // External link warning and button
-                    if (article['url'] != null && article['url'].toString().isNotEmpty) ...[
+                    if (article['url'] != null &&
+                        article['url'].toString().isNotEmpty) ...[
                       Container(
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
                           color: Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                          border: Border.all(
+                              color: Colors.orange.withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.info_outline, size: 16.sp, color: Colors.orange[700]),
+                                Icon(Icons.info_outline,
+                                    size: 16.sp, color: Colors.orange[700]),
                                 SizedBox(width: 8.w),
                                 Text(
                                   'External Link Notice',
@@ -166,10 +172,12 @@ class NewsDetailDialog extends StatelessWidget {
                           icon: Icon(Icons.open_in_new, size: 16.sp),
                           label: Text(
                             'Read Full Article',
-                            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                                fontSize: 14.sp, fontWeight: FontWeight.w600),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(vertical: 12.h),
                             shape: RoundedRectangleBorder(

@@ -16,14 +16,14 @@ class UserCacheService {
   static const String _userAvatarsKey = 'cached_user_avatars';
   static const String _lastUpdateKey = 'cache_last_update';
   static const String _currentUserKey = 'cached_current_user';
-  
+
   // Cache expiry times
   static const Duration _userDataExpiry = Duration(hours: 6);
   static const Duration _userNamesExpiry = Duration(hours: 24);
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   // In-memory cache for faster access
   Map<String, dynamic>? _currentUserData;
   Map<String, String> _userNamesCache = {};
@@ -39,7 +39,8 @@ class UserCacheService {
   }
 
   /// Get current user data from cache or fetch from Firebase
-  Future<Map<String, dynamic>?> getCurrentUserData({bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>?> getCurrentUserData(
+      {bool forceRefresh = false}) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
       debugPrint('UserCacheService: No authenticated user');
@@ -55,10 +56,8 @@ class UserCacheService {
     // Fetch fresh data from Firebase
     debugPrint('UserCacheService: Fetching fresh user data from Firebase');
     try {
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
+      final userDoc =
+          await _firestore.collection('users').doc(currentUser.uid).get();
 
       if (userDoc.exists) {
         final userData = userDoc.data()!;
@@ -83,7 +82,9 @@ class UserCacheService {
   /// Get user name by ID from cache or fetch from Firebase
   Future<String> getUserName(String userId, {bool forceRefresh = false}) async {
     // Check cache first
-    if (!forceRefresh && _userNamesCache.containsKey(userId) && _isUserNamesValid()) {
+    if (!forceRefresh &&
+        _userNamesCache.containsKey(userId) &&
+        _isUserNamesValid()) {
       return _userNamesCache[userId]!;
     }
 
@@ -120,9 +121,12 @@ class UserCacheService {
   }
 
   /// Get user avatar by ID from cache or fetch from Firebase
-  Future<String> getUserAvatar(String userId, {bool forceRefresh = false}) async {
+  Future<String> getUserAvatar(String userId,
+      {bool forceRefresh = false}) async {
     // Check cache first
-    if (!forceRefresh && _userAvatarsCache.containsKey(userId) && _isUserNamesValid()) {
+    if (!forceRefresh &&
+        _userAvatarsCache.containsKey(userId) &&
+        _isUserNamesValid()) {
       return _userAvatarsCache[userId]!;
     }
 
@@ -136,7 +140,8 @@ class UserCacheService {
         return photoUrl;
       }
     } catch (e) {
-      debugPrint('UserCacheService: Error fetching user avatar for $userId: $e');
+      debugPrint(
+          'UserCacheService: Error fetching user avatar for $userId: $e');
     }
 
     // Return cached value as fallback or default
@@ -146,29 +151,31 @@ class UserCacheService {
   /// Pre-fetch all user names and avatars for better performance
   Future<void> preFetchAllUsers({bool forceRefresh = false}) async {
     if (!forceRefresh && _isUserNamesValid()) {
-      debugPrint('UserCacheService: User names cache is still valid, skipping pre-fetch');
+      debugPrint(
+          'UserCacheService: User names cache is still valid, skipping pre-fetch');
       return;
     }
 
     debugPrint('UserCacheService: Pre-fetching all user names and avatars');
     try {
       final usersSnapshot = await _firestore.collection('users').get();
-      
+
       for (final doc in usersSnapshot.docs) {
         final data = doc.data();
         final userId = doc.id;
         final fullName = data['fullName'] ?? 'Unknown User';
         final photoUrl = _validateAvatarUrl(data['photoUrl']);
-        
+
         _userNamesCache[userId] = fullName;
         _userAvatarsCache[userId] = photoUrl;
       }
-      
+
       await _saveUserNamesCache();
       await _saveUserAvatarsCache();
       _lastUserNamesUpdate = DateTime.now();
-      
-      debugPrint('UserCacheService: Pre-fetched ${_userNamesCache.length} users');
+
+      debugPrint(
+          'UserCacheService: Pre-fetched ${_userNamesCache.length} users');
     } catch (e) {
       debugPrint('UserCacheService: Error pre-fetching users: $e');
     }
@@ -184,14 +191,14 @@ class UserCacheService {
   Future<void> updateUserAvatar(String userId, String avatarUrl) async {
     try {
       _userAvatarsCache[userId] = _validateAvatarUrl(avatarUrl);
-      
+
       // If this is the current user, also update current user cache
       if (_auth.currentUser?.uid == userId && _currentUserData != null) {
         _currentUserData!['photoUrl'] = avatarUrl;
         _lastUserDataUpdate = DateTime.now();
         await _cacheCurrentUserData(_currentUserData!);
       }
-      
+
       await _saveUserAvatarsCache();
       debugPrint('UserCacheService: User avatar updated for $userId');
     } catch (e) {
@@ -200,14 +207,15 @@ class UserCacheService {
   }
 
   /// Update cached user name and avatar
-  Future<void> updateUserInfo(String userId, {String? fullName, String? photoUrl}) async {
+  Future<void> updateUserInfo(String userId,
+      {String? fullName, String? photoUrl}) async {
     if (fullName != null) {
       _userNamesCache[userId] = fullName;
     }
     if (photoUrl != null) {
       _userAvatarsCache[userId] = _validateAvatarUrl(photoUrl);
     }
-    
+
     await _saveUserNamesCache();
     await _saveUserAvatarsCache();
   }
@@ -216,7 +224,7 @@ class UserCacheService {
   Future<void> clearCache() async {
     debugPrint('UserCacheService: Clearing all cached data');
     final prefs = await SharedPreferences.getInstance();
-    
+
     await Future.wait([
       prefs.remove(_userDataKey),
       prefs.remove(_userNamesKey),
@@ -224,7 +232,7 @@ class UserCacheService {
       prefs.remove(_lastUpdateKey),
       prefs.remove(_currentUserKey),
     ]);
-    
+
     _currentUserData = null;
     _userNamesCache.clear();
     _userAvatarsCache.clear();
@@ -235,11 +243,11 @@ class UserCacheService {
   /// Clear cache for a specific user (useful when user logs out)
   Future<void> clearUserCache(String userId) async {
     debugPrint('UserCacheService: Clearing cache for user $userId');
-    
+
     if (_auth.currentUser?.uid == userId) {
       _currentUserData = null;
       _lastUserDataUpdate = null;
-      
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userDataKey);
       await prefs.remove(_currentUserKey);
@@ -247,23 +255,24 @@ class UserCacheService {
   }
 
   // Private helper methods
-  
+
   Future<void> _loadCachedData() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Load current user data
     final userDataString = prefs.getString(_userDataKey);
     final lastUpdateString = prefs.getString(_lastUpdateKey);
-    
+
     if (userDataString != null && lastUpdateString != null) {
       try {
-        _currentUserData = Map<String, dynamic>.from(jsonDecode(userDataString));
+        _currentUserData =
+            Map<String, dynamic>.from(jsonDecode(userDataString));
         _lastUserDataUpdate = DateTime.parse(lastUpdateString);
       } catch (e) {
         debugPrint('UserCacheService: Error loading cached user data: $e');
       }
     }
-    
+
     // Load user names cache
     final userNamesString = prefs.getString(_userNamesKey);
     if (userNamesString != null) {
@@ -274,19 +283,20 @@ class UserCacheService {
         debugPrint('UserCacheService: Error loading cached user names: $e');
       }
     }
-    
+
     // Load user avatars cache
     final userAvatarsString = prefs.getString(_userAvatarsKey);
     if (userAvatarsString != null) {
       try {
-        final decoded = Map<String, dynamic>.from(jsonDecode(userAvatarsString));
+        final decoded =
+            Map<String, dynamic>.from(jsonDecode(userAvatarsString));
         _userAvatarsCache = Map<String, String>.from(decoded);
       } catch (e) {
         debugPrint('UserCacheService: Error loading cached user avatars: $e');
       }
     }
   }
-  
+
   Future<void> _cacheCurrentUserData(Map<String, dynamic> userData) async {
     // Convert Firestore Timestamp fields to ISO8601 strings for serialization
     Map<String, dynamic> safeUserData = {};
@@ -306,44 +316,42 @@ class UserCacheService {
       prefs.setString(_currentUserKey, _auth.currentUser?.uid ?? ''),
     ]);
   }
-  
+
   Future<void> _saveUserNamesCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userNamesKey, jsonEncode(_userNamesCache));
   }
-  
+
   Future<void> _saveUserAvatarsCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userAvatarsKey, jsonEncode(_userAvatarsCache));
   }
-  
+
   bool _isUserDataValid() {
     if (_lastUserDataUpdate == null) return false;
     return DateTime.now().difference(_lastUserDataUpdate!) < _userDataExpiry;
   }
-  
+
   bool _isUserNamesValid() {
     if (_lastUserNamesUpdate == null) return false;
     return DateTime.now().difference(_lastUserNamesUpdate!) < _userNamesExpiry;
   }
-  
+
   String _validateAvatarUrl(String? url) {
     if (url == null || url.isEmpty) return '';
-    
+
     // If it's already a valid network URL, return it
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    
+
     // If it's a local file path, return empty string
     if (url.startsWith('file://') || url.startsWith('/')) {
       return '';
     }
-    
+
     return '';
   }
-
-
 
   // Getters for debugging and monitoring
   int get cachedUserAvatarsCount => _userAvatarsCache.length;

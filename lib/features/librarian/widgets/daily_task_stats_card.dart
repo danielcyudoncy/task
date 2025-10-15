@@ -15,27 +15,28 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _pulseAnimation;
-  
-  final DailyTaskNotificationService _notificationService = Get.find<DailyTaskNotificationService>();
-  
+
+  final DailyTaskNotificationService _notificationService =
+      Get.find<DailyTaskNotificationService>();
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
-  
+
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -43,7 +44,7 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
       parent: _animationController,
       curve: Curves.elasticOut,
     ));
-    
+
     _pulseAnimation = Tween<double>(
       begin: 1.0,
       end: 1.05,
@@ -51,22 +52,22 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   void _onRefresh() {
     _notificationService.refreshListeners();
     _animationController.reset();
     _animationController.forward();
   }
-  
+
   Future<void> _showWeeklySummary() async {
     try {
       final weeklySummary = await _notificationService.getWeeklySummary();
-      
+
       if (!mounted) return;
-      
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -91,14 +92,16 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                         final assigned = data['assigned'] ?? 0;
                         final completed = data['completed'] ?? 0;
                         final pending = assigned - completed;
-                        
+
                         return Card(
                           margin: EdgeInsets.symmetric(vertical: 4),
                           child: ListTile(
                             title: Text(date),
-                            subtitle: Text('Assigned: $assigned, Completed: $completed, Pending: $pending'),
+                            subtitle: Text(
+                                'Assigned: $assigned, Completed: $completed, Pending: $pending'),
                             trailing: assigned > 0
-                                ? Text('${((completed / assigned) * 100).toStringAsFixed(1)}%')
+                                ? Text(
+                                    '${((completed / assigned) * 100).toStringAsFixed(1)}%')
                                 : Text('0%'),
                           ),
                         );
@@ -133,10 +136,10 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
       }
     }
   }
-  
+
   Future<void> _showUserFilterDialog() async {
     final TextEditingController userIdController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -185,13 +188,14 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
       ),
     );
   }
-  
+
   Future<void> _showUserTasks(String userId) async {
     try {
-      final userTasks = await _notificationService.getTasksAssignedToUserToday(userId);
-      
+      final userTasks =
+          await _notificationService.getTasksAssignedToUserToday(userId);
+
       if (!mounted) return;
-      
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -264,7 +268,7 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -275,10 +279,11 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
           child: Obx(() {
             final hasNotifications = _notificationService.hasNotifications;
             final assignedCount = _notificationService.todayAssignedCount.value;
-            final completedCount = _notificationService.todayCompletedCount.value;
+            final completedCount =
+                _notificationService.todayCompletedCount.value;
             final pendingCount = _notificationService.todayPendingCount.value;
             final completionRate = _notificationService.completionRate;
-            
+
             return AnimatedBuilder(
               animation: _pulseAnimation,
               builder: (context, child) {
@@ -310,7 +315,8 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blue.withValues(alpha: hasNotifications ? 0.2 : 0.1),
+                          color: Colors.blue
+                              .withValues(alpha: hasNotifications ? 0.2 : 0.1),
                           blurRadius: hasNotifications ? 15 : 10,
                           offset: const Offset(0, 4),
                         ),
@@ -329,23 +335,46 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                                     children: [
                                       Text(
                                         'Daily Task Overview',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue,
+                                            ),
                                       ),
-                                      if (hasNotifications) ...[                                         const SizedBox(width: 8),                                         Container(                                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),                                           decoration: BoxDecoration(                                             color: Colors.red,                                             borderRadius: BorderRadius.circular(8),                                           ),                                           child: Text(                                             'NEW',                                             style: TextStyle(
-                                               color: Theme.of(context).colorScheme.onError,
-                                               fontSize: 8,
-                                               fontWeight: FontWeight.bold,
-                                             ),                                           ),                                         ),                                       ],
+                                      if (hasNotifications) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'NEW',
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onError,
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                   Text(
                                     'Real-time task updates',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -353,47 +382,49 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      _onRefresh();
-                                      if (hasNotifications) {
-                                        _notificationService.clearNotifications();
-                                      }
-                                    },
-                                    icon: Icon(
-                                      Icons.refresh,
-                                      color: Colors.blue,
-                                    ),
-                                    tooltip: 'Quick Refresh',
+                                IconButton(
+                                  onPressed: () {
+                                    _onRefresh();
+                                    if (hasNotifications) {
+                                      _notificationService.clearNotifications();
+                                    }
+                                  },
+                                  icon: Icon(
+                                    Icons.refresh,
+                                    color: Colors.blue,
                                   ),
-                                  PopupMenuButton<String>(
-                                    icon: Icon(
-                                      Icons.more_vert,
-                                      color: Colors.blue,
-                                    ),
-                                    tooltip: 'More options',
-                                    onSelected: (value) async {
-                                      switch (value) {
-                                        case 'weekly':
-                                          await _showWeeklySummary();
-                                          break;
-                                        case 'user_filter':
-                                          await _showUserFilterDialog();
-                                          break;
-                                        case 'refresh':
-                                          _onRefresh();
-                                          if (hasNotifications) {
-                                            _notificationService.clearNotifications();
-                                          }
-                                          break;
-                                      }
-                                    },
+                                  tooltip: 'Quick Refresh',
+                                ),
+                                PopupMenuButton<String>(
+                                  icon: Icon(
+                                    Icons.more_vert,
+                                    color: Colors.blue,
+                                  ),
+                                  tooltip: 'More options',
+                                  onSelected: (value) async {
+                                    switch (value) {
+                                      case 'weekly':
+                                        await _showWeeklySummary();
+                                        break;
+                                      case 'user_filter':
+                                        await _showUserFilterDialog();
+                                        break;
+                                      case 'refresh':
+                                        _onRefresh();
+                                        if (hasNotifications) {
+                                          _notificationService
+                                              .clearNotifications();
+                                        }
+                                        break;
+                                    }
+                                  },
                                   itemBuilder: (context) => [
                                     PopupMenuItem(
                                       value: 'refresh',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.refresh, size: 16, color: Colors.blue),
+                                          Icon(Icons.refresh,
+                                              size: 16, color: Colors.blue),
                                           SizedBox(width: 8),
                                           Text('Refresh'),
                                         ],
@@ -403,7 +434,8 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                                       value: 'weekly',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.calendar_view_week, size: 16, color: Colors.green),
+                                          Icon(Icons.calendar_view_week,
+                                              size: 16, color: Colors.green),
                                           SizedBox(width: 8),
                                           Text('Weekly Summary'),
                                         ],
@@ -413,7 +445,8 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                                       value: 'user_filter',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.person_search, size: 16, color: Colors.orange),
+                                          Icon(Icons.person_search,
+                                              size: 16, color: Colors.orange),
                                           SizedBox(width: 8),
                                           Text('Filter by User'),
                                         ],
@@ -436,7 +469,8 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                                 label: 'Assigned',
                                 value: assignedCount,
                                 color: Colors.blue,
-                                hasNewData: _notificationService.hasNewAssignments.value,
+                                hasNewData: _notificationService
+                                    .hasNewAssignments.value,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -448,7 +482,8 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                                 label: 'Completed',
                                 value: completedCount,
                                 color: Colors.green,
-                                hasNewData: _notificationService.hasNewCompletions.value,
+                                hasNewData: _notificationService
+                                    .hasNewCompletions.value,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -482,10 +517,13 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
                                 const SizedBox(width: 8),
                                 Text(
                                   'Completion Rate: ${completionRate.toStringAsFixed(1)}%',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[700],
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
                                 const Spacer(),
                                 Container(
@@ -525,7 +563,7 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
       },
     );
   }
-  
+
   Widget _buildStatItem(
     BuildContext context, {
     required IconData icon,
@@ -536,7 +574,7 @@ class _DailyTaskStatsCardState extends State<DailyTaskStatsCard>
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
+import 'package:task/models/task_metadata.dart';
 import 'package:task/service/task_attachment_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -23,7 +24,8 @@ class TaskAttachmentsWidget extends StatefulWidget {
 }
 
 class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
-  final TaskAttachmentService _attachmentService = Get.find<TaskAttachmentService>();
+  final TaskAttachmentService _attachmentService =
+      Get.find<TaskAttachmentService>();
   bool _isUploading = false;
 
   @override
@@ -126,7 +128,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Loading indicator
             if (_isUploading)
               Container(
@@ -151,7 +153,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
                   ],
                 ),
               ),
-            
+
             // Attachments list
             if (widget.task.attachmentUrls.isEmpty && !_isUploading)
               Container(
@@ -201,15 +203,15 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
   Widget _buildAttachmentItem(BuildContext context, int index) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     final url = widget.task.attachmentUrls[index];
     final name = widget.task.attachmentNames[index];
     final type = widget.task.attachmentTypes[index];
     final size = widget.task.attachmentSizes[index];
-    
+
     final icon = _attachmentService.getFileTypeIcon(type);
     final formattedSize = _attachmentService.formatFileSize(size);
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -235,7 +237,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // File details
           Expanded(
             child: Column(
@@ -270,7 +272,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
               ],
             ),
           ),
-          
+
           // Actions
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -285,7 +287,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
                 ),
                 tooltip: type == 'image' ? 'View' : 'Download',
               ),
-              
+
               // Delete button (only if not read-only)
               if (!widget.isReadOnly)
                 IconButton(
@@ -306,7 +308,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
 
   Color _getTypeColor(String type) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     switch (type.toLowerCase()) {
       case 'image':
         return colorScheme.secondary;
@@ -323,14 +325,14 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
 
   Future<void> _handleAddAttachment(String type) async {
     if (_isUploading) return;
-    
+
     setState(() {
       _isUploading = true;
     });
-    
+
     try {
       Map<String, dynamic>? result;
-      
+
       switch (type) {
         case 'camera':
           result = await _attachmentService.pickAndUploadImage(
@@ -350,7 +352,7 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
           );
           break;
       }
-      
+
       if (result != null) {
         // Add attachment to task
         await _attachmentService.addAttachmentToTask(
@@ -360,22 +362,35 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
           type: result['type'],
           size: result['size'],
         );
-        
+
         // Update local task object
         final updatedTask = widget.task.copyWith(
-          attachmentUrls: [...widget.task.attachmentUrls, result['url']],
-          attachmentNames: [...widget.task.attachmentNames, result['name']],
-          attachmentTypes: [...widget.task.attachmentTypes, result['type']],
-          attachmentSizes: [...widget.task.attachmentSizes, result['size']],
-          lastAttachmentAdded: result['uploadedAt'],
+          metadata: widget.task.metadata?.copyWith(
+            attachmentUrls: [...widget.task.attachmentUrls, result['url']],
+            attachmentNames: [...widget.task.attachmentNames, result['name']],
+            attachmentTypes: [...widget.task.attachmentTypes, result['type']],
+            attachmentSizes: [...widget.task.attachmentSizes, result['size']],
+            lastAttachmentAdded: result['uploadedAt'] is DateTime
+                ? result['uploadedAt']
+                : DateTime.now(),
+          ) ?? TaskMetadata(
+            attachmentUrls: [...widget.task.attachmentUrls, result['url']],
+            attachmentNames: [...widget.task.attachmentNames, result['name']],
+            attachmentTypes: [...widget.task.attachmentTypes, result['type']],
+            attachmentSizes: [...widget.task.attachmentSizes, result['size']],
+            lastAttachmentAdded: result['uploadedAt'] is DateTime
+                ? result['uploadedAt']
+                : DateTime.now(),
+          ),
         );
-        
+
         widget.onTaskUpdated?.call(updatedTask);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Attachment "${result['name']}" uploaded successfully'),
+              content:
+                  Text('Attachment "${result['name']}" uploaded successfully'),
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
@@ -422,36 +437,43 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
         ],
       ),
     );
-    
+
     if (confirmed != true) return;
-    
+
     try {
       await _attachmentService.removeAttachmentFromTask(
         taskId: widget.task.taskId,
         attachmentIndex: index,
         task: widget.task,
       );
-      
+
       // Update local task object
       final updatedUrls = List<String>.from(widget.task.attachmentUrls);
       final updatedNames = List<String>.from(widget.task.attachmentNames);
       final updatedTypes = List<String>.from(widget.task.attachmentTypes);
       final updatedSizes = List<int>.from(widget.task.attachmentSizes);
-      
+
       updatedUrls.removeAt(index);
       updatedNames.removeAt(index);
       updatedTypes.removeAt(index);
       updatedSizes.removeAt(index);
-      
+
       final updatedTask = widget.task.copyWith(
-        attachmentUrls: updatedUrls,
-        attachmentNames: updatedNames,
-        attachmentTypes: updatedTypes,
-        attachmentSizes: updatedSizes,
+        metadata: widget.task.metadata?.copyWith(
+          attachmentUrls: updatedUrls,
+          attachmentNames: updatedNames,
+          attachmentTypes: updatedTypes,
+          attachmentSizes: updatedSizes,
+        ) ?? TaskMetadata(
+          attachmentUrls: updatedUrls,
+          attachmentNames: updatedNames,
+          attachmentTypes: updatedTypes,
+          attachmentSizes: updatedSizes,
+        ),
       );
-      
+
       widget.onTaskUpdated?.call(updatedTask);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -475,10 +497,11 @@ class _TaskAttachmentsWidgetState extends State<TaskAttachmentsWidget> {
   Future<void> _openAttachment(String url) async {
     try {
       final uri = Uri.parse(url);
-      if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView,
-        browserConfiguration: const BrowserConfiguration(
-          showTitle: true,
-        ))) {
+      if (!await launchUrl(uri,
+          mode: LaunchMode.inAppBrowserView,
+          browserConfiguration: const BrowserConfiguration(
+            showTitle: true,
+          ))) {
         throw Exception('Could not launch URL');
       }
     } catch (e) {

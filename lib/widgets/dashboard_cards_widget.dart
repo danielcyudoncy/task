@@ -30,26 +30,54 @@ class DashboardCardsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const cardColor = Color(0xFF357088);
-    
+
     // Get screen dimensions for responsive design using AppDevices
     final screenWidth = AppDevices.getScreenWidth(context);
     final screenHeight = AppDevices.getScreenHeight(context);
     final isTablet = AppDevices.isTablet(context);
     final isSmallScreen = screenWidth < 360;
     final isShortScreen = screenHeight < 600;
-    
+
     // Responsive card dimensions
-    
-    final cardSpacing = isTablet ? 20.0 : isSmallScreen ? 8.0 : 14.0;
-    final padding = isTablet ? 24.0 : isSmallScreen ? 12.0 : 16.0;
-    
+
+    final cardSpacing = isTablet
+        ? 20.0
+        : isSmallScreen
+            ? 8.0
+            : 14.0;
+    final padding = isTablet
+        ? 24.0
+        : isSmallScreen
+            ? 12.0
+            : 16.0;
+
     // Responsive card heights based on screen size and height
     final baseHeightMultiplier = isShortScreen ? 0.8 : 1.0;
-    final totalUsersHeight = (isTablet ? 180.0 : isSmallScreen ? 140.0 : 160.0) * baseHeightMultiplier;
-    final pendingTasksHeight = (isTablet ? 140.0 : isSmallScreen ? 100.0 : 120.0) * baseHeightMultiplier;
-    final onlineNowHeight = (isTablet ? 140.0 : isSmallScreen ? 100.0 : 120.0) * baseHeightMultiplier;
-    final newsFeedHeight = (isTablet ? 180.0 : isSmallScreen ? 140.0 : 160.0) * baseHeightMultiplier;
-    
+    final totalUsersHeight = (isTablet
+            ? 180.0
+            : isSmallScreen
+                ? 140.0
+                : 160.0) *
+        baseHeightMultiplier;
+    final pendingTasksHeight = (isTablet
+            ? 140.0
+            : isSmallScreen
+                ? 100.0
+                : 120.0) *
+        baseHeightMultiplier;
+    final onlineNowHeight = (isTablet
+            ? 140.0
+            : isSmallScreen
+                ? 100.0
+                : 120.0) *
+        baseHeightMultiplier;
+    final newsFeedHeight = (isTablet
+            ? 180.0
+            : isSmallScreen
+                ? 140.0
+                : 160.0) *
+        baseHeightMultiplier;
+
     return Padding(
       padding: EdgeInsets.all(padding),
       child: LayoutBuilder(
@@ -157,7 +185,7 @@ class _DashboardGridCard extends StatelessWidget {
     final borderRadius = isSmallScreen ? 16.0 : 24.0;
     final verticalSpacing = isSmallScreen ? 6.0 : 10.0;
     final smallSpacing = isSmallScreen ? 2.0 : 4.0;
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -174,8 +202,8 @@ class _DashboardGridCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                icon, 
-                color: Colors.white, 
+                icon,
+                color: Colors.white,
                 size: iconSize,
               ),
               SizedBox(height: verticalSpacing),

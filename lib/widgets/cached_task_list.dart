@@ -11,7 +11,7 @@ class CachedTaskList extends StatefulWidget {
   final String? category;
   final bool enableRealTime;
   final VoidCallback? onTaskTap;
-  
+
   const CachedTaskList({
     super.key,
     this.userId,
@@ -20,7 +20,7 @@ class CachedTaskList extends StatefulWidget {
     this.enableRealTime = true,
     this.onTaskTap,
   });
-  
+
   @override
   State<CachedTaskList> createState() => _CachedTaskListState();
 }
@@ -28,26 +28,26 @@ class CachedTaskList extends StatefulWidget {
 class _CachedTaskListState extends State<CachedTaskList> {
   final CachedTaskService _taskService = Get.find<CachedTaskService>();
   final CacheManager _cacheManager = Get.find<CacheManager>();
-  
+
   List<Map<String, dynamic>> _tasks = [];
   bool _isLoading = true;
   bool _isRefreshing = false;
   String? _error;
-  
+
   @override
   void initState() {
     super.initState();
     _loadTasks();
     _setupRealTimeUpdates();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // Cache status indicator
         _buildCacheStatusBar(),
-        
+
         // Task list
         Expanded(
           child: _buildTaskList(),
@@ -55,7 +55,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
       ],
     );
   }
-  
+
   Widget _buildCacheStatusBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -80,9 +80,9 @@ class _CachedTaskListState extends State<CachedTaskList> {
             child: Text(
               'cache_status_active'.tr,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).primaryColor,
-                fontWeight: FontWeight.w500,
-              ),
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ),
           // Refresh button
@@ -130,20 +130,20 @@ class _CachedTaskListState extends State<CachedTaskList> {
       ),
     );
   }
-  
+
   Widget _buildTaskList() {
     if (_isLoading) {
       return _buildLoadingState();
     }
-    
+
     if (_error != null) {
       return _buildErrorState();
     }
-    
+
     if (_tasks.isEmpty) {
       return _buildEmptyState();
     }
-    
+
     return RefreshIndicator(
       onRefresh: _refreshTasks,
       child: ListView.builder(
@@ -155,7 +155,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
       ),
     );
   }
-  
+
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -171,7 +171,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
       ),
     );
   }
-  
+
   Widget _buildErrorState() {
     return Center(
       child: Column(
@@ -192,8 +192,8 @@ class _CachedTaskListState extends State<CachedTaskList> {
           Text(
             _error ?? 'unknown_error'.tr,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.error,
-            ),
+                  color: Theme.of(context).colorScheme.error,
+                ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -205,7 +205,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
       ),
     );
   }
-  
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -225,24 +225,25 @@ class _CachedTaskListState extends State<CachedTaskList> {
           Text(
             'no_tasks_description'.tr,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).disabledColor,
-            ),
+                  color: Theme.of(context).disabledColor,
+                ),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildTaskCard(Map<String, dynamic> task) {
     final title = task['title'] ?? 'untitled_task'.tr;
     final description = task['description'] ?? '';
     final status = task['status'] ?? 'pending';
     final priority = task['priority'] ?? 'medium';
-    final assigneeData = task['assigneeData'] as List<Map<String, dynamic>>? ?? [];
+    final assigneeData =
+        task['assigneeData'] as List<Map<String, dynamic>>? ?? [];
     final creatorName = task['creatorName'] ?? 'unknown_user'.tr;
     final dueDate = task['dueDate'];
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
@@ -260,8 +261,8 @@ class _CachedTaskListState extends State<CachedTaskList> {
                     child: Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                            fontWeight: FontWeight.w600,
+                          ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -270,7 +271,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
                   _buildStatusChip(status),
                 ],
               ),
-              
+
               // Description
               if (description.isNotEmpty) const SizedBox(height: 8),
               if (description.isNotEmpty)
@@ -280,16 +281,16 @@ class _CachedTaskListState extends State<CachedTaskList> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Footer with assignees, creator, and due date
               Row(
                 children: [
                   // Priority indicator
                   _buildPriorityIndicator(priority),
                   const SizedBox(width: 8),
-                  
+
                   // Creator
                   Expanded(
                     child: Text(
@@ -298,11 +299,12 @@ class _CachedTaskListState extends State<CachedTaskList> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  
+
                   // Assignees
                   if (assigneeData.isNotEmpty) const SizedBox(width: 8),
-                  if (assigneeData.isNotEmpty) _buildAssigneeAvatars(assigneeData),
-                  
+                  if (assigneeData.isNotEmpty)
+                    _buildAssigneeAvatars(assigneeData),
+
                   // Due date
                   if (dueDate != null) const SizedBox(width: 8),
                   if (dueDate != null) _buildDueDateChip(dueDate),
@@ -314,11 +316,11 @@ class _CachedTaskListState extends State<CachedTaskList> {
       ),
     );
   }
-  
+
   Widget _buildStatusChip(String status) {
     Color backgroundColor;
     Color textColor;
-    
+
     switch (status.toLowerCase()) {
       case 'completed':
         backgroundColor = Colors.green.withValues(alpha: 0.1);
@@ -340,7 +342,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
         backgroundColor = Theme.of(context).primaryColor.withValues(alpha: 0.1);
         textColor = Theme.of(context).primaryColor;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -350,16 +352,16 @@ class _CachedTaskListState extends State<CachedTaskList> {
       child: Text(
         status.tr,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: textColor,
-          fontWeight: FontWeight.w500,
-        ),
+              color: textColor,
+              fontWeight: FontWeight.w500,
+            ),
       ),
     );
   }
-  
+
   Widget _buildPriorityIndicator(String priority) {
     Color color;
-    
+
     switch (priority.toLowerCase()) {
       case 'high':
         color = Colors.red;
@@ -373,7 +375,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
       default:
         color = Colors.grey;
     }
-    
+
     return Container(
       width: 8,
       height: 8,
@@ -383,38 +385,38 @@ class _CachedTaskListState extends State<CachedTaskList> {
       ),
     );
   }
-  
+
   Widget _buildAssigneeAvatars(List<Map<String, dynamic>> assignees) {
     const maxVisible = 3;
     final visibleAssignees = assignees.take(maxVisible).toList();
     final remainingCount = assignees.length - maxVisible;
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         ...visibleAssignees.map((assignee) {
           final avatar = assignee['avatar'] as String? ?? '';
           final name = assignee['name'] as String? ?? 'Unknown';
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 4),
             child: CircleAvatar(
               radius: 12,
-              backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+              backgroundColor:
+                  Theme.of(context).primaryColor.withValues(alpha: 0.1),
               backgroundImage: avatar.isNotEmpty ? NetworkImage(avatar) : null,
               child: avatar.isEmpty
                   ? Text(
                       name.isNotEmpty ? name[0].toUpperCase() : '?',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                     )
                   : null,
             ),
           );
         }),
-        
         if (remainingCount > 0)
           Container(
             width: 24,
@@ -427,35 +429,36 @@ class _CachedTaskListState extends State<CachedTaskList> {
               child: Text(
                 '+$remainingCount',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).disabledColor,
-                  fontSize: 10,
-                ),
+                      color: Theme.of(context).disabledColor,
+                      fontSize: 10,
+                    ),
               ),
             ),
           ),
       ],
     );
   }
-  
+
   Widget _buildDueDateChip(dynamic dueDate) {
     DateTime? date;
-    
+
     if (dueDate is String) {
       date = DateTime.tryParse(dueDate);
     } else if (dueDate is DateTime) {
       date = dueDate;
     }
-    
+
     if (date == null) return const SizedBox.shrink();
-    
+
     final now = DateTime.now();
     final isOverdue = date.isBefore(now);
-    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
     final isTomorrow = date.difference(now).inDays == 1;
-    
+
     String text;
     Color color;
-    
+
     if (isOverdue) {
       text = 'overdue'.tr;
       color = Colors.red;
@@ -470,7 +473,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
       text = '$days ${'days'.tr}';
       color = Colors.grey;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -481,16 +484,16 @@ class _CachedTaskListState extends State<CachedTaskList> {
       child: Text(
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-        ),
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
       ),
     );
   }
-  
+
   // Event handlers
-  
+
   Future<void> _loadTasks() async {
     if (mounted) {
       setState(() {
@@ -498,7 +501,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
         _error = null;
       });
     }
-    
+
     try {
       final tasks = await _taskService.getTasks(
         assignedTo: widget.userId,
@@ -506,7 +509,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
         category: widget.category,
         enableRealTime: widget.enableRealTime,
       );
-      
+
       if (mounted) {
         setState(() {
           _tasks = tasks;
@@ -522,14 +525,14 @@ class _CachedTaskListState extends State<CachedTaskList> {
       }
     }
   }
-  
+
   Future<void> _refreshTasks() async {
     if (mounted) {
       setState(() {
         _isRefreshing = true;
       });
     }
-    
+
     try {
       final tasks = await _taskService.getTasks(
         assignedTo: widget.userId,
@@ -538,7 +541,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
         forceRefresh: true,
         enableRealTime: widget.enableRealTime,
       );
-      
+
       if (mounted) {
         setState(() {
           _tasks = tasks;
@@ -554,11 +557,11 @@ class _CachedTaskListState extends State<CachedTaskList> {
       }
     }
   }
-  
+
   Future<void> _clearCache() async {
     try {
       await _cacheManager.invalidateAllTaskCache();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -567,7 +570,7 @@ class _CachedTaskListState extends State<CachedTaskList> {
           ),
         );
       }
-      
+
       // Reload tasks after clearing cache
       await _loadTasks();
     } catch (e) {
@@ -581,10 +584,10 @@ class _CachedTaskListState extends State<CachedTaskList> {
       }
     }
   }
-  
+
   void _setupRealTimeUpdates() {
     if (!widget.enableRealTime) return;
-    
+
     // Listen to task updates
     _taskService.tasksStream.listen((tasks) {
       if (mounted) {
@@ -593,12 +596,12 @@ class _CachedTaskListState extends State<CachedTaskList> {
         });
       }
     });
-    
+
     // Listen to individual task updates
     _taskService.taskUpdateStream.listen((update) {
       final action = update['action'] as String?;
       final taskId = update['taskId'] as String?;
-      
+
       if (mounted && taskId != null) {
         switch (action) {
           case 'created':

@@ -11,7 +11,7 @@ class UpdateService {
   static const String _lastUpdateCheckKey = 'last_update_check';
   static const String _updateFrequencyKey = 'update_check_frequency';
   static const String _autoUpdateEnabledKey = 'auto_update_enabled';
-  
+
   // Update check frequency options (in hours)
   static const Map<String, int> updateFrequencies = {
     'Never': -1,
@@ -19,12 +19,12 @@ class UpdateService {
     'Weekly': 168,
     'Monthly': 720,
   };
-  
+
   /// Initialize update service
   static Future<void> initialize() async {
     await _setDefaultPreferences();
   }
-  
+
   /// Check for updates based on platform
   static Future<void> checkForUpdates({
     bool forceCheck = false,
@@ -36,10 +36,10 @@ class UpdateService {
       if (!forceCheck && !await _shouldCheckForUpdate()) {
         return;
       }
-      
+
       // Update last check timestamp
       await _updateLastCheckTime();
-      
+
       if (Platform.isAndroid) {
         await AndroidUpdateService.checkForAndroidUpdate(
           showDialog: showDialog,
@@ -57,12 +57,12 @@ class UpdateService {
       }
     }
   }
-  
+
   /// Check for updates silently (background check)
   static Future<void> checkForUpdatesInBackground() async {
     try {
       final updateInfo = await VersionService.checkForUpdate();
-      
+
       if (updateInfo != null) {
         // Show a subtle notification
         if (Platform.isIOS) {
@@ -71,34 +71,36 @@ class UpdateService {
         // For Android, we'll use the in-app update mechanism directly
         // when the user opens the app next time
       }
-    // ignore: empty_catches
-    } catch (e) {}
+    } catch (e) {
+      debugPrint('Background update check failed: $e');
+      // Continue silently - background checks shouldn't interrupt user experience
+    }
   }
-  
+
   /// Set update check frequency
   static Future<void> setUpdateFrequency(String frequency) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_updateFrequencyKey, frequency);
   }
-  
+
   /// Get current update frequency
   static Future<String> getUpdateFrequency() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_updateFrequencyKey) ?? 'Weekly';
   }
-  
+
   /// Enable/disable auto updates
   static Future<void> setAutoUpdateEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_autoUpdateEnabledKey, enabled);
   }
-  
+
   /// Check if auto updates are enabled
   static Future<bool> isAutoUpdateEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_autoUpdateEnabledKey) ?? true;
   }
-  
+
   /// Show update settings dialog
   static void showUpdateSettings() {
     Get.dialog(
@@ -137,7 +139,8 @@ class UpdateService {
                 final isEnabled = snapshot.data ?? true;
                 return SwitchListTile(
                   title: const Text('Auto-update notifications'),
-                  subtitle: const Text('Show notifications when updates are available'),
+                  subtitle: const Text(
+                      'Show notifications when updates are available'),
                   value: isEnabled,
                   onChanged: (bool value) {
                     setAutoUpdateEnabled(value);
@@ -163,50 +166,51 @@ class UpdateService {
       ),
     );
   }
-  
+
   /// Check if we should perform an update check
   static Future<bool> _shouldCheckForUpdate() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Check if auto updates are disabled
     if (!await isAutoUpdateEnabled()) {
       return false;
     }
-    
+
     final frequency = await getUpdateFrequency();
     final frequencyHours = updateFrequencies[frequency] ?? 168;
-    
+
     // If frequency is "Never", don't check
     if (frequencyHours == -1) {
       return false;
     }
-    
+
     final lastCheck = prefs.getInt(_lastUpdateCheckKey) ?? 0;
     final now = DateTime.now().millisecondsSinceEpoch;
     final hoursSinceLastCheck = (now - lastCheck) / (1000 * 60 * 60);
-    
+
     return hoursSinceLastCheck >= frequencyHours;
   }
-  
+
   /// Update last check timestamp
   static Future<void> _updateLastCheckTime() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_lastUpdateCheckKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(
+        _lastUpdateCheckKey, DateTime.now().millisecondsSinceEpoch);
   }
-  
+
   /// Set default preferences
   static Future<void> _setDefaultPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     if (!prefs.containsKey(_updateFrequencyKey)) {
       await prefs.setString(_updateFrequencyKey, 'Weekly');
     }
-    
+
     if (!prefs.containsKey(_autoUpdateEnabledKey)) {
       await prefs.setBool(_autoUpdateEnabledKey, true);
     }
   }
-  
+
   /// Show update error
   static void _showUpdateError() {
     Get.snackbar(
@@ -218,22 +222,24 @@ class UpdateService {
       duration: const Duration(seconds: 3),
     );
   }
-  
+
   /// Get update status info
   static Future<Map<String, dynamic>> getUpdateStatus() async {
     try {
       final updateInfo = await VersionService.checkForUpdate();
       final frequency = await getUpdateFrequency();
       final autoUpdateEnabled = await isAutoUpdateEnabled();
-      
+
       return {
         'hasUpdate': updateInfo != null,
-        'updateInfo': updateInfo != null ? {
-          'currentVersion': updateInfo.currentVersion,
-          'latestVersion': updateInfo.latestVersion,
-          'isForced': updateInfo.isForced,
-          'releaseNotes': updateInfo.releaseNotes,
-        } : null,
+        'updateInfo': updateInfo != null
+            ? {
+                'currentVersion': updateInfo.currentVersion,
+                'latestVersion': updateInfo.latestVersion,
+                'isForced': updateInfo.isForced,
+                'releaseNotes': updateInfo.releaseNotes,
+              }
+            : null,
         'frequency': frequency,
         'autoUpdateEnabled': autoUpdateEnabled,
         'platform': Platform.operatingSystem,

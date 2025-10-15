@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/wallpaper_controller.dart';
 
-
 class WallpaperScreen extends StatefulWidget {
   const WallpaperScreen({super.key});
 
@@ -87,7 +86,8 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                   icon: const Icon(Icons.photo_library, size: 18),
                   label: const Text('Photos', style: TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     minimumSize: const Size(0, 36),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -97,13 +97,14 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                   icon: const Icon(Icons.delete_outline, size: 18),
                   label: const Text('Remove', style: TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     minimumSize: const Size(0, 36),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   onPressed: () async {
                     await _wallpaperController.setWallpaper('');
-if (!context.mounted) return;
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Wallpaper removed!')),
                     );
@@ -128,9 +129,10 @@ if (!context.mounted) return;
               itemBuilder: (context, index) {
                 final color = _solidColors[index];
                 // Convert color to a hex string for storage
-final argb = color.toARGB32();
+                final argb = color.toARGB32();
                 final rgb = (argb & 0x00FFFFFF);
-                final hexString = '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+                final hexString =
+                    '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
                 return GestureDetector(
                   onTap: () => _updateWallpaper(hexString),
                   child: Container(

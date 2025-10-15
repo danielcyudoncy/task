@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 // Platform-specific imports
 import 'package:google_sign_in/google_sign_in.dart';
 // import 'package:sign_in_with_apple/sign_in_with_apple.dart'; // Commented out - Apple development not registered yet
@@ -18,6 +17,8 @@ import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/user_cache_service.dart';
+import 'package:task/service/fcm_helper.dart';
+import 'package:task/utils/constants/app_constants.dart';
 
 class AuthController extends GetxController {
   static AuthController get to => Get.find<AuthController>();
@@ -29,14 +30,14 @@ class AuthController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
   final FirebaseStorageService storageService = FirebaseStorageService();
 
-  Rx<User?> firebaseUser = Rx<User?>(null);
   RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
 
+  // Single source of truth for current user
   final Rx<User?> user = Rx<User?>(null);
   RxBool isLoginPasswordHidden = true.obs;
   RxBool isSignUpPasswordHidden = true.obs;
   RxBool isConfirmPasswordHidden = true.obs;
- 
+
   // Add a flag to track if the app is ready for snackbars
 
   User? get currentUser => user.value ?? _auth.currentUser;
@@ -54,14 +55,13 @@ class AuthController extends GetxController {
   final lastActivity = DateTime.now().obs;
   final isAdmin = false.obs;
   final canCreateTasks = false.obs;
-  
 
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneNumberController = TextEditingController();
   final passwordController = TextEditingController();
 
-    final List<String> userRoles = [
+  final List<String> userRoles = [
     "Reporter",
     "Cameraman",
     "Driver",
@@ -108,17 +108,17 @@ class AuthController extends GetxController {
     debugPrint("AuthController: onInit called");
     // Ensure loading state is false on initialization
     isLoading(false);
-    
+
     // Initialize observables with safe default values
     fullName.value = "";
     profilePic.value = "";
     selectedRole.value = "";
     userRole.value = "";
     isProfileComplete.value = false;
-    
+
     // Initialize user observable with current Firebase user
     user.value = _auth.currentUser;
-    
+
     _auth.authStateChanges().listen((User? userValue) {
       user.value = userValue;
       if (userValue == null) {
@@ -135,7 +135,6 @@ class AuthController extends GetxController {
   void onReady() {
     // Delay Firebase auth state binding to prevent premature operations
     Future.delayed(const Duration(milliseconds: 500), () {
-      firebaseUser.bindStream(_auth.authStateChanges());
       user.bindStream(_auth.authStateChanges());
       // Temporarily disable automatic role-based navigation to prevent build phase issues
       // debounce(userRole, (_) => _handleRoleChange(), time: const Duration(milliseconds: 100));
@@ -197,7 +196,8 @@ class AuthController extends GetxController {
           await presence.setOffline();
         }
       } else {
-        debugPrint("AuthController: PresenceService not initialized, skipping presence update");
+        debugPrint(
+            "AuthController: PresenceService not initialized, skipping presence update");
       }
     } else {
       debugPrint("AuthController: PresenceService not registered");
@@ -220,8 +220,10 @@ class AuthController extends GetxController {
             await navigateBasedOnRole();
           });
         } else {
-          debugPrint("AuthController: Profile complete but userRole is empty, cannot navigate");
-          showSnackbar("Login Error", "Your user role is missing. Please contact support.");
+          debugPrint(
+              "AuthController: Profile complete but userRole is empty, cannot navigate");
+          showSnackbar("Login Error",
+              "Your user role is missing. Please contact support.");
         }
       } else {
         Get.offAllNamed("/login");
@@ -255,7 +257,8 @@ class AuthController extends GetxController {
 
   // Enhanced loadUserData with caching for better performance
   Future<void> loadUserData({bool forceRefresh = false}) async {
-    debugPrint("AuthController: Starting loadUserData (forceRefresh: $forceRefresh)");
+    debugPrint(
+        "AuthController: Starting loadUserData (forceRefresh: $forceRefresh)");
     if (_auth.currentUser == null) {
       debugPrint("AuthController: No current user, returning");
       return;
@@ -263,7 +266,10 @@ class AuthController extends GetxController {
     try {
       // Always fetch fresh data from Firestore before navigation
       debugPrint("AuthController: Fetching fresh user data from Firestore");
-      final userDoc = await _firestore.collection("users").doc(_auth.currentUser!.uid).get();
+      final userDoc = await _firestore
+          .collection("users")
+          .doc(_auth.currentUser!.uid)
+          .get();
       if (userDoc.exists) {
         debugPrint("AuthController: Fresh user document exists, updating data");
         final data = userDoc.data()!;
@@ -271,11 +277,14 @@ class AuthController extends GetxController {
         // Optionally update cache
         final userCacheService = Get.find<UserCacheService>();
         await userCacheService.updateCurrentUserData(data);
-        debugPrint("AuthController: Fresh user data loaded and cached successfully");
-        debugPrint("AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
+        debugPrint(
+            "AuthController: Fresh user data loaded and cached successfully");
+        debugPrint(
+            "AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
         return;
       } else {
-        debugPrint("AuthController: User document does not exist for ${_auth.currentUser!.uid}");
+        debugPrint(
+            "AuthController: User document does not exist for ${_auth.currentUser!.uid}");
         resetUserData();
         throw Exception("User document not found");
       }
@@ -293,7 +302,7 @@ class AuthController extends GetxController {
       rethrow;
     }
   }
-  
+
   // Helper method to update user data from a map
   void _updateUserDataFromMap(Map<String, dynamic> data) {
     fullName.value = data['fullName'] ?? '';
@@ -338,13 +347,14 @@ class AuthController extends GetxController {
       setUserRole(selectedRole.value);
       isProfileComplete.value = true;
 
-        debugPrint("AuthController: Profile completed successfully");
-        debugPrint("AuthController: User role: ${userRole.value}");
-        debugPrint("AuthController: Profile complete: ${isProfileComplete.value}");
-        
-        // Load user data and navigate to correct dashboard
-        await loadUserData(forceRefresh: true);
-        await navigateBasedOnRole();
+      debugPrint("AuthController: Profile completed successfully");
+      debugPrint("AuthController: User role: ${userRole.value}");
+      debugPrint(
+          "AuthController: Profile complete: ${isProfileComplete.value}");
+
+      // Load user data and navigate to correct dashboard
+      await loadUserData(forceRefresh: true);
+      await navigateBasedOnRole();
     } catch (e) {
       debugPrint("AuthController: Profile completion error: $e");
       _safeSnackbar("Error", "Failed to complete profile: ${e.toString()}");
@@ -391,56 +401,35 @@ class AuthController extends GetxController {
   }
 
   void setBuildPhase(bool inBuildPhase) {
-    // _isInBuildPhase = inBuildPhase; // This line was removed
+    // This method is kept for compatibility but no longer used
   }
 
   void resetLoadingState() {
     debugPrint("AuthController: Resetting loading state");
     isLoading(false);
   }
- 
 
   Future<void> signUp(
       String userFullName, String email, String password, String role) async {
     try {
       isLoading(true);
-      
+
       // Try to create the user directly
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       // If we get here, user was created successfully
       final user = userCredential.user;
       if (user != null) {
         // Update user profile with display name
         await user.updateDisplayName(userFullName);
         await user.reload();
-        
+
         // Get FCM token for notifications
-        String? fcmToken;
-        if (!kIsWeb) {
-          try {
-            // Request permissions first
-            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
-            
-            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-                settings.authorizationStatus == AuthorizationStatus.provisional) {
-              fcmToken = await FirebaseMessaging.instance.getToken();
-              debugPrint("✅ FCM Token obtained during signup: ${fcmToken?.substring(0, 20)}...");
-            } else {
-              debugPrint("⚠️ Notification permissions not granted during signup: ${settings.authorizationStatus}");
-            }
-          } catch (e) {
-            debugPrint("❌ Error getting FCM Token during signup: $e");
-          }
-        }
-        
+        final fcmToken = await FCMHelper.getFCMToken();
+
         // Save additional user data to Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
@@ -452,17 +441,18 @@ class AuthController extends GetxController {
           'photoUrl': "",
           'createdAt': FieldValue.serverTimestamp(),
         });
-        
-  // Update the local user role
-  userRole.value = role;
-  // Load user data from Firestore to ensure userRole is set
-  await loadUserData(forceRefresh: true);
-  // Navigate based on the user's role
-  await navigateBasedOnRole();
+
+        // Update the local user role
+        userRole.value = role;
+        // Load user data from Firestore to ensure userRole is set
+        await loadUserData(forceRefresh: true);
+        // Navigate based on the user's role
+        await navigateBasedOnRole();
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
-        _safeSnackbar('Error', 'The email address is already in use by another account.');
+        _safeSnackbar(
+            'Error', 'The email address is already in use by another account.');
       } else {
         _safeSnackbar('Error', e.message ?? 'An error occurred during sign up');
       }
@@ -486,18 +476,20 @@ class AuthController extends GetxController {
         if (!kIsWeb) {
           try {
             // Request permissions first
-            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+            final settings = await FirebaseMessaging.instance.requestPermission(
               alert: true,
               badge: true,
               sound: true,
             );
-            
-            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-                settings.authorizationStatus == AuthorizationStatus.provisional) {
-              fcmToken = await FirebaseMessaging.instance.getToken();
-              debugPrint("✅ FCM Token obtained during admin signup: ${fcmToken?.substring(0, 20)}...");
+
+            if (settings.authorizationStatus ==
+                    AuthorizationStatus.authorized ||
+                settings.authorizationStatus ==
+                    AuthorizationStatus.provisional) {
+              fcmToken = await FCMHelper.getFCMToken();
             } else {
-              debugPrint("⚠️ Notification permissions not granted during admin signup: ${settings.authorizationStatus}");
+              debugPrint(
+                  "⚠️ Notification permissions not granted during admin signup: ${settings.authorizationStatus}");
             }
           } catch (e) {
             debugPrint("❌ Error getting FCM Token during admin signup: $e");
@@ -546,27 +538,27 @@ class AuthController extends GetxController {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       // Get FCM token for notifications
-       String? fcmToken;
-       if (!kIsWeb) {
-         try {
-           // Request permissions first
-           NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-             alert: true,
-             badge: true,
-             sound: true,
-           );
-           
-           if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-               settings.authorizationStatus == AuthorizationStatus.provisional) {
-             fcmToken = await FirebaseMessaging.instance.getToken();
-             debugPrint("✅ FCM Token obtained during createAdminUser: ${fcmToken?.substring(0, 20)}...");
-           } else {
-             debugPrint("⚠️ Notification permissions not granted during createAdminUser: ${settings.authorizationStatus}");
-           }
-         } catch (e) {
-           debugPrint("❌ Error getting FCM Token during createAdminUser: $e");
-         }
-       }
+      String? fcmToken;
+      if (!kIsWeb) {
+        try {
+          // Request permissions first
+          final settings = await FirebaseMessaging.instance.requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+
+          if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional) {
+            fcmToken = await FCMHelper.getFCMToken();
+          } else {
+            debugPrint(
+                "⚠️ Notification permissions not granted during createAdminUser: ${settings.authorizationStatus}");
+          }
+        } catch (e) {
+          debugPrint("❌ Error getting FCM Token during createAdminUser: $e");
+        }
+      }
 
       await FirebaseFirestore.instance
           .collection('users')
@@ -625,16 +617,17 @@ class AuthController extends GetxController {
         });
 
         profilePic.value = downloadUrl;
-        
+
         // Update cache with new profile picture
         try {
           final userCacheService = Get.find<UserCacheService>();
           await userCacheService.updateUserAvatar(user.uid, downloadUrl);
           debugPrint("AuthController: Profile picture cache updated");
         } catch (e) {
-          debugPrint("AuthController: Failed to update profile picture cache: $e");
+          debugPrint(
+              "AuthController: Failed to update profile picture cache: $e");
         }
-        
+
         debugPrint("AuthController: Profile picture updated successfully");
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
@@ -650,7 +643,8 @@ class AuthController extends GetxController {
   }
 
   /// Profile picture upload using bytes (for web platform)
-  Future<void> uploadProfilePictureFromBytes(Uint8List bytes, String fileName) async {
+  Future<void> uploadProfilePictureFromBytes(
+      Uint8List bytes, String fileName) async {
     final User? user = _auth.currentUser;
     if (user == null) {
       _safeSnackbar("Error", "User not logged in.");
@@ -683,16 +677,17 @@ class AuthController extends GetxController {
         });
 
         profilePic.value = downloadUrl;
-        
+
         // Update cache with new profile picture
         try {
           final userCacheService = Get.find<UserCacheService>();
           await userCacheService.updateUserAvatar(user.uid, downloadUrl);
           debugPrint("AuthController: Profile picture cache updated");
         } catch (e) {
-          debugPrint("AuthController: Failed to update profile picture cache: $e");
+          debugPrint(
+              "AuthController: Failed to update profile picture cache: $e");
         }
-        
+
         debugPrint("AuthController: Profile picture updated successfully");
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
@@ -723,29 +718,31 @@ class AuthController extends GetxController {
         'role': selectedRole.value,
         'profileComplete': true,
       };
-      
+
       await _firebaseService.updateUserData(user.uid, updatedData);
 
       fullName.value = fullNameController.text.trim();
       phoneNumber.value = phoneNumberController.text.trim();
       setUserRole(selectedRole.value);
       isProfileComplete.value = true;
-      
+
       // Update cache with new profile data
-       try {
-         final userCacheService = Get.find<UserCacheService>();
-         await userCacheService.updateUserInfo(user.uid, fullName: fullNameController.text.trim());
-         
-         // Get current cached data and merge with updates
-         final currentCachedData = await userCacheService.getCurrentUserData() ?? {};
-         await userCacheService.updateCurrentUserData({
-           ...currentCachedData,
-           ...updatedData,
-         });
-         debugPrint("AuthController: Profile data cache updated");
-       } catch (e) {
-         debugPrint("AuthController: Failed to update profile data cache: $e");
-       }
+      try {
+        final userCacheService = Get.find<UserCacheService>();
+        await userCacheService.updateUserInfo(user.uid,
+            fullName: fullNameController.text.trim());
+
+        // Get current cached data and merge with updates
+        final currentCachedData =
+            await userCacheService.getCurrentUserData() ?? {};
+        await userCacheService.updateCurrentUserData({
+          ...currentCachedData,
+          ...updatedData,
+        });
+        debugPrint("AuthController: Profile data cache updated");
+      } catch (e) {
+        debugPrint("AuthController: Failed to update profile data cache: $e");
+      }
 
       _safeSnackbar('Success', 'Profile updated successfully');
     } catch (e) {
@@ -760,34 +757,29 @@ class AuthController extends GetxController {
 
     try {
       // Request permissions first
-      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+      await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
-      
-      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional) {
-        String? token = await FirebaseMessaging.instance.getToken();
-        if (token != null && _auth.currentUser != null) {
-          debugPrint("✅ FCM Token obtained: ${token.substring(0, 20)}...");
-          await _firestore
-              .collection('users')
-              .doc(_auth.currentUser!.uid)
-              .update({"fcmToken": token});
-          debugPrint("✅ FCM Token saved to Firestore for user: ${_auth.currentUser!.uid}");
-        } else {
-          debugPrint("⚠️ FCM Token is null or user not authenticated");
-        }
+
+      String? token = await FCMHelper.getFCMToken();
+      if (token != null && _auth.currentUser != null) {
+        await _firestore
+            .collection('users')
+            .doc(_auth.currentUser!.uid)
+            .update({"fcmToken": token});
+        debugPrint(
+            "✅ FCM Token saved to Firestore for user: ${_auth.currentUser!.uid}");
       } else {
-        debugPrint("⚠️ Notification permissions not granted: ${settings.authorizationStatus}");
+        debugPrint("⚠️ FCM Token is null or user not authenticated");
       }
     } catch (e) {
       debugPrint("❌ Error saving FCM Token: $e");
     }
   }
 
-    Future<void> signIn(String email, String password) async {
+  Future<void> signIn(String email, String password) async {
     try {
       debugPrint("AuthController: Starting sign in process");
       isLoading(true);
@@ -798,9 +790,11 @@ class AuthController extends GetxController {
 
       if (credential.user == null) throw Exception("No user returned");
 
-      debugPrint("AuthController: User signed in successfully, loading user data");
+      debugPrint(
+          "AuthController: User signed in successfully, loading user data");
       await loadUserData();
-      debugPrint("AuthController: loadUserData completed, setting lastActivity");
+      debugPrint(
+          "AuthController: loadUserData completed, setting lastActivity");
       lastActivity.value = DateTime.now();
       debugPrint("AuthController: Setting presence to online");
       try {
@@ -810,11 +804,13 @@ class AuthController extends GetxController {
         debugPrint("AuthController: Presence setting failed, continuing: $e");
       }
 
-      debugPrint("AuthController: User data loaded, profile complete: ${isProfileComplete.value}");
+      debugPrint(
+          "AuthController: User data loaded, profile complete: ${isProfileComplete.value}");
       debugPrint("AuthController: User role: ${userRole.value}");
       debugPrint("AuthController: User full name: ${fullName.value}");
-      debugPrint("AuthController: Current route before navigation: ${Get.currentRoute}");
-      
+      debugPrint(
+          "AuthController: Current route before navigation: ${Get.currentRoute}");
+
       // Use a post-frame callback to ensure navigation happens after the current build phase
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!isProfileComplete.value) {
@@ -854,68 +850,78 @@ class AuthController extends GetxController {
     try {
       isLoading(true);
       debugPrint("AuthController: Starting Google sign-in");
-      
+
       if (_googleSignIn == null) {
-        debugPrint("AuthController: Google Sign-In not available on this platform");
+        debugPrint(
+            "AuthController: Google Sign-In not available on this platform");
         _safeSnackbar("Error", "Google Sign-In not available on this platform");
         isLoading(false);
         return;
       }
-      
+
       // Trigger the authentication flow
       debugPrint("AuthController: Calling _googleSignIn.signIn()");
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
+
       if (googleUser == null) {
         // User canceled the sign-in
         debugPrint("AuthController: Google sign-in canceled by user");
         isLoading(false);
         return;
       }
-      
+
       // Obtain the auth details from the request
       debugPrint("AuthController: Getting Google authentication details");
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      debugPrint("AuthController: Got access token: ${googleAuth.accessToken != null}");
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      debugPrint(
+          "AuthController: Got access token: ${googleAuth.accessToken != null}");
       debugPrint("AuthController: Got ID token: ${googleAuth.idToken != null}");
-      
+
       // Create a new credential
       debugPrint("AuthController: Creating Firebase credential");
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      
+
       // Sign in to Firebase with the Google credential
-      debugPrint("AuthController: Signing in to Firebase with Google credential");
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      debugPrint(
+          "AuthController: Signing in to Firebase with Google credential");
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
       debugPrint("AuthController: Firebase sign-in successful");
-      
-      if (userCredential.user == null) throw Exception("No user returned from Google sign in");
-      
+
+      if (userCredential.user == null) {
+        throw Exception("No user returned from Google sign in");
+      }
+
       // Check if this is a new user
-      final bool isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
-      
+      final bool isNewUser =
+          userCredential.additionalUserInfo?.isNewUser ?? false;
+
       if (isNewUser) {
         // Create user document for new Google users
         String? fcmToken;
         if (!kIsWeb) {
           try {
-            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+            final settings = await FirebaseMessaging.instance.requestPermission(
               alert: true,
               badge: true,
               sound: true,
             );
-            
-            if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-                settings.authorizationStatus == AuthorizationStatus.provisional) {
-              fcmToken = await FirebaseMessaging.instance.getToken();
+
+            if (settings.authorizationStatus ==
+                    AuthorizationStatus.authorized ||
+                settings.authorizationStatus ==
+                    AuthorizationStatus.provisional) {
+              fcmToken = await FCMHelper.getFCMToken();
             }
           } catch (e) {
             debugPrint("Error getting FCM Token during Google signup: $e");
           }
         }
-        
+
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
           'uid': userCredential.user!.uid,
           'email': userCredential.user!.email ?? '',
@@ -927,24 +933,24 @@ class AuthController extends GetxController {
           'createdAt': FieldValue.serverTimestamp(),
           'authProvider': 'google',
         });
-        
+
         userRole.value = 'Reporter';
         fullName.value = userCredential.user!.displayName ?? '';
         profilePic.value = userCredential.user!.photoURL ?? '';
-        
+
         _safeSnackbar('Success', 'Account created successfully with Google!');
         Get.offAllNamed("/profile-update");
       } else {
         // Existing user, load their data
         await loadUserData();
         lastActivity.value = DateTime.now();
-        
+
         try {
           await _handlePresence(true);
         } catch (e) {
           debugPrint("Presence setting failed: $e");
         }
-        
+
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (!isProfileComplete.value) {
             Get.offAllNamed("/profile-update");
@@ -952,16 +958,17 @@ class AuthController extends GetxController {
             // Ensure role is loaded before navigation
             int attempts = 0;
             while (userRole.value.isEmpty && attempts < 10) {
-              debugPrint("AuthController: Waiting for user role to load (attempt ${attempts + 1})");
+              debugPrint(
+                  "AuthController: Waiting for user role to load (attempt ${attempts + 1})");
               await Future.delayed(const Duration(milliseconds: 200));
               attempts++;
             }
-            debugPrint("AuthController: Role loaded: ${userRole.value}, navigating...");
+            debugPrint(
+                "AuthController: Role loaded: ${userRole.value}, navigating...");
             await navigateBasedOnRole();
           }
         });
       }
-      
     } on FirebaseAuthException catch (e) {
       debugPrint("Google sign in Firebase error: ${e.message}");
       _safeSnackbar("Error", _handleAuthError(e));
@@ -973,12 +980,11 @@ class AuthController extends GetxController {
     }
   }
 
-
-
   Future<void> assignTask(String taskId, String userId) async {
     try {
       isLoading.value = true;
-      final taskRef = FirebaseFirestore.instance.collection('tasks').doc(taskId);
+      final taskRef =
+          FirebaseFirestore.instance.collection('tasks').doc(taskId);
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final taskSnapshot = await transaction.get(taskRef);
@@ -987,7 +993,8 @@ class AuthController extends GetxController {
           throw Exception("Task does not exist!");
         }
 
-        List<dynamic> assignedUsers = taskSnapshot.data()?['assignedUsers'] ?? [];
+        List<dynamic> assignedUsers =
+            taskSnapshot.data()?['assignedUsers'] ?? [];
 
         if (assignedUsers.contains(userId)) {
           _safeSnackbar("Info", "User is already assigned to this task.");
@@ -995,7 +1002,8 @@ class AuthController extends GetxController {
         }
 
         if (assignedUsers.length >= 3) {
-          _safeSnackbar("Error", "This task has already been assigned to 3 users.");
+          _safeSnackbar(
+              "Error", "This task has already been assigned to 3 users.");
           return;
         }
 
@@ -1012,7 +1020,7 @@ class AuthController extends GetxController {
     }
   }
 
- Future<void> logout() async {
+  Future<void> logout() async {
     try {
       isLoading.value = true;
 
@@ -1032,7 +1040,8 @@ class AuthController extends GetxController {
           await cache.clearCache();
         }
       } catch (e) {
-        debugPrint("AuthController: Failed clearing user cache during logout: $e");
+        debugPrint(
+            "AuthController: Failed clearing user cache during logout: $e");
       }
 
       // 2. Then handle presence and auth signout
@@ -1049,7 +1058,8 @@ class AuthController extends GetxController {
         if (Get.context != null) {
           Get.offAllNamed("/login", arguments: {'fromLogout': true});
         } else {
-          debugPrint("AuthController: No context available for navigation after logout");
+          debugPrint(
+              "AuthController: No context available for navigation after logout");
         }
       });
     } catch (e) {
@@ -1079,7 +1089,8 @@ class AuthController extends GetxController {
           await cache.clearCache();
         }
       } catch (e) {
-        debugPrint("AuthController: Failed clearing user cache during signOut: $e");
+        debugPrint(
+            "AuthController: Failed clearing user cache during signOut: $e");
       }
 
       // Presence offline and Firebase sign out in parallel
@@ -1096,7 +1107,8 @@ class AuthController extends GetxController {
         if (Get.context != null) {
           Get.offAllNamed('/login', arguments: {'fromLogout': true});
         } else {
-          debugPrint("AuthController: No context available for navigation after signOut");
+          debugPrint(
+              "AuthController: No context available for navigation after signOut");
         }
       });
     } catch (e) {
@@ -1143,12 +1155,12 @@ class AuthController extends GetxController {
   Future<void> sendSignInLinkToEmail(String email) async {
     try {
       isLoading(true);
-      
+
       // Configure the action code settings
       final ActionCodeSettings actionCodeSettings = ActionCodeSettings(
         // URL you want to redirect back to. This should be a deep link to your app
         // For development, you can use a custom URL scheme
-        url: 'https://task-app.firebaseapp.com/email-link-signin',
+        url: ExternalUrls.emailLinkAuthUrl,
         // This must be true for email link authentication
         handleCodeInApp: true,
         iOSBundleId: 'com.example.task',
@@ -1165,7 +1177,7 @@ class AuthController extends GetxController {
 
       // Save the email locally so you can complete sign in on the same device
       await _saveEmailForSignIn(email.trim());
-      
+
       _safeSnackbar("Success", "Authentication link sent to your email");
     } on FirebaseAuthException catch (e) {
       debugPrint("AuthController: Firebase auth error: ${e.message}");
@@ -1183,7 +1195,7 @@ class AuthController extends GetxController {
   Future<void> signInWithEmailLink(String email, String emailLink) async {
     try {
       isLoading(true);
-      
+
       // Confirm the link is a sign-in with email link.
       if (!_auth.isSignInWithEmailLink(emailLink)) {
         throw Exception("Invalid email link");
@@ -1199,7 +1211,7 @@ class AuthController extends GetxController {
       debugPrint("AuthController: User signed in with email link successfully");
       await loadUserData();
       lastActivity.value = DateTime.now();
-      
+
       try {
         await _handlePresence(true);
         debugPrint("AuthController: Presence set successfully");
@@ -1209,7 +1221,7 @@ class AuthController extends GetxController {
 
       // Clear the saved email
       await _clearSavedEmail();
-      
+
       // Navigate based on profile completion and role
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!isProfileComplete.value) {
@@ -1264,15 +1276,16 @@ class AuthController extends GetxController {
     }
   }
 
-
   void _checkInactivity() {
     // Automatic logout disabled to keep users logged in
     // Users can manually logout if needed
     final now = DateTime.now();
-    debugPrint('Inactivity check: ${now.difference(lastActivity.value).inMinutes} minutes since last activity');
+    debugPrint(
+        'Inactivity check: ${now.difference(lastActivity.value).inMinutes} minutes since last activity');
     // Note: Automatic logout has been disabled for better user experience
     // Users will remain logged in until they manually logout
   }
+
   // Keep this in your auth controller for future debugging
   void printAuthState() {
     debugPrint('''

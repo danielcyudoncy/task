@@ -69,7 +69,8 @@ class AppLocalizations {
   // Initialize localization
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedLanguage = prefs.getString('selectedLanguage') ?? 'English (Default)';
+    final savedLanguage =
+        prefs.getString('selectedLanguage') ?? 'English (Default)';
     await changeLanguage(savedLanguage);
   }
 
@@ -79,13 +80,14 @@ class AppLocalizations {
     if (locale != null) {
       _currentLocale = locale;
       Get.updateLocale(locale);
-      
+
       // Save to preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('selectedLanguage', languageName);
-      
-      debugPrint('🌍 Language changed to: $languageName (${locale.languageCode})');
-      
+
+      debugPrint(
+          '🌍 Language changed to: $languageName (${locale.languageCode})');
+
       // Show warning for unsupported languages
       if (!isFullySupported(locale)) {
         Get.snackbar(
@@ -127,4 +129,4 @@ class AppLocalizations {
   String getLanguageNameFromLocale(Locale locale) {
     return localeToLanguageName[locale] ?? 'English (Default)';
   }
-} 
+}

@@ -17,7 +17,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
 
-
 class NewsSourcesCarousel extends StatefulWidget {
   final ColorScheme colorScheme;
 
@@ -81,7 +80,8 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
         'source': 'BBC News',
         'logo': 'assets/images/tv-logos/BBC News-01.png',
         'id': 'bbc-news',
-        'rss': 'https://feeds.bbci.co.uk/news/world/rss.xml', // Updated to world news feed
+        'rss':
+            'https://feeds.bbci.co.uk/news/world/rss.xml', // Updated to world news feed
       },
       {
         'source': 'CNN',
@@ -99,7 +99,8 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
         'source': 'Reuters',
         'logo': 'assets/images/tv-logos/reuters.png',
         'id': 'reuters',
-        'rss': 'https://www.reuters.com/rssFeed/topNews', // Updated to new Reuters feed
+        'rss':
+            'https://www.reuters.com/rssFeed/topNews', // Updated to new Reuters feed
       },
       {
         'source': 'Channels TV',
@@ -136,6 +137,7 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
       }
       return null;
     }
+
     return Column(
       children: [
         // (Removed header row with 'Major News Sources' and 'Tap to Visit')
@@ -151,7 +153,8 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
             }
             if (articles.isEmpty) {
               return Center(
-                child: Text('No news available', style: TextStyle(fontSize: 16.sp)),
+                child: Text('No news available',
+                    style: TextStyle(fontSize: 16.sp)),
               );
             }
             // For each static source, find the latest article for that source
@@ -161,7 +164,9 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
               final sourceId = sourceInfo['id']!;
               final rssUrl = sourceInfo['rss'] ?? '';
               final article = articles.firstWhereOrNull(
-                (a) => (a['source']?.toString().toLowerCase() ?? '') == sourceId.toLowerCase(),
+                (a) =>
+                    (a['source']?.toString().toLowerCase() ?? '') ==
+                    sourceId.toLowerCase(),
               );
               if (article != null) {
                 return Padding(
@@ -175,10 +180,12 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                           onTap: () {
                             final url = article['url'];
                             if (url != null && url.toString().isNotEmpty) {
-                              launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView,
-          browserConfiguration: const BrowserConfiguration(
-            showTitle: true,
-          ));
+                              launchUrl(Uri.parse(url),
+                                  mode: LaunchMode.inAppBrowserView,
+                                  browserConfiguration:
+                                      const BrowserConfiguration(
+                                    showTitle: true,
+                                  ));
                             }
                           },
                         )
@@ -190,10 +197,12 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                           onTap: () {
                             final url = article['url'];
                             if (url != null && url.toString().isNotEmpty) {
-                              launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView,
-            browserConfiguration: const BrowserConfiguration(
-              showTitle: true,
-            ));
+                              launchUrl(Uri.parse(url),
+                                  mode: LaunchMode.inAppBrowserView,
+                                  browserConfiguration:
+                                      const BrowserConfiguration(
+                                    showTitle: true,
+                                  ));
                             }
                           },
                         ),
@@ -205,7 +214,8 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                   child: FutureBuilder<Map<String, String>?>(
                     future: fetchLatestRssHeadline(rssUrl),
                     builder: (context, snapshot) {
-                      final rssHeadline = snapshot.data?['title'] ?? 'No headline available';
+                      final rssHeadline =
+                          snapshot.data?['title'] ?? 'No headline available';
                       final rssUrlLink = snapshot.data?['url'];
                       return NewsCarouselCard(
                         imagePath: logoPath,
@@ -214,10 +224,12 @@ class _NewsSourcesCarouselState extends State<NewsSourcesCarousel> {
                         timeAgo: '',
                         onTap: () {
                           if (rssUrlLink != null) {
-                            launchUrl(Uri.parse(rssUrlLink), mode: LaunchMode.inAppBrowserView,
-            browserConfiguration: const BrowserConfiguration(
-              showTitle: true,
-            ));
+                            launchUrl(Uri.parse(rssUrlLink),
+                                mode: LaunchMode.inAppBrowserView,
+                                browserConfiguration:
+                                    const BrowserConfiguration(
+                                  showTitle: true,
+                                ));
                           }
                         },
                       );

@@ -23,7 +23,7 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize NewsService with proper error handling
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
@@ -40,7 +40,7 @@ class _NewsScreenState extends State<NewsScreen> {
       if (await canLaunchUrl(uri)) {
         // Use inAppBrowserView to keep the app in memory and prevent restarts
         await launchUrl(
-          uri, 
+          uri,
           mode: LaunchMode.inAppBrowserView,
           browserConfiguration: const BrowserConfiguration(
             showTitle: true,
@@ -102,7 +102,7 @@ class _NewsScreenState extends State<NewsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
-    
+
     // Ensure NewsService is available
     if (_newsService == null) {
       try {
@@ -122,17 +122,16 @@ class _NewsScreenState extends State<NewsScreen> {
         );
       }
     }
-    
+
     return Scaffold(
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-             color: Theme.of(context).brightness == Brightness.dark
+            color: Theme.of(context).brightness == Brightness.dark
                 ? [Colors.grey[900]!, Colors.grey[800]!]
                     .reduce((value, element) => value)
                 : Theme.of(context).colorScheme.primary,
           ),
-
           child: Column(
             children: [
               // Custom App Bar
@@ -165,7 +164,8 @@ class _NewsScreenState extends State<NewsScreen> {
                               title: Text('search_news'.tr),
                               content: TextField(
                                 autofocus: true,
-                                decoration: InputDecoration(hintText: 'search_news_hint'.tr),
+                                decoration: InputDecoration(
+                                    hintText: 'search_news_hint'.tr),
                                 onChanged: (value) {
                                   searchText = value;
                                 },
@@ -176,7 +176,8 @@ class _NewsScreenState extends State<NewsScreen> {
                                   child: Text('cancel'.tr),
                                 ),
                                 ElevatedButton(
-                                  onPressed: () => Navigator.of(context).pop(searchText),
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(searchText),
                                   child: Text('search'.tr),
                                 ),
                               ],
@@ -193,7 +194,7 @@ class _NewsScreenState extends State<NewsScreen> {
                   ],
                 ),
               ),
-              
+
               // Main Content Container
               Expanded(
                 child: Container(
@@ -217,7 +218,8 @@ class _NewsScreenState extends State<NewsScreen> {
                             SizedBox(
                               width: 403.w,
                               height: 326.h,
-                              child: NewsSourcesCarousel(colorScheme: theme.colorScheme),
+                              child: NewsSourcesCarousel(
+                                  colorScheme: theme.colorScheme),
                             ),
                             SizedBox(height: 16.h),
                             // News Category Filter
@@ -234,7 +236,8 @@ class _NewsScreenState extends State<NewsScreen> {
                             SizedBox(height: 16.h),
                             // Manual Refresh Button for Testing
                             Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: theme.colorScheme.primary,
@@ -242,7 +245,8 @@ class _NewsScreenState extends State<NewsScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 12),
                                   textStyle: TextStyle(
                                     fontSize: 16.sp,
                                     fontWeight: FontWeight.w600,
@@ -252,13 +256,14 @@ class _NewsScreenState extends State<NewsScreen> {
                                   try {
                                     if (_newsService != null) {
                                       _newsService!.fetchNews();
-                                    } else {
-                                    }
+                                    } else {}
                                   } catch (e) {
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
-                                          content: Text('error_launching_url'.tr),
+                                          content:
+                                              Text('error_launching_url'.tr),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
@@ -282,23 +287,44 @@ class _NewsScreenState extends State<NewsScreen> {
                                 );
                               }
                               // Get articles filtered by category
-                              var filteredArticles = _newsService!.getNewsByCategory(_selectedCategory);
+                              var filteredArticles = _newsService!
+                                  .getNewsByCategory(_selectedCategory);
                               // Apply search filter if search text is not empty
                               if (_searchController.text.isNotEmpty) {
-                                filteredArticles = filteredArticles.where((article) {
-                                  final query = _searchController.text.toLowerCase();
-                                  final title = article['title']?.toString().toLowerCase() ?? '';
-                                  final summary = article['summary']?.toString().toLowerCase() ?? '';
-                                  final content = article['content']?.toString().toLowerCase() ?? '';
-                                  final source = article['source']?.toString().toLowerCase() ?? '';
-                                  final author = article['author']?.toString().toLowerCase() ?? '';
-                                  final category = article['category']?.toString().toLowerCase() ?? '';
+                                filteredArticles =
+                                    filteredArticles.where((article) {
+                                  final query =
+                                      _searchController.text.toLowerCase();
+                                  final title = article['title']
+                                          ?.toString()
+                                          .toLowerCase() ??
+                                      '';
+                                  final summary = article['summary']
+                                          ?.toString()
+                                          .toLowerCase() ??
+                                      '';
+                                  final content = article['content']
+                                          ?.toString()
+                                          .toLowerCase() ??
+                                      '';
+                                  final source = article['source']
+                                          ?.toString()
+                                          .toLowerCase() ??
+                                      '';
+                                  final author = article['author']
+                                          ?.toString()
+                                          .toLowerCase() ??
+                                      '';
+                                  final category = article['category']
+                                          ?.toString()
+                                          .toLowerCase() ??
+                                      '';
                                   return title.contains(query) ||
-                                         summary.contains(query) ||
-                                         content.contains(query) ||
-                                         source.contains(query) ||
-                                         author.contains(query) ||
-                                         category.contains(query);
+                                      summary.contains(query) ||
+                                      content.contains(query) ||
+                                      source.contains(query) ||
+                                      author.contains(query) ||
+                                      category.contains(query);
                                 }).toList();
                               }
                               if (filteredArticles.isEmpty) {
@@ -313,9 +339,11 @@ class _NewsScreenState extends State<NewsScreen> {
                                       ),
                                       SizedBox(height: 16.h),
                                       Text(
-                                        _selectedCategory == 'All' || _selectedCategory == 'All News'
+                                        _selectedCategory == 'All' ||
+                                                _selectedCategory == 'All News'
                                             ? 'no_news_articles_found'.tr
-                                            : 'no_news_articles_found_in_category'.tr,
+                                            : 'no_news_articles_found_in_category'
+                                                .tr,
                                         style: TextStyle(
                                           fontSize: 16.sp,
                                           color: Colors.grey[600],
@@ -324,12 +352,16 @@ class _NewsScreenState extends State<NewsScreen> {
                                       SizedBox(height: 8.h),
                                       ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: theme.colorScheme.primary,
-                                          foregroundColor: theme.colorScheme.onPrimary,
+                                          backgroundColor:
+                                              theme.colorScheme.primary,
+                                          foregroundColor:
+                                              theme.colorScheme.onPrimary,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
                                           ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 12),
                                           textStyle: TextStyle(
                                             fontSize: 16.sp,
                                             fontWeight: FontWeight.w600,
@@ -349,8 +381,10 @@ class _NewsScreenState extends State<NewsScreen> {
                               return Column(
                                 children: filteredArticles.map((article) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    child: _buildNewsCard(article, primaryColor),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                    child:
+                                        _buildNewsCard(article, primaryColor),
                                   );
                                 }).toList(),
                               );
@@ -400,9 +434,10 @@ class _NewsScreenState extends State<NewsScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       image: DecorationImage(
-                        image: article['imageUrl'].toString().startsWith('assets/')
-                            ? AssetImage(article['imageUrl'])
-                            : NetworkImage(article['imageUrl']),
+                        image:
+                            article['imageUrl'].toString().startsWith('assets/')
+                                ? AssetImage(article['imageUrl'])
+                                : NetworkImage(article['imageUrl']),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -423,7 +458,11 @@ class _NewsScreenState extends State<NewsScreen> {
                   _stripHtmlTags(article['summary'] ?? ''),
                   style: TextStyle(
                     fontSize: 14.sp,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.8 * 255).round()),
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withAlpha((0.8 * 255).round()),
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
@@ -434,7 +473,10 @@ class _NewsScreenState extends State<NewsScreen> {
                     Icon(
                       Icons.source,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -442,7 +484,10 @@ class _NewsScreenState extends State<NewsScreen> {
                         article['source'] ?? 'unknown_source'.tr,
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -450,14 +495,20 @@ class _NewsScreenState extends State<NewsScreen> {
                     Icon(
                       Icons.access_time,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _formatDate(article['date'] ?? ''),
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7),
                       ),
                     ),
                   ],

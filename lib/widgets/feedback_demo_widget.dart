@@ -2,20 +2,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../service/enhanced_notification_service.dart';
+
 /// Demo widget showcasing the enhanced notification system
 class FeedbackDemoWidget extends StatefulWidget {
   const FeedbackDemoWidget({super.key});
-  
+
   @override
   State<FeedbackDemoWidget> createState() => _FeedbackDemoWidgetState();
 }
 
 class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
-  final EnhancedNotificationService _notificationService = Get.find<EnhancedNotificationService>();
-  
+  final EnhancedNotificationService _notificationService =
+      Get.find<EnhancedNotificationService>();
+
   double _loadingProgress = 0.0;
   String? _currentLoadingId;
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,21 +56,18 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                   icon: Icons.check_circle,
                   onPressed: () => _showSuccessNotification(),
                 ),
-                
                 _buildNotificationButton(
                   label: 'error_notification'.tr,
                   color: Colors.red,
                   icon: Icons.error,
                   onPressed: () => _showErrorNotification(),
                 ),
-                
                 _buildNotificationButton(
                   label: 'warning_notification'.tr,
                   color: Colors.orange,
                   icon: Icons.warning,
                   onPressed: () => _showWarningNotification(),
                 ),
-                
                 _buildNotificationButton(
                   label: 'info_notification'.tr,
                   color: Colors.blue,
@@ -77,9 +76,9 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Interactive notifications section
             _buildSection(
               title: 'interactive_notifications'.tr,
@@ -90,14 +89,12 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                   icon: Icons.hourglass_empty,
                   onPressed: () => _showLoadingNotification(),
                 ),
-                
                 _buildNotificationButton(
                   label: 'confirmation_dialog'.tr,
                   color: Colors.amber,
                   icon: Icons.help,
                   onPressed: () => _showConfirmationNotification(),
                 ),
-                
                 _buildNotificationButton(
                   label: 'action_notification'.tr,
                   color: Colors.indigo,
@@ -106,9 +103,9 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Batch operations section
             _buildSection(
               title: 'batch_operations'.tr,
@@ -119,7 +116,6 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                   icon: Icons.queue,
                   onPressed: () => _showMultipleNotifications(),
                 ),
-                
                 _buildNotificationButton(
                   label: 'clear_all_notifications'.tr,
                   color: Colors.grey,
@@ -128,9 +124,9 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Statistics section
             _buildSection(
               title: 'notification_statistics'.tr,
@@ -143,7 +139,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ),
     );
   }
-  
+
   Widget _buildSection({
     required String title,
     required List<Widget> children,
@@ -157,8 +153,8 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 16),
             ...children,
@@ -167,7 +163,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ),
     );
   }
-  
+
   Widget _buildNotificationButton({
     required String label,
     required Color color,
@@ -191,7 +187,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ),
     );
   }
-  
+
   Widget _buildStatisticsCard(Map<String, dynamic> stats) {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -245,7 +241,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ),
     );
   }
-  
+
   Widget _buildStatItem({
     required String label,
     required String value,
@@ -263,9 +259,9 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
         Text(
           value,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
         ),
         Text(
           label,
@@ -275,9 +271,9 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ],
     );
   }
-  
+
   // Notification methods
-  
+
   void _showSuccessNotification() {
     _notificationService.showSuccess(
       title: 'success'.tr,
@@ -285,7 +281,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       duration: const Duration(seconds: 3),
     );
   }
-  
+
   void _showErrorNotification() {
     _notificationService.showError(
       title: 'error_occurred'.tr,
@@ -308,7 +304,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ],
     );
   }
-  
+
   void _showWarningNotification() {
     _notificationService.showWarning(
       title: 'warning'.tr,
@@ -332,7 +328,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ],
     );
   }
-  
+
   void _showInfoNotification() {
     _notificationService.showInfo(
       title: 'tip'.tr,
@@ -340,25 +336,25 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       duration: const Duration(seconds: 5),
     );
   }
-  
+
   void _showLoadingNotification() {
     _loadingProgress = 0.0;
-    
+
     _currentLoadingId = _notificationService.showLoading(
       title: 'syncing_data'.tr,
       message: 'please_wait_while_syncing'.tr,
     );
-    
+
     // Simulate progress
     _simulateProgress();
   }
-  
+
   void _showConfirmationNotification() async {
     final confirmed = await _notificationService.showConfirmation(
       title: 'delete_task'.tr,
       message: 'are_you_sure_delete_task'.tr,
     );
-    
+
     if (confirmed) {
       _notificationService.showSuccess(
         title: 'deleted'.tr,
@@ -371,7 +367,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       );
     }
   }
-  
+
   void _showActionNotification() {
     final notification = NotificationItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -408,35 +404,35 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       duration: const Duration(seconds: 10),
       timestamp: DateTime.now(),
     );
-    
+
     _notificationService.showCustom(notification);
   }
-  
+
   void _showMultipleNotifications() {
     final notifications = [
       () => _notificationService.showInfo(
-        title: 'step_1'.tr,
-        message: 'preparing_data'.tr,
-      ),
+            title: 'step_1'.tr,
+            message: 'preparing_data'.tr,
+          ),
       () => _notificationService.showInfo(
-        title: 'step_2'.tr,
-        message: 'validating_input'.tr,
-      ),
+            title: 'step_2'.tr,
+            message: 'validating_input'.tr,
+          ),
       () => _notificationService.showWarning(
-        title: 'step_3'.tr,
-        message: 'found_potential_issues'.tr,
-      ),
+            title: 'step_3'.tr,
+            message: 'found_potential_issues'.tr,
+          ),
       () => _notificationService.showSuccess(
-        title: 'completed'.tr,
-        message: 'all_steps_completed'.tr,
-      ),
+            title: 'completed'.tr,
+            message: 'all_steps_completed'.tr,
+          ),
     ];
-    
+
     for (int i = 0; i < notifications.length; i++) {
       Future.delayed(Duration(milliseconds: i * 500), notifications[i]);
     }
   }
-  
+
   void _showNotificationQueue() {
     showModalBottomSheet(
       context: context,
@@ -465,7 +461,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Content
               Expanded(
                 child: _buildNotificationQueue(),
@@ -476,18 +472,18 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       ),
     );
   }
-  
+
   Map<String, dynamic> _getStatistics() {
     return _notificationService.getStatistics();
   }
-  
+
   Widget _buildNotificationQueue() {
     return StreamBuilder<List<NotificationItem>>(
       stream: _notificationService.queueStream,
       initialData: _notificationService.notifications,
       builder: (context, snapshot) {
         final notifications = snapshot.data ?? [];
-        
+
         if (notifications.isEmpty) {
           return Center(
             child: Column(
@@ -502,14 +498,14 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                 Text(
                   'no_notifications'.tr,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).disabledColor,
-                  ),
+                        color: Theme.of(context).disabledColor,
+                      ),
                 ),
               ],
             ),
           );
         }
-        
+
         return Column(
           children: [
             // Header
@@ -520,8 +516,8 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                   Text(
                     'notifications'.tr,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                   const Spacer(),
                   if (notifications.isNotEmpty)
@@ -536,7 +532,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                 ],
               ),
             ),
-            
+
             // Notification list
             Expanded(
               child: ListView.builder(
@@ -562,14 +558,16 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
                           const SizedBox(height: 4),
                           Text(
                             _formatTimestamp(notification.timestamp),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).disabledColor,
-                            ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).disabledColor,
+                                    ),
                           ),
                         ],
                       ),
                       trailing: IconButton(
-                        onPressed: () => _notificationService.dismissNotification(notification.id),
+                        onPressed: () => _notificationService
+                            .dismissNotification(notification.id),
                         icon: const Icon(Icons.close),
                       ),
                       onTap: () {
@@ -586,7 +584,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       },
     );
   }
-  
+
   Color _getNotificationColor(NotificationType type) {
     switch (type) {
       case NotificationType.success:
@@ -605,7 +603,7 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
         return Colors.grey;
     }
   }
-  
+
   IconData _getNotificationIcon(NotificationType type) {
     switch (type) {
       case NotificationType.success:
@@ -624,11 +622,11 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
         return Icons.notifications;
     }
   }
-  
+
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-    
+
     if (difference.inSeconds < 60) {
       return 'just_now'.tr;
     } else if (difference.inMinutes < 60) {
@@ -639,22 +637,22 @@ class _FeedbackDemoWidgetState extends State<FeedbackDemoWidget> {
       return '${difference.inDays}d ago';
     }
   }
-  
+
   void _simulateProgress() {
     if (_currentLoadingId == null) return;
-    
+
     const duration = Duration(milliseconds: 100);
     const increment = 0.05;
-    
+
     Future.delayed(duration, () {
       if (_loadingProgress < 1.0 && _currentLoadingId != null) {
         _loadingProgress += increment;
-        
+
         _notificationService.updateLoading(
           _currentLoadingId!,
           progress: _loadingProgress,
         );
-        
+
         if (_loadingProgress < 1.0) {
           _simulateProgress();
         } else {

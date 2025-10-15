@@ -1,7 +1,7 @@
 // controllers/librarian_task_controller.dart
-// ignore_for_file: empty_catches
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 class LibrarianTaskController extends GetxController {
@@ -78,6 +78,7 @@ class LibrarianTaskController extends GetxController {
         return {'id': doc.id, ...doc.data()};
       }).toList();
     } catch (e) {
+      debugPrint('LibrarianTaskController: Error fetching archived tasks: $e');
     }
   }
 
@@ -92,6 +93,7 @@ class LibrarianTaskController extends GetxController {
       await fetchArchivedTasks();
       await fetchCompletedTasks(); // remove from active
     } catch (e) {
+      debugPrint('LibrarianTaskController: Error archiving task $taskId: $e');
     }
   }
 
@@ -108,6 +110,7 @@ class LibrarianTaskController extends GetxController {
       });
       await refreshAll();
     } catch (e) {
+      debugPrint('LibrarianTaskController: Error updating task tags/categories for $taskId: $e');
     }
   }
 

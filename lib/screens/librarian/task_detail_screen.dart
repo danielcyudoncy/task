@@ -1,20 +1,19 @@
-// views/librarian/task_detail_screen.dart
+// screens/librarian/task_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/task_controller.dart';
 
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/service/export_service.dart';
 import 'package:task/service/pdf_export_service.dart';
 import 'package:task/utils/constants/app_sizes.dart';
 import 'package:task/utils/devices/app_devices.dart';
 import 'package:task/widgets/task_action_utility.dart';
 
-
 class TaskDetailScreen extends StatefulWidget {
   final Task task;
-  
+
   const TaskDetailScreen({super.key, required this.task});
 
   @override
@@ -24,11 +23,9 @@ class TaskDetailScreen extends StatefulWidget {
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final TaskController _taskController = Get.find<TaskController>();
   final DateFormat _dateFormat = DateFormat('MMM d, y');
-  
+
   bool _isLoading = false;
   String? _errorMessage;
-
-
 
   @override
   void initState() {
@@ -39,18 +36,18 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       });
     }
   }
-  
+
   // Helper method to safely get task ID
   String get _taskId => widget.task.taskId;
 
   Future<void> _handleTaskAction(Future<void> Function() action) async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    
+
     try {
       await action();
       if (mounted) {
@@ -109,7 +106,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 const SizedBox(height: AppSizes.md),
                 Text(
                   _errorMessage!,
-                  style: textTheme.bodyLarge?.copyWith(color: colorScheme.error),
+                  style:
+                      textTheme.bodyLarge?.copyWith(color: colorScheme.error),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSizes.lg),
@@ -191,73 +189,75 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            // Header with status and dates
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (widget.task.status.isNotEmpty)
-                  Chip(
-                    label: Text(
-                      widget.task.status,
-                      style: TextStyle(
-                        color: _getStatusColor(widget.task.status, colorScheme),
+              // Header with status and dates
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (widget.task.status.isNotEmpty)
+                    Chip(
+                      label: Text(
+                        widget.task.status,
+                        style: TextStyle(
+                          color:
+                              _getStatusColor(widget.task.status, colorScheme),
+                        ),
                       ),
+                      backgroundColor: _getStatusBackgroundColor(
+                          widget.task.status, colorScheme),
                     ),
-                    backgroundColor: _getStatusBackgroundColor(widget.task.status, colorScheme),
+                  Text(
+                    'Created: ${_dateFormat.format(widget.task.timestamp)}',
+                    style: textTheme.bodySmall,
                   ),
-                Text(
-                  'Created: ${_dateFormat.format(widget.task.timestamp)}',
-                  style: textTheme.bodySmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.spaceBtwSections),
-            
-            // Task Title
-            Text(
-              widget.task.title,
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: isTablet ? 28 : null,
+                ],
               ),
-            ),
-            const SizedBox(height: AppSizes.sm),
-            
-            // Assigned To
-            if (widget.task.assignedReporterId != null || 
-                widget.task.assignedCameramanId != null ||
-                widget.task.assignedDriverId != null ||
-                widget.task.assignedLibrarianId != null) ...[
-              _buildAssignedToSection(),
-              const Divider(),
-            ] else if (widget.task.description.isNotEmpty) ...[
-              // This ensures the divider is added before the description if there are no assigned users
-              const Divider(),
-            ] else ...[
-              // No assigned users and no description, so we don't need to add anything
-            ],
-            
-            // Description
-            if (widget.task.description.isNotEmpty) ...[
+              const SizedBox(height: AppSizes.spaceBtwSections),
+
+              // Task Title
               Text(
-                'Description',
-                style: textTheme.titleMedium?.copyWith(
+                widget.task.title,
+                style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: isTablet ? 28 : null,
                 ),
               ),
-              const SizedBox(height: AppSizes.xs),
-              Text(widget.task.description),
-              const SizedBox(height: AppSizes.spaceBtwSections),
-            ],
-            
-            // Metadata Section
-            _buildMetadataSection(),
-            
-            // Tags
-            if (widget.task.tags.isNotEmpty) ...[
-              const SizedBox(height: AppSizes.spaceBtwSections),
-              _buildTagsSection(),
-            ],
+              const SizedBox(height: AppSizes.sm),
+
+              // Assigned To
+              if (widget.task.assignedReporterId != null ||
+                  widget.task.assignedCameramanId != null ||
+                  widget.task.assignedDriverId != null ||
+                  widget.task.assignedLibrarianId != null) ...[
+                _buildAssignedToSection(),
+                const Divider(),
+              ] else if (widget.task.description.isNotEmpty) ...[
+                // This ensures the divider is added before the description if there are no assigned users
+                const Divider(),
+              ] else ...[
+                // No assigned users and no description, so we don't need to add anything
+              ],
+
+              // Description
+              if (widget.task.description.isNotEmpty) ...[
+                Text(
+                  'Description',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AppSizes.xs),
+                Text(widget.task.description),
+                const SizedBox(height: AppSizes.spaceBtwSections),
+              ],
+
+              // Metadata Section
+              _buildMetadataSection(),
+
+              // Tags
+              if (widget.task.tags.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.spaceBtwSections),
+                _buildTagsSection(),
+              ],
             ],
           ),
         ),
@@ -288,7 +288,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             DateFormat('MMM d, y').format(widget.task.dueDate!),
           ),
         _buildMetadataItem('Created By', _getCreatorName()),
-        if (widget.task.status.toLowerCase() == 'completed' && widget.task.lastModified != null)
+        if (widget.task.status.toLowerCase() == 'completed' &&
+            widget.task.lastModified != null)
           _buildMetadataItem(
             'Completed On',
             DateFormat('MMM d, y').format(widget.task.lastModified!),
@@ -322,8 +323,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     );
   }
 
-
-
   Widget _buildTagsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +337,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          children: widget.task.tags.map((tag) => Chip(label: Text(tag))).toList(),
+          children:
+              widget.task.tags.map((tag) => Chip(label: Text(tag))).toList(),
         ),
       ],
     );
@@ -484,7 +484,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Widget _buildAssignedToSection() {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -501,22 +501,26 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           children: [
             if (widget.task.assignedReporterId != null)
               _buildAssignedChip(
-                widget.task.assignedReporter ?? 'Reporter #${widget.task.assignedReporterId}',
+                widget.task.assignedReporter ??
+                    'Reporter #${widget.task.assignedReporterId}',
                 Icons.person_outline,
               ),
             if (widget.task.assignedCameramanId != null)
               _buildAssignedChip(
-                widget.task.assignedCameraman ?? 'Cameraman #${widget.task.assignedCameramanId}',
+                widget.task.assignedCameraman ??
+                    'Cameraman #${widget.task.assignedCameramanId}',
                 Icons.videocam_outlined,
               ),
             if (widget.task.assignedDriverId != null)
               _buildAssignedChip(
-                widget.task.assignedDriver ?? 'Driver #${widget.task.assignedDriverId}',
+                widget.task.assignedDriver ??
+                    'Driver #${widget.task.assignedDriverId}',
                 Icons.drive_eta_outlined,
               ),
             if (widget.task.assignedLibrarianId != null)
               _buildAssignedChip(
-                widget.task.assignedLibrarian ?? 'Librarian #${widget.task.assignedLibrarianId}',
+                widget.task.assignedLibrarian ??
+                    'Librarian #${widget.task.assignedLibrarianId}',
                 Icons.menu_book_outlined,
               ),
           ],
@@ -528,7 +532,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   Widget _buildAssignedChip(String name, IconData icon) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.sm,

@@ -9,7 +9,8 @@ class PendingTasksDialog {
   static void show({
     required BuildContext context,
     required Map<String, Map<String, String>> userCache,
-    required Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole,
+    required Future<Map<String, String>> Function(String, VoidCallback)
+        getUserNameAndRole,
     required Function(String) onTaskTap,
   }) {
     final AdminController adminController = Get.find<AdminController>();
@@ -44,7 +45,8 @@ class PendingTasksDialog {
             child: Column(
               children: [
                 _buildHeader(context, tasks),
-                _buildContent(context, tasks, docs, userCache, getUserNameAndRole, onTaskTap),
+                _buildContent(context, tasks, docs, userCache,
+                    getUserNameAndRole, onTaskTap),
                 _buildFooter(context),
               ],
             ),
@@ -93,7 +95,7 @@ class PendingTasksDialog {
                   ),
                 ),
                 Text(
-                  tasks.isEmpty 
+                  tasks.isEmpty
                       ? 'All tasks completed! 🎉'
                       : '${tasks.length} task${tasks.length != 1 ? 's' : ''} awaiting completion',
                   style: TextStyle(
@@ -113,7 +115,8 @@ class PendingTasksDialog {
               size: 24,
             ),
             style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.onPrimary.withAlpha(2),
+              backgroundColor:
+                  Theme.of(context).colorScheme.onPrimary.withAlpha(2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -129,7 +132,8 @@ class PendingTasksDialog {
     List<String> tasks,
     List<Map<String, dynamic>> docs,
     Map<String, Map<String, String>> userCache,
-    Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole,
+    Future<Map<String, String>> Function(String, VoidCallback)
+        getUserNameAndRole,
     Function(String) onTaskTap,
   ) {
     return Expanded(
@@ -144,7 +148,8 @@ class PendingTasksDialog {
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
                     final title = tasks[index];
-                    final doc = docs.firstWhereOrNull((d) => d['title'] == title);
+                    final doc =
+                        docs.firstWhereOrNull((d) => d['title'] == title);
 
                     final creatorId = doc?['createdBy'] ?? 'Unknown';
                     final userInfo = userCache[creatorId];
@@ -165,12 +170,15 @@ class PendingTasksDialog {
                       } else if (createdAt is DateTime) {
                         dt = createdAt;
                       } else {
-                        dt = DateTime.tryParse(createdAt.toString()) ?? DateTime.now();
+                        dt = DateTime.tryParse(createdAt.toString()) ??
+                            DateTime.now();
                       }
-                      dateStr = "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+                      dateStr =
+                          "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
                     }
 
-                    return _buildTaskItem(context, title, creatorName, creatorRole, dateStr, onTaskTap);
+                    return _buildTaskItem(context, title, creatorName,
+                        creatorRole, dateStr, onTaskTap);
                   },
                 ),
               ),
@@ -285,14 +293,16 @@ class PendingTasksDialog {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? Colors.white
                                   : const Color(0xFF2C3E50),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: const Color(0xFF4A90E2),
                               borderRadius: BorderRadius.circular(8),
@@ -325,9 +335,10 @@ class PendingTasksDialog {
                           dateStr,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white70
-                                : Colors.grey[600],
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white70
+                                    : Colors.grey[600],
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

@@ -1,14 +1,14 @@
 // service/duplicate_detection_service.dart
 import 'package:get/get.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/service/task_service.dart';
 
 class DuplicateDetectionService extends GetxService {
   static DuplicateDetectionService get to => Get.find();
-  
+
   final TaskService _taskService;
   bool _isInitialized = false;
-  
+
   DuplicateDetectionService({
     TaskService? taskService,
   }) : _taskService = taskService ?? Get.find<TaskService>();
@@ -16,7 +16,7 @@ class DuplicateDetectionService extends GetxService {
   /// Initializes the duplicate detection service
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     try {
       Get.log('DuplicateDetectionService: Initializing...');
       _isInitialized = true;
@@ -103,9 +103,9 @@ class DuplicateDetectionService extends GetxService {
       final exactDuplicates = localTasks.where((task) {
         final taskTitle = _normalizeText(task.title);
         final taskDescription = _normalizeText(task.description);
-        
-        return taskTitle == normalizedTitle && 
-               taskDescription == normalizedDescription;
+
+        return taskTitle == normalizedTitle &&
+            taskDescription == normalizedDescription;
       }).toList();
 
       return exactDuplicates;
@@ -132,13 +132,17 @@ class DuplicateDetectionService extends GetxService {
     factors++;
 
     // Description similarity (weight: 30%)
-    final descriptionSimilarity = _calculateTextSimilarity(description, existingTask.description);
+    final descriptionSimilarity =
+        _calculateTextSimilarity(description, existingTask.description);
     totalScore += descriptionSimilarity * 0.3;
     factors++;
 
     // Category similarity (weight: 15%)
     if (category != null && existingTask.category != null) {
-      final categorySimilarity = category.toLowerCase() == existingTask.category!.toLowerCase() ? 1.0 : 0.0;
+      final categorySimilarity =
+          category.toLowerCase() == existingTask.category!.toLowerCase()
+              ? 1.0
+              : 0.0;
       totalScore += categorySimilarity * 0.15;
       factors++;
     }
@@ -158,8 +162,10 @@ class DuplicateDetectionService extends GetxService {
     if (text1.isEmpty && text2.isEmpty) return 1.0;
     if (text1.isEmpty || text2.isEmpty) return 0.0;
 
-    final words1 = _normalizeText(text1).split(' ').where((w) => w.isNotEmpty).toSet();
-    final words2 = _normalizeText(text2).split(' ').where((w) => w.isNotEmpty).toSet();
+    final words1 =
+        _normalizeText(text1).split(' ').where((w) => w.isNotEmpty).toSet();
+    final words2 =
+        _normalizeText(text2).split(' ').where((w) => w.isNotEmpty).toSet();
 
     if (words1.isEmpty && words2.isEmpty) return 1.0;
     if (words1.isEmpty || words2.isEmpty) return 0.0;
@@ -175,8 +181,10 @@ class DuplicateDetectionService extends GetxService {
     if (tags1.isEmpty && tags2.isEmpty) return 1.0;
     if (tags1.isEmpty || tags2.isEmpty) return 0.0;
 
-    final normalizedTags1 = tags1.map((tag) => tag.toLowerCase().trim()).toSet();
-    final normalizedTags2 = tags2.map((tag) => tag.toLowerCase().trim()).toSet();
+    final normalizedTags1 =
+        tags1.map((tag) => tag.toLowerCase().trim()).toSet();
+    final normalizedTags2 =
+        tags2.map((tag) => tag.toLowerCase().trim()).toSet();
 
     final intersection = normalizedTags1.intersection(normalizedTags2).length;
     final union = normalizedTags1.union(normalizedTags2).length;
@@ -342,13 +350,14 @@ class DuplicateCheckResult {
     this.highestSimilarityScore,
   });
 
-  bool get hasDuplicates => hasExactDuplicates || potentialDuplicates.isNotEmpty;
+  bool get hasDuplicates =>
+      hasExactDuplicates || potentialDuplicates.isNotEmpty;
 }
 
 /// Recommendation for handling duplicates
 enum DuplicateRecommendation {
-  allow,    // No significant duplicates found
-  suggest,  // Low similarity, suggest reviewing
-  warn,     // Medium similarity, warn user
-  block,    // High similarity, block creation
+  allow, // No significant duplicates found
+  suggest, // Low similarity, suggest reviewing
+  warn, // Medium similarity, warn user
+  block, // High similarity, block creation
 }

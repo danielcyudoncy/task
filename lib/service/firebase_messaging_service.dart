@@ -75,7 +75,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (!Firebase.apps.isNotEmpty) {
     await Firebase.initializeApp();
   }
-  
+
   if (kDebugMode) {
     debugPrint("Handling background message: ${message.messageId}");
   }

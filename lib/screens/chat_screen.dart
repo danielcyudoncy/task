@@ -14,6 +14,7 @@ import '../widgets/chat_nav_bar.dart';
 import '../controllers/wallpaper_controller.dart';
 // Import the UserNavBar
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../utils/constants/app_constants.dart';
 
 // Helper function
 bool isSameDay(Timestamp? a, Timestamp? b) {
@@ -71,7 +72,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Timer? _typingTimer;
   StreamSubscription? _typingSubscription;
   bool _shouldScrollToBottom = true;
-  final WallpaperController _wallpaperController = Get.put(WallpaperController());
+  final WallpaperController _wallpaperController =
+      Get.put(WallpaperController());
 
   @override
   void initState() {
@@ -80,11 +82,10 @@ class _ChatScreenState extends State<ChatScreen> {
     conversationId = widget.conversationId!;
     final rtdb = FirebaseDatabase.instanceFor(
       app: Firebase.app(),
-      databaseURL:
-          'https://task-e5a96-default-rtdb.firebaseio.com', 
+      databaseURL: ExternalUrls.firebaseRtdbUrl,
     );
 
-   _typingStatusRef = rtdb.ref('typing_status/$conversationId');
+    _typingStatusRef = rtdb.ref('typing_status/$conversationId');
 
     _typingSubscription =
         _typingStatusRef.child(widget.receiverId).onValue.listen((event) {
@@ -100,7 +101,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollController.addListener(_onScroll);
 
     markMessagesAsSeen();
-    
+
     // Schedule scroll to bottom after the first build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -160,8 +161,6 @@ class _ChatScreenState extends State<ChatScreen> {
   //     }
   //   });
   // }
-
-
 
   void _startReply(Map<String, dynamic> messageData, String messageId) {
     setState(() {
@@ -302,9 +301,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-   
-
-@override
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -313,14 +310,14 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.grey[900]!, Colors.grey[800]!]
-                      .reduce((value, element) => value)
-                  : Theme.of(context).colorScheme.primary,
+          ? [Colors.grey[900]!, Colors.grey[800]!]
+              .reduce((value, element) => value)
+          : Theme.of(context).colorScheme.primary,
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.grey[900]!, Colors.grey[800]!]
-                      .reduce((value, element) => value)
-                  : Theme.of(context).colorScheme.primary,
+            ? [Colors.grey[900]!, Colors.grey[800]!]
+                .reduce((value, element) => value)
+            : Theme.of(context).colorScheme.primary,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
@@ -330,7 +327,9 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.home, color: isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary),
+            icon: Icon(Icons.home,
+                color:
+                    isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary),
             onPressed: () {
               Get.offNamed('/admin-dashboard');
             },
@@ -357,7 +356,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       minChildSize: 0.4,
                       maxChildSize: 0.85,
                       expand: false,
-                      builder: (context, scrollController) => SingleChildScrollView(
+                      builder: (context, scrollController) =>
+                          SingleChildScrollView(
                         controller: scrollController,
                         child: UserDetailsSheet(user: widget.otherUser),
                       ),
@@ -370,7 +370,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDarkMode ? colorScheme.onPrimary : colorScheme.primary,
+                          color: isDarkMode
+                              ? colorScheme.onPrimary
+                              : colorScheme.primary,
                           width: 2,
                         ),
                       ),
@@ -384,7 +386,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                   width: 36,
                                   height: 36,
                                   fit: BoxFit.cover,
-                                  placeholder: (context, url) => CircularProgressIndicator(
+                                  placeholder: (context, url) =>
+                                      CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: colorScheme.primary,
                                   ),
@@ -419,7 +422,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           Text(
                             widget.receiverName,
                             style: textTheme.titleMedium?.copyWith(
-                              color: isDarkMode ? colorScheme.onSurface : colorScheme.onPrimary,
+                              color: isDarkMode
+                                  ? colorScheme.onSurface
+                                  : colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -446,121 +451,127 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         titleSpacing: 0,
       ),
-
       body: Obx(() => Stack(
-        children: [
-          _ChatBackground(backgroundValue: _wallpaperController.wallpaper.value),
-          Column(
             children: [
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('conversations')
-                      .doc(conversationId)
-                      .collection('messages')
-                      .orderBy('timestamp', descending: true)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    // Scroll to bottom when new messages arrive
-                    if (snapshot.hasData && snapshot.data!.docs.isNotEmpty && _shouldScrollToBottom) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          _scrollToBottom();
+              _ChatBackground(
+                  backgroundValue: _wallpaperController.wallpaper.value),
+              Column(
+                children: [
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('conversations')
+                          .doc(conversationId)
+                          .collection('messages')
+                          .orderBy('timestamp', descending: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        // Scroll to bottom when new messages arrive
+                        if (snapshot.hasData &&
+                            snapshot.data!.docs.isNotEmpty &&
+                            _shouldScrollToBottom) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              _scrollToBottom();
+                            }
+                          });
                         }
-                      });
-                    }
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
-                          child: CircularProgressIndicator(
-                              color: colorScheme.secondary));
-                    }
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return Center(
-                          child: Text('say_hello'.tr,
-                              style: TextStyle(
-color: isDarkMode
-                                      ? colorScheme.onSurface
-                                      : colorScheme.onPrimary)));
-                    }
-                    return ListView.builder(
-                      reverse: true,
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 8.0),
-                      itemCount: snapshot.data!.docs.length,
-                      itemBuilder: (context, index) {
-                        final messageDoc = snapshot.data!.docs[index];
-                        final messageData =
-                            messageDoc.data() as Map<String, dynamic>;
-                        bool showDayDivider = false;
-                        if (index < snapshot.data!.docs.length - 1) {
-                          final prevMessageDoc = snapshot.data!.docs[index + 1];
-                          final prevMessageData =
-                              prevMessageDoc.data() as Map<String, dynamic>;
-                          if (!isSameDay(messageData['timestamp'],
-                              prevMessageData['timestamp'])) {
-                            showDayDivider = true;
-                          }
-                        } else {
-                          showDayDivider = true;
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                              child: CircularProgressIndicator(
+                                  color: colorScheme.secondary));
                         }
-                        final bool isMe =
-                            messageData['senderId'] == currentUserId;
-                        return Dismissible(
-                          key: Key(messageDoc.id),
-                          direction: DismissDirection.startToEnd,
-                          onDismissed: (direction) =>
-                              _startReply(messageData, messageDoc.id),
-                          background: Container(
-                            color: colorScheme.secondary.withValues(alpha: 0.5),
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            alignment: Alignment.centerLeft,
-                            child: const Icon(Icons.reply, color: Colors.white),
-                          ),
-                          child: Column(
-                            children: [
-                              if (showDayDivider)
-                                _DateDivider(
-                                    timestamp: messageData['timestamp']),
-                              _MessageBubble(
-                                messageId: messageDoc.id,
-                                messageData: messageData,
-                                isMe: isMe,
-                                onDelete: () => deleteMessage(messageDoc.id),
-                                onToggleReaction: (emoji) =>
-                                    toggleReaction(messageDoc.id, emoji),
-                                onStartEdit: () => _startEdit(
-                                    messageDoc.id, messageData['text']),
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return Center(
+                              child: Text('say_hello'.tr,
+                                  style: TextStyle(
+                                      color: isDarkMode
+                                          ? colorScheme.onSurface
+                                          : colorScheme.onPrimary)));
+                        }
+                        return ListView.builder(
+                          reverse: true,
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 8.0),
+                          itemCount: snapshot.data!.docs.length,
+                          itemBuilder: (context, index) {
+                            final messageDoc = snapshot.data!.docs[index];
+                            final messageData =
+                                messageDoc.data() as Map<String, dynamic>;
+                            bool showDayDivider = false;
+                            if (index < snapshot.data!.docs.length - 1) {
+                              final prevMessageDoc =
+                                  snapshot.data!.docs[index + 1];
+                              final prevMessageData =
+                                  prevMessageDoc.data() as Map<String, dynamic>;
+                              if (!isSameDay(messageData['timestamp'],
+                                  prevMessageData['timestamp'])) {
+                                showDayDivider = true;
+                              }
+                            } else {
+                              showDayDivider = true;
+                            }
+                            final bool isMe =
+                                messageData['senderId'] == currentUserId;
+                            return Dismissible(
+                              key: Key(messageDoc.id),
+                              direction: DismissDirection.startToEnd,
+                              onDismissed: (direction) =>
+                                  _startReply(messageData, messageDoc.id),
+                              background: Container(
+                                color: colorScheme.secondary
+                                    .withValues(alpha: 0.5),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                alignment: Alignment.centerLeft,
+                                child: const Icon(Icons.reply,
+                                    color: Colors.white),
                               ),
-                            ],
-                          ),
+                              child: Column(
+                                children: [
+                                  if (showDayDivider)
+                                    _DateDivider(
+                                        timestamp: messageData['timestamp']),
+                                  _MessageBubble(
+                                    messageId: messageDoc.id,
+                                    messageData: messageData,
+                                    isMe: isMe,
+                                    onDelete: () =>
+                                        deleteMessage(messageDoc.id),
+                                    onToggleReaction: (emoji) =>
+                                        toggleReaction(messageDoc.id, emoji),
+                                    onStartEdit: () => _startEdit(
+                                        messageDoc.id, messageData['text']),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
-              ),
-              if (_replyingToMessage != null)
-                _ReplyPreview(
-                    messageData: _replyingToMessage!,
-                    onCancel: _cancelReplyOrEdit),
-              if (_editingMessageId != null)
-                _EditPreview(onCancel: _cancelReplyOrEdit),
-              _MessageInputField(
-                controller: _messageController,
-                focusNode: _inputFocusNode,
-                onSend: sendMessage,
+                    ),
+                  ),
+                  if (_replyingToMessage != null)
+                    _ReplyPreview(
+                        messageData: _replyingToMessage!,
+                        onCancel: _cancelReplyOrEdit),
+                  if (_editingMessageId != null)
+                    _EditPreview(onCancel: _cancelReplyOrEdit),
+                  _MessageInputField(
+                    controller: _messageController,
+                    focusNode: _inputFocusNode,
+                    onSend: sendMessage,
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
-      )),
+          )),
       bottomNavigationBar: const ChatNavBar(currentIndex: 0),
     );
   }
-
 }
-
 
 class _ChatBackground extends StatelessWidget {
   final String backgroundValue;
@@ -624,7 +635,8 @@ class _MessageBubble extends StatelessWidget {
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
         padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
         decoration: BoxDecoration(
           color: isMe
               ? colorScheme.secondary
@@ -661,7 +673,9 @@ class _MessageBubble extends StatelessWidget {
                 child: Text(
                   DateFormat('h:mm a').format(time),
                   style: TextStyle(
-                    color: isMe ? Colors.white.withAlpha((0.7 * 255).round()) : Colors.grey,
+                    color: isMe
+                        ? Colors.white.withAlpha((0.7 * 255).round())
+                        : Colors.grey,
                     fontSize: 11.sp,
                   ),
                 ),
@@ -683,7 +697,9 @@ class _DateDivider extends StatelessWidget {
     final date = timestamp!.toDate();
     final now = DateTime.now();
     String label;
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       label = 'Today'.tr;
     } else {
       label = DateFormat('d MMM yyyy').format(date);
@@ -702,11 +718,10 @@ class _DateDivider extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.grey[400] 
-                    : Colors.grey[700], 
-                  fontWeight: FontWeight.w600
-                ),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : Colors.grey[700],
+                  fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -735,8 +750,7 @@ class _MessageInputField extends StatelessWidget {
       child: Material(
         elevation: 6,
         borderRadius: BorderRadius.circular(28),
-color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
-
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
         child: Row(
           children: [
             Expanded(
@@ -748,7 +762,8 @@ color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
                 decoration: InputDecoration(
                   hintText: 'type_here_your_message'.tr,
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
                 ),
               ),
             ),
@@ -776,7 +791,8 @@ class _ReplyPreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withAlpha((0.2 * 255).round())),
+          color: colorScheme.surfaceContainerHighest
+              .withAlpha((0.2 * 255).round())),
       child: IntrinsicHeight(
         child: Row(
           children: [
@@ -795,13 +811,15 @@ class _ReplyPreview extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          color: colorScheme.onSurface.withAlpha((0.8 * 255).round()))),
+                          color: colorScheme.onSurface
+                              .withAlpha((0.8 * 255).round()))),
                 ],
               ),
             ),
             IconButton(
                 icon: Icon(Icons.close,
-                    color: colorScheme.onSurface.withAlpha((0.6 * 255).round())),
+                    color:
+                        colorScheme.onSurface.withAlpha((0.6 * 255).round())),
                 onPressed: onCancel),
           ],
         ),
@@ -820,7 +838,8 @@ class _EditPreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withAlpha((0.2 * 255).round())),
+          color: colorScheme.surfaceContainerHighest
+              .withAlpha((0.2 * 255).round())),
       child: Row(
         children: [
           Icon(Icons.edit, color: colorScheme.secondary),
@@ -892,16 +911,21 @@ class UserDetailsSheet extends StatelessWidget {
           ),
           if (role.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(role, style: textTheme.bodyMedium?.copyWith(color: colorScheme.secondary)),
+            Text(role,
+                style: textTheme.bodyMedium
+                    ?.copyWith(color: colorScheme.secondary)),
           ],
           const SizedBox(height: 16),
           if (about.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.info_outline, color: colorScheme.secondary, size: 20.sp),
+                Icon(Icons.info_outline,
+                    color: colorScheme.secondary, size: 20.sp),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(about, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
+                  child: Text(about,
+                      style: textTheme.bodyMedium
+                          ?.copyWith(color: colorScheme.onSurface)),
                 ),
               ],
             ),
@@ -912,7 +936,9 @@ class UserDetailsSheet extends StatelessWidget {
               Icon(Icons.phone, color: colorScheme.secondary, size: 20.sp),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(phone, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
+                child: Text(phone,
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: colorScheme.onSurface)),
               ),
             ],
           ),
@@ -922,7 +948,9 @@ class UserDetailsSheet extends StatelessWidget {
               Icon(Icons.email, color: colorScheme.secondary, size: 20.sp),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(email, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)),
+                child: Text(email,
+                    style: textTheme.bodyMedium
+                        ?.copyWith(color: colorScheme.onSurface)),
               ),
             ],
           ),
@@ -940,9 +968,9 @@ class UserDetailsSheet extends StatelessWidget {
                 shadowColor: Colors.black26,
               ),
               icon: const Icon(Icons.message, color: Colors.white),
-              label: Text("Message".tr, style: TextStyle(
-                color: Theme.of(context).colorScheme.onPrimary
-              )),
+              label: Text("Message".tr,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary)),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),

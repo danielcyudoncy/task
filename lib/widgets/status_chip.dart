@@ -12,10 +12,10 @@ class StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     Color chipColor;
     Color textColor;
-    
+
     switch (status.toLowerCase()) {
       case "completed":
         chipColor = isDark ? Colors.green[700]! : Colors.green[100]!;
@@ -34,7 +34,7 @@ class StatusChip extends StatelessWidget {
         textColor = isDark ? Colors.grey[100]! : Colors.grey[800]!;
         break;
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(left: 8.0),
       child: Container(
