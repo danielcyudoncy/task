@@ -8,7 +8,8 @@ class ChannelsCard extends StatelessWidget {
 
   void _launchURL() async {
     final uri = Uri.parse('https://www.channelstv.com');
-    if (!await launchUrl(uri, mode: LaunchMode.inAppBrowserView,
+    if (!await launchUrl(uri,
+        mode: LaunchMode.inAppBrowserView,
         browserConfiguration: const BrowserConfiguration(
           showTitle: true,
         ))) {

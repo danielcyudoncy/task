@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 
-
 class ArchiveStatsCard extends StatelessWidget {
   final int totalArchived;
   final int archivedThisMonth;
@@ -12,7 +11,7 @@ class ArchiveStatsCard extends StatelessWidget {
   final bool isLoading;
   final String? error;
   final VoidCallback? onTotalArchivedTap;
-  
+
   const ArchiveStatsCard({
     super.key,
     required this.totalArchived,
@@ -28,18 +27,18 @@ class ArchiveStatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark 
+        color: isDark
             ? colorScheme.surfaceVariant.withValues(alpha: 0.3)
             : colorScheme.surfaceVariant.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: isDark 
+        border: isDark
             ? Border.all(
                 color: colorScheme.outline.withValues(alpha: 0.2),
                 width: 1,
@@ -67,12 +66,13 @@ class ArchiveStatsCard extends StatelessWidget {
                   color: isDark ? colorScheme.onSurface : colorScheme.primary,
                 ),
               ),
-              if (!isLoading && error == null) _buildToggleButton(theme, colorScheme),
+              if (!isLoading && error == null)
+                _buildToggleButton(theme, colorScheme),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Content
           if (isLoading)
             _buildLoadingState(theme, colorScheme)
@@ -84,10 +84,10 @@ class ArchiveStatsCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildToggleButton(ThemeData theme, ColorScheme colorScheme) {
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Row(
       children: [
         Text(
@@ -100,7 +100,9 @@ class ArchiveStatsCard extends StatelessWidget {
         const SizedBox(width: 4),
         IconButton(
           icon: Icon(
-            showArchived ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            showArchived
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
             size: 18,
             color: isDark ? colorScheme.onSurface : colorScheme.primary,
           ),
@@ -113,7 +115,7 @@ class ArchiveStatsCard extends StatelessWidget {
       ],
     );
   }
-  
+
   Widget _buildLoadingState(ThemeData theme, ColorScheme colorScheme) {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 16.0),
@@ -126,7 +128,7 @@ class ArchiveStatsCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildErrorState(ThemeData theme, String error) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -157,8 +159,9 @@ class ArchiveStatsCard extends StatelessWidget {
       ),
     );
   }
-  
-  Widget _buildStatsContent(BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+
+  Widget _buildStatsContent(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
     return Row(
       children: [
         _buildStatItem(
@@ -180,7 +183,7 @@ class ArchiveStatsCard extends StatelessWidget {
       ],
     );
   }
-  
+
   Widget _buildStatItem({
     required BuildContext context,
     required String label,
@@ -192,7 +195,7 @@ class ArchiveStatsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -217,81 +220,84 @@ class ArchiveStatsCard extends StatelessWidget {
               ],
             ],
           ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon and label row
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: isDark ? 0.2 : 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 16,
-                    color: isDark ? colorScheme.onSurface : color,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon and label row
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+                      shape: BoxShape.circle,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 8),
-            
-            // Value
-            Text(
-              value?.toString() ?? '---',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: value != null ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
-                height: 1.1,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            
-            // Subtle trend indicator (example - could be dynamic based on data)
-            if (label == 'This Month' && value != null && value > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.arrow_upward_rounded,
-                      size: 12,
-                      color: isDark ? Colors.green.shade300 : Colors.green,
+                    child: Icon(
+                      icon,
+                      size: 16,
+                      color: isDark ? colorScheme.onSurface : color,
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${(value / 10).ceil() * 10}% from last month',
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      label,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: isDark 
-                            ? colorScheme.onSurfaceVariant
-                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                        fontSize: 10,
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-          ],
-        ),
+
+              const SizedBox(height: 8),
+
+              // Value
+              Text(
+                value?.toString() ?? '---',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: value != null
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
+                  height: 1.1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              // Subtle trend indicator (example - could be dynamic based on data)
+              if (label == 'This Month' && value != null && value > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.arrow_upward_rounded,
+                        size: 12,
+                        color: isDark ? Colors.green.shade300 : Colors.green,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${(value / 10).ceil() * 10}% from last month',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: isDark
+                              ? colorScheme.onSurfaceVariant
+                              : colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.8),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -40,13 +40,12 @@ class ForgotPasswordScreen extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(24.w),
             child: SingleChildScrollView(
-              child: Column(
-                children: [
+              child: Column(children: [
                 // Back arrow
                 Row(
                   children: [
                     IconButton(
-                      icon:  Icon(
+                      icon: Icon(
                         Icons.arrow_back,
                         color: Colors.white,
                         size: 24.sp, // adjust the size as needed
@@ -64,7 +63,6 @@ class ForgotPasswordScreen extends StatelessWidget {
                   width: 213.w,
                   height: 216.h,
                 ),
-                
 
                 // Forgot Password Card
                 Container(
@@ -82,124 +80,134 @@ class ForgotPasswordScreen extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                          // Title
-                          Text(
-                            "Forgot Password",
-                            style: textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'raleway',
-                              color: colorScheme.onSurface,
+                        // Title
+                        Text(
+                          "Forgot Password",
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'raleway',
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        SizedBox(height: 15.h),
+
+                        // Description
+                        Text(
+                          "Enter your email address to receive a password reset link.",
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 31.h),
+
+                        // Email Field
+                        TextFormField(
+                          controller: _emailController,
+                          style: textTheme.bodyMedium,
+                          decoration: InputDecoration(
+                            labelText: "Email",
+                            labelStyle: textTheme.bodyMedium,
+                            hintStyle: textTheme.bodyMedium,
+                            prefixIcon: Icon(Icons.email,
+                                color: colorScheme.onSurfaceVariant),
+                            filled: true,
+                            fillColor: theme.brightness == Brightness.light
+                                ? Colors.grey[200]
+                                : Colors.grey[800],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
                             ),
                           ),
-                          SizedBox(height: 15.h),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter your email";
+                            }
+                            if (!GetUtils.isEmail(value)) {
+                              return "Please enter a valid email";
+                            }
+                            return null;
+                          },
+                        ),
 
-                          // Description
-                          Text(
-                            "Enter your email address to receive a password reset link.",
-                            style: textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 31.h),
+                        SizedBox(height: 30.h),
 
-                          // Email Field
-                          TextFormField(
-                            controller: _emailController,
-                            style: textTheme.bodyMedium,
-                            decoration: InputDecoration(
-                              labelText: "Email",
-                              labelStyle: textTheme.bodyMedium,
-                              hintStyle: textTheme.bodyMedium,
-                              prefixIcon: Icon(Icons.email,
-                                  color: colorScheme.onSurfaceVariant),
-                              filled: true,
-                               fillColor: theme.brightness == Brightness.light
-                                  ? Colors.grey[200]
-                                  : Colors.grey[800],
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Please enter your email";
-                              }
-                              if (!GetUtils.isEmail(value)) {
-                                return "Please enter a valid email";
-                              }
-                              return null;
-                            },
-                          ),
-
-                          SizedBox(height: 30.h),
-
-                          // Save Changes Button
-                          Obx(() {
-                            if (!Get.isRegistered<AuthController>()) {
-                              return SizedBox(
-                                width: double.infinity,
-                                height: 48.h,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: colorScheme.secondary,
-                                    foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Get.find<SettingsController>().triggerFeedback();
-                                    _submit();
-                                  },
-                                  child: Text(
-                                    'Save Changes',
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.black : colorScheme.onSecondary,
-                                    ),
+                        // Save Changes Button
+                        Obx(() {
+                          if (!Get.isRegistered<AuthController>()) {
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 48.h,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colorScheme.secondary,
+                                  foregroundColor: isDark
+                                      ? Colors.black
+                                      : colorScheme.onSecondary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
                                   ),
                                 ),
-                              );
-                            }
+                                onPressed: () {
+                                  Get.find<SettingsController>()
+                                      .triggerFeedback();
+                                  _submit();
+                                },
+                                child: Text(
+                                  'Save Changes',
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? Colors.black
+                                        : colorScheme.onSecondary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
 
-                            return _auth.isLoading.value
-                                ? const Center(child: CircularProgressIndicator())
-                                : SizedBox(
-                                    width: double.infinity,
-                                    height: 48.h,
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: colorScheme.secondary,
-                                        foregroundColor: isDark ? Colors.black : colorScheme.onSecondary,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12.r),
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        Get.find<SettingsController>().triggerFeedback();
-                                        _submit();
-                                      },
-                                      child: Text(
-                                        'Save Changes',
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark ? Colors.black : colorScheme.onSecondary,
-                                        ),
+                          return _auth.isLoading.value
+                              ? const Center(child: CircularProgressIndicator())
+                              : SizedBox(
+                                  width: double.infinity,
+                                  height: 48.h,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: colorScheme.secondary,
+                                      foregroundColor: isDark
+                                          ? Colors.black
+                                          : colorScheme.onSecondary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12.r),
                                       ),
                                     ),
-                                  );
-                          }),
-                        ],
-                      ),
+                                    onPressed: () {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
+                                      _submit();
+                                    },
+                                    child: Text(
+                                      'Save Changes',
+                                      style: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Colors.black
+                                            : colorScheme.onSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                        }),
+                      ],
                     ),
                   ),
-                ]),
-             // Add some bottom spacing
-              
+                ),
+              ]),
+              // Add some bottom spacing
             ),
           ),
         ),

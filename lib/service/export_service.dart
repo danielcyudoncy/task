@@ -6,9 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/service/pdf_export_service.dart';
-
 
 enum ExportFormat {
   csv,
@@ -37,23 +36,23 @@ class ExportProgress {
 
 class ExportService extends GetxService {
   static ExportService get to => Get.find();
-  
+
   bool _isInitialized = false;
   final _exportController = StreamController<ExportProgress>.broadcast();
-  
+
   /// Stream to listen to export progress
   Stream<ExportProgress> get exportStream => _exportController.stream;
-  
+
   @override
   void onClose() {
     _exportController.close();
     super.onClose();
   }
-  
+
   /// Initializes the ExportService
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     try {
       // Create exports directory if it doesn't exist
       final directory = await getApplicationDocumentsDirectory();
@@ -61,28 +60,28 @@ class ExportService extends GetxService {
       if (!await exportDir.exists()) {
         await exportDir.create(recursive: true);
       }
-      
+
       // Clean up old exports
       await _cleanupOldExports();
-      
+
       _isInitialized = true;
     } catch (e) {
       debugPrint('Failed to initialize ExportService: $e');
       rethrow;
     }
   }
-  
+
   /// Cleans up export files older than 7 days
   Future<void> _cleanupOldExports() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final exportDir = Directory('${directory.path}/exports');
-      
+
       if (!await exportDir.exists()) return;
-      
+
       final now = DateTime.now();
       final files = exportDir.listSync();
-      
+
       for (var file in files) {
         if (file is File) {
           try {
@@ -102,7 +101,7 @@ class ExportService extends GetxService {
       // Don't rethrow - this shouldn't block the export
     }
   }
-  
+
   /// Exports tasks to a file and shares it
   Future<String> exportTasks({
     required List<Map<String, dynamic>> tasks,
@@ -114,12 +113,12 @@ class ExportService extends GetxService {
     if (!_isInitialized) {
       await initialize();
     }
-    
+
     // Input validation
     if (tasks.isEmpty) {
       throw ArgumentError('No tasks to export');
     }
-    
+
     final totalTasks = tasks.length;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final progress = ExportProgress(
@@ -127,10 +126,10 @@ class ExportService extends GetxService {
       total: totalTasks,
       status: 'Preparing export...',
     );
-    
+
     _exportController.add(progress);
     onProgress?.call(progress);
-    
+
     try {
       // Create exports directory if it doesn't exist
       final directory = await getApplicationDocumentsDirectory();
@@ -138,11 +137,11 @@ class ExportService extends GetxService {
       if (!await exportDir.exists()) {
         await exportDir.create(recursive: true);
       }
-      
+
       // Generate file content based on format
       String fileContent;
       String fileExtension;
-      
+
       switch (format) {
         case ExportFormat.csv:
           fileContent = _convertToCsv(tasks, (current, status) {
@@ -156,7 +155,7 @@ class ExportService extends GetxService {
           });
           fileExtension = 'csv';
           break;
-          
+
         case ExportFormat.json:
           fileContent = _convertToJson(tasks, (current, status) {
             final progress = ExportProgress(
@@ -170,13 +169,14 @@ class ExportService extends GetxService {
           fileExtension = 'json';
           break;
       }
-      
+
       // Save to file
-      final exportFileName = fileName ?? 'tasks_export_$timestamp.$fileExtension';
+      final exportFileName =
+          fileName ?? 'tasks_export_$timestamp.$fileExtension';
       final exportFile = File('${exportDir.path}/$exportFileName');
-      
+
       await exportFile.writeAsString(fileContent);
-      
+
       // Share the file if requested
       if (shareAfterExport) {
         await SharePlus.instance.share(
@@ -187,7 +187,7 @@ class ExportService extends GetxService {
           ),
         );
       }
-      
+
       // Send completion progress
       final completeProgress = ExportProgress(
         current: totalTasks,
@@ -198,12 +198,11 @@ class ExportService extends GetxService {
       );
       _exportController.add(completeProgress);
       onProgress?.call(completeProgress);
-      
+
       return exportFile.path;
-      
     } catch (e, stackTrace) {
       debugPrint('Export failed: $e\n$stackTrace');
-      
+
       final errorProgress = ExportProgress(
         current: 0,
         total: totalTasks,
@@ -212,77 +211,83 @@ class ExportService extends GetxService {
       );
       _exportController.add(errorProgress);
       onProgress?.call(errorProgress);
-      
+
       rethrow;
     }
   }
-  
+
   String _convertToCsv(
     List<Map<String, dynamic>> tasks,
     void Function(int current, String status) onProgress,
   ) {
     if (tasks.isEmpty) return '';
-    
+
     final buffer = StringBuffer();
     final headers = tasks.first.keys.toList();
-    
+
     // Add headers
     buffer.writeln(headers.map((h) => _escapeCsvField(h)).join(','));
-    
+
     // Add rows
     for (int i = 0; i < tasks.length; i++) {
       final task = tasks[i];
-      final row = headers.map((h) => _escapeCsvField(task[h]?.toString() ?? '')).toList();
+      final row = headers
+          .map((h) => _escapeCsvField(task[h]?.toString() ?? ''))
+          .toList();
       buffer.writeln(row.join(','));
-      
+
       // Update progress every 10% or at least every 10 items
       if (i % 10 == 0 || i == tasks.length - 1) {
         final progress = (i + 1) * 100 ~/ tasks.length;
         onProgress(i + 1, 'Exporting... $progress%');
       }
     }
-    
+
     return buffer.toString();
   }
-  
+
   String _convertToJson(
     List<Map<String, dynamic>> tasks,
     void Function(int current, String status) onProgress,
   ) {
     final List<Map<String, dynamic>> jsonList = [];
-    
+
     for (int i = 0; i < tasks.length; i++) {
       jsonList.add(Map<String, dynamic>.from(tasks[i]));
-      
+
       // Update progress every 10% or at least every 10 items
       if (i % 10 == 0 || i == tasks.length - 1) {
         final progress = (i + 1) * 100 ~/ tasks.length;
         onProgress(i + 1, 'Exporting... $progress%');
       }
     }
-    
+
     return const JsonEncoder.withIndent('  ').convert(jsonList);
   }
-  
+
   String _escapeCsvField(dynamic field) {
     if (field == null) return '';
     final str = field.toString();
-    if (str.contains(',') || str.contains('"') || str.contains('\n') || str.contains('\r')) {
+    if (str.contains(',') ||
+        str.contains('"') ||
+        str.contains('\n') ||
+        str.contains('\r')) {
       return '"${str.replaceAll('"', '""')}"';
     }
     return str;
   }
 
   // Legacy methods for backward compatibility
-  
+
   /// Export tasks to CSV format (legacy method)
   Future<File> exportToCsv(List<Task> tasks, {String? fileName}) async {
     try {
       final StringBuffer csvContent = StringBuffer();
-      
+
       // Add CSV header
-      csvContent.writeln('Title,Description,Status,Category,Assigned Reporter,Assigned Cameraman,Assigned Driver,Assigned Librarian,Created At,Due Date,Archived At,Tags');
-      
+      csvContent.writeln(
+          'Title,Description,Status,Category,Assigned Reporter,Assigned Cameraman,Assigned Driver,Assigned Librarian,Created At,Due Date,Archived At,Tags');
+
       // Add task data
       for (final task in tasks) {
         final tags = task.tags.join('; ');
@@ -302,12 +307,13 @@ class ExportService extends GetxService {
         ];
         csvContent.writeln(row.join(','));
       }
-      
+
       // Create file
       final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/${fileName ?? 'tasks_${DateTime.now().millisecondsSinceEpoch}.csv'}');
+      final file = File(
+          '${directory.path}/${fileName ?? 'tasks_${DateTime.now().millisecondsSinceEpoch}.csv'}');
       await file.writeAsString(csvContent.toString());
-      
+
       return file;
     } catch (e) {
       debugPrint('Error exporting to CSV: $e');
@@ -319,14 +325,17 @@ class ExportService extends GetxService {
   Future<File> exportToJson(List<Task> tasks, {String? fileName}) async {
     try {
       // Convert tasks to JSON
-      final List<Map<String, dynamic>> jsonData = tasks.map((task) => task.toMap()).toList();
-      final String jsonString = const JsonEncoder.withIndent('  ').convert(jsonData);
-      
+      final List<Map<String, dynamic>> jsonData =
+          tasks.map((task) => task.toMap()).toList();
+      final String jsonString =
+          const JsonEncoder.withIndent('  ').convert(jsonData);
+
       // Create file
       final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/${fileName ?? 'tasks_${DateTime.now().millisecondsSinceEpoch}.json'}');
+      final file = File(
+          '${directory.path}/${fileName ?? 'tasks_${DateTime.now().millisecondsSinceEpoch}.json'}');
       await file.writeAsString(jsonString);
-      
+
       return file;
     } catch (e) {
       debugPrint('Error exporting to JSON: $e');
@@ -339,8 +348,9 @@ class ExportService extends GetxService {
     try {
       // Use the dedicated PDF export service for proper PDF generation
       final pdfExportService = Get.find<PdfExportService>();
-      final pdfPath = await pdfExportService.exportTasksToPdf(tasks, title: 'Tasks Export');
-      
+      final pdfPath =
+          await pdfExportService.exportTasksToPdf(tasks, title: 'Tasks Export');
+
       // If a custom filename is provided, rename the file
       if (fileName != null) {
         final directory = await getTemporaryDirectory();
@@ -350,7 +360,7 @@ class ExportService extends GetxService {
         await originalFile.delete();
         return newFile;
       }
-      
+
       return File(pdfPath);
     } catch (e) {
       debugPrint('Error exporting to PDF: $e');
@@ -396,7 +406,8 @@ class ExportService extends GetxService {
   }
 
   /// Export tasks to CSV format
-  Future<String> exportTasksToCSV(List<Task> tasks, {
+  Future<String> exportTasksToCSV(
+    List<Task> tasks, {
     Function(double)? onProgress,
   }) async {
     // Convert Task objects to Map<String, dynamic>
@@ -404,7 +415,9 @@ class ExportService extends GetxService {
     return await exportTasks(
       tasks: taskMaps,
       format: ExportFormat.csv,
-      onProgress: onProgress != null ? (progress) => onProgress(progress.progress) : null,
+      onProgress: onProgress != null
+          ? (progress) => onProgress(progress.progress)
+          : null,
     );
   }
 }

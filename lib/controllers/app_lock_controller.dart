@@ -9,7 +9,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   static AppLockController get to => Get.find<AppLockController>();
   final AuthController _authController = Get.find<AuthController>();
   final BiometricService _biometricService = Get.find<BiometricService>();
-  
+
   // Observable variables
   final RxBool isAppLocked = false.obs;
   final RxBool isAppLockEnabled = true.obs;
@@ -21,32 +21,36 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
 
   // Default PIN for first-time users
   static const String defaultPin = '0000';
-  
+
   // App lifecycle state
   AppLifecycleState? _lastLifecycleState;
   DateTime? _backgroundTime;
-  
-  // Lock timeout (in seconds) - app locks immediately when minimized for security
-  static const int lockTimeoutSeconds = 1;
-  
+
+  // Lock timeout (in seconds) - app locks after being minimized for this duration
+  static const int lockTimeoutSeconds = 8;
+
   // Grace period after successful authentication (in seconds)
   static const int gracePeriodSeconds = 30;
-  
+
   // Track last successful authentication time
   DateTime? _lastAuthTime;
-  
+
+  // Track last user activity time for preventing lock during active usage
+  DateTime? _lastUserActivity;
+
   // Getter for current lifecycle state (useful for debugging and monitoring)
   AppLifecycleState? get currentLifecycleState => _lastLifecycleState;
-  
+
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
     _loadSettings();
-    
+
     // Check if we should lock on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint('AppLockController: Checking if app should be locked on startup...');
+      debugPrint(
+          'AppLockController: Checking if app should be locked on startup...');
       if (shouldLockOnStartup()) {
         debugPrint('AppLockController: App should be locked on startup');
         // Delay navigation to ensure GetX is fully initialized
@@ -58,16 +62,17 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       }
     });
   }
-  
+
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     super.onClose();
   }
-  
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    debugPrint('App lifecycle state changed from $_lastLifecycleState to $state');
+    debugPrint(
+        'App lifecycle state changed from $_lastLifecycleState to $state');
 
     // Only process state changes if this is a meaningful transition
     if (_lastLifecycleState != state) {
@@ -88,11 +93,11 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
           _handleAppPaused(state);
           break;
       }
-      
+
       _lastLifecycleState = state;
     }
   }
-  
+
   void _handleAppPaused(AppLifecycleState currentState) {
     if (_isAuthenticating.value) {
       debugPrint(
@@ -110,83 +115,111 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
         }
       }
 
+      // Check if user has been active recently (within last 15 seconds)
+      if (_lastUserActivity != null) {
+        final timeSinceActivity = DateTime.now().difference(_lastUserActivity!);
+        if (timeSinceActivity.inSeconds < 15) {
+          debugPrint(
+              'AppLockController: User was active recently (${15 - timeSinceActivity.inSeconds}s ago), not locking');
+          return;
+        }
+      }
+
       _backgroundTime = DateTime.now();
       debugPrint(
           'App went to background (state: $currentState) at: $_backgroundTime');
 
-      // Lock immediately when app is minimized for enhanced security
+      // Only lock if app was actually minimized (not just temporary UI changes)
       if (_lastLifecycleState == AppLifecycleState.resumed) {
-        debugPrint('App is no longer in the foreground, locking.');
-        _lockApp();
+        debugPrint('App is no longer in the foreground, will lock after timeout.');
+        // Schedule lock after timeout instead of locking immediately
+        Future.delayed(const Duration(seconds: lockTimeoutSeconds), () {
+          // Double-check that app is still in background before locking
+          if (_lastLifecycleState != AppLifecycleState.resumed &&
+              isAppLockEnabled.value &&
+              _authController.currentUser != null) {
+            debugPrint('App still in background after timeout, locking.');
+            _lockApp();
+          } else {
+            debugPrint('App is back in foreground or conditions changed, not locking.');
+          }
+        });
       }
     }
   }
-  
+
   void _handleAppResumed() {
     debugPrint('AppLockController: App resumed from $_lastLifecycleState');
-    debugPrint('AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
-    debugPrint('AppLockController: currentUser = ${_authController.currentUser != null}');
-    
+    debugPrint(
+        'AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
+    debugPrint(
+        'AppLockController: currentUser = ${_authController.currentUser != null}');
+
     // Check if we should lock on resume
     if (isAppLockEnabled.value && _authController.currentUser != null) {
       // Check if we're within the grace period after authentication
       if (_lastAuthTime != null) {
         final timeSinceAuth = DateTime.now().difference(_lastAuthTime!);
         if (timeSinceAuth.inSeconds < gracePeriodSeconds) {
-          debugPrint('AppLockController: Within grace period (${gracePeriodSeconds - timeSinceAuth.inSeconds}s remaining), not locking');
+          debugPrint(
+              'AppLockController: Within grace period (${gracePeriodSeconds - timeSinceAuth.inSeconds}s remaining), not locking');
           return;
         }
       }
-      
+
       debugPrint('AppLockController: Conditions met for locking on resume');
       _lockApp();
     } else {
       debugPrint('AppLockController: App lock conditions not met on resume');
-      debugPrint('AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
-      debugPrint('AppLockController: hasCurrentUser = ${_authController.currentUser != null}');
+      debugPrint(
+          'AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
+      debugPrint(
+          'AppLockController: hasCurrentUser = ${_authController.currentUser != null}');
     }
-    
+
     _backgroundTime = null;
   }
-  
+
   void _handleAppDetached() {
     debugPrint('App is being terminated - performing cleanup');
-    
+
     // Clear sensitive data when app is being terminated
     _backgroundTime = null;
-    
+    _lastUserActivity = null;
+
     // If app lock is enabled, ensure the app will be locked on next startup
     if (isAppLockEnabled.value && _authController.currentUser != null) {
-      debugPrint('App terminated while locked - will require unlock on restart');
+      debugPrint(
+          'App terminated while locked - will require unlock on restart');
     }
   }
-  
+
   void _lockApp() {
     debugPrint('Locking app - current route: ${Get.currentRoute}');
     debugPrint('App lock enabled: ${isAppLockEnabled.value}');
     debugPrint('Biometric enabled: ${isBiometricEnabled.value}');
     isAppLocked.value = true;
-    
+
     // Navigate to app lock screen
     debugPrint('Navigating to app lock screen...');
     Get.offAllNamed('/app-lock');
     debugPrint('Navigation to app lock screen completed');
   }
-  
+
   Future<void> unlockWithPin(String pin) async {
     // Check if PIN matches (either user's PIN or default PIN)
     bool isCorrectPin = false;
-    
+
     if (hasSetPin.value && pin == appPin.value) {
       isCorrectPin = true;
     } else if (!hasSetPin.value && pin == defaultPin) {
       isCorrectPin = true;
       isUsingDefaultPin.value = true;
     }
-    
+
     if (isCorrectPin) {
       _unlockApp();
-      
+
       // Show warning if using default PIN
       if (isUsingDefaultPin.value) {
         Future.delayed(const Duration(milliseconds: 500), () {
@@ -210,9 +243,9 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       );
     }
   }
-  
+
   // Biometric authentication removed
-  
+
   /// Unlock app using biometric authentication
   Future<void> unlockWithBiometric() async {
     if (_isAuthenticating.value) {
@@ -267,36 +300,43 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   bool get canUseBiometric {
     final biometricAvailable = _biometricService.isBiometricAvailable.value;
     final biometricEnabled = isBiometricEnabled.value;
-    
+
     debugPrint('AppLockController: canUseBiometric check:');
     debugPrint('  - biometricAvailable: $biometricAvailable');
     debugPrint('  - biometricEnabled: $biometricEnabled');
     debugPrint('  - result: ${biometricEnabled && biometricAvailable}');
-    
+
     return biometricEnabled && biometricAvailable;
   }
-  
+
   /// Get biometric icon for UI display
   IconData get biometricIcon => _biometricService.getBiometricIcon();
-  
+
   /// Get biometric type string for UI display
   String get biometricTypeString => _biometricService.getBiometricTypeString();
-  
+
   void _unlockApp() async {
     debugPrint('Unlocking app');
     isAppLocked.value = false;
     _lastAuthTime = DateTime.now();
-    
+    _lastUserActivity = DateTime.now(); // Reset activity timer on unlock
+
     // Navigate back to appropriate screen based on user role
     await _authController.navigateBasedOnRole();
   }
-  
+
+  /// Track user activity to prevent locking during active usage
+  void trackUserActivity() {
+    _lastUserActivity = DateTime.now();
+    debugPrint('AppLockController: User activity tracked at: $_lastUserActivity');
+  }
+
   Future<void> setPin(String pin) async {
     appPin.value = pin;
     hasSetPin.value = true;
     isUsingDefaultPin.value = false;
     await _saveSettings();
-    
+
     Get.snackbar(
       'Success',
       'PIN has been set successfully.',
@@ -305,7 +345,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       colorText: Colors.white,
     );
   }
-  
+
   Future<void> changePin(String oldPin, String newPin) async {
     if (oldPin != appPin.value) {
       Get.snackbar(
@@ -317,30 +357,31 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       );
       return;
     }
-    
+
     await setPin(newPin);
   }
-  
+
   Future<void> toggleAppLock(bool enabled) async {
     isAppLockEnabled.value = enabled;
     await _saveSettings();
   }
-  
+
   Future<void> toggleBiometric(bool enabled) async {
     isBiometricEnabled.value = enabled;
     await _saveSettings();
   }
-  
+
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       isAppLockEnabled.value = prefs.getBool('app_lock_enabled') ?? true;
-      isBiometricEnabled.value = prefs.getBool('biometric_enabled') ?? true; // Enable by default
+      isBiometricEnabled.value =
+          prefs.getBool('biometric_enabled') ?? true; // Enable by default
       appPin.value = prefs.getString('app_pin') ?? '';
       hasSetPin.value = appPin.value.isNotEmpty;
       isUsingDefaultPin.value = prefs.getBool('is_using_default_pin') ?? true;
-      
+
       debugPrint('AppLockController: Settings loaded:');
       debugPrint('  - isAppLockEnabled: ${isAppLockEnabled.value}');
       debugPrint('  - isBiometricEnabled: ${isBiometricEnabled.value}');
@@ -350,32 +391,31 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
       debugPrint('Error loading app lock settings: $e');
     }
   }
-  
+
   Future<void> _saveSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       await prefs.setBool('app_lock_enabled', isAppLockEnabled.value);
       await prefs.setBool('biometric_enabled', isBiometricEnabled.value);
       await prefs.setString('app_pin', appPin.value);
       await prefs.setBool('is_using_default_pin', isUsingDefaultPin.value);
-      
+
       debugPrint('App lock settings saved');
     } catch (e) {
       debugPrint('Error saving app lock settings: $e');
     }
   }
-  
+
   // Force lock the app (can be called manually)
   void lockAppManually() {
     if (_authController.currentUser != null) {
       _lockApp();
     }
   }
-  
+
   // Check if app should be locked on startup
   bool shouldLockOnStartup() {
-    return isAppLockEnabled.value && 
-           _authController.currentUser != null;
+    return isAppLockEnabled.value && _authController.currentUser != null;
   }
 }

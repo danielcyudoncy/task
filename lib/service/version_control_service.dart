@@ -7,15 +7,15 @@ import 'dart:typed_data';
 
 class VersionControlService extends GetxService {
   static VersionControlService get to => Get.find();
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorageService _storageService = FirebaseStorageService.to;
   bool _isInitialized = false;
-  
+
   /// Initializes the version control service
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     try {
       Get.log('VersionControlService: Initializing...');
       _isInitialized = true;
@@ -42,23 +42,24 @@ class VersionControlService extends GetxService {
 
     try {
       Get.log('Creating new version for file: $fileName in task: $taskId');
-      
+
       // Generate version ID
       final versionId = _generateVersionId();
       final timestamp = DateTime.now();
-      
+
       // Upload file to storage with version path
-      final storagePath = 'tasks/$taskId/attachments/versions/$versionId/$fileName';
+      final storagePath =
+          'tasks/$taskId/attachments/versions/$versionId/$fileName';
       final downloadUrl = await _storageService.uploadFile(
         bucket: 'task-versions',
         path: storagePath,
         file: file,
       );
-      
+
       // Get file metadata
       final fileStats = await file.stat();
       final fileSize = fileStats.size;
-      
+
       // Determine version number
       int versionNumber = 1;
       if (previousVersionId != null) {
@@ -67,7 +68,7 @@ class VersionControlService extends GetxService {
           versionNumber = previousVersion.versionNumber + 1;
         }
       }
-      
+
       // Create version document
       final version = FileVersion(
         versionId: versionId,
@@ -84,13 +85,13 @@ class VersionControlService extends GetxService {
         previousVersionId: previousVersionId,
         isLatest: true,
       );
-      
+
       // Save to Firestore
       await _firestore
           .collection('file_versions')
           .doc(versionId)
           .set(version.toMap());
-      
+
       // Update previous version to not be latest
       if (previousVersionId != null) {
         await _firestore
@@ -98,8 +99,9 @@ class VersionControlService extends GetxService {
             .doc(previousVersionId)
             .update({'isLatest': false});
       }
-      
-      Get.log('Successfully created version $versionNumber for file: $fileName');
+
+      Get.log(
+          'Successfully created version $versionNumber for file: $fileName');
       return version;
     } catch (e) {
       Get.log('Failed to create version for file $fileName: $e');
@@ -121,29 +123,32 @@ class VersionControlService extends GetxService {
     }
 
     try {
-      Get.log('Creating new version from bytes for file: $fileName in task: $taskId');
-      
+      Get.log(
+          'Creating new version from bytes for file: $fileName in task: $taskId');
+
       // Generate version ID
       final versionId = _generateVersionId();
       final timestamp = DateTime.now();
-      
+
       // Upload bytes to storage with version path
-      final storagePath = 'tasks/$taskId/attachments/versions/$versionId/$fileName';
-      
+      final storagePath =
+          'tasks/$taskId/attachments/versions/$versionId/$fileName';
+
       // Create a temporary file for upload
       final tempDir = Directory.systemTemp;
-      final tempFile = File('${tempDir.path}/temp_version_${DateTime.now().millisecondsSinceEpoch}');
+      final tempFile = File(
+          '${tempDir.path}/temp_version_${DateTime.now().millisecondsSinceEpoch}');
       await tempFile.writeAsBytes(bytes);
-      
+
       final downloadUrl = await _storageService.uploadFile(
         bucket: 'task-versions',
         path: storagePath,
         file: tempFile,
       );
-      
+
       // Clean up temp file
       await tempFile.delete();
-      
+
       // Determine version number
       int versionNumber = 1;
       if (previousVersionId != null) {
@@ -152,7 +157,7 @@ class VersionControlService extends GetxService {
           versionNumber = previousVersion.versionNumber + 1;
         }
       }
-      
+
       // Create version document
       final version = FileVersion(
         versionId: versionId,
@@ -169,13 +174,13 @@ class VersionControlService extends GetxService {
         previousVersionId: previousVersionId,
         isLatest: true,
       );
-      
+
       // Save to Firestore
       await _firestore
           .collection('file_versions')
           .doc(versionId)
           .set(version.toMap());
-      
+
       // Update previous version to not be latest
       if (previousVersionId != null) {
         await _firestore
@@ -183,8 +188,9 @@ class VersionControlService extends GetxService {
             .doc(previousVersionId)
             .update({'isLatest': false});
       }
-      
-      Get.log('Successfully created version $versionNumber for file: $fileName');
+
+      Get.log(
+          'Successfully created version $versionNumber for file: $fileName');
       return version;
     } catch (e) {
       Get.log('Failed to create version from bytes for file $fileName: $e');
@@ -199,15 +205,13 @@ class VersionControlService extends GetxService {
     }
 
     try {
-      final doc = await _firestore
-          .collection('file_versions')
-          .doc(versionId)
-          .get();
-      
+      final doc =
+          await _firestore.collection('file_versions').doc(versionId).get();
+
       if (doc.exists && doc.data() != null) {
         return FileVersion.fromMap(doc.data()!);
       }
-      
+
       return null;
     } catch (e) {
       Get.log('Failed to get version $versionId: $e');
@@ -231,7 +235,7 @@ class VersionControlService extends GetxService {
           .where('fileName', isEqualTo: fileName)
           .orderBy('versionNumber', descending: true)
           .get();
-      
+
       return querySnapshot.docs
           .map((doc) => FileVersion.fromMap(doc.data()))
           .toList();
@@ -258,11 +262,11 @@ class VersionControlService extends GetxService {
           .where('isLatest', isEqualTo: true)
           .limit(1)
           .get();
-      
+
       if (querySnapshot.docs.isNotEmpty) {
         return FileVersion.fromMap(querySnapshot.docs.first.data());
       }
-      
+
       return null;
     } catch (e) {
       Get.log('Failed to get latest version for $fileName in task $taskId: $e');
@@ -282,7 +286,7 @@ class VersionControlService extends GetxService {
           .where('taskId', isEqualTo: taskId)
           .orderBy('createdAt', descending: true)
           .get();
-      
+
       return querySnapshot.docs
           .map((doc) => FileVersion.fromMap(doc.data()))
           .toList();
@@ -304,28 +308,28 @@ class VersionControlService extends GetxService {
 
     try {
       Get.log('Restoring version: $versionId');
-      
+
       // Get the version to restore
       final versionToRestore = await getVersion(versionId);
       if (versionToRestore == null) {
         throw Exception('Version not found: $versionId');
       }
-      
+
       // Get current latest version
       final currentLatest = await getLatestVersion(
         taskId: versionToRestore.taskId,
         fileName: versionToRestore.fileName,
       );
-      
+
       // Create new version based on the restored version
       final newVersionId = _generateVersionId();
       final timestamp = DateTime.now();
-      
+
       int newVersionNumber = 1;
       if (currentLatest != null) {
         newVersionNumber = currentLatest.versionNumber + 1;
       }
-      
+
       final restoredVersion = FileVersion(
         versionId: newVersionId,
         taskId: versionToRestore.taskId,
@@ -337,18 +341,19 @@ class VersionControlService extends GetxService {
         mimeType: versionToRestore.mimeType,
         createdBy: userId,
         createdAt: timestamp,
-        comment: comment ?? 'Restored from version ${versionToRestore.versionNumber}',
+        comment: comment ??
+            'Restored from version ${versionToRestore.versionNumber}',
         previousVersionId: currentLatest?.versionId,
         isLatest: true,
         restoredFromVersionId: versionId,
       );
-      
+
       // Save new version
       await _firestore
           .collection('file_versions')
           .doc(newVersionId)
           .set(restoredVersion.toMap());
-      
+
       // Update previous latest version
       if (currentLatest != null) {
         await _firestore
@@ -356,8 +361,9 @@ class VersionControlService extends GetxService {
             .doc(currentLatest.versionId)
             .update({'isLatest': false});
       }
-      
-      Get.log('Successfully restored version $versionId as version $newVersionNumber');
+
+      Get.log(
+          'Successfully restored version $versionId as version $newVersionNumber');
       return restoredVersion;
     } catch (e) {
       Get.log('Failed to restore version $versionId: $e');
@@ -373,29 +379,28 @@ class VersionControlService extends GetxService {
 
     try {
       Get.log('Deleting version: $versionId');
-      
+
       // Get version info
       final version = await getVersion(versionId);
       if (version == null) {
         throw Exception('Version not found: $versionId');
       }
-      
+
       // Don't allow deletion of latest version if it's the only version
       if (version.isLatest) {
         final allVersions = await getFileVersions(
           taskId: version.taskId,
           fileName: version.fileName,
         );
-        
+
         if (allVersions.length == 1) {
           throw Exception('Cannot delete the only version of a file');
         }
-        
+
         // If deleting latest version, promote previous version
-        final previousVersions = allVersions
-            .where((v) => v.versionId != versionId)
-            .toList();
-        
+        final previousVersions =
+            allVersions.where((v) => v.versionId != versionId).toList();
+
         if (previousVersions.isNotEmpty) {
           final newLatest = previousVersions.first;
           await _firestore
@@ -404,19 +409,16 @@ class VersionControlService extends GetxService {
               .update({'isLatest': true});
         }
       }
-      
+
       // Delete from storage
       await _storageService.deleteFile(
         bucket: 'task-versions',
         path: version.storagePath,
       );
-      
+
       // Delete from Firestore
-      await _firestore
-          .collection('file_versions')
-          .doc(versionId)
-          .delete();
-      
+      await _firestore.collection('file_versions').doc(versionId).delete();
+
       Get.log('Successfully deleted version: $versionId');
     } catch (e) {
       Get.log('Failed to delete version $versionId: $e');
@@ -435,12 +437,12 @@ class VersionControlService extends GetxService {
 
     try {
       Get.log('Deleting all versions for file: $fileName in task: $taskId');
-      
+
       final versions = await getFileVersions(
         taskId: taskId,
         fileName: fileName,
       );
-      
+
       for (final version in versions) {
         try {
           // Delete from storage
@@ -448,7 +450,7 @@ class VersionControlService extends GetxService {
             bucket: 'task-versions',
             path: version.storagePath,
           );
-          
+
           // Delete from Firestore
           await _firestore
               .collection('file_versions')
@@ -458,7 +460,7 @@ class VersionControlService extends GetxService {
           Get.log('Failed to delete version ${version.versionId}: $e');
         }
       }
-      
+
       Get.log('Successfully deleted all versions for file: $fileName');
     } catch (e) {
       Get.log('Failed to delete all versions for file $fileName: $e');
@@ -480,27 +482,28 @@ class VersionControlService extends GetxService {
         taskId: taskId,
         fileName: fileName,
       );
-      
+
       final history = <VersionHistoryEntry>[];
-      
+
       for (int i = 0; i < versions.length; i++) {
         final version = versions[i];
-        final previousVersion = i < versions.length - 1 ? versions[i + 1] : null;
-        
+        final previousVersion =
+            i < versions.length - 1 ? versions[i + 1] : null;
+
         final entry = VersionHistoryEntry(
           version: version,
           previousVersion: previousVersion,
-          sizeDifference: previousVersion != null 
-              ? version.fileSize - previousVersion.fileSize 
+          sizeDifference: previousVersion != null
+              ? version.fileSize - previousVersion.fileSize
               : 0,
-          timeDifference: previousVersion != null 
-              ? version.createdAt.difference(previousVersion.createdAt) 
+          timeDifference: previousVersion != null
+              ? version.createdAt.difference(previousVersion.createdAt)
               : Duration.zero,
         );
-        
+
         history.add(entry);
       }
-      
+
       return history;
     } catch (e) {
       Get.log('Failed to get version history for $fileName: $e');
@@ -516,7 +519,7 @@ class VersionControlService extends GetxService {
   /// Gets MIME type from file extension
   String _getMimeType(String fileName) {
     final extension = fileName.split('.').last.toLowerCase();
-    
+
     switch (extension) {
       case 'jpg':
       case 'jpeg':
@@ -611,7 +614,8 @@ class FileVersion {
       fileSize: map['fileSize'] ?? 0,
       mimeType: map['mimeType'] ?? 'application/octet-stream',
       createdBy: map['createdBy'] ?? '',
-      createdAt: DateTime.parse(map['createdAt'] ?? DateTime.now().toIso8601String()),
+      createdAt:
+          DateTime.parse(map['createdAt'] ?? DateTime.now().toIso8601String()),
       comment: map['comment'],
       previousVersionId: map['previousVersionId'],
       isLatest: map['isLatest'] ?? false,

@@ -37,6 +37,7 @@ dependencies:
   firebase_auth: ^5.0.0
   firebase_core: ^3.15.0
   firebase_crashlytics: ^4.0.0
+  firebase_performance: ^0.10.0+10
   firebase_database: ^11.0.0
   firebase_messaging: ^15.2.9
   firebase_storage: ^12.0.0
@@ -70,7 +71,6 @@ dependencies:
   responsive_framework: ^1.5.1
   shared_preferences: ^2.3.0
   shimmer: ^3.0.0
-  # supabase_flutter: ^2.9.1  # Removed - using Firebase Storage instead
   syncfusion_flutter_charts: ^30.1.40
   table_calendar: ^3.1.3
   url_launcher: ^6.3.2

@@ -26,8 +26,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-    
     return Scaffold(
       appBar: AppBar(title: Text('all_tasks'.tr)),
       body: Obx(() {
@@ -96,11 +94,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
         onPressed: () => _showAddTaskDialog(context),
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar:  UserNavBar(currentIndex: 1),
+      bottomNavigationBar: UserNavBar(currentIndex: 1),
     );
   }
-
-
 
   void _showAddTaskDialog(BuildContext context) {
     final TextEditingController titleController = TextEditingController();
@@ -169,15 +165,25 @@ class _TaskListScreenState extends State<TaskListScreen> {
                             builder: (context, child) {
                               return Theme(
                                 data: Theme.of(context).copyWith(
-                                  colorScheme: Theme.of(context).colorScheme.copyWith(
-                                    primary: Theme.of(context).colorScheme.primary,
-                                    onPrimary: Theme.of(context).colorScheme.onPrimary,
-                                    surface: Theme.of(context).colorScheme.surface,
-                                    onSurface: Theme.of(context).colorScheme.onSurface,
-                                  ),
+                                  colorScheme:
+                                      Theme.of(context).colorScheme.copyWith(
+                                            primary: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                            onPrimary: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary,
+                                            surface: Theme.of(context)
+                                                .colorScheme
+                                                .surface,
+                                            onSurface: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface,
+                                          ),
                                   textButtonTheme: TextButtonThemeData(
                                     style: TextButton.styleFrom(
-                                      foregroundColor: Theme.of(context).colorScheme.primary,
+                                      foregroundColor:
+                                          Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ),

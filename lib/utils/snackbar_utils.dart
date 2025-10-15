@@ -13,7 +13,9 @@ class SnackbarUtils {
   }
 
   /// Safe snackbar method that checks if app is ready
-  static void showSnackbar(String title, String message, {
+  static void showSnackbar(
+    String title,
+    String message, {
     SnackPosition? snackPosition,
     Duration? duration,
   }) {
@@ -22,32 +24,32 @@ class SnackbarUtils {
       debugPrint("Snackbar skipped - app not ready: $title: $message");
       return;
     }
-    
+
     if (!isBootstrapComplete) {
       debugPrint("Snackbar skipped - bootstrap incomplete: $title: $message");
       return;
     }
-    
+
     if (Get.isSnackbarOpen) {
       debugPrint("Snackbar skipped - snackbar already open: $title: $message");
       return;
     }
-    
+
     // Check if context is available
     if (Get.context == null) {
       debugPrint("Snackbar skipped - context not available: $title: $message");
       return;
     }
-    
+
     // Check if we're in a build phase
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.detached) {
       debugPrint("Snackbar skipped - app detached: $title: $message");
       return;
     }
-    
+
     try {
       Get.snackbar(
-        title, 
+        title,
         message,
         snackPosition: snackPosition ?? SnackPosition.BOTTOM,
         duration: duration ?? const Duration(seconds: 3),

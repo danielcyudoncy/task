@@ -98,7 +98,8 @@ class SettingsController extends GetxController {
             data['isLocationEnabled'] ?? isLocationEnabled.value;
         isTargetedAdsEnabled.value =
             data['isTargetedAdsEnabled'] ?? isTargetedAdsEnabled.value;
-        isBiometricEnabled.value = data['isBiometricEnabled'] ?? isBiometricEnabled.value;
+        isBiometricEnabled.value =
+            data['isBiometricEnabled'] ?? isBiometricEnabled.value;
 
         // Save pulled settings to local preferences too
         await saveSettings(localOnly: true);

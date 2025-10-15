@@ -6,18 +6,18 @@ import 'package:get/get.dart';
 
 class AndroidUpdateService {
   static bool _isUpdateInProgress = false;
-  
+
   /// Check for Android in-app updates
   static Future<void> checkForAndroidUpdate({
     bool showDialog = true,
     bool forceUpdate = false,
   }) async {
     if (!Platform.isAndroid || _isUpdateInProgress) return;
-    
+
     try {
       // Check if update is available through Google Play
       final updateInfo = await InAppUpdate.checkForUpdate();
-      
+
       if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
         if (showDialog) {
           _showUpdateDialog(
@@ -33,7 +33,7 @@ class AndroidUpdateService {
       'Error checking for updates';
     }
   }
-  
+
   /// Show update dialog
   static void _showUpdateDialog({
     required AppUpdateInfo updateInfo,
@@ -75,16 +75,16 @@ class AndroidUpdateService {
       barrierDismissible: !forceUpdate,
     );
   }
-  
+
   /// Start the update process
   static Future<void> _startUpdate(
     AppUpdateInfo updateInfo,
     bool forceUpdate,
   ) async {
     if (_isUpdateInProgress) return;
-    
+
     _isUpdateInProgress = true;
-    
+
     try {
       if (forceUpdate || updateInfo.immediateUpdateAllowed) {
         // Immediate update - app will restart after update
@@ -99,12 +99,12 @@ class AndroidUpdateService {
       _isUpdateInProgress = false;
     }
   }
-  
+
   /// Start immediate update
   static Future<void> _startImmediateUpdate() async {
     try {
       final result = await InAppUpdate.performImmediateUpdate();
-      
+
       switch (result) {
         case AppUpdateResult.success:
           break;
@@ -118,12 +118,12 @@ class AndroidUpdateService {
       _showUpdateError();
     }
   }
-  
+
   /// Start flexible update
   static Future<void> _startFlexibleUpdate() async {
     try {
       final result = await InAppUpdate.startFlexibleUpdate();
-      
+
       switch (result) {
         case AppUpdateResult.success:
           _listenForFlexibleUpdateCompletion();
@@ -138,13 +138,13 @@ class AndroidUpdateService {
       _showUpdateError();
     }
   }
-  
+
   /// Listen for flexible update completion
   static void _listenForFlexibleUpdateCompletion() {
     // Show snackbar to notify user that update is ready
     _showUpdateCompletedSnackbar();
   }
-  
+
   /// Show update completed snackbar
   static void _showUpdateCompletedSnackbar() {
     Get.snackbar(
@@ -165,7 +165,7 @@ class AndroidUpdateService {
       ),
     );
   }
-  
+
   /// Show update error
   static void _showUpdateError() {
     Get.snackbar(
@@ -177,7 +177,7 @@ class AndroidUpdateService {
       duration: const Duration(seconds: 3),
     );
   }
-  
+
   /// Check if flexible update is downloaded and ready to install
   static Future<bool> isFlexibleUpdateDownloaded() async {
     try {
@@ -187,7 +187,7 @@ class AndroidUpdateService {
       return false;
     }
   }
-  
+
   /// Complete flexible update (restart app)
   static Future<void> completeFlexibleUpdate() async {
     try {

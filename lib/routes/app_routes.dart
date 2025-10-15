@@ -130,7 +130,7 @@ class AppRoutes {
     ),
     GetPage(
       name: "/forgot-password",
-      page: () =>  ForgotPasswordScreen(),
+      page: () => ForgotPasswordScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),
@@ -158,12 +158,12 @@ class AppRoutes {
     ),
     GetPage(
       name: "/chat-list",
-      page: () =>  const ChatListScreen(),
+      page: () => const ChatListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
-     GetPage(
+    GetPage(
       name: "/user-list",
       page: () => const UserListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
@@ -177,7 +177,7 @@ class AppRoutes {
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
-    
+
     GetPage(
       name: "/notifications",
       page: () => NotificationScreen(),

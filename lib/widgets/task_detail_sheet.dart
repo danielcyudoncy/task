@@ -21,7 +21,7 @@ class TaskDetailSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    
+
     // Robust timestamp extraction & formatting
     final dynamic timestampRaw = data['timestamp'];
     String formattedTimestamp = '';
@@ -78,12 +78,16 @@ class TaskDetailSheet extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 20,
                     backgroundColor: avatarBg,
-                    backgroundImage: (data['creatorAvatar'] != null && data['creatorAvatar'].isNotEmpty && 
-                        (data['creatorAvatar'].startsWith('http://') || data['creatorAvatar'].startsWith('https://')))
+                    backgroundImage: (data['creatorAvatar'] != null &&
+                            data['creatorAvatar'].isNotEmpty &&
+                            (data['creatorAvatar'].startsWith('http://') ||
+                                data['creatorAvatar'].startsWith('https://')))
                         ? NetworkImage(data['creatorAvatar'])
                         : null,
-                    child: (data['creatorAvatar'] == null || data['creatorAvatar'].isEmpty || 
-                        !(data['creatorAvatar'].startsWith('http://') || data['creatorAvatar'].startsWith('https://')))
+                    child: (data['creatorAvatar'] == null ||
+                            data['creatorAvatar'].isEmpty ||
+                            !(data['creatorAvatar'].startsWith('http://') ||
+                                data['creatorAvatar'].startsWith('https://')))
                         ? Text(
                             (data['creatorName'].isNotEmpty
                                     ? data['creatorName'][0]
@@ -123,14 +127,13 @@ class TaskDetailSheet extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               data['description'] ?? '',
-              style: textTheme.bodyMedium?.copyWith(
-                fontSize: 15.sp * textScale, 
-                color: mainText
-              ),
+              style: textTheme.bodyMedium
+                  ?.copyWith(fontSize: 15.sp * textScale, color: mainText),
             ),
             const SizedBox(height: 16),
             // Category
-            if (data['category'] != null && data['category'].toString().isNotEmpty)
+            if (data['category'] != null &&
+                data['category'].toString().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
@@ -156,7 +159,8 @@ class TaskDetailSheet extends StatelessWidget {
                 ),
               ),
             // Priority
-            if (data['priority'] != null && data['priority'].toString().isNotEmpty)
+            if (data['priority'] != null &&
+                data['priority'].toString().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Row(
@@ -232,7 +236,9 @@ class TaskDetailSheet extends StatelessWidget {
               ),
             ),
             // Tags
-            if (data['tags'] != null && data['tags'] is List && (data['tags'] as List).isNotEmpty)
+            if (data['tags'] != null &&
+                data['tags'] is List &&
+                (data['tags'] as List).isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Wrap(
@@ -246,10 +252,11 @@ class TaskDetailSheet extends StatelessWidget {
                         fontSize: 13.sp * textScale,
                       ),
                     ),
-                    ...List<Widget>.from((data['tags'] as List).map((tag) => Chip(
-                          label: Text(tag.toString()),
-                          backgroundColor: colorScheme.primaryContainer,
-                        ))),
+                    ...List<Widget>.from(
+                        (data['tags'] as List).map((tag) => Chip(
+                              label: Text(tag.toString()),
+                              backgroundColor: colorScheme.primaryContainer,
+                            ))),
                   ],
                 ),
               ),
@@ -300,10 +307,8 @@ class TaskDetailSheet extends StatelessWidget {
                     formattedTimestamp.isNotEmpty
                         ? formattedTimestamp
                         : 'no_date'.tr,
-                    style: textTheme.bodySmall?.copyWith(
-                      fontSize: 13.sp * textScale, 
-                      color: subText
-                    ),
+                    style: textTheme.bodySmall
+                        ?.copyWith(fontSize: 13.sp * textScale, color: subText),
                   ),
                 ],
               ),

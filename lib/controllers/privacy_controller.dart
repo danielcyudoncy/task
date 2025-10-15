@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../service/biometric_service.dart';
 import '../utils/url_launcher_helper.dart';
+import '../utils/constants/app_constants.dart';
 
 class PrivacyController extends GetxController {
   // Privacy settings observables
@@ -21,40 +22,40 @@ class PrivacyController extends GetxController {
   final RxBool locationServices = false.obs;
   final RxBool adPreferences = false.obs;
   final RxBool twoFactorAuth = false.obs;
-  
+
   // Loading states
   final RxBool isLoading = false.obs;
   final RxBool isSaving = false.obs;
-  
+
   // Services
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final BiometricService _biometricService = BiometricService();
   // final FirebaseMessagingService _messagingService = Get.find<FirebaseMessagingService>();
-  
-  // Privacy policy and terms URLs
-  static const String privacyPolicyUrl = 'https://your-company.com/privacy-policy';
-  static const String termsOfServiceUrl = 'https://your-company.com/terms-of-service';
-  static const String dataProtectionUrl = 'https://your-company.com/data-protection';
-  
+
+  // Privacy policy and terms URLs - using constants for configurability
+  static String get privacyPolicyUrl => ExternalUrls.privacyPolicyUrl;
+  static String get termsOfServiceUrl => ExternalUrls.termsOfServiceUrl;
+  static String get dataProtectionUrl => ExternalUrls.dataProtectionUrl;
+
   @override
   void onInit() {
     super.onInit();
     loadPrivacySettings();
   }
-  
+
   /// Load privacy settings from local storage and Firestore
   Future<void> loadPrivacySettings() async {
     try {
       isLoading.value = true;
-      
+
       // Load from SharedPreferences first (faster)
       final prefs = await SharedPreferences.getInstance();
       thirdPartyServices.value = prefs.getBool('third_party_services') ?? false;
       locationServices.value = prefs.getBool('location_services') ?? false;
       adPreferences.value = prefs.getBool('ad_preferences') ?? false;
       twoFactorAuth.value = prefs.getBool('two_factor_auth') ?? false;
-      
+
       // Sync with Firestore if user is authenticated
       final user = _auth.currentUser;
       if (user != null) {
@@ -67,7 +68,7 @@ class PrivacyController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
   /// Sync settings with Firestore
   Future<void> _syncWithFirestore(String userId) async {
     try {
@@ -77,14 +78,14 @@ class PrivacyController extends GetxController {
           .collection('privacy_settings')
           .doc('preferences')
           .get();
-      
+
       if (doc.exists) {
         final data = doc.data()!;
         thirdPartyServices.value = data['third_party_services'] ?? false;
         locationServices.value = data['location_services'] ?? false;
         adPreferences.value = data['ad_preferences'] ?? false;
         twoFactorAuth.value = data['two_factor_auth'] ?? false;
-        
+
         // Update local storage
         await _saveToLocalStorage();
       }
@@ -92,7 +93,7 @@ class PrivacyController extends GetxController {
       debugPrint('Error syncing with Firestore: $e');
     }
   }
-  
+
   /// Save settings to local storage
   Future<void> _saveToLocalStorage() async {
     try {
@@ -105,24 +106,24 @@ class PrivacyController extends GetxController {
       debugPrint('Error saving to local storage: $e');
     }
   }
-  
+
   /// Save all privacy settings
   Future<void> savePrivacySettings() async {
     try {
       isSaving.value = true;
-      
+
       // Save to local storage
       await _saveToLocalStorage();
-      
+
       // Save to Firestore if user is authenticated
       final user = _auth.currentUser;
       if (user != null) {
         await _saveToFirestore(user.uid);
       }
-      
+
       // Apply settings
       await _applyPrivacySettings();
-      
+
       _showSuccessSnackbar('Privacy settings saved successfully');
     } catch (e) {
       debugPrint('Error saving privacy settings: $e');
@@ -131,7 +132,7 @@ class PrivacyController extends GetxController {
       isSaving.value = false;
     }
   }
-  
+
   /// Save settings to Firestore
   Future<void> _saveToFirestore(String userId) async {
     try {
@@ -152,7 +153,7 @@ class PrivacyController extends GetxController {
       rethrow;
     }
   }
-  
+
   /// Apply privacy settings to relevant services
   Future<void> _applyPrivacySettings() async {
     try {
@@ -162,21 +163,21 @@ class PrivacyController extends GetxController {
       } else {
         await _disableThirdPartyServices();
       }
-      
+
       // Apply location services setting
       if (locationServices.value) {
         await _enableLocationServices();
       } else {
         await _disableLocationServices();
       }
-      
+
       // Apply ad preferences
       if (adPreferences.value) {
         await _enablePersonalizedAds();
       } else {
         await _disablePersonalizedAds();
       }
-      
+
       // Apply two-factor authentication
       if (twoFactorAuth.value) {
         await _enableTwoFactorAuth();
@@ -185,60 +186,60 @@ class PrivacyController extends GetxController {
       debugPrint('Error applying privacy settings: $e');
     }
   }
-  
+
   /// Enable third-party services (notifications, analytics)
   Future<void> _enableThirdPartyServices() async {
     try {
       // Enable push notifications
       // Note: FCM service integration would be implemented here
       // await _messagingService.requestPermission();
-      
+
       // Enable Firebase Analytics
       await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
-      
+
       // Enable Firebase Crashlytics
       await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-      
+
       debugPrint('Third-party services enabled (Analytics and Crashlytics)');
     } catch (e) {
       debugPrint('Error enabling third-party services: $e');
     }
   }
-  
+
   /// Disable third-party services
   Future<void> _disableThirdPartyServices() async {
     try {
       // Note: We can't completely disable FCM, but we can stop requesting permissions
       // and disable analytics data collection
-      
+
       // Disable Firebase Analytics
       await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
-      
+
       // Disable Firebase Crashlytics
       await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
-      
+
       debugPrint('Third-party services disabled (Analytics and Crashlytics)');
     } catch (e) {
       debugPrint('Error disabling third-party services: $e');
     }
   }
-  
+
   /// Enable location services
   Future<void> _enableLocationServices() async {
     try {
       // Request location permissions
       final locationPermission = await Permission.location.request();
-      
+
       if (locationPermission.isGranted) {
         // Location permission granted
         debugPrint('Location services enabled - permission granted');
-        
+
         // Enable location-based features
         // This could include:
         // - Location-based task assignments
         // - Geofencing for task reminders
         // - Location tracking for field workers
-        
+
         // Update user preferences in Firestore
         final user = _auth.currentUser;
         if (user != null) {
@@ -252,16 +253,18 @@ class PrivacyController extends GetxController {
             'location_enabled_at': FieldValue.serverTimestamp(),
           });
         }
-        
+
         debugPrint('Location services fully enabled');
       } else if (locationPermission.isDenied) {
         locationServices.value = false;
         debugPrint('Location permission denied');
-        _showErrorSnackbar('Location permission denied. Please enable in device settings.');
+        _showErrorSnackbar(
+            'Location permission denied. Please enable in device settings.');
       } else if (locationPermission.isPermanentlyDenied) {
         locationServices.value = false;
         debugPrint('Location permission permanently denied');
-        _showErrorSnackbar('Location permission permanently denied. Please enable in device settings.');
+        _showErrorSnackbar(
+            'Location permission permanently denied. Please enable in device settings.');
         // Optionally open app settings
         await openAppSettings();
       }
@@ -270,23 +273,23 @@ class PrivacyController extends GetxController {
       _showErrorSnackbar('Failed to enable location services');
     }
   }
-  
+
   /// Disable location services
   Future<void> _disableLocationServices() async {
     try {
       debugPrint('Disabling location services');
-      
+
       // Disable location-based features
       // This would stop:
       // - Location-based task assignments
       // - Geofencing for task reminders
       // - Location tracking for field workers
-      
+
       // Clear cached location data (if any)
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('last_known_location');
       await prefs.remove('location_cache');
-      
+
       // Update user preferences in Firestore
       final user = _auth.currentUser;
       if (user != null) {
@@ -300,20 +303,20 @@ class PrivacyController extends GetxController {
           'location_disabled_at': FieldValue.serverTimestamp(),
         });
       }
-      
+
       debugPrint('Location services disabled');
     } catch (e) {
       debugPrint('Error disabling location services: $e');
     }
   }
-  
+
   /// Enable personalized ads
   Future<void> _enablePersonalizedAds() async {
     try {
       // Note: This app doesn't currently show ads
       // This is a placeholder for future ad integration
       debugPrint('Personalized ads enabled (placeholder)');
-      
+
       // Future implementation would include:
       // - Enable ad personalization
       // - Update ad preferences with ad networks
@@ -322,12 +325,12 @@ class PrivacyController extends GetxController {
       debugPrint('Error enabling personalized ads: $e');
     }
   }
-  
+
   /// Disable personalized ads
   Future<void> _disablePersonalizedAds() async {
     try {
       debugPrint('Personalized ads disabled');
-      
+
       // Future implementation would include:
       // - Disable ad personalization
       // - Show generic ads only
@@ -336,20 +339,20 @@ class PrivacyController extends GetxController {
       debugPrint('Error disabling personalized ads: $e');
     }
   }
-  
+
   /// Enable two-factor authentication
   Future<void> _enableTwoFactorAuth() async {
     try {
       // Check if biometric authentication is available
       final isAvailable = await _biometricService.canCheckBiometrics();
-      
+
       if (isAvailable) {
         // Biometric is available, user can use it as 2FA
         debugPrint('Two-factor authentication enabled with biometric');
       } else {
         // Fallback to other 2FA methods (SMS, email, authenticator app)
         debugPrint('Two-factor authentication enabled (non-biometric)');
-        
+
         // Show dialog to set up alternative 2FA method
         _showBiometricSetupDialog();
       }
@@ -358,7 +361,7 @@ class PrivacyController extends GetxController {
       _showErrorSnackbar('Failed to enable two-factor authentication');
     }
   }
-  
+
   /// Show biometric setup dialog
   void _showBiometricSetupDialog() {
     Get.dialog(
@@ -393,8 +396,9 @@ class PrivacyController extends GetxController {
 
   /// Get biometric type string for user feedback
   String _getBiometricTypeString(List<dynamic> biometrics) {
-    debugPrint('PrivacyController: Getting biometric type string for: $biometrics');
-    
+    debugPrint(
+        'PrivacyController: Getting biometric type string for: $biometrics');
+
     if (biometrics.contains('fingerprint')) {
       return 'fingerprint';
     } else if (biometrics.contains('face')) {
@@ -405,29 +409,29 @@ class PrivacyController extends GetxController {
       return 'biometric authentication';
     }
   }
-  
+
   // Removed unused 2FA setup methods - can be added back when needed
-  
+
   /// Open privacy policy
   void openPrivacyPolicy() {
     UrlLauncherHelper.openExternalLink(privacyPolicyUrl);
   }
-  
+
   /// Open terms of service
   void openTermsOfService() {
     UrlLauncherHelper.openExternalLink(termsOfServiceUrl);
   }
-  
+
   /// Open data protection information
   void openDataProtection() {
     UrlLauncherHelper.openExternalLink(dataProtectionUrl);
   }
-  
+
   /// Exports user data
   Future<void> exportUserData() async {
     try {
       isSaving.value = true;
-      
+
       // Get current user
       final user = _auth.currentUser;
       if (user == null) {
@@ -437,17 +441,17 @@ class PrivacyController extends GetxController {
 
       // Request storage permissions based on Android version
       PermissionStatus permissionStatus;
-      
+
       // For Android 13+ (API 33+), use more specific permissions
       if (Platform.isAndroid) {
         // Try to request manage external storage permission first
         permissionStatus = await Permission.manageExternalStorage.request();
-        
+
         // If manage external storage is denied, try regular storage permission
         if (!permissionStatus.isGranted) {
           permissionStatus = await Permission.storage.request();
         }
-        
+
         // If still denied, show detailed instructions
         if (!permissionStatus.isGranted) {
           _showDetailedPermissionError();
@@ -466,7 +470,7 @@ class PrivacyController extends GetxController {
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
         dialogTitle: 'Select location to save your data export',
       );
-      
+
       if (selectedDirectory == null) {
         // User cancelled the picker
         _showErrorSnackbar('Export cancelled - no location selected');
@@ -475,16 +479,16 @@ class PrivacyController extends GetxController {
 
       // Collect user data from Firestore
       final userData = await _collectUserData(user);
-      
+
       // Create JSON file with user data
-      final fileName = 'user_data_export_${DateTime.now().millisecondsSinceEpoch}.json';
+      final fileName =
+          'user_data_export_${DateTime.now().millisecondsSinceEpoch}.json';
       final filePath = '$selectedDirectory/$fileName';
-      
+
       final file = File(filePath);
       await file.writeAsString(jsonEncode(userData));
-      
+
       _showSuccessSnackbar('Data exported successfully to: $filePath');
-      
     } catch (e) {
       debugPrint('Error exporting user data: $e');
       _showErrorSnackbar('Failed to export data: $e');
@@ -492,11 +496,11 @@ class PrivacyController extends GetxController {
       isSaving.value = false;
     }
   }
-  
+
   /// Collects user data from various sources
   Future<Map<String, dynamic>> _collectUserData(User user) async {
     final userData = <String, dynamic>{};
-    
+
     try {
       // Basic user information
       userData['user_info'] = {
@@ -508,7 +512,7 @@ class PrivacyController extends GetxController {
         'creation_time': user.metadata.creationTime?.toIso8601String(),
         'last_sign_in': user.metadata.lastSignInTime?.toIso8601String(),
       };
-      
+
       // Privacy settings
       userData['privacy_settings'] = {
         'third_party_services': thirdPartyServices.value,
@@ -516,10 +520,11 @@ class PrivacyController extends GetxController {
         'ad_preferences': adPreferences.value,
         'two_factor_auth': twoFactorAuth.value,
       };
-      
+
       // Try to get user documents from Firestore
       try {
-        final userDoc = await _firestore.collection('users').doc(user.uid).get();
+        final userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
           userData['firestore_data'] = userDoc.data();
         }
@@ -527,19 +532,18 @@ class PrivacyController extends GetxController {
         debugPrint('Could not fetch Firestore data: $e');
         userData['firestore_data'] = 'Error fetching data: $e';
       }
-      
+
       // Export timestamp
       userData['export_info'] = {
         'exported_at': DateTime.now().toIso8601String(),
         'export_version': '1.0',
         'app_version': '1.0.0',
       };
-      
     } catch (e) {
       debugPrint('Error collecting user data: $e');
       userData['error'] = 'Error collecting some data: $e';
     }
-    
+
     return userData;
   }
 
@@ -548,7 +552,7 @@ class PrivacyController extends GetxController {
     try {
       // Delete user document
       await _firestore.collection('users').doc(userId).delete();
-      
+
       // Delete privacy settings
       await _firestore
           .collection('users')
@@ -556,17 +560,17 @@ class PrivacyController extends GetxController {
           .collection('privacy_settings')
           .doc('preferences')
           .delete();
-      
+
       // Delete any other user-related collections
       // Note: Add more collections as needed based on your app's data structure
-      
+
       debugPrint('User data deleted from Firestore');
     } catch (e) {
       debugPrint('Error deleting user data from Firestore: $e');
       rethrow;
     }
   }
-  
+
   /// Clear all local storage data
   Future<void> _clearLocalStorage() async {
     try {
@@ -606,7 +610,7 @@ class PrivacyController extends GetxController {
 
     try {
       isSaving.value = true;
-      
+
       // Get current user
       final user = _auth.currentUser;
       if (user == null) {
@@ -616,19 +620,18 @@ class PrivacyController extends GetxController {
 
       // Step 1: Delete user data from Firestore
       await _deleteUserDataFromFirestore(user.uid);
-      
+
       // Step 2: Clear local storage
       await _clearLocalStorage();
-      
+
       // Step 3: Delete user authentication account
       await user.delete();
-      
+
       // Step 4: Show success message and redirect to login
       _showSuccessSnackbar('Your account has been permanently deleted.');
-      
+
       // Navigate to login screen and clear navigation stack
       Get.offAllNamed('/login');
-      
     } catch (e) {
       debugPrint('Error deleting user account: $e');
       _showErrorSnackbar('Failed to delete account: $e');
@@ -636,45 +639,48 @@ class PrivacyController extends GetxController {
       isSaving.value = false;
     }
   }
-  
+
   /// Toggle third-party services
   Future<void> toggleThirdPartyServices(bool value) async {
     try {
       thirdPartyServices.value = value;
-      
+
       if (value) {
         // Enable third-party services
-        debugPrint('Enabling third-party services (Analytics, Crash Reporting)');
-        
+        debugPrint(
+            'Enabling third-party services (Analytics, Crash Reporting)');
+
         // Enable Firebase Analytics
         await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
-        
+
         // Enable Firebase Crashlytics
-        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-        
+        await FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(true);
+
         _showSuccessSnackbar('Third-party services enabled');
       } else {
         // Disable third-party services
-        debugPrint('Disabling third-party services (Analytics, Crash Reporting)');
-        
+        debugPrint(
+            'Disabling third-party services (Analytics, Crash Reporting)');
+
         // Disable Firebase Analytics
         await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
-        
+
         // Disable Firebase Crashlytics
-        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false);
-        
+        await FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(false);
+
         _showSuccessSnackbar('Third-party services disabled');
       }
-      
+
       // Save to preferences
       await _saveToLocalStorage();
-      
     } catch (e) {
       debugPrint('Error toggling third-party services: $e');
       _showErrorSnackbar('Failed to toggle third-party services');
     }
   }
-  
+
   /// Toggle location services
   Future<void> toggleLocationServices(bool value) async {
     try {
@@ -683,7 +689,8 @@ class PrivacyController extends GetxController {
         // For now, just toggle the setting
         locationServices.value = true;
         debugPrint('Location services enabled');
-        _showSuccessSnackbar('Location services enabled (requires permission_handler package for full functionality)');
+        _showSuccessSnackbar(
+            'Location services enabled (requires permission_handler package for full functionality)');
       } else {
         locationServices.value = false;
         debugPrint('Location services disabled');
@@ -694,81 +701,88 @@ class PrivacyController extends GetxController {
       _showErrorSnackbar('Failed to toggle location services');
     }
   }
-  
+
   /// Toggle ad preferences
   Future<void> toggleAdPreferences(bool value) async {
     try {
       adPreferences.value = value;
-      
+
       if (value) {
         // Enable targeted ads
         debugPrint('Enabling targeted advertisements');
-        
+
         // Enable ad personalization
         // Note: This requires additional setup with Google Mobile Ads SDK
         // For now, we'll store the preference and it can be used by ad networks
         debugPrint('Ad personalization enabled - targeted ads will be shown');
-        
+
         _showSuccessSnackbar('Targeted ads enabled');
       } else {
         // Disable targeted ads
         debugPrint('Disabling targeted advertisements');
-        
+
         // Disable ad personalization
         // Note: This requires additional setup with Google Mobile Ads SDK
         // For now, we'll store the preference and it can be used by ad networks
-        debugPrint('Ad personalization disabled - only non-personalized ads will be shown');
-        
-        _showSuccessSnackbar('Targeted ads disabled - you will see generic ads');
+        debugPrint(
+            'Ad personalization disabled - only non-personalized ads will be shown');
+
+        _showSuccessSnackbar(
+            'Targeted ads disabled - you will see generic ads');
       }
-      
+
       // Save to preferences
       await _saveToLocalStorage();
-      
     } catch (e) {
       debugPrint('Error toggling ad preferences: $e');
       _showErrorSnackbar('Failed to toggle ad preferences');
     }
   }
-  
+
   /// Toggle two-factor authentication
   Future<void> toggleTwoFactorAuth(bool value) async {
     try {
-      debugPrint('PrivacyController: Starting toggleTwoFactorAuth with value: $value');
-      
+      debugPrint(
+          'PrivacyController: Starting toggleTwoFactorAuth with value: $value');
+
       if (value) {
         // Debug biometric status first
         final debugStatus = await _biometricService.debugBiometricStatus();
         debugPrint('PrivacyController: Biometric debug status: $debugStatus');
-        
+
         // Check if biometric authentication is available
         final isAvailable = await _biometricService.canCheckBiometrics();
-        final availableBiometrics = await _biometricService.getAvailableBiometrics();
-        
-        debugPrint('PrivacyController: isAvailable=$isAvailable, availableBiometrics=$availableBiometrics');
-        
+        final availableBiometrics =
+            await _biometricService.getAvailableBiometrics();
+
+        debugPrint(
+            'PrivacyController: isAvailable=$isAvailable, availableBiometrics=$availableBiometrics');
+
         if (isAvailable && availableBiometrics.isNotEmpty) {
           debugPrint('PrivacyController: Attempting biometric authentication');
-          
+
           // Test biometric authentication with biometric-only option
           final authenticated = await _biometricService.authenticate(
-            reason: 'Enable App Lock with Biometric Authentication',
-            biometricOnly: true
-          );
-          
-          debugPrint('PrivacyController: Authentication result: $authenticated');
-          
+              reason: 'Enable App Lock with Biometric Authentication',
+              biometricOnly: true);
+
+          debugPrint(
+              'PrivacyController: Authentication result: $authenticated');
+
           if (authenticated) {
             twoFactorAuth.value = true;
-            debugPrint('PrivacyController: App lock enabled with biometric authentication');
-            _showSuccessSnackbar('App lock enabled with ${_getBiometricTypeString(availableBiometrics)}');
+            debugPrint(
+                'PrivacyController: App lock enabled with biometric authentication');
+            _showSuccessSnackbar(
+                'App lock enabled with ${_getBiometricTypeString(availableBiometrics)}');
           } else {
             twoFactorAuth.value = false;
             debugPrint('PrivacyController: Biometric authentication failed');
             _showErrorSnackbar('Biometric authentication failed');
           }
         } else {
-          debugPrint('PrivacyController: Biometrics not available, showing setup dialog');
+          debugPrint(
+              'PrivacyController: Biometrics not available, showing setup dialog');
           // Show dialog to explain biometric setup
           _showBiometricSetupDialog();
         }
@@ -782,7 +796,7 @@ class PrivacyController extends GetxController {
       _showErrorSnackbar('Failed to toggle app lock');
     }
   }
-  
+
   /// Show success snackbar
   void _showSuccessSnackbar(String message) {
     Get.snackbar(
@@ -795,7 +809,7 @@ class PrivacyController extends GetxController {
       duration: const Duration(seconds: 3),
     );
   }
-  
+
   /// Show error snackbar
   void _showErrorSnackbar(String message) {
     Get.snackbar(
@@ -806,8 +820,6 @@ class PrivacyController extends GetxController {
       colorText: Get.theme.colorScheme.onError,
     );
   }
-
-
 
   /// Show detailed permission error with instructions
   void _showDetailedPermissionError() {
@@ -834,5 +846,4 @@ class PrivacyController extends GetxController {
       ),
     );
   }
-
 }

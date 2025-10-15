@@ -1,7 +1,7 @@
 // widgets/bulk_operations_widget.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/service/bulk_operations_service.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import 'package:task/utils/constants/app_sizes.dart';
@@ -26,13 +26,16 @@ class BulkOperationsWidget extends StatefulWidget {
 class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
     with SingleTickerProviderStateMixin {
   final BulkOperationsService _bulkService = BulkOperationsService.to;
-  final TextEditingController _archiveReasonController = TextEditingController();
-  final TextEditingController _archiveLocationController = TextEditingController();
-  final TextEditingController _exportFileNameController = TextEditingController();
-  
+  final TextEditingController _archiveReasonController =
+      TextEditingController();
+  final TextEditingController _archiveLocationController =
+      TextEditingController();
+  final TextEditingController _exportFileNameController =
+      TextEditingController();
+
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
-  
+
   bool _isLoading = false;
   String? _selectedStatus;
   double _operationProgress = 0.0;
@@ -151,7 +154,7 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
         'Error',
         'Archive reason is required',
         backgroundColor: AppColors.errorRed,
-         colorText: AppColors.white,
+        colorText: AppColors.white,
       );
       return;
     }
@@ -167,8 +170,8 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
       final result = await _bulkService.bulkArchiveTasks(
         taskIds: taskIds,
         reason: _archiveReasonController.text,
-        location: _archiveLocationController.text.isNotEmpty 
-            ? _archiveLocationController.text 
+        location: _archiveLocationController.text.isNotEmpty
+            ? _archiveLocationController.text
             : null,
         onProgress: _updateProgress,
       );
@@ -234,20 +237,20 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
 
     try {
       BulkExportResult result;
-      
+
       if (format == 'CSV') {
         result = await _bulkService.bulkExportTasksToCSV(
           tasks: widget.selectedTasks,
-          fileName: _exportFileNameController.text.isNotEmpty 
-              ? _exportFileNameController.text 
+          fileName: _exportFileNameController.text.isNotEmpty
+              ? _exportFileNameController.text
               : null,
           onProgress: _updateProgress,
         );
       } else {
         result = await _bulkService.bulkExportTasksToPDF(
           tasks: widget.selectedTasks,
-          title: _exportFileNameController.text.isNotEmpty 
-              ? _exportFileNameController.text 
+          title: _exportFileNameController.text.isNotEmpty
+              ? _exportFileNameController.text
               : 'Bulk Task Export',
           onProgress: _updateProgress,
         );
@@ -255,11 +258,11 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
 
       if (result.success) {
         Get.snackbar(
-        'Export Complete',
-        'Successfully exported ${result.exportedCount} tasks to $format',
-        backgroundColor: AppColors.saveColor,
-        colorText: AppColors.white,
-      );
+          'Export Complete',
+          'Successfully exported ${result.exportedCount} tasks to $format',
+          backgroundColor: AppColors.saveColor,
+          colorText: AppColors.white,
+        );
       } else {
         Get.snackbar(
           'Export Failed',
@@ -273,7 +276,7 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
         'Error',
         'Export operation failed: $e',
         backgroundColor: AppColors.errorRed,
-          colorText: AppColors.white,
+        colorText: AppColors.white,
       );
     } finally {
       setState(() {
@@ -317,7 +320,7 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
         'Error',
         'Status update failed: $e',
         backgroundColor: AppColors.errorRed,
-          colorText: AppColors.white,
+        colorText: AppColors.white,
       );
     } finally {
       setState(() {
@@ -447,10 +450,10 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                      color: AppColors.lightGrey,
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
+                    color: AppColors.lightGrey,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
               child: Column(
@@ -471,24 +474,25 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   if (_isLoading) ...[
                     LinearProgressIndicator(
                       value: _operationProgress,
                       backgroundColor: AppColors.lightGrey,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _operationStatus,
                       style: TextStyle(
-                         fontSize: AppSizes.fontSm,
-                         color: AppColors.secondaryText,
-                       ),
+                        fontSize: AppSizes.fontSm,
+                        color: AppColors.secondaryText,
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Archive Operations
                   _buildOperationSection(
                     'Archive Operations',
@@ -507,9 +511,9 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Export Operations
                   _buildOperationSection(
                     'Export Operations',
@@ -528,9 +532,9 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Status Update
                   _buildOperationSection(
                     'Status Update',
@@ -568,9 +572,9 @@ class _BulkOperationsWidgetState extends State<BulkOperationsWidget>
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Danger Zone
                   _buildOperationSection(
                     'Danger Zone',

@@ -8,32 +8,45 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:path/path.dart' as path;
 
 class TaskAttachmentService extends GetxService {
   static TaskAttachmentService get to => Get.find();
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseStorageService _storageService = Get.find<FirebaseStorageService>();
+  final FirebaseStorageService _storageService =
+      Get.find<FirebaseStorageService>();
   final ImagePicker _imagePicker = ImagePicker();
-  
+
   /// Initialize the service
   Future<void> initialize() async {
     debugPrint('TaskAttachmentService initialized');
   }
-  
+
   // Supported file types
-  static const List<String> supportedImageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-  static const List<String> supportedDocumentTypes = ['pdf', 'doc', 'docx', 'txt', 'rtf'];
+  static const List<String> supportedImageTypes = [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'webp'
+  ];
+  static const List<String> supportedDocumentTypes = [
+    'pdf',
+    'doc',
+    'docx',
+    'txt',
+    'rtf'
+  ];
   static const List<String> supportedVideoTypes = ['mp4', 'mov', 'avi', 'mkv'];
   static const List<String> supportedAudioTypes = ['mp3', 'wav', 'aac', 'm4a'];
-  
+
   // Maximum file size (10MB)
   static const int maxFileSize = 10 * 1024 * 1024;
-  
+
   /// Pick and upload image from camera or gallery
   Future<Map<String, dynamic>?> pickAndUploadImage({
     required String taskId,
@@ -46,15 +59,15 @@ class TaskAttachmentService extends GetxService {
         maxHeight: 1080,
         imageQuality: 85,
       );
-      
+
       if (pickedFile == null) return null;
-      
+
       // Check file size
       final fileSize = await pickedFile.length();
       if (fileSize > maxFileSize) {
         throw Exception('File size exceeds 10MB limit');
       }
-      
+
       if (kIsWeb) {
         final bytes = await pickedFile.readAsBytes();
         return await _uploadFileFromBytes(
@@ -77,7 +90,7 @@ class TaskAttachmentService extends GetxService {
       rethrow;
     }
   }
-  
+
   /// Pick and upload document files
   Future<Map<String, dynamic>?> pickAndUploadDocument({
     required String taskId,
@@ -85,28 +98,33 @@ class TaskAttachmentService extends GetxService {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: [...supportedDocumentTypes, ...supportedVideoTypes, ...supportedAudioTypes],
+        allowedExtensions: [
+          ...supportedDocumentTypes,
+          ...supportedVideoTypes,
+          ...supportedAudioTypes
+        ],
         allowMultiple: false,
       );
-      
+
       if (result == null || result.files.isEmpty) return null;
-      
+
       final platformFile = result.files.first;
-      
+
       // Check file size
       if (platformFile.size > maxFileSize) {
         throw Exception('File size exceeds 10MB limit');
       }
-      
-      final fileExtension = path.extension(platformFile.name).toLowerCase().replaceAll('.', '');
+
+      final fileExtension =
+          path.extension(platformFile.name).toLowerCase().replaceAll('.', '');
       String fileType = 'document';
-      
+
       if (supportedVideoTypes.contains(fileExtension)) {
         fileType = 'video';
       } else if (supportedAudioTypes.contains(fileExtension)) {
         fileType = 'audio';
       }
-      
+
       if (kIsWeb) {
         if (platformFile.bytes == null) {
           throw Exception('File bytes not available');
@@ -134,7 +152,7 @@ class TaskAttachmentService extends GetxService {
       rethrow;
     }
   }
-  
+
   /// Upload file from File object
   Future<Map<String, dynamic>> _uploadFile({
     required String taskId,
@@ -146,24 +164,25 @@ class TaskAttachmentService extends GetxService {
     if (user == null) {
       throw Exception('User not authenticated');
     }
-    
+
     // Create unique file path
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final fileExtension = path.extension(fileName);
-    final uniqueFileName = '${path.basenameWithoutExtension(fileName)}_$timestamp$fileExtension';
+    final uniqueFileName =
+        '${path.basenameWithoutExtension(fileName)}_$timestamp$fileExtension';
     final filePath = 'task_attachments/$taskId/$uniqueFileName';
-    
+
     // Upload to Firebase Storage
     final downloadUrl = await _storageService.uploadFile(
       bucket: 'task-attachments',
       path: filePath,
       file: file,
     );
-    
+
     if (downloadUrl == null) {
       throw Exception('Failed to upload file');
     }
-    
+
     return {
       'url': downloadUrl,
       'name': fileName,
@@ -172,7 +191,7 @@ class TaskAttachmentService extends GetxService {
       'uploadedAt': DateTime.now(),
     };
   }
-  
+
   /// Upload file from bytes (for web)
   Future<Map<String, dynamic>> _uploadFileFromBytes({
     required String taskId,
@@ -184,17 +203,20 @@ class TaskAttachmentService extends GetxService {
     if (user == null) {
       throw Exception('User not authenticated');
     }
-    
+
     // Create unique file path
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final fileExtension = path.extension(fileName);
-    final uniqueFileName = '${path.basenameWithoutExtension(fileName)}_$timestamp$fileExtension';
+    final uniqueFileName =
+        '${path.basenameWithoutExtension(fileName)}_$timestamp$fileExtension';
     final filePath = 'task_attachments/$taskId/$uniqueFileName';
-    
+
     try {
       // Upload to Firebase Storage
-      final storageRef = storage.FirebaseStorage.instance.ref().child('task-attachments/$filePath');
-      
+      final storageRef = storage.FirebaseStorage.instance
+          .ref()
+          .child('task-attachments/$filePath');
+
       final uploadTask = storageRef.putData(
         bytes,
         storage.SettableMetadata(
@@ -206,10 +228,10 @@ class TaskAttachmentService extends GetxService {
           },
         ),
       );
-      
+
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       return {
         'url': downloadUrl,
         'name': fileName,
@@ -222,7 +244,7 @@ class TaskAttachmentService extends GetxService {
       rethrow;
     }
   }
-  
+
   /// Add attachment to task
   Future<void> addAttachmentToTask({
     required String taskId,
@@ -233,7 +255,7 @@ class TaskAttachmentService extends GetxService {
   }) async {
     try {
       final taskRef = _firestore.collection('tasks').doc(taskId);
-      
+
       await taskRef.update({
         'attachmentUrls': FieldValue.arrayUnion([url]),
         'attachmentNames': FieldValue.arrayUnion([name]),
@@ -247,7 +269,7 @@ class TaskAttachmentService extends GetxService {
       rethrow;
     }
   }
-  
+
   /// Remove attachment from task
   Future<void> removeAttachmentFromTask({
     required String taskId,
@@ -255,16 +277,17 @@ class TaskAttachmentService extends GetxService {
     required Task task,
   }) async {
     try {
-      if (attachmentIndex < 0 || attachmentIndex >= task.attachmentUrls.length) {
+      if (attachmentIndex < 0 ||
+          attachmentIndex >= task.attachmentUrls.length) {
         throw Exception('Invalid attachment index');
       }
-      
+
       // Get attachment details
       final url = task.attachmentUrls[attachmentIndex];
       final name = task.attachmentNames[attachmentIndex];
       final type = task.attachmentTypes[attachmentIndex];
       final size = task.attachmentSizes[attachmentIndex];
-      
+
       // Remove from Firebase Storage
       try {
         final ref = storage.FirebaseStorage.instance.refFromURL(url);
@@ -272,7 +295,7 @@ class TaskAttachmentService extends GetxService {
       } catch (e) {
         debugPrint('Warning: Could not delete file from storage: $e');
       }
-      
+
       // Update task in Firestore
       final taskRef = _firestore.collection('tasks').doc(taskId);
       await taskRef.update({
@@ -287,7 +310,7 @@ class TaskAttachmentService extends GetxService {
       rethrow;
     }
   }
-  
+
   /// Get content type for file extension
   String _getContentType(String extension) {
     switch (extension.toLowerCase()) {
@@ -320,11 +343,12 @@ class TaskAttachmentService extends GetxService {
         return 'application/octet-stream';
     }
   }
-  
+
   /// Get file type category
   String getFileTypeCategory(String fileName) {
-    final extension = path.extension(fileName).toLowerCase().replaceAll('.', '');
-    
+    final extension =
+        path.extension(fileName).toLowerCase().replaceAll('.', '');
+
     if (supportedImageTypes.contains(extension)) {
       return 'image';
     } else if (supportedVideoTypes.contains(extension)) {
@@ -334,10 +358,10 @@ class TaskAttachmentService extends GetxService {
     } else if (supportedDocumentTypes.contains(extension)) {
       return 'document';
     }
-    
+
     return 'unknown';
   }
-  
+
   /// Format file size
   String formatFileSize(int bytes) {
     if (bytes < 1024) {
@@ -348,7 +372,7 @@ class TaskAttachmentService extends GetxService {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
     }
   }
-  
+
   /// Get icon for file type
   IconData getFileTypeIcon(String fileType) {
     switch (fileType.toLowerCase()) {

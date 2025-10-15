@@ -1,6 +1,6 @@
 // features/librarian/screens/archived_tasks_screen.dart
 import 'package:flutter/material.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
@@ -32,9 +32,9 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
       });
 
       final tasks = await _taskController.getAllTasks();
-      
+
       final archivedTasks = tasks.where((task) => task.isArchived).toList();
-      
+
       // Sort by archived date (most recent first)
       archivedTasks.sort((a, b) {
         if (a.archivedAt == null && b.archivedAt == null) return 0;
@@ -64,9 +64,9 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
       appBar: AppBar(
         title: const Text('Archived Tasks'),
         backgroundColor: Theme.of(context).brightness == Brightness.dark
-                   ? [Colors.grey[900]!, Colors.grey[800]!]
-                       .reduce((value, element) => value)
-                   : Theme.of(context).colorScheme.primary,
+            ? [Colors.grey[900]!, Colors.grey[800]!]
+                .reduce((value, element) => value)
+            : Theme.of(context).colorScheme.primary,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
         actions: [
@@ -80,16 +80,17 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
       body: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-                     ? [Colors.grey[900]!, Colors.grey[800]!]
-                         .reduce((value, element) => value)
-                     : Theme.of(context).colorScheme.primary,
+              ? [Colors.grey[900]!, Colors.grey[800]!]
+                  .reduce((value, element) => value)
+              : Theme.of(context).colorScheme.primary,
         ),
         child: _buildBody(context, theme, colorScheme),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildBody(
+      BuildContext context, ThemeData theme, ColorScheme colorScheme) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -172,18 +173,21 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
     );
   }
 
-  Widget _buildArchivedTaskCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, Task task) {
+  Widget _buildArchivedTaskCard(BuildContext context, ThemeData theme,
+      ColorScheme colorScheme, Task task) {
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: isDark ? 0 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isDark ? BorderSide(
-          color: colorScheme.outline.withValues(alpha:0.2),
-          width: 1,
-        ) : BorderSide.none,
+        side: isDark
+            ? BorderSide(
+                color: colorScheme.outline.withValues(alpha: 0.2),
+                width: 1,
+              )
+            : BorderSide.none,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -206,7 +210,8 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
@@ -232,9 +237,9 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Task description
             if (task.description.isNotEmpty)
               Padding(
@@ -248,7 +253,7 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            
+
             // Archive details
             _buildArchiveDetails(context, theme, colorScheme, task),
           ],
@@ -257,7 +262,8 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
     );
   }
 
-  Widget _buildArchiveDetails(BuildContext context, ThemeData theme, ColorScheme colorScheme, Task task) {
+  Widget _buildArchiveDetails(BuildContext context, ThemeData theme,
+      ColorScheme colorScheme, Task task) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -277,7 +283,7 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
               'Archived Date',
               DateFormat('MMM dd, yyyy \\at hh:mm a').format(task.archivedAt!),
             ),
-          
+
           // Archive location
           if (task.archiveLocation != null && task.archiveLocation!.isNotEmpty)
             _buildDetailRow(
@@ -288,7 +294,7 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
               'Location',
               task.archiveLocation!,
             ),
-          
+
           // Archived by
           if (task.archivedBy != null && task.archivedBy!.isNotEmpty)
             _buildDetailRow(
@@ -299,7 +305,7 @@ class _ArchivedTasksScreenState extends State<ArchivedTasksScreen> {
               'Archived By',
               task.archivedBy!,
             ),
-          
+
           // Archive reason
           if (task.archiveReason != null && task.archiveReason!.isNotEmpty)
             _buildDetailRow(
