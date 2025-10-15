@@ -36,47 +36,49 @@ class _AppLockScreenState extends State<AppLockScreen> {
     _pinController.dispose();
     super.dispose();
   }
-  
+
   void _onNumberPressed(String number) {
     if (enteredPin.value.length < 4) {
       enteredPin.value += number;
       _pinController.text = enteredPin.value;
-      
+
       // Auto-submit when 4 digits are entered
       if (enteredPin.value.length == 4) {
         _submitPin();
       }
     }
   }
-  
+
   void _onBackspacePressed() {
     if (enteredPin.value.isNotEmpty) {
-      enteredPin.value = enteredPin.value.substring(0, enteredPin.value.length - 1);
+      enteredPin.value =
+          enteredPin.value.substring(0, enteredPin.value.length - 1);
       _pinController.text = enteredPin.value;
     }
   }
-  
+
   void _clearPin() {
     enteredPin.value = '';
     _pinController.text = '';
   }
-  
+
   Future<void> _submitPin() async {
     if (enteredPin.value.length != 4) return;
-    
+
     isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 300)); // Small delay for UX
-    
+    await Future.delayed(
+        const Duration(milliseconds: 300)); // Small delay for UX
+
     await _appLockController.unlockWithPin(enteredPin.value);
-    
+
     // Clear pin if unlock failed
     if (_appLockController.isAppLocked.value) {
       _clearPin();
     }
-    
+
     isLoading.value = false;
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -84,12 +86,18 @@ class _AppLockScreenState extends State<AppLockScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Keep original background logic
     final backgroundColor = isDark
-        ? [Colors.grey[900]!, Colors.grey[800]!].reduce((value, element) => value)
+        ? [Colors.grey[900]!, Colors.grey[800]!]
+            .reduce((value, element) => value)
         : colorScheme.primary;
     // Use high-contrast foreground color for light mode
-    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
-    final secondaryForegroundColor = isDark ? colorScheme.onSurface.withValues(alpha: 0.7) : colorScheme.onPrimary.withValues(alpha: 0.7);
-    final outlineColor = isDark ? colorScheme.outline.withValues(alpha: 0.3) : colorScheme.onPrimary.withValues(alpha: 0.3);
+    final foregroundColor =
+        isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final secondaryForegroundColor = isDark
+        ? colorScheme.onSurface.withValues(alpha: 0.7)
+        : colorScheme.onPrimary.withValues(alpha: 0.7);
+    final outlineColor = isDark
+        ? colorScheme.outline.withValues(alpha: 0.3)
+        : colorScheme.onPrimary.withValues(alpha: 0.3);
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -115,84 +123,84 @@ class _AppLockScreenState extends State<AppLockScreen> {
                 ),
               ),
               SizedBox(height: isTablet ? 12 : 8),
-              
+
               Obx(() => Column(
-                children: [
-                  Text(
-                    'Enter your PIN to unlock',
-                    style: TextStyle(
-                      fontSize: isTablet ? 16.sp : 14.sp,
-                      color: secondaryForegroundColor,
-                      fontFamily: 'Raleway',
-                    ),
-                  ),
-                  
-                  // Show default PIN hint if user hasn't set a custom PIN
-                   if (!_appLockController.hasSetPin.value) ...[
-                     SizedBox(height: isTablet ? 12 : 8),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isTablet ? 20 : 16,
-                        vertical: isTablet ? 12 : 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: outlineColor,
+                    children: [
+                      Text(
+                        'Enter your PIN to unlock',
+                        style: TextStyle(
+                          fontSize: isTablet ? 16.sp : 14.sp,
+                          color: secondaryForegroundColor,
+                          fontFamily: 'Raleway',
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Default PIN: 0000',
-                            style: TextStyle(
-                              fontSize: isTablet ? 14.sp : 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: foregroundColor,
-                              fontFamily: 'Raleway',
+
+                      // Show default PIN hint if user hasn't set a custom PIN
+                      if (!_appLockController.hasSetPin.value) ...[
+                        SizedBox(height: isTablet ? 12 : 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isTablet ? 20 : 16,
+                            vertical: isTablet ? 12 : 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer
+                                .withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: outlineColor,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Please change this in Settings after unlocking',
-                            style: TextStyle(
-                              fontSize: isTablet ? 12.sp : 10.sp,
-                              color: secondaryForegroundColor,
-                              fontFamily: 'Raleway',
-                            ),
-                            textAlign: TextAlign.center,
+                          child: Column(
+                            children: [
+                              Text(
+                                'Default PIN: 0000',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 14.sp : 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: foregroundColor,
+                                  fontFamily: 'Raleway',
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Please change this in Settings after unlocking',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 12.sp : 10.sp,
+                                  color: secondaryForegroundColor,
+                                  fontFamily: 'Raleway',
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              )),
-              
+                        ),
+                      ],
+                    ],
+                  )),
+
               SizedBox(height: isTablet ? 48 : 32),
-              
+
               // PIN Display
               Obx(() => Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  final isActive = index < enteredPin.value.length;
-                  return Container(
-                    margin: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8),
-                    width: isTablet ? 20 : 16,
-                    height: isTablet ? 20 : 16,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive 
-                        ? foregroundColor
-                        : outlineColor,
-                    ),
-                  );
-                }),
-              )),
-              
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (index) {
+                      final isActive = index < enteredPin.value.length;
+                      return Container(
+                        margin:
+                            EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8),
+                        width: isTablet ? 20 : 16,
+                        height: isTablet ? 20 : 16,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isActive ? foregroundColor : outlineColor,
+                        ),
+                      );
+                    }),
+                  )),
+
               SizedBox(height: isTablet ? 48 : 32),
-              
+
               // Number Pad
               Expanded(
                 child: GridView.builder(
@@ -209,8 +217,8 @@ class _AppLockScreenState extends State<AppLockScreen> {
                     if (index == 9) {
                       // Biometric button (if available)
                       return Obx(() => _appLockController.canUseBiometric
-                        ? _buildBiometricButton(colorScheme, isTablet)
-                        : const SizedBox.shrink());
+                          ? _buildBiometricButton(colorScheme, isTablet)
+                          : const SizedBox.shrink());
                     } else if (index == 10) {
                       // Number 0
                       return _buildNumberButton(
@@ -238,60 +246,65 @@ class _AppLockScreenState extends State<AppLockScreen> {
                   },
                 ),
               ),
-              
+
               SizedBox(height: isTablet ? 24 : 16),
-              
+
               // Loading indicator
               Obx(() => isLoading.value
-                ? const CircularProgressIndicator()
-                : const SizedBox.shrink()),
+                  ? const CircularProgressIndicator()
+                  : const SizedBox.shrink()),
             ],
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildNumberButton(
     String number,
     ColorScheme colorScheme,
     bool isTablet,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
-    final outlineColor = isDark ? colorScheme.outline.withValues(alpha: 0.3) : colorScheme.onPrimary.withValues(alpha: 0.3);
+    final foregroundColor =
+        isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final outlineColor = isDark
+        ? colorScheme.outline.withValues(alpha: 0.3)
+        : colorScheme.onPrimary.withValues(alpha: 0.3);
     return Obx(() => Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: isLoading.value ? null : () {
-          Get.find<SettingsController>().triggerFeedback();
-          _onNumberPressed(number);
-        },
-        borderRadius: BorderRadius.circular(isTablet ? 40 : 32),
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: outlineColor,
-              width: 1,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              number,
-              style: TextStyle(
-                fontSize: isTablet ? 24.sp : 20.sp,
-                fontWeight: FontWeight.w600,
-                color: foregroundColor,
-                fontFamily: 'Raleway',
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isLoading.value
+                ? null
+                : () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    _onNumberPressed(number);
+                  },
+            borderRadius: BorderRadius.circular(isTablet ? 40 : 32),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: outlineColor,
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  number,
+                  style: TextStyle(
+                    fontSize: isTablet ? 24.sp : 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: foregroundColor,
+                    fontFamily: 'Raleway',
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
-    ));
+        ));
   }
-  
+
   Widget _buildActionButton({
     required IconData icon,
     required VoidCallback? onPressed,
@@ -299,15 +312,20 @@ class _AppLockScreenState extends State<AppLockScreen> {
     required bool isTablet,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
-    final outlineColor = isDark ? colorScheme.outline.withValues(alpha: 0.3) : colorScheme.onPrimary.withValues(alpha: 0.3);
+    final foregroundColor =
+        isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final outlineColor = isDark
+        ? colorScheme.outline.withValues(alpha: 0.3)
+        : colorScheme.onPrimary.withValues(alpha: 0.3);
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onPressed == null ? null : () {
-          Get.find<SettingsController>().triggerFeedback();
-          onPressed();
-        },
+        onTap: onPressed == null
+            ? null
+            : () {
+                Get.find<SettingsController>().triggerFeedback();
+                onPressed();
+              },
         borderRadius: BorderRadius.circular(isTablet ? 40 : 32),
         child: Container(
           decoration: BoxDecoration(
@@ -321,36 +339,45 @@ class _AppLockScreenState extends State<AppLockScreen> {
             child: Icon(
               icon,
               size: isTablet ? 28.sp : 24.sp,
-              color: onPressed == null 
-                ? foregroundColor.withValues(alpha: 0.3)
-                : foregroundColor,
+              color: onPressed == null
+                  ? foregroundColor.withValues(alpha: 0.3)
+                  : foregroundColor,
             ),
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildBiometricButton(ColorScheme colorScheme, bool isTablet) {
     final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
-    final foregroundColor = isDark ? colorScheme.onSurface : colorScheme.onPrimary;
-    final outlineColor = isDark ? colorScheme.primary.withValues(alpha: .5) : colorScheme.onPrimary.withValues(alpha: 0.5);
-    final fillColor = isDark ? colorScheme.primary.withValues(alpha: 0.1) : colorScheme.onPrimary.withValues(alpha: 0.1);
+    final foregroundColor =
+        isDark ? colorScheme.onSurface : colorScheme.onPrimary;
+    final outlineColor = isDark
+        ? colorScheme.primary.withValues(alpha: .5)
+        : colorScheme.onPrimary.withValues(alpha: 0.5);
+    final fillColor = isDark
+        ? colorScheme.primary.withValues(alpha: 0.1)
+        : colorScheme.onPrimary.withValues(alpha: 0.1);
     return Obx(() {
       final canUseBiometric = _appLockController.canUseBiometric;
-      debugPrint('AppLockScreen: Building biometric button, canUseBiometric = $canUseBiometric');
+      debugPrint(
+          'AppLockScreen: Building biometric button, canUseBiometric = $canUseBiometric');
       if (!canUseBiometric) {
-        debugPrint('AppLockScreen: Biometric not available, showing empty container');
+        debugPrint(
+            'AppLockScreen: Biometric not available, showing empty container');
         return const SizedBox.shrink();
       }
       return Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isLoading.value ? null : () async {
-            debugPrint('AppLockScreen: Biometric button tapped');
-            Get.find<SettingsController>().triggerFeedback();
-            await _appLockController.unlockWithBiometric();
-          },
+          onTap: isLoading.value
+              ? null
+              : () async {
+                  debugPrint('AppLockScreen: Biometric button tapped');
+                  Get.find<SettingsController>().triggerFeedback();
+                  await _appLockController.unlockWithBiometric();
+                },
           borderRadius: BorderRadius.circular(isTablet ? 40 : 32),
           child: Container(
             decoration: BoxDecoration(
@@ -365,9 +392,9 @@ class _AppLockScreenState extends State<AppLockScreen> {
               child: Icon(
                 _appLockController.biometricIcon,
                 size: isTablet ? 28.sp : 24.sp,
-                color: isLoading.value 
-                  ? foregroundColor.withValues(alpha: 0.3)
-                  : foregroundColor,
+                color: isLoading.value
+                    ? foregroundColor.withValues(alpha: 0.3)
+                    : foregroundColor,
               ),
             ),
           ),

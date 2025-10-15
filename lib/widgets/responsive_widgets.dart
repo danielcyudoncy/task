@@ -11,7 +11,7 @@ class AdaptiveNavigation extends StatelessWidget {
   final Widget? leading;
   final Widget? title;
   final List<Widget>? actions;
-  
+
   const AdaptiveNavigation({
     super.key,
     required this.items,
@@ -38,33 +38,37 @@ class AdaptiveNavigation extends StatelessWidget {
       },
     );
   }
-  
+
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
-      items: items.map((item) => BottomNavigationBarItem(
-        icon: Icon(item.icon),
-        label: item.label,
-        activeIcon: Icon(item.activeIcon ?? item.icon),
-      )).toList(),
+      items: items
+          .map((item) => BottomNavigationBarItem(
+                icon: Icon(item.icon),
+                label: item.label,
+                activeIcon: Icon(item.activeIcon ?? item.icon),
+              ))
+          .toList(),
     );
   }
-  
+
   Widget _buildNavigationRail() {
     return NavigationRail(
       selectedIndex: currentIndex,
       onDestinationSelected: onTap,
       labelType: NavigationRailLabelType.selected,
-      destinations: items.map((item) => NavigationRailDestination(
-        icon: Icon(item.icon),
-        selectedIcon: Icon(item.activeIcon ?? item.icon),
-        label: Text(item.label),
-      )).toList(),
+      destinations: items
+          .map((item) => NavigationRailDestination(
+                icon: Icon(item.icon),
+                selectedIcon: Icon(item.activeIcon ?? item.icon),
+                label: Text(item.label),
+              ))
+          .toList(),
     );
   }
-  
+
   Widget _buildNavigationDrawer() {
     return Drawer(
       child: ListView(
@@ -82,7 +86,9 @@ class AdaptiveNavigation extends StatelessWidget {
             final item = entry.value;
             return ListTile(
               leading: Icon(
-                index == currentIndex ? (item.activeIcon ?? item.icon) : item.icon,
+                index == currentIndex
+                    ? (item.activeIcon ?? item.icon)
+                    : item.icon,
               ),
               title: Text(item.label),
               selected: index == currentIndex,
@@ -101,7 +107,7 @@ class NavigationItem {
   final IconData? activeIcon;
   final String label;
   final String? tooltip;
-  
+
   const NavigationItem({
     required this.icon,
     required this.label,
@@ -123,7 +129,7 @@ class AdaptiveScaffold extends StatelessWidget {
   final bool extendBodyBehindAppBar;
   final Color? backgroundColor;
   final bool resizeToAvoidBottomInset;
-  
+
   const AdaptiveScaffold({
     super.key,
     this.appBar,
@@ -144,10 +150,10 @@ class AdaptiveScaffold extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, deviceType) {
         final controller = ResponsiveController.to;
-        
+
         // Adjust scaffold based on device type
         Widget scaffoldBody = body;
-        
+
         // Add responsive padding for larger screens
         if (controller.isDesktop) {
           scaffoldBody = ResponsiveLayout(
@@ -156,7 +162,7 @@ class AdaptiveScaffold extends StatelessWidget {
             child: body,
           );
         }
-        
+
         return Scaffold(
           appBar: appBar as PreferredSizeWidget?,
           body: scaffoldBody,
@@ -186,7 +192,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool centerTitle;
   final Widget? flexibleSpace;
   final PreferredSizeWidget? bottom;
-  
+
   const AdaptiveAppBar({
     super.key,
     this.title,
@@ -205,14 +211,14 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
     return ResponsiveBuilder(
       builder: (context, deviceType) {
         final controller = ResponsiveController.to;
-        
+
         // Adjust app bar height based on device type
         final appBarHeight = controller.getResponsiveValue(
           mobile: kToolbarHeight,
           tablet: kToolbarHeight + 8,
           desktop: kToolbarHeight + 16,
         );
-        
+
         // Adjust title style based on device type
         Widget? responsiveTitle = title;
         if (title is Text) {
@@ -222,7 +228,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
             tablet: 22.0,
             desktop: 24.0,
           );
-          
+
           responsiveTitle = Text(
             textWidget.data ?? '',
             style: (textWidget.style ?? const TextStyle()).copyWith(
@@ -230,7 +236,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           );
         }
-        
+
         return AppBar(
           title: responsiveTitle,
           leading: leading,
@@ -255,7 +261,7 @@ class AdaptiveAppBar extends StatelessWidget implements PreferredSizeWidget {
       tablet: kToolbarHeight + 8,
       desktop: kToolbarHeight + 16,
     );
-    
+
     return Size.fromHeight(height + (bottom?.preferredSize.height ?? 0));
   }
 }
@@ -269,7 +275,7 @@ class AdaptiveDialog extends StatelessWidget {
   final bool scrollable;
   final double? maxWidth;
   final double? maxHeight;
-  
+
   const AdaptiveDialog({
     super.key,
     this.title,
@@ -286,20 +292,22 @@ class AdaptiveDialog extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, deviceType) {
         final controller = ResponsiveController.to;
-        
+
         // Adjust dialog constraints based on device type
-        final dialogMaxWidth = maxWidth ?? controller.getResponsiveValue<double>(
-          mobile: MediaQuery.of(context).size.width * 0.9,
-          tablet: 500.0,
-          desktop: 600.0,
-        );
-        
-        final dialogMaxHeight = maxHeight ?? controller.getResponsiveValue<double>(
-          mobile: MediaQuery.of(context).size.height * 0.8,
-          tablet: MediaQuery.of(context).size.height * 0.7,
-          desktop: MediaQuery.of(context).size.height * 0.6,
-        );
-        
+        final dialogMaxWidth = maxWidth ??
+            controller.getResponsiveValue<double>(
+              mobile: MediaQuery.of(context).size.width * 0.9,
+              tablet: 500.0,
+              desktop: 600.0,
+            );
+
+        final dialogMaxHeight = maxHeight ??
+            controller.getResponsiveValue<double>(
+              mobile: MediaQuery.of(context).size.height * 0.8,
+              tablet: MediaQuery.of(context).size.height * 0.7,
+              desktop: MediaQuery.of(context).size.height * 0.6,
+            );
+
         // Use different dialog types based on device
         if (controller.isMobile) {
           return AlertDialog(
@@ -338,7 +346,8 @@ class AdaptiveDialog extends StatelessWidget {
                   if (content != null)
                     Flexible(
                       child: Padding(
-                        padding: contentPadding ?? const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 24.0),
+                        padding: contentPadding ??
+                            const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 24.0),
                         child: scrollable
                             ? SingleChildScrollView(child: content!)
                             : content!,
@@ -371,7 +380,7 @@ class AdaptiveListView extends StatelessWidget {
   final EdgeInsets? padding;
   final bool useCards;
   final double? itemSpacing;
-  
+
   const AdaptiveListView({
     super.key,
     required this.children,
@@ -388,26 +397,30 @@ class AdaptiveListView extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, deviceType) {
         final responsiveController = ResponsiveController.to;
-        
+
         // Adjust spacing based on device type
-        final spacing = itemSpacing ?? responsiveController.getResponsiveValue(
-          mobile: 8.0,
-          tablet: 12.0,
-          desktop: 16.0,
-        );
-        
+        final spacing = itemSpacing ??
+            responsiveController.getResponsiveValue(
+              mobile: 8.0,
+              tablet: 12.0,
+              desktop: 16.0,
+            );
+
         // Adjust padding based on device type
-        final listPadding = padding ?? responsiveController.getResponsivePadding();
-        
+        final listPadding =
+            padding ?? responsiveController.getResponsivePadding();
+
         List<Widget> listChildren = children;
-        
+
         // Wrap items in cards for larger screens if requested
         if (useCards && responsiveController.isDesktop) {
-          listChildren = children.map((child) => ResponsiveCard(
-            child: child,
-          )).toList();
+          listChildren = children
+              .map((child) => ResponsiveCard(
+                    child: child,
+                  ))
+              .toList();
         }
-        
+
         // Add spacing between items
         if (spacing != null && spacing > 0) {
           final spacedChildren = <Widget>[];
@@ -419,7 +432,7 @@ class AdaptiveListView extends StatelessWidget {
           }
           listChildren = spacedChildren;
         }
-        
+
         return ListView(
           controller: controller,
           shrinkWrap: shrinkWrap,
@@ -441,7 +454,7 @@ class AdaptiveFormField extends StatelessWidget {
   final String? errorText;
   final Widget? prefix;
   final Widget? suffix;
-  
+
   const AdaptiveFormField({
     super.key,
     this.label,
@@ -458,14 +471,14 @@ class AdaptiveFormField extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, deviceType) {
         final controller = ResponsiveController.to;
-        
+
         // Adjust field spacing based on device type
         final fieldSpacing = controller.getResponsiveValue(
           mobile: 8.0,
           tablet: 12.0,
           desktop: 16.0,
         );
-        
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -527,7 +540,7 @@ class AdaptiveButton extends StatelessWidget {
   final Widget? icon;
   final bool isLoading;
   final bool isFullWidth;
-  
+
   const AdaptiveButton({
     super.key,
     required this.text,
@@ -543,38 +556,40 @@ class AdaptiveButton extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, deviceType) {
         final controller = ResponsiveController.to;
-        
+
         // Adjust button padding based on device type
         final buttonPadding = controller.getResponsiveValue(
           mobile: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           tablet: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           desktop: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         );
-        
+
         // Adjust font size based on device type
         final fontSize = controller.getResponsiveFontSize(
           mobile: 14.0,
           tablet: 15.0,
           desktop: 16.0,
         );
-        
+
         final buttonStyle = (style ?? ElevatedButton.styleFrom()).copyWith(
           padding: WidgetStateProperty.all(buttonPadding),
           textStyle: WidgetStateProperty.all(
             TextStyle(fontSize: fontSize),
           ),
         );
-        
+
         Widget button;
-        
+
         if (icon != null) {
           button = ElevatedButton.icon(
             onPressed: isLoading ? null : onPressed,
-            icon: isLoading ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ) : icon!,
+            icon: isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : icon!,
             label: Text(text),
             style: buttonStyle,
           );
@@ -591,14 +606,14 @@ class AdaptiveButton extends StatelessWidget {
                 : Text(text),
           );
         }
-        
+
         if (isFullWidth) {
           return SizedBox(
             width: double.infinity,
             child: button,
           );
         }
-        
+
         return button;
       },
     );

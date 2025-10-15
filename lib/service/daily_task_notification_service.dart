@@ -4,35 +4,36 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 
 class DailyTaskNotificationService extends GetxService {
   static DailyTaskNotificationService get instance => Get.find();
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Observables for real-time updates
   final RxInt todayAssignedCount = 0.obs; // Tracks tasks assigned today
   final RxInt todayCompletedCount = 0.obs; // Tracks tasks completed today
-  final RxInt todayPendingCount = 0.obs; // Tracks tasks assigned to users today but not yet completed
+  final RxInt todayPendingCount =
+      0.obs; // Tracks tasks assigned to users today but not yet completed
   final RxBool hasNewAssignments = false.obs; // Tracks new task assignments
   final RxBool hasNewCompletions = false.obs;
-  
+
   // Stream subscriptions
   StreamSubscription<QuerySnapshot>? _assignedTasksSubscription;
   StreamSubscription<QuerySnapshot>? _completedTasksSubscription;
   StreamSubscription<QuerySnapshot>? _pendingTasksSubscription;
-  
+
   // Cache for previous counts to detect changes
   int _previousAssignedCount = 0; // Actually tracks tasks created today
   int _previousCompletedCount = 0;
-  
+
   @override
   void onInit() {
     super.onInit();
     _initializeListeners();
   }
-  
+
   @override
   void onClose() {
     _assignedTasksSubscription?.cancel();
@@ -40,24 +41,22 @@ class DailyTaskNotificationService extends GetxService {
     _pendingTasksSubscription?.cancel();
     super.onClose();
   }
-  
+
   void _initializeListeners() {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    
+
     // Listen to all tasks and filter for those assigned today
-    _assignedTasksSubscription = _firestore
-        .collection('tasks')
-        .snapshots()
-        .listen(
+    _assignedTasksSubscription =
+        _firestore.collection('tasks').snapshots().listen(
       (snapshot) {
         int assignedTodayCount = 0;
-        
+
         for (final doc in snapshot.docs) {
           final data = doc.data();
           final assignedAt = data['assignedAt'];
-          
+
           // Check if task was assigned today
           if (assignedAt != null) {
             DateTime? assignmentDate;
@@ -66,7 +65,7 @@ class DailyTaskNotificationService extends GetxService {
             } else if (assignedAt is String) {
               assignmentDate = DateTime.tryParse(assignedAt);
             }
-            
+
             if (assignmentDate != null &&
                 assignmentDate.isAfter(startOfDay) &&
                 assignmentDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
@@ -74,35 +73,36 @@ class DailyTaskNotificationService extends GetxService {
             }
           }
         }
-        
+
         // Check if there are new task assignments
-        if (assignedTodayCount > _previousAssignedCount && _previousAssignedCount > 0) {
+        if (assignedTodayCount > _previousAssignedCount &&
+            _previousAssignedCount > 0) {
           hasNewAssignments.value = true;
-          _showNewAssignmentNotification(assignedTodayCount - _previousAssignedCount);
+          _showNewAssignmentNotification(
+              assignedTodayCount - _previousAssignedCount);
         }
-        
+
         todayAssignedCount.value = assignedTodayCount;
         _previousAssignedCount = assignedTodayCount;
       },
-onError: (error) {
-          if (kDebugMode) {
-            print('Error listening to assigned tasks: $error');
-          }
+      onError: (error) {
+        if (kDebugMode) {
+          print('Error listening to assigned tasks: $error');
+        }
       },
     );
-    
+
     // Listen to all tasks and filter for those completed today by checking userCompletionTimestamps
-    _completedTasksSubscription = _firestore
-        .collection('tasks')
-        .snapshots()
-        .listen(
+    _completedTasksSubscription =
+        _firestore.collection('tasks').snapshots().listen(
       (snapshot) {
         int completedTodayCount = 0;
-        
+
         for (final doc in snapshot.docs) {
           final data = doc.data();
-          final userCompletionTimestamps = data['userCompletionTimestamps'] as Map<String, dynamic>? ?? {};
-          
+          final userCompletionTimestamps =
+              data['userCompletionTimestamps'] as Map<String, dynamic>? ?? {};
+
           // Check if any user completed this task today
           for (final timestampValue in userCompletionTimestamps.values) {
             DateTime? completionDate;
@@ -111,7 +111,7 @@ onError: (error) {
             } else if (timestampValue is String) {
               completionDate = DateTime.tryParse(timestampValue);
             }
-            
+
             if (completionDate != null &&
                 completionDate.isAfter(startOfDay) &&
                 completionDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
@@ -120,35 +120,35 @@ onError: (error) {
             }
           }
         }
-        
+
         // Check if there are new completions
-        if (completedTodayCount > _previousCompletedCount && _previousCompletedCount > 0) {
+        if (completedTodayCount > _previousCompletedCount &&
+            _previousCompletedCount > 0) {
           hasNewCompletions.value = true;
-          _showNewCompletionNotification(completedTodayCount - _previousCompletedCount);
+          _showNewCompletionNotification(
+              completedTodayCount - _previousCompletedCount);
         }
-        
+
         todayCompletedCount.value = completedTodayCount;
         _previousCompletedCount = completedTodayCount;
       },
-onError: (error) {
-          if (kDebugMode) {
-            print('Error listening to completed tasks: $error');
-          }
+      onError: (error) {
+        if (kDebugMode) {
+          print('Error listening to completed tasks: $error');
+        }
       },
     );
-    
+
     // Listen to all tasks and filter for pending tasks that have been assigned to users today
-    _pendingTasksSubscription = _firestore
-        .collection('tasks')
-        .snapshots()
-        .listen(
+    _pendingTasksSubscription =
+        _firestore.collection('tasks').snapshots().listen(
       (snapshot) {
         int pendingTodayCount = 0;
-        
+
         for (final doc in snapshot.docs) {
           final data = doc.data();
           final assignedAt = data['assignedAt'];
-          
+
           // Check if task was assigned today
           bool assignedToday = false;
           if (assignedAt != null) {
@@ -158,54 +158,60 @@ onError: (error) {
             } else if (assignedAt is String) {
               assignmentDate = DateTime.tryParse(assignedAt);
             }
-            
+
             if (assignmentDate != null &&
                 assignmentDate.isAfter(startOfDay) &&
                 assignmentDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
               assignedToday = true;
             }
           }
-          
+
           // Get all assigned user IDs first
           final assignedUserIds = <String>[];
-          if (data['assignedReporterId'] != null && data['assignedReporterId'].toString().isNotEmpty) {
+          if (data['assignedReporterId'] != null &&
+              data['assignedReporterId'].toString().isNotEmpty) {
             assignedUserIds.add(data['assignedReporterId'].toString());
           }
-          if (data['assignedCameramanId'] != null && data['assignedCameramanId'].toString().isNotEmpty) {
+          if (data['assignedCameramanId'] != null &&
+              data['assignedCameramanId'].toString().isNotEmpty) {
             assignedUserIds.add(data['assignedCameramanId'].toString());
           }
-          if (data['assignedDriverId'] != null && data['assignedDriverId'].toString().isNotEmpty) {
+          if (data['assignedDriverId'] != null &&
+              data['assignedDriverId'].toString().isNotEmpty) {
             assignedUserIds.add(data['assignedDriverId'].toString());
           }
-          if (data['assignedLibrarianId'] != null && data['assignedLibrarianId'].toString().isNotEmpty) {
+          if (data['assignedLibrarianId'] != null &&
+              data['assignedLibrarianId'].toString().isNotEmpty) {
             assignedUserIds.add(data['assignedLibrarianId'].toString());
           }
-          
+
           // Only consider tasks that have been assigned to users and were assigned today
           if (assignedUserIds.isNotEmpty && assignedToday) {
             final status = data['status'] as String? ?? '';
-            final completedByUserIds = List<String>.from(data['completedByUserIds'] ?? []);
-            
+            final completedByUserIds =
+                List<String>.from(data['completedByUserIds'] ?? []);
+
             // Check if task is pending (not completed by all assigned users)
-            bool isCompleted = status.toLowerCase() == 'completed' || 
-                             assignedUserIds.every((userId) => completedByUserIds.contains(userId));
-            
+            bool isCompleted = status.toLowerCase() == 'completed' ||
+                assignedUserIds
+                    .every((userId) => completedByUserIds.contains(userId));
+
             if (!isCompleted) {
               pendingTodayCount++;
             }
           }
         }
-        
+
         todayPendingCount.value = pendingTodayCount;
       },
-onError: (error) {
-          if (kDebugMode) {
-            print('Error listening to pending tasks: $error');
-          }
+      onError: (error) {
+        if (kDebugMode) {
+          print('Error listening to pending tasks: $error');
+        }
       },
     );
   }
-  
+
   void _showNewAssignmentNotification(int newAssignments) {
     Get.snackbar(
       '📋 New Task Assignments',
@@ -224,7 +230,7 @@ onError: (error) {
       dismissDirection: DismissDirection.horizontal,
     );
   }
-  
+
   void _showNewCompletionNotification(int newCompletions) {
     Get.snackbar(
       '✅ Tasks Completed',
@@ -243,29 +249,31 @@ onError: (error) {
       dismissDirection: DismissDirection.horizontal,
     );
   }
-  
+
   /// Get daily task statistics
   Map<String, int> get dailyStats => {
-    'assigned': todayAssignedCount.value, // Tasks assigned today
-    'completed': todayCompletedCount.value, // Tasks completed today
-    'pending': todayPendingCount.value, // Tasks assigned today but not yet completed
-  };
-  
+        'assigned': todayAssignedCount.value, // Tasks assigned today
+        'completed': todayCompletedCount.value, // Tasks completed today
+        'pending': todayPendingCount
+            .value, // Tasks assigned today but not yet completed
+      };
+
   /// Get completion rate as percentage
   double get completionRate {
     if (todayAssignedCount.value == 0) return 0.0;
     return (todayCompletedCount.value / todayAssignedCount.value) * 100;
   }
-  
+
   /// Check if there are any notifications to show
-  bool get hasNotifications => hasNewAssignments.value || hasNewCompletions.value;
-  
+  bool get hasNotifications =>
+      hasNewAssignments.value || hasNewCompletions.value;
+
   /// Clear notification flags
   void clearNotifications() {
     hasNewAssignments.value = false;
     hasNewCompletions.value = false;
   }
-  
+
   /// Manually refresh the listeners (useful for timezone changes or day transitions)
   void refreshListeners() {
     _assignedTasksSubscription?.cancel();
@@ -275,23 +283,21 @@ onError: (error) {
     _previousCompletedCount = 0;
     _initializeListeners();
   }
-  
+
   /// Get tasks assigned to a specific user today
   Future<List<Task>> getTasksAssignedToUserToday(String userId) async {
     try {
       final now = DateTime.now();
       final startOfDay = DateTime(now.year, now.month, now.day);
       final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
-      
-      final snapshot = await _firestore
-          .collection('tasks')
-          .get();
-      
+
+      final snapshot = await _firestore.collection('tasks').get();
+
       final tasks = <Task>[];
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final assignedAt = data['assignedAt'];
-        
+
         // Check if task was assigned today
         bool assignedToday = false;
         if (assignedAt != null) {
@@ -301,80 +307,87 @@ onError: (error) {
           } else if (assignedAt is String) {
             assignmentDate = DateTime.tryParse(assignedAt);
           }
-          
+
           if (assignmentDate != null &&
               assignmentDate.isAfter(startOfDay) &&
               assignmentDate.isBefore(endOfDay.add(Duration(seconds: 1)))) {
             assignedToday = true;
           }
         }
-        
+
         if (assignedToday) {
           data['taskId'] = doc.id;
-        final task = Task.fromMap(data);
+          final task = Task.fromMap(data);
           // Check if user is assigned to this task
           if (task.assignedUserIds.contains(userId)) {
             tasks.add(task);
           }
         }
       }
-      
+
       return tasks;
-} catch (e) {
+    } catch (e) {
       if (kDebugMode) {
         print('Error getting tasks assigned to user today: $e');
       }
       return [];
     }
   }
-  
+
   /// Get summary for the past week
   Future<Map<String, Map<String, int>>> getWeeklySummary() async {
     try {
       final now = DateTime.now();
       final weekAgo = now.subtract(const Duration(days: 7));
-      
+
       final snapshot = await _firestore
           .collection('tasks')
-          .where('assignmentTimestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(weekAgo))
-          .where('assignmentTimestamp', isLessThanOrEqualTo: Timestamp.fromDate(now))
+          .where('assignmentTimestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(weekAgo))
+          .where('assignmentTimestamp',
+              isLessThanOrEqualTo: Timestamp.fromDate(now))
           .get();
-      
+
       final weeklyData = <String, Map<String, int>>{};
-      
+
       for (int i = 0; i < 7; i++) {
         final date = now.subtract(Duration(days: i));
-        final dateKey = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        final dateKey =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
         weeklyData[dateKey] = {'assigned': 0, 'completed': 0};
       }
-      
+
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final assignmentTimestamp = data['assignmentTimestamp'] as Timestamp?;
         final status = data['status'] as String?;
         final lastModified = data['lastModified'] as Timestamp?;
-        
+
         if (assignmentTimestamp != null) {
           final assignmentDate = assignmentTimestamp.toDate();
-          final dateKey = '${assignmentDate.year}-${assignmentDate.month.toString().padLeft(2, '0')}-${assignmentDate.day.toString().padLeft(2, '0')}';
-          
+          final dateKey =
+              '${assignmentDate.year}-${assignmentDate.month.toString().padLeft(2, '0')}-${assignmentDate.day.toString().padLeft(2, '0')}';
+
           if (weeklyData.containsKey(dateKey)) {
-            weeklyData[dateKey]!['assigned'] = (weeklyData[dateKey]!['assigned'] ?? 0) + 1;
+            weeklyData[dateKey]!['assigned'] =
+                (weeklyData[dateKey]!['assigned'] ?? 0) + 1;
           }
         }
-        
+
         if (status == 'completed' && lastModified != null) {
           final completionDate = lastModified.toDate();
-          final dateKey = '${completionDate.year}-${completionDate.month.toString().padLeft(2, '0')}-${completionDate.day.toString().padLeft(2, '0')}';
-          
+          final dateKey =
+              '${completionDate.year}-${completionDate.month.toString().padLeft(2, '0')}-${completionDate.day.toString().padLeft(2, '0')}';
+
           if (weeklyData.containsKey(dateKey)) {
-            weeklyData[dateKey]!['completed'] = (weeklyData[dateKey]!['completed'] ?? 0) + 1;
+            weeklyData[dateKey]!['completed'] =
+                (weeklyData[dateKey]!['completed'] ?? 0) + 1;
           }
         }
       }
-      
+
       return weeklyData;
-} catch (e) {
+    } catch (e) {
       if (kDebugMode) {
         print('Error getting weekly summary: $e');
       }

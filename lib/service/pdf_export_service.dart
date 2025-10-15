@@ -7,26 +7,25 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
-import 'package:task/models/task_model.dart';
-
+import 'package:task/models/task.dart';
 
 class PdfExportService extends GetxService {
   static PdfExportService get to => Get.find();
-  
+
   bool _isInitialized = false;
   late pw.Font _regularFont;
   late pw.Font _boldFont;
-  
+
   /// Initializes the PDF export service
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     try {
       Get.log('PdfExportService: Initializing...');
-      
+
       // Load fonts
       await _loadFonts();
-      
+
       _isInitialized = true;
       Get.log('PdfExportService: Initialized successfully');
     } catch (e) {
@@ -35,15 +34,17 @@ class PdfExportService extends GetxService {
       rethrow;
     }
   }
-  
+
   /// Loads fonts for PDF generation
   Future<void> _loadFonts() async {
     try {
       // Try to load custom fonts, fallback to default if not available
       try {
-        final regularFontData = await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
-        final boldFontData = await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
-        
+        final regularFontData =
+            await rootBundle.load('assets/fonts/Roboto-Regular.ttf');
+        final boldFontData =
+            await rootBundle.load('assets/fonts/Roboto-Bold.ttf');
+
         _regularFont = pw.Font.ttf(regularFontData);
         _boldFont = pw.Font.ttf(boldFontData);
       } catch (e) {
@@ -106,46 +107,44 @@ class PdfExportService extends GetxService {
                   ],
                 ),
               ),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Task Details
               _buildTaskDetailsSection(task, dateFormat),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Assignment Details
-              if (_hasAssignments(task))
-                _buildAssignmentSection(task),
-              
+              if (_hasAssignments(task)) _buildAssignmentSection(task),
+
               pw.SizedBox(height: 20),
-              
+
               // Timeline
               _buildTimelineSection(task, dateFormat),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Attachments
               if (task.attachmentUrls.isNotEmpty)
                 _buildAttachmentsSection(task),
-              
+
               pw.SizedBox(height: 20),
-              
+
               // Comments
-              if (task.comments.isNotEmpty)
-                _buildCommentsSection(task),
-              
+              if (task.comments.isNotEmpty) _buildCommentsSection(task),
+
               pw.SizedBox(height: 20),
-              
+
               // Archive Information
-              if (task.isArchived)
-                _buildArchiveSection(task, dateFormat),
+              if (task.isArchived) _buildArchiveSection(task, dateFormat),
             ];
           },
         ),
       );
 
-      return await _savePdfToFile(pdf, 'task_${task.taskId}_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      return await _savePdfToFile(pdf,
+          'task_${task.taskId}_${DateTime.now().millisecondsSinceEpoch}.pdf');
     } catch (e) {
       Get.log('Error exporting task to PDF: $e');
       rethrow;
@@ -203,14 +202,14 @@ class PdfExportService extends GetxService {
                     ],
                   ),
                 ),
-                
+
                 pw.SizedBox(height: 30),
-                
+
                 // Summary statistics
                 _buildSummarySection(tasks),
-                
+
                 pw.SizedBox(height: 30),
-                
+
                 // Tasks overview table
                 _buildTasksOverviewTable(tasks, dateFormat),
               ],
@@ -244,30 +243,30 @@ class PdfExportService extends GetxService {
                     ),
                   ),
                 ),
-                
+
                 pw.SizedBox(height: 15),
-                
+
                 // Task content
                 _buildTaskDetailsSection(task, dateFormat),
-                
+
                 if (_hasAssignments(task)) ...[
                   pw.SizedBox(height: 15),
                   _buildAssignmentSection(task),
                 ],
-                
+
                 pw.SizedBox(height: 15),
                 _buildTimelineSection(task, dateFormat),
-                
+
                 if (task.attachmentUrls.isNotEmpty) ...[
                   pw.SizedBox(height: 15),
                   _buildAttachmentsSection(task),
                 ],
-                
+
                 if (task.comments.isNotEmpty) ...[
                   pw.SizedBox(height: 15),
                   _buildCommentsSection(task),
                 ],
-                
+
                 if (task.isArchived) ...[
                   pw.SizedBox(height: 15),
                   _buildArchiveSection(task, dateFormat),
@@ -278,7 +277,8 @@ class PdfExportService extends GetxService {
         );
       }
 
-      return await _savePdfToFile(pdf, 'tasks_report_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      return await _savePdfToFile(
+          pdf, 'tasks_report_${DateTime.now().millisecondsSinceEpoch}.pdf');
     } catch (e) {
       Get.log('Error exporting tasks to PDF: $e');
       rethrow;
@@ -301,13 +301,17 @@ class PdfExportService extends GetxService {
             style: pw.TextStyle(font: _boldFont, fontSize: 16),
           ),
           pw.SizedBox(height: 12),
-          
           _buildDetailRow('Title', task.title),
-          _buildDetailRow('Description', task.description.isNotEmpty ? task.description : 'No description'),
+          _buildDetailRow(
+              'Description',
+              task.description.isNotEmpty
+                  ? task.description
+                  : 'No description'),
           _buildDetailRow('Status', task.status),
           _buildDetailRow('Category', task.category ?? 'Uncategorized'),
           _buildDetailRow('Priority', task.priority ?? 'Not specified'),
-          _buildDetailRow('Tags', task.tags.isNotEmpty ? task.tags.join(', ') : 'No tags'),
+          _buildDetailRow(
+              'Tags', task.tags.isNotEmpty ? task.tags.join(', ') : 'No tags'),
           _buildDetailRow('Created By', _getCreatorName(task)),
         ],
       ),
@@ -330,7 +334,6 @@ class PdfExportService extends GetxService {
             style: pw.TextStyle(font: _boldFont, fontSize: 16),
           ),
           pw.SizedBox(height: 12),
-          
           if (task.assignedReporter != null)
             _buildDetailRow('Reporter', task.assignedReporter!),
           if (task.assignedCameraman != null)
@@ -360,12 +363,14 @@ class PdfExportService extends GetxService {
             style: pw.TextStyle(font: _boldFont, fontSize: 16),
           ),
           pw.SizedBox(height: 12),
-          
-          _buildDetailRow('Created', dateFormat.format(task.timestamp.toLocal())),
+          _buildDetailRow(
+              'Created', dateFormat.format(task.timestamp.toLocal())),
           if (task.dueDate != null)
-            _buildDetailRow('Due Date', dateFormat.format(task.dueDate!.toLocal())),
+            _buildDetailRow(
+                'Due Date', dateFormat.format(task.dueDate!.toLocal())),
           if (task.lastModified != null)
-            _buildDetailRow('Last Modified', dateFormat.format(task.lastModified!.toLocal())),
+            _buildDetailRow('Last Modified',
+                dateFormat.format(task.lastModified!.toLocal())),
         ],
       ),
     );
@@ -387,12 +392,11 @@ class PdfExportService extends GetxService {
             style: pw.TextStyle(font: _boldFont, fontSize: 16),
           ),
           pw.SizedBox(height: 12),
-          
           ...List.generate(task.attachmentUrls.length, (index) {
             final name = task.attachmentNames[index];
             final type = task.attachmentTypes[index];
             final size = _formatFileSize(task.attachmentSizes[index]);
-            
+
             return pw.Padding(
               padding: const pw.EdgeInsets.only(bottom: 4),
               child: pw.Text(
@@ -422,14 +426,13 @@ class PdfExportService extends GetxService {
             style: pw.TextStyle(font: _boldFont, fontSize: 16),
           ),
           pw.SizedBox(height: 12),
-          
           ...task.comments.map((comment) => pw.Padding(
-            padding: const pw.EdgeInsets.only(bottom: 8),
-            child: pw.Text(
-              '• $comment',
-              style: pw.TextStyle(font: _regularFont, fontSize: 12),
-            ),
-          )),
+                padding: const pw.EdgeInsets.only(bottom: 8),
+                child: pw.Text(
+                  '• $comment',
+                  style: pw.TextStyle(font: _regularFont, fontSize: 12),
+                ),
+              )),
         ],
       ),
     );
@@ -448,12 +451,13 @@ class PdfExportService extends GetxService {
         children: [
           pw.Text(
             'Archive Information',
-            style: pw.TextStyle(font: _boldFont, fontSize: 16, color: PdfColors.orange),
+            style: pw.TextStyle(
+                font: _boldFont, fontSize: 16, color: PdfColors.orange),
           ),
           pw.SizedBox(height: 12),
-          
           if (task.archivedAt != null)
-            _buildDetailRow('Archived At', dateFormat.format(task.archivedAt!.toLocal())),
+            _buildDetailRow(
+                'Archived At', dateFormat.format(task.archivedAt!.toLocal())),
           if (task.archivedBy != null)
             _buildDetailRow('Archived By', task.archivedBy!),
           if (task.archiveReason != null)
@@ -469,7 +473,7 @@ class PdfExportService extends GetxService {
   pw.Widget _buildSummarySection(List<Task> tasks) {
     final statusCounts = <String, int>{};
     final categoryCounts = <String, int>{};
-    
+
     for (final task in tasks) {
       statusCounts[task.status] = (statusCounts[task.status] ?? 0) + 1;
       final category = task.category ?? 'Uncategorized';
@@ -490,29 +494,27 @@ class PdfExportService extends GetxService {
             style: pw.TextStyle(font: _boldFont, fontSize: 16),
           ),
           pw.SizedBox(height: 12),
-          
           _buildDetailRow('Total Tasks', tasks.length.toString()),
-          _buildDetailRow('Archived Tasks', tasks.where((t) => t.isArchived).length.toString()),
-          
+          _buildDetailRow('Archived Tasks',
+              tasks.where((t) => t.isArchived).length.toString()),
           pw.SizedBox(height: 8),
           pw.Text(
             'Status Distribution:',
             style: pw.TextStyle(font: _boldFont, fontSize: 12),
           ),
-          ...statusCounts.entries.map((entry) => 
-            pw.Text(
+          ...statusCounts.entries.map(
+            (entry) => pw.Text(
               '  • ${entry.key}: ${entry.value}',
               style: pw.TextStyle(font: _regularFont, fontSize: 10),
             ),
           ),
-          
           pw.SizedBox(height: 8),
           pw.Text(
             'Category Distribution:',
             style: pw.TextStyle(font: _boldFont, fontSize: 12),
           ),
-          ...categoryCounts.entries.map((entry) => 
-            pw.Text(
+          ...categoryCounts.entries.map(
+            (entry) => pw.Text(
               '  • ${entry.key}: ${entry.value}',
               style: pw.TextStyle(font: _regularFont, fontSize: 10),
             ),
@@ -545,13 +547,13 @@ class PdfExportService extends GetxService {
         ),
         // Data rows
         ...tasks.map((task) => pw.TableRow(
-          children: [
-            _buildTableCell(task.title),
-            _buildTableCell(task.status),
-            _buildTableCell(task.category ?? 'Uncategorized'),
-            _buildTableCell(dateFormat.format(task.timestamp.toLocal())),
-          ],
-        )),
+              children: [
+                _buildTableCell(task.title),
+                _buildTableCell(task.status),
+                _buildTableCell(task.category ?? 'Uncategorized'),
+                _buildTableCell(dateFormat.format(task.timestamp.toLocal())),
+              ],
+            )),
       ],
     );
   }
@@ -598,16 +600,18 @@ class PdfExportService extends GetxService {
   /// Checks if task has assignments
   bool _hasAssignments(Task task) {
     return task.assignedReporter != null ||
-           task.assignedCameraman != null ||
-           task.assignedDriver != null ||
-           task.assignedLibrarian != null;
+        task.assignedCameraman != null ||
+        task.assignedDriver != null ||
+        task.assignedLibrarian != null;
   }
 
   /// Formats file size
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 

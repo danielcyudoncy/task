@@ -61,7 +61,7 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                 width: 150,
                 height: 150,
               ),
-              
+
               // Success card
               Expanded(
                 child: Center(
@@ -115,17 +115,20 @@ class _SaveSuccessScreenState extends State<SaveSuccessScreen> {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 32),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 32),
                   ),
                   onPressed: () {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       final auth = Get.find<AuthController>();
                       final role = auth.userRole.value;
-                      if (["Admin", "Assignment Editor", "Head of Department"].contains(role)) {
+                      if (["Admin", "Assignment Editor", "Head of Department"]
+                          .contains(role)) {
                         Get.offAllNamed("/admin-dashboard");
                       } else if (role == "Librarian") {
                         Get.offAllNamed("/librarian-dashboard");
-                      } else if (["Reporter", "Cameraman", "Driver"].contains(role)) {
+                      } else if (["Reporter", "Cameraman", "Driver"]
+                          .contains(role)) {
                         Get.offAllNamed("/home");
                       } else {
                         Get.offAllNamed("/login");

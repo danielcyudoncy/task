@@ -5,7 +5,7 @@ import 'package:task/models/task_filters.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/task_controller.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/models/task_status_filter.dart';
 import 'package:task/features/librarian/widgets/librarian_task_card.dart';
 import 'package:task/utils/constants/app_sizes.dart';
@@ -35,7 +35,8 @@ class TaskListView extends StatefulWidget {
 class _TaskListViewState extends State<TaskListView> {
   final TaskController _taskController = Get.find<TaskController>();
   final RxBool _isLoading = RxBool(false); // Use RxBool for reactive boolean
-  final RxString _errorMessage = RxString(''); // Use RxString for reactive string
+  final RxString _errorMessage =
+      RxString(''); // Use RxString for reactive string
   final RxList<Task> _tasks = RxList<Task>([]); // Use RxList for reactive list
   final RxBool _isRefreshing = RxBool(false); // Use RxBool for reactive boolean
 
@@ -89,26 +90,29 @@ class _TaskListViewState extends State<TaskListView> {
 
       // Get tasks based on status filter
       List<Task> tasks = [];
-try {
-  switch (widget.statusFilter) {
-    case TaskStatusFilter.completed:
-      final allTasks = await _taskController.getAllTasks();
-      tasks = allTasks.where((task) => task.status.toLowerCase() == 'completed').toList();
-      break;
-    case TaskStatusFilter.pending:
-      // Get all tasks that are not completed
-      final allTasks = await _taskController.getAllTasks();
-      tasks = allTasks.where((task) => 
-          task.status.toLowerCase() != 'completed').toList();
-      break;
-    case TaskStatusFilter.all:
-      tasks = await _taskController.getAllTasks();
-      break;
-  }
-} catch (e) {
-  _errorMessage.value = 'Failed to load tasks. Please try again.';
-  widget.onError?.call(_errorMessage.value);
-}
+      try {
+        switch (widget.statusFilter) {
+          case TaskStatusFilter.completed:
+            final allTasks = await _taskController.getAllTasks();
+            tasks = allTasks
+                .where((task) => task.status.toLowerCase() == 'completed')
+                .toList();
+            break;
+          case TaskStatusFilter.pending:
+            // Get all tasks that are not completed
+            final allTasks = await _taskController.getAllTasks();
+            tasks = allTasks
+                .where((task) => task.status.toLowerCase() != 'completed')
+                .toList();
+            break;
+          case TaskStatusFilter.all:
+            tasks = await _taskController.getAllTasks();
+            break;
+        }
+      } catch (e) {
+        _errorMessage.value = 'Failed to load tasks. Please try again.';
+        widget.onError?.call(_errorMessage.value);
+      }
       // Apply archive filter
       if (!widget.showArchived) {
         tasks = tasks.where((task) => !task.isArchived).toList();
@@ -131,7 +135,8 @@ try {
               (task.category?.toLowerCase().contains(query) ?? false) ||
               task.tags.any((tag) => tag.toLowerCase().contains(query)) ||
               (task.assignedReporter?.toLowerCase().contains(query) ?? false) ||
-              (task.assignedCameraman?.toLowerCase().contains(query) ?? false) ||
+              (task.assignedCameraman?.toLowerCase().contains(query) ??
+                  false) ||
               (task.assignedDriver?.toLowerCase().contains(query) ?? false) ||
               (task.assignedLibrarian?.toLowerCase().contains(query) ?? false);
         }).toList();
@@ -173,8 +178,8 @@ try {
     return tasks.where((task) {
       // Status filter
       if (filters.statuses?.isNotEmpty == true) {
-        if (!filters.statuses!.any((status) =>
-            task.status.toLowerCase() == status.toLowerCase())) {
+        if (!filters.statuses!.any(
+            (status) => task.status.toLowerCase() == status.toLowerCase())) {
           return false;
         }
       }
@@ -189,8 +194,8 @@ try {
 
       // Tags filter
       if (filters.tags?.isNotEmpty == true) {
-        if (task.tags.isEmpty || !filters.tags!.any((tag) =>
-            task.tags.any((taskTag) =>
+        if (task.tags.isEmpty ||
+            !filters.tags!.any((tag) => task.tags.any((taskTag) =>
                 taskTag.toLowerCase().trim() == tag.toLowerCase().trim()))) {
           return false;
         }
@@ -203,7 +208,8 @@ try {
           return false;
         }
         if (filters.endDate != null &&
-            task.timestamp.isAfter(filters.endDate!.add(const Duration(days: 1)))) {
+            task.timestamp
+                .isAfter(filters.endDate!.add(const Duration(days: 1)))) {
           return false;
         }
       }

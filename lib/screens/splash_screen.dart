@@ -15,7 +15,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -23,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
@@ -56,25 +57,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _controller.forward();
     Timer(const Duration(seconds: 3), () async {
       try {
-        
         // Wait for bootstrap to complete
         while (!isBootstrapComplete) {
-          
           await Future.delayed(const Duration(milliseconds: 100));
         }
-        
+
         // Add a small delay to ensure all controllers are ready
         await Future.delayed(const Duration(milliseconds: 1000));
-        
+
         // Mark app as ready for snackbars before navigation
         if (Get.isRegistered<AuthController>()) {
           Get.find<AuthController>().markAppAsReady();
         }
-        
+
         final prefs = await SharedPreferences.getInstance();
-        
+
         final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-        
+
         if (!hasSeenOnboarding) {
           Get.offAllNamed('/onboarding');
         } else {
@@ -83,16 +82,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             Get.offAllNamed('/login');
             return;
           }
-          
+
           final authController = Get.find<AuthController>();
-          
+
           // Wait a bit for Firebase auth to initialize
           await Future.delayed(const Duration(milliseconds: 500));
-          
+
           if (authController.isLoggedIn) {
             // User is logged in, navigate based on role
             await authController.navigateBasedOnRole();
-
           } else {
             // User is not logged in, go to login screen
             Get.offAllNamed('/login');
@@ -119,10 +117,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final orientation = MediaQuery.of(context).orientation;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     // Calculate responsive logo size based on orientation
-    final logoSize = orientation == Orientation.portrait 
-        ? screenWidth * 0.4  // 40% of screen width in portrait
+    final logoSize = orientation == Orientation.portrait
+        ? screenWidth * 0.4 // 40% of screen width in portrait
         : screenHeight * 0.35; // 35% of screen height in landscape
 
     return Scaffold(
@@ -131,9 +129,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         height: double.infinity,
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.grey[900]!, Colors.grey[800]!]
-                      .reduce((value, element) => value)
-                  : Theme.of(context).colorScheme.primary,
+              ? [Colors.grey[900]!, Colors.grey[800]!]
+                  .reduce((value, element) => value)
+              : Theme.of(context).colorScheme.primary,
         ),
         child: Center(
           child: Column(
@@ -163,18 +161,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   style: textTheme.headlineSmall?.copyWith(
                     color: colorScheme.onPrimary,
                     fontFamily: 'Raleway',
-                    fontSize: orientation == Orientation.portrait ? 16.sp : 14.sp,
+                    fontSize:
+                        orientation == Orientation.portrait ? 16.sp : 14.sp,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
-              SizedBox(height: orientation == Orientation.portrait ? 16.h : 12.h),
+              SizedBox(
+                  height: orientation == Orientation.portrait ? 16.h : 12.h),
               FadeTransition(
                 opacity: _textOpacityAnimation,
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
                 ),
               ),
             ],

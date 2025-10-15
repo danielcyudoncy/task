@@ -16,7 +16,7 @@ class ApprovalStatusChip extends StatelessWidget {
     }
 
     final bool isApproved = approvalStatus == 'approved';
-    
+
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(

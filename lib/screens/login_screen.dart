@@ -48,8 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -81,8 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
-                        
-
                         // App Logo
                         Center(
                           child: ClipRRect(
@@ -94,9 +90,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         SizedBox(height: 24),
-                        
-
-                      
 
                         // Main box container
                         Container(
@@ -156,7 +149,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     prefixIcon: Icon(Icons.email,
                                         color: colorScheme.onSurfaceVariant),
                                     filled: true,
-                                    fillColor: Theme.of(context).brightness == Brightness.light
+                                    fillColor: Theme.of(context).brightness ==
+                                            Brightness.light
                                         ? Colors.grey[200]
                                         : Colors.grey[800],
                                     border: OutlineInputBorder(
@@ -188,14 +182,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       decoration: InputDecoration(
                                         labelText: 'password'.tr,
-                                        labelStyle: textTheme.bodyMedium?.copyWith(
+                                        labelStyle:
+                                            textTheme.bodyMedium?.copyWith(
                                           color: colorScheme.onSurfaceVariant,
                                         ),
-                                        hintStyle: textTheme.bodyMedium?.copyWith(
+                                        hintStyle:
+                                            textTheme.bodyMedium?.copyWith(
                                           color: colorScheme.onSurfaceVariant,
                                         ),
                                         prefixIcon: Icon(Icons.lock,
-                                            color: colorScheme.onSurfaceVariant),
+                                            color:
+                                                colorScheme.onSurfaceVariant),
                                         suffixIcon: IconButton(
                                           icon: Icon(
                                             Icons.visibility_off,
@@ -204,11 +201,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                           onPressed: () {},
                                         ),
                                         filled: true,
-                                        fillColor: Theme.of(context).brightness == Brightness.light
-                                            ? Colors.grey[200]
-                                            : Colors.grey[800],
+                                        fillColor:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.light
+                                                ? Colors.grey[200]
+                                                : Colors.grey[800],
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                           borderSide: BorderSide.none,
                                         ),
                                       ),
@@ -223,16 +223,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                       },
                                     );
                                   }
-                                  
+
                                   return TextFormField(
                                     controller: _passwordController,
-                                    obscureText: _auth.isLoginPasswordHidden.value,
+                                    obscureText:
+                                        _auth.isLoginPasswordHidden.value,
                                     style: textTheme.bodyMedium?.copyWith(
                                       color: colorScheme.onSurface,
                                     ),
                                     decoration: InputDecoration(
                                       labelText: 'password'.tr,
-                                      labelStyle: textTheme.bodyMedium?.copyWith(
+                                      labelStyle:
+                                          textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.onSurfaceVariant,
                                       ),
                                       hintStyle: textTheme.bodyMedium?.copyWith(
@@ -248,13 +250,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                           color: colorScheme.onSurfaceVariant,
                                         ),
                                         onPressed: () {
-                                          Get.find<SettingsController>().triggerFeedback();
+                                          Get.find<SettingsController>()
+                                              .triggerFeedback();
                                           _auth.isLoginPasswordHidden.value =
-                                              !_auth.isLoginPasswordHidden.value;
+                                              !_auth
+                                                  .isLoginPasswordHidden.value;
                                         },
                                       ),
                                       filled: true,
-                                      fillColor: Theme.of(context).brightness == Brightness.light
+                                      fillColor: Theme.of(context).brightness ==
+                                              Brightness.light
                                           ? Colors.grey[200]
                                           : Colors.grey[800],
                                       border: OutlineInputBorder(
@@ -282,7 +287,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     return ElevatedButton(
                                         // Using theme's default button styling
                                         onPressed: () {
-                                          Get.find<SettingsController>().triggerFeedback();
+                                          Get.find<SettingsController>()
+                                              .triggerFeedback();
                                           _submit(context);
                                         },
                                         child: Text(
@@ -291,14 +297,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                             fontWeight: FontWeight.bold,
                                             fontFamily: 'Raleway',
                                           ),
-                                        )
-                                      );
+                                        ));
                                   }
-                                  
+
                                   return _auth.isLoading.value
-                                      ? const Center(child: CircularProgressIndicator())
+                                      ? const Center(
+                                          child: CircularProgressIndicator())
                                       : ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
+                                          style: ElevatedButton.styleFrom(
                                             backgroundColor:
                                                 const Color(0xFF2F80ED),
                                             foregroundColor: Colors.white,
@@ -310,7 +316,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                           // Using theme's default button styling
                                           onPressed: () {
-                                            Get.find<SettingsController>().triggerFeedback();
+                                            Get.find<SettingsController>()
+                                                .triggerFeedback();
                                             _submit(context);
                                           },
                                           child: Text(
@@ -328,7 +335,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // Divider with text
                                 Row(
                                   children: [
-                                    const Expanded(child: Divider(color: Colors.white)),
+                                    const Expanded(
+                                        child: Divider(color: Colors.white)),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8),
@@ -339,7 +347,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                       ),
                                     ),
-                                    const Expanded(child: Divider(color: Colors.white)),
+                                    const Expanded(
+                                        child: Divider(color: Colors.white)),
                                   ],
                                 ),
 
@@ -369,8 +378,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                           'Coming Soon',
                                           'Apple Sign-In will be available soon!',
                                           snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: Get.theme.colorScheme.surface,
-                                          colorText: Get.theme.colorScheme.onSurface,
+                                          backgroundColor:
+                                              Get.theme.colorScheme.surface,
+                                          colorText:
+                                              Get.theme.colorScheme.onSurface,
                                         );
                                       },
                                     ),
@@ -413,7 +424,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Get.find<SettingsController>()
                                         .triggerFeedback();
                                     Get.toNamed('/forgot-password');
-                                    },
+                                  },
                                   child: Text(
                                     'forget_password'.tr,
                                     textAlign: TextAlign.center,
@@ -429,10 +440,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        
-                       
-                      
-                       
                       ],
                     ),
                   ),
@@ -440,8 +447,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-
-         
         ],
       ),
     );

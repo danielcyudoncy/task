@@ -42,7 +42,7 @@ class ChipInputField<T> extends StatefulWidget {
     this.onSubmitted,
   });
 
-@override
+  @override
   State<ChipInputField<T>> createState() => _ChipInputFieldState<T>();
 }
 
@@ -61,7 +61,7 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
     _controller = widget.controller ?? TextEditingController();
     _focusNode = widget.focusNode ?? FocusNode();
     _items.addAll(widget.initialItems);
-    
+
     _focusNode.addListener(() {
       if (_focusNode.hasFocus && widget.showSuggestionsOnFocus) {
         _showSuggestionOverlay();
@@ -74,13 +74,13 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
   @override
   void didUpdateWidget(ChipInputField<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.controller == null && oldWidget.controller != null) {
       _controller = TextEditingController();
     } else if (widget.controller != null && oldWidget.controller == null) {
       _controller = widget.controller!;
     }
-    
+
     if (widget.focusNode == null && oldWidget.focusNode != null) {
       _focusNode = FocusNode();
       _setupFocusNode();
@@ -88,7 +88,7 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
       _focusNode = widget.focusNode!;
       _setupFocusNode();
     }
-    
+
     if (widget.initialItems != oldWidget.initialItems) {
       _items.clear();
       _items.addAll(widget.initialItems);
@@ -117,13 +117,13 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
 
   void _showSuggestionOverlay() {
     if (_overlayEntry != null) return;
-    
+
     _filterSuggestions(_controller.text);
-    
+
     final renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
-    
+
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         left: offset.dx,
@@ -204,7 +204,7 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
         }),
       );
     }
-    
+
     if (_overlayEntry != null) {
       _overlayEntry!.markNeedsBuild();
     }
@@ -214,17 +214,16 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
     if (_items.contains(item) && !widget.allowDuplicates) {
       return;
     }
-    
+
     setState(() {
       _items.add(item);
       _controller.clear();
       _filterSuggestions('');
       widget.onChanged(_items.toList());
     });
-    
+
     _focusNode.requestFocus();
   }
-
 
   void _onSubmitted(String value) {
     if (value.trim().isNotEmpty) {
@@ -234,9 +233,9 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
             suggestion.toString().toLowerCase() == value.trim().toLowerCase(),
         orElse: () => value as T,
       );
-      
+
       _addItem(matchingSuggestion);
-      
+
       if (widget.onSubmitted != null) {
         widget.onSubmitted!(value);
       }
@@ -262,7 +261,7 @@ class _ChipInputFieldState<T> extends State<ChipInputField<T>> {
                   )
                   .toList(),
             ),
-          
+
           // Text field
           TextFormField(
             controller: _controller,

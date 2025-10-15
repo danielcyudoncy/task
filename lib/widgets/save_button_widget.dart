@@ -3,12 +3,15 @@ import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/constants/app_colors.dart';
 
-Widget buildSaveButton(AuthController controller, String userFullName, String email, String password) {
+Widget buildSaveButton(AuthController controller, String userFullName,
+    String email, String password) {
   return Obx(() => ElevatedButton(
-        onPressed: controller.isLoading.value || controller.userRole.value.isEmpty
+        onPressed: controller.isLoading.value ||
+                controller.userRole.value.isEmpty
             ? null
             : () {
-                controller.signUp(userFullName, email, password, controller.userRole.value);
+                controller.signUp(
+                    userFullName, email, password, controller.userRole.value);
               },
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,

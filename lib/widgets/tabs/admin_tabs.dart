@@ -11,10 +11,10 @@ import '../dialogs/task_approval_dialog.dart';
 import '../report_completion_dialog.dart';
 import '../ui_helpers.dart';
 
-
 class TasksTab extends StatefulWidget {
   final Map<String, Map<String, String>> userCache;
-  final Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole;
+  final Future<Map<String, String>> Function(String, VoidCallback)
+      getUserNameAndRole;
   final Function(String) showTaskDetailDialog;
   final String taskType; // 'pending' or 'completed'
 
@@ -42,7 +42,7 @@ class _TasksTabState extends State<TasksTab> {
         );
       }
 
-      final tasks = widget.taskType == 'completed' 
+      final tasks = widget.taskType == 'completed'
           ? adminController.completedTaskTitles
           : adminController.pendingTaskTitles;
       if (tasks.isEmpty) {
@@ -95,7 +95,8 @@ class _TasksTabState extends State<TasksTab> {
     );
   }
 
-  Widget _buildTaskCard(BuildContext context, String title, Map<String, dynamic>? doc) {
+  Widget _buildTaskCard(
+      BuildContext context, String title, Map<String, dynamic>? doc) {
     final creatorId = doc?['createdBy'] ?? 'Unknown';
     final userInfo = widget.userCache[creatorId];
     if (userInfo == null && creatorId != 'Unknown') {
@@ -113,14 +114,15 @@ class _TasksTabState extends State<TasksTab> {
     final status = doc?['status'] ?? 'Unknown';
     final priority = doc?['priority'] ?? 'Medium';
     final taskId = doc?['id'] ?? doc?['taskId'] ?? '';
-    
+
     // Check if current user can complete this task
     final authController = Get.find<AuthController>();
     final currentUserId = authController.auth.currentUser?.uid;
     final userRole = authController.userRole.value;
     final isAssignedUser = _isUserAssignedToTask(doc, currentUserId);
-    final canCompleteTask = widget.taskType == 'pending' && isAssignedUser && currentUserId != null;
-    
+    final canCompleteTask =
+        widget.taskType == 'pending' && isAssignedUser && currentUserId != null;
+
     // Debug logging
 
     return Card(
@@ -165,12 +167,19 @@ class _TasksTabState extends State<TasksTab> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onPrimary
+                            .withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.3),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
@@ -191,15 +200,23 @@ class _TasksTabState extends State<TasksTab> {
                       width: 24.w,
                       height: 24.h,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onPrimary
+                            .withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.4),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withValues(alpha: 0.4),
                         ),
                       ),
                       child: Center(
                         child: Text(
-                          creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
+                          creatorName.isNotEmpty
+                              ? creatorName[0].toUpperCase()
+                              : '?',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onPrimary,
                             fontSize: 12.sp,
@@ -214,18 +231,24 @@ class _TasksTabState extends State<TasksTab> {
                         'Created by $creatorName',
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withValues(alpha: 0.8),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _getPriorityColor(priority).withValues(alpha: 0.2),
+                        color:
+                            _getPriorityColor(priority).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: _getPriorityColor(priority).withValues(alpha: 0.4),
+                          color: _getPriorityColor(priority)
+                              .withValues(alpha: 0.4),
                         ),
                       ),
                       child: Text(
@@ -245,13 +268,16 @@ class _TasksTabState extends State<TasksTab> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       ElevatedButton.icon(
-                         onPressed: doc != null ? () => _completeTask(doc, currentUserId, userRole) : null,
-                         icon: const Icon(Icons.check_circle, size: 16),
-                         label: const Text('Complete'),
+                        onPressed: doc != null
+                            ? () => _completeTask(doc, currentUserId, userRole)
+                            : null,
+                        icon: const Icon(Icons.check_circle, size: 16),
+                        label: const Text('Complete'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF27AE60),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           textStyle: const TextStyle(fontSize: 12),
                           elevation: 0,
                         ),
@@ -262,17 +288,23 @@ class _TasksTabState extends State<TasksTab> {
                         icon: const Icon(Icons.comment, size: 16),
                         label: const Text('Comment'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                          side: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          textStyle:  TextStyle(fontSize: 12.sp),
-                          backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
+                          side: BorderSide(
+                              color: Theme.of(context).colorScheme.onPrimary),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          textStyle: TextStyle(fontSize: 12.sp),
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withValues(alpha: 0.1),
                         ),
                       ),
                     ],
                   ),
                 ],
-                ],
+              ],
             ),
           ),
         ),
@@ -282,14 +314,14 @@ class _TasksTabState extends State<TasksTab> {
 
   bool _isUserAssignedToTask(Map<String, dynamic>? doc, String? userId) {
     if (doc == null || userId == null) return false;
-    
+
     final assignedReporterId = doc['assignedReporterId']?.toString();
     final assignedCameramanId = doc['assignedCameramanId']?.toString();
     final assignedDriverId = doc['assignedDriverId']?.toString();
-    
+
     return assignedReporterId == userId ||
-           assignedCameramanId == userId ||
-           assignedDriverId == userId;
+        assignedCameramanId == userId ||
+        assignedDriverId == userId;
   }
 
   Color _getPriorityColor(String priority) {
@@ -305,19 +337,21 @@ class _TasksTabState extends State<TasksTab> {
     }
   }
 
-  Future<void> _completeTask(Map<String, dynamic> doc, String currentUserId, String userRole) async {
+  Future<void> _completeTask(
+      Map<String, dynamic> doc, String currentUserId, String userRole) async {
     try {
       final taskController = Get.find<TaskController>();
       final taskId = doc['id'] ?? doc['taskId'] ?? '';
-      
+
       if (taskId.isEmpty) {
         Get.snackbar("Error", "Task ID not found",
             snackPosition: SnackPosition.BOTTOM);
         return;
       }
-      
+
       // If user is a reporter, show completion dialog
-      if (userRole == "Reporter" && doc['assignedReporterId'] == currentUserId) {
+      if (userRole == "Reporter" &&
+          doc['assignedReporterId'] == currentUserId) {
         final result = await Get.dialog<ReportCompletionInfo>(
           ReportCompletionDialog(
             onComplete: (info) {
@@ -326,7 +360,7 @@ class _TasksTabState extends State<TasksTab> {
           ),
           barrierDismissible: false,
         );
-        
+
         if (result != null) {
           await taskController.markTaskCompletedByUser(
             taskId,
@@ -334,7 +368,7 @@ class _TasksTabState extends State<TasksTab> {
             reportCompletionInfo: result,
           );
           Get.snackbar(
-            "Success", 
+            "Success",
             "Task marked as completed with report details",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
@@ -344,7 +378,7 @@ class _TasksTabState extends State<TasksTab> {
       } else {
         await taskController.markTaskCompletedByUser(taskId, currentUserId);
         Get.snackbar(
-          "Success", 
+          "Success",
           "Task marked as completed",
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
@@ -363,9 +397,9 @@ class _TasksTabState extends State<TasksTab> {
           snackPosition: SnackPosition.BOTTOM);
       return;
     }
-    
+
     final TextEditingController commentController = TextEditingController();
-    
+
     final result = await Get.dialog<String>(
       AlertDialog(
         title: Text('Add Comment to "$taskTitle"'),
@@ -395,17 +429,17 @@ class _TasksTabState extends State<TasksTab> {
         ],
       ),
     );
-    
+
     if (result != null && result.isNotEmpty) {
       try {
         final taskController = Get.find<TaskController>();
         final authController = Get.find<AuthController>();
         final currentUserId = authController.auth.currentUser?.uid;
-        
+
         if (currentUserId != null) {
           await taskController.addComment(taskId, result);
           Get.snackbar(
-            "Success", 
+            "Success",
             "Comment added successfully",
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Get.theme.colorScheme.primary,
@@ -422,7 +456,8 @@ class _TasksTabState extends State<TasksTab> {
 
 class TaskApprovalTab extends StatefulWidget {
   final Map<String, Map<String, String>> userCache;
-  final Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole;
+  final Future<Map<String, String>> Function(String, VoidCallback)
+      getUserNameAndRole;
 
   const TaskApprovalTab({
     super.key,
@@ -584,12 +619,12 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
         widget.getUserNameAndRole(creatorId, () => setState(() {}));
       });
     }
-    
+
     final creatorName = userInfo?['name'] ?? 'Unknown';
     final title = task['title'] ?? 'Untitled Task';
     final priority = task['priority'] ?? 'medium';
     final category = task['category'] ?? 'general';
-    
+
     String dateStr = 'Unknown';
     final createdAt = task['timestamp'];
     if (createdAt != null) {
@@ -662,12 +697,15 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
-                        color: _getPriorityColor(priority).withValues(alpha: 0.2),
+                        color:
+                            _getPriorityColor(priority).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: _getPriorityColor(priority).withValues(alpha: 0.4),
+                          color: _getPriorityColor(priority)
+                              .withValues(alpha: 0.4),
                         ),
                       ),
                       child: Text(
@@ -688,15 +726,23 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                       width: 24.w,
                       height: 24.h,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onPrimary
+                            .withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.4),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withValues(alpha: 0.4),
                         ),
                       ),
                       child: Center(
                         child: Text(
-                          creatorName.isNotEmpty ? creatorName[0].toUpperCase() : '?',
+                          creatorName.isNotEmpty
+                              ? creatorName[0].toUpperCase()
+                              : '?',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onPrimary,
                             fontSize: 12.sp,
@@ -723,7 +769,10 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                             category,
                             style: TextStyle(
                               fontSize: 10.sp,
-                              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimary
+                                  .withValues(alpha: 0.7),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -736,14 +785,20 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
                         Icon(
                           Icons.access_time,
                           size: 12,
-                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withValues(alpha: 0.7),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           dateStr,
                           style: TextStyle(
                             fontSize: 10.sp,
-                            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimary
+                                .withValues(alpha: 0.7),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

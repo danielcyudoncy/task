@@ -10,7 +10,7 @@ class UpdateDialog extends StatelessWidget {
   final VoidCallback? onUpdate;
   final VoidCallback? onSkip;
   final VoidCallback? onLater;
-  
+
   const UpdateDialog({
     super.key,
     required this.updateInfo,
@@ -19,7 +19,7 @@ class UpdateDialog extends StatelessWidget {
     this.onSkip,
     this.onLater,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -60,7 +60,8 @@ class UpdateDialog extends StatelessWidget {
                 color: Colors.grey[600],
               ),
             ),
-            if (updateInfo.releaseNotes != null && updateInfo.releaseNotes!.isNotEmpty) ...[
+            if (updateInfo.releaseNotes != null &&
+                updateInfo.releaseNotes!.isNotEmpty) ...[
               const SizedBox(height: 16),
               const Text(
                 'What\'s New:',
@@ -121,10 +122,10 @@ class UpdateDialog extends StatelessWidget {
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
     );
   }
-  
+
   List<Widget> _buildActions(BuildContext context) {
     final actions = <Widget>[];
-    
+
     // Add "Later" button if not forced
     if (!forceUpdate && !updateInfo.isForced) {
       actions.add(
@@ -142,7 +143,7 @@ class UpdateDialog extends StatelessWidget {
         ),
       );
     }
-    
+
     // Add "Skip" button if not forced
     if (!forceUpdate && !updateInfo.isForced) {
       actions.add(
@@ -161,7 +162,7 @@ class UpdateDialog extends StatelessWidget {
         ),
       );
     }
-    
+
     // Add "Update" button
     actions.add(
       ElevatedButton(
@@ -192,10 +193,10 @@ class UpdateDialog extends StatelessWidget {
         ),
       ),
     );
-    
+
     return actions;
   }
-  
+
   void _defaultUpdateAction() {
     // Default update action - delegate to UpdateService
     UpdateService.checkForUpdates(
@@ -203,7 +204,7 @@ class UpdateDialog extends StatelessWidget {
       showDialog: false,
     );
   }
-  
+
   /// Show update dialog
   static void show({
     required UpdateInfo updateInfo,
@@ -230,14 +231,14 @@ class UpdateNotification extends StatelessWidget {
   final UpdateInfo updateInfo;
   final VoidCallback? onTap;
   final VoidCallback? onDismiss;
-  
+
   const UpdateNotification({
     super.key,
     required this.updateInfo,
     this.onTap,
     this.onDismiss,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(

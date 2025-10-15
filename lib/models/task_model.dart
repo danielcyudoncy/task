@@ -86,6 +86,17 @@ class Task {
     return userIds;
   }
 
+  // Helper method to get all assigned user IDs including legacy assignedTo field
+  List<String> get allAssignedUserIds {
+    List<String> userIds = List.from(assignedUserIds);
+    if (assignedTo != null &&
+        assignedTo!.isNotEmpty &&
+        !userIds.contains(assignedTo)) {
+      userIds.add(assignedTo!);
+    }
+    return userIds;
+  }
+
   // Helper method to check if all assigned users have completed the task
   bool get isCompletedByAllAssignedUsers {
     final assignedUsers = assignedUserIds;

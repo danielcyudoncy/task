@@ -1,4 +1,5 @@
-import '../models/task_model.dart';
+// service/task_service.dart
+import '../models/task.dart';
 import 'database_service.dart';
 
 class TaskService {
@@ -53,16 +54,21 @@ class TaskService {
 
   // Compatibility methods to match the old Isar service interface
   Future<void> put(Task task) async {
+    Task taskToUse = task;
     if (task.taskId.isEmpty) {
-      // Generate a new task ID if not provided
-      task.taskId = DateTime.now().millisecondsSinceEpoch.toString();
+      // Generate a new task ID if not provided - create new Task with updated ID
+      taskToUse = task.copyWith(
+        core: task.core.copyWith(
+          taskId: DateTime.now().millisecondsSinceEpoch.toString(),
+        ),
+      );
     }
-    
-    final existingTask = await getTaskById(task.taskId);
+
+    final existingTask = await getTaskById(taskToUse.taskId);
     if (existingTask != null) {
-      await updateTask(task);
+      await updateTask(taskToUse);
     } else {
-      await addTask(task);
+      await addTask(taskToUse);
     }
   }
 

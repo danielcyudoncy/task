@@ -4,7 +4,8 @@ import 'package:shimmer/shimmer.dart';
 class UserSkeletonList extends StatelessWidget {
   final bool isLargeScreen;
   final double textScale;
-  const UserSkeletonList({required this.isLargeScreen, required this.textScale, super.key});
+  const UserSkeletonList(
+      {required this.isLargeScreen, required this.textScale, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +15,8 @@ class UserSkeletonList extends StatelessWidget {
       itemCount: itemCount,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) => Padding(
-        padding: EdgeInsets.symmetric(horizontal: isLargeScreen ? 32 : 16, vertical: 4.0),
+        padding: EdgeInsets.symmetric(
+            horizontal: isLargeScreen ? 32 : 16, vertical: 4.0),
         child: Shimmer.fromColors(
           baseColor: Colors.grey[300]!,
           highlightColor: Colors.grey[100]!,

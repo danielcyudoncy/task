@@ -57,8 +57,9 @@ class _UserListScreenState extends State<UserListScreen> {
                   final user = doc.data() as Map<String, dynamic>?;
                   if (user == null) return false;
 
-                  final name =
-                      (user['fullName'] ?? '').toString().toLowerCase(); // ✅ fixed
+                  final name = (user['fullName'] ?? '')
+                      .toString()
+                      .toLowerCase(); // ✅ fixed
                   return name.contains(searchQuery);
                 }).toList();
 
@@ -88,7 +89,8 @@ class _UserListScreenState extends State<UserListScreen> {
                     if (userData == null) return const SizedBox.shrink();
 
                     final userId = userData['uid'] ?? ''; // ✅ fixed
-                    final userName = userData['fullName'] ?? 'unknown'.tr; // ✅ fixed
+                    final userName =
+                        userData['fullName'] ?? 'unknown'.tr; // ✅ fixed
                     final userAvatar = userData['photoUrl']; // ✅ fixed
 
                     final isPinned = userData['isPinned'] == true;
@@ -98,9 +100,10 @@ class _UserListScreenState extends State<UserListScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : Colors.white,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Colors.white,
                             width: 2,
                           ),
                         ),
@@ -112,9 +115,11 @@ class _UserListScreenState extends State<UserListScreen> {
                                     width: 40,
                                     height: 40,
                                     fit: BoxFit.cover,
-                                    placeholder: (context, url) => CircularProgressIndicator(
+                                    placeholder: (context, url) =>
+                                        CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                     ),
                                     errorWidget: (context, url, error) => Text(
                                       userName.isNotEmpty ? userName[0] : '?',
@@ -145,7 +150,8 @@ class _UserListScreenState extends State<UserListScreen> {
                                 receiverAvatar: userAvatar ?? '',
                                 chatId: conversationId,
                                 otherUserId: userId,
-                                otherUserName: userName, chatBackground: '',
+                                otherUserName: userName,
+                                chatBackground: '',
                               ));
                         });
                       },

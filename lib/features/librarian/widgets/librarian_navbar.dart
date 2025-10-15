@@ -37,7 +37,8 @@ class LibrarianNavbar extends StatelessWidget {
           onTap: _onTap,
           items: const [
             TabItem(icon: Icons.list_alt_rounded, title: 'All Tasks'),
-            TabItem(icon: Icons.check_circle_outline_rounded, title: 'Completed'),
+            TabItem(
+                icon: Icons.check_circle_outline_rounded, title: 'Completed'),
             TabItem(icon: Icons.schedule_rounded, title: 'Pending'),
           ],
         );

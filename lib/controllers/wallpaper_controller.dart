@@ -22,4 +22,4 @@ class WallpaperController extends GetxController {
     await prefs.setString(_wallpaperKey, value);
     wallpaper.value = value;
   }
-} 
+}

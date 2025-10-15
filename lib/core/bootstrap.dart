@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -45,6 +46,8 @@ import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
 import 'package:task/service/archive_service.dart';
+import 'package:task/service/logging_service.dart';
+import 'package:task/utils/constants/app_constants.dart';
 import 'package:task/service/task_attachment_service.dart';
 import 'package:task/service/bulk_operations_service.dart';
 import 'package:task/service/version_control_service.dart';
@@ -61,8 +64,10 @@ import 'package:task/service/biometric_service.dart';
 import 'db_factory_stub.dart' if (dart.library.html) 'db_factory_web.dart';
 
 // --- Emulator/Production Switch ---
-const bool useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
-const String emulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST', defaultValue: '192.168.1.7');
+const bool useEmulator =
+    bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+const String emulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST',
+    defaultValue: FirebaseConstants.emulatorHost);
 
 // Global flag to track bootstrap state
 bool _isBootstrapComplete = false;
@@ -74,9 +79,12 @@ void _updateStatusBarColor() {
 
   SystemChrome.setSystemUIOverlayStyle(
     SystemUiOverlayStyle(
-      statusBarColor: isDark ? Colors.grey[900] : Colors.white, // Background color
-      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark, // Icon color
-      statusBarBrightness: isDark ? Brightness.dark : Brightness.light, // For iOS
+      statusBarColor:
+          isDark ? Colors.grey[900] : Colors.white, // Background color
+      statusBarIconBrightness:
+          isDark ? Brightness.light : Brightness.dark, // Icon color
+      statusBarBrightness:
+          isDark ? Brightness.dark : Brightness.light, // For iOS
     ),
   );
 }
@@ -91,7 +99,7 @@ Future<void> bootstrapApp() async {
 
     // Configure database factory (web uses FFI web)
     configureDbFactory();
-    
+
     // Set preferred orientations
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -106,49 +114,55 @@ Future<void> bootstrapApp() async {
     ever(themeController.isDarkMode, (_) {
       _updateStatusBarColor();
     });
-    
+
     // Initialize error handling
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
-     
     };
-    
+
     // Set uncaught error handler
     PlatformDispatcher.instance.onError = (error, stack) {
-      
       return true;
     };
 
     // Load environment variables
-    
+
     await dotenv.load(fileName: "assets/.env");
-    
 
     // Initialize Firebase
-    
+
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
+
+    // Initialize Crashlytics
+    FlutterError.onError = (errorDetails) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    };
+
+    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+
     // Automatically connect to emulator if flag is set
     if (useEmulator) {
       useFirebaseEmulator(emulatorHost);
     }
-    
-    
+
     // Initialize Firebase services
-    
+
     await _verifyFirebaseServices();
-    
-    
+
     // Initialize User Cache Service early for better performance
-    
+
     final userCacheService = UserCacheService();
     await userCacheService.initialize();
     Get.put(userCacheService, permanent: true);
-    
+
     // Pre-fetch all user names and avatars for immediate display
-    
+
     try {
       await userCacheService.preFetchAllUsers();
       debugPrint('🚀 BOOTSTRAP: Pre-fetched user data for immediate display');
@@ -156,229 +170,217 @@ Future<void> bootstrapApp() async {
       debugPrint('⚠️ BOOTSTRAP: Failed to pre-fetch user data: $e');
       // Continue bootstrap even if pre-fetch fails
     }
-    
-    
+
     // Initialize Firebase Messaging Service
-    
+
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     final firebaseMessagingService = FirebaseMessagingService();
     await firebaseMessagingService.initialize();
     Get.put(firebaseMessagingService, permanent: true);
-    
 
     // Initialize other services
-    
+
     final taskService = TaskService();
     await taskService.initialize();
     Get.put(taskService, permanent: true);
-    
 
     // Initialize audio player
-    
+
     final audioPlayer = await _initializeAudioPlayer();
-    
-    
+
     // Initialize services
     debugPrint("🚀 BOOTSTRAP: Initializing services");
-    await _initializeService(() => AuthController(), 'AuthController');
-    await _initializeService(() => ThemeController(), 'ThemeController');
-    await _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService');
-    
+    await _initializeService(
+        () => QuarterlyTransitionService(), 'QuarterlyTransitionService');
+
     // Initialize other services with proper error handling
     await _initializeService<FirebaseStorageService>(
       () => FirebaseStorageService(),
       'FirebaseStorageService',
     );
-    
+
     await _initializeService<ExportService>(
       () => ExportService(),
       'ExportService',
     );
-    
+
     await _initializeService<ArchiveService>(
       () => ArchiveService(),
       'ArchiveService',
     );
-    
+
     await _initializeService<TaskAttachmentService>(
       () => TaskAttachmentService(),
       'TaskAttachmentService',
     );
-    
+
     await _initializeService<PdfExportService>(
       () => PdfExportService(),
       'PdfExportService',
       needsInitialization: true,
     );
-    
+
     await _initializeService<VersionControlService>(
       () => VersionControlService(),
       'VersionControlService',
     );
-    
+
     await _initializeService<DuplicateDetectionService>(
       () => DuplicateDetectionService(),
       'DuplicateDetectionService',
     );
-    
+
     await _initializeService<CloudFunctionUserDeletionService>(
       () => CloudFunctionUserDeletionService(),
       'UserDeletionService',
     );
-    
+
     // Register the service by interface type as well
-    Get.put<UserDeletionService>(Get.find<CloudFunctionUserDeletionService>(), permanent: true);
-    
+    Get.put<UserDeletionService>(Get.find<CloudFunctionUserDeletionService>(),
+        permanent: true);
+
     await _initializeService<NewsService>(
       () => NewsService(),
       'NewsService',
     );
-    
+
     await _initializeService<DailyTaskNotificationService>(
       () => DailyTaskNotificationService(),
       'DailyTaskNotificationService',
     );
-    
+
     await _initializeService<AccessControlService>(
       () => AccessControlService(),
       'AccessControlService',
     );
-    
+
     // Initialize new architecture services
     await _initializeService<StartupOptimizationService>(
       () => StartupOptimizationService(),
       'StartupOptimizationService',
     );
-    
+
     // Initialize ResponsiveController
     await _initializeService<ResponsiveController>(
       () => ResponsiveController(),
       'ResponsiveController',
     );
-    
+
     await _initializeService<IntelligentCacheService>(
       () => IntelligentCacheService(),
       'IntelligentCacheService',
     );
-    
+
     await _initializeService<CacheManager>(
       () => CacheManager(),
       'CacheManager',
     );
-    
+
     await _initializeService<CachedTaskService>(
       () => CachedTaskService(),
       'CachedTaskService',
     );
-    
+
     await _initializeService<EnhancedNotificationService>(
       () => EnhancedNotificationService(),
       'EnhancedNotificationService',
     );
-    
+
     await _initializeService<NetworkService>(
       () => NetworkService(),
       'NetworkService',
     );
-    
+
     await _initializeService<ConnectivityService>(
       () => ConnectivityService(),
       'ConnectivityService',
     );
-    
+
     await _initializeService<ErrorHandlingService>(
       () => ErrorHandlingService(),
       'ErrorHandlingService',
     );
-    
+
     await _initializeService<LoadingStateService>(
       () => LoadingStateService(),
       'LoadingStateService',
     );
-    
+
     await _initializeService<OfflineDataService>(
       () => OfflineDataService(),
       'OfflineDataService',
     );
-    
+
+    // Initialize LoggingService early for better debugging
+    await _initializeService<LoggingService>(
+      () => LoggingService(),
+      'LoggingService',
+    );
+
     // Initialize BiometricService early for app lock functionality
     await _initializeService<BiometricService>(
       () => BiometricService(),
       'BiometricService',
     );
-    
+
     // Initialize controllers that depend on services
-    
+
     Get.put(AuthController(), permanent: true);
-    
+
     Get.put(AppLockController(), permanent: true);
-    
-    Get.put(ThemeController(), permanent: true);
-    
+
+    // ThemeController already initialized at line 98
+
     Get.put(SettingsController(audioPlayer), permanent: true);
-    
+
     // Initialize QuarterlyTransitionController
-    
+
     Get.put(QuarterlyTransitionController(), permanent: true);
-    
+
     Get.put(TaskController(), permanent: true);
-    
-    
-    Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
-    
-    
+
+    Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()),
+        permanent: true);
+
     Get.put(PresenceService(), permanent: true);
-    
-    
+
     Get.put(AdminController(), permanent: true);
-    
-    
+
     Get.put(ChatController(), permanent: true);
-    
+
     // Initialize services that depend on controllers
     await _initializeService<BulkOperationsService>(
       () => BulkOperationsService(),
       'BulkOperationsService',
     );
-    
-    
-    Get.put(ManageUsersController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
-   
+
+    Get.put(ManageUsersController(Get.find<CloudFunctionUserDeletionService>()),
+        permanent: true);
+
     // Mark app as ready for snackbars BEFORE initializing controllers that might use them
     SnackbarUtils.markAppAsReady();
-    
+
     Get.put(NotificationController(), permanent: true);
-    
+
     Get.put(PrivacyController(), permanent: true);
-    
+
     Get.put(WallpaperController(), permanent: true);
-    
-    // Initialize QuarterlyTransitionService
-   
-    await _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService');
-    
-    
+
+    // QuarterlyTransitionService already initialized at line 194
+
     // Mark bootstrap as complete
     _isBootstrapComplete = true;
-    
+
     // Execute startup optimization
     try {
       await StartupOptimizationService.to.executeStartup();
     } catch (e) {
       debugPrint('Startup optimization failed: $e');
     }
-    
-    // Ensure widgets are properly initialized
-    WidgetsFlutterBinding.ensureInitialized();
-    
+
     // Run the app
     runApp(const MyApp());
-   
-    
   } catch (e) {
-    
-    
-    
     // Show error UI if bootstrap fails
     runApp(MaterialApp(
       home: Scaffold(
@@ -391,26 +393,23 @@ Future<void> bootstrapApp() async {
 }
 
 Future<void> _initializeService<T>(
-  T Function() create, 
+  T Function() create,
   String serviceName, {
   bool needsInitialization = false,
 }) async {
   try {
-    
     final service = create();
-    
+
     // Call initialize method if the service needs it
     if (needsInitialization && service is GetxService) {
       if (service.runtimeType.toString() == 'PdfExportService') {
         await (service as dynamic).initialize();
       }
     }
-    
+
     // Put the service into GetX
     Get.put<T>(service, permanent: true);
-    
   } catch (e) {
-   
     rethrow;
   }
 }
@@ -434,9 +433,9 @@ Future<AudioPlayer> _initializeAudioPlayer() async {
         ),
       ),
     );
-  // ignore: empty_catches
   } catch (e) {
-    
+    debugPrint('Audio player initialization failed: $e');
+    // Continue with app initialization even if audio fails
   }
   return player;
 }
@@ -445,14 +444,18 @@ Future<void> _verifyFirebaseServices() async {
   try {
     await FirebaseFirestore.instance.collection('test').limit(1).get();
 
+    final databaseUrl = const String.fromEnvironment(
+      AppConstants.firebaseRtdbUrlKey,
+      defaultValue: ExternalUrls.firebaseRtdbUrl,
+    );
+
     final rtdb = FirebaseDatabase.instanceFor(
       app: Firebase.app(),
-      databaseURL: 'https://task-e5a96-default-rtdb.firebaseio.com',
+      databaseURL: databaseUrl,
     );
     // --- CORRECTED: Only one call is needed ---
     await rtdb.ref('.info/connected').once();
   } catch (e) {
-    
     throw Exception(
       'Firebase service verification failed: $e\nPlease check your internet connection or Firebase configuration.',
     );
@@ -462,12 +465,16 @@ Future<void> _verifyFirebaseServices() async {
 // Background Message Handler for Firebase Messaging
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Initialize Firebase if it hasn't been initialized yet
-  if (!Firebase.apps.isNotEmpty) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+  // Only initialize Firebase if it hasn't been initialized yet
+  // This prevents duplicate initialization issues
+  if (Firebase.apps.isEmpty) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      debugPrint('Firebase background initialization failed: $e');
+      // Continue with message handling even if Firebase init fails
+    }
   }
-  
-  
 }

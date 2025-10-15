@@ -70,7 +70,8 @@ class TaskApprovalDialog {
     );
   }
 
-  static Widget _buildHeader(BuildContext context, String title, String status) {
+  static Widget _buildHeader(
+      BuildContext context, String title, String status) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -117,7 +118,8 @@ class TaskApprovalDialog {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status).withAlpha(2),
                     borderRadius: BorderRadius.circular(12),
@@ -183,7 +185,9 @@ class TaskApprovalDialog {
               'Description',
               Icons.description,
               Text(
-                description.isNotEmpty ? description : 'No description provided',
+                description.isNotEmpty
+                    ? description
+                    : 'No description provided',
                 style: TextStyle(
                   fontSize: 16,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -312,7 +316,8 @@ class TaskApprovalDialog {
     );
   }
 
-  static Widget _buildDetailRow(BuildContext context, String label, String value) {
+  static Widget _buildDetailRow(
+      BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -366,7 +371,8 @@ class TaskApprovalDialog {
     );
   }
 
-  static Widget _buildAttachmentItem(BuildContext context, String name, String url) {
+  static Widget _buildAttachmentItem(
+      BuildContext context, String name, String url) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -420,7 +426,7 @@ class TaskApprovalDialog {
     VoidCallback onReject,
   ) {
     final AdminController adminController = Get.find<AdminController>();
-    
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -436,84 +442,90 @@ class TaskApprovalDialog {
         children: [
           Expanded(
             child: Obx(() => ElevatedButton(
-              onPressed: adminController.isLoading.value ? null : () {
-                Navigator.of(context).pop();
-                onReject();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE74C3C),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: adminController.isLoading.value
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.close, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Reject',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                  onPressed: adminController.isLoading.value
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                          onReject();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE74C3C),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-            )),
+                    elevation: 0,
+                  ),
+                  child: adminController.isLoading.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.close, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Reject',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                )),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Obx(() => ElevatedButton(
-              onPressed: adminController.isLoading.value ? null : () {
-                Navigator.of(context).pop();
-                onApprove();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF27AE60),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: adminController.isLoading.value
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Approve',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                  onPressed: adminController.isLoading.value
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                          onApprove();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF27AE60),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-            )),
+                    elevation: 0,
+                  ),
+                  child: adminController.isLoading.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Approve',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                )),
           ),
         ],
       ),

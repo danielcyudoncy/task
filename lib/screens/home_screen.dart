@@ -15,7 +15,6 @@ import '../controllers/notification_controller.dart';
 import 'package:task/widgets/user_dashboard_cards_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 import '../utils/constants/app_styles.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen>
   final TaskController taskController = Get.find<TaskController>();
   final NotificationController notificationController =
       Get.find<NotificationController>();
-      final SettingsController settingsController = Get.find<SettingsController>();
+  final SettingsController settingsController = Get.find<SettingsController>();
 
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -40,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
+
     // Add a small delay to ensure the screen is fully initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeData();
@@ -59,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen>
             taskController.fetchRelevantTasksForUser();
           }
           taskController.fetchTaskCounts();
-          
+
           notificationController.fetchNotifications();
         } catch (e) {
           // debugPrint("HomeScreen: Error initializing data: $e");
@@ -69,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
   }
-
 
   @override
   void dispose() {
@@ -88,12 +86,14 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: authController.userRole.value == 'Librarian' ? const LibrarianAppDrawer() : const AppDrawer(),
+      drawer: authController.userRole.value == 'Librarian'
+          ? const LibrarianAppDrawer()
+          : const AppDrawer(),
       body: SizedBox.expand(
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-             color: Theme.of(context).brightness == Brightness.dark
+            color: Theme.of(context).brightness == Brightness.dark
                 ? [Colors.grey[900]!, Colors.grey[800]!]
                     .reduce((value, element) => value)
                 : Theme.of(context).colorScheme.primary,
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen>
                 // Header (menu, avatar, greeting, email)
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 16.w, 
+                    horizontal: 16.w,
                     vertical: isPortrait ? 16.h : 8.h,
                   ),
                   child: Column(
@@ -117,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen>
                           IconButton(
                             icon: Icon(
                               Icons.menu,
-                              color: Colors.white, 
+                              color: Colors.white,
                               size: isPortrait ? 28.sp : 24.sp,
                             ),
                             onPressed: () {
@@ -130,10 +130,10 @@ class _HomeScreenState extends State<HomeScreen>
                           // Clickable Avatar with Notification Badge
                           GestureDetector(
                             onTap: () {
-                              settingsController.triggerFeedback(); // 👈 Add this
+                              settingsController
+                                  .triggerFeedback(); // 👈 Add this
                               Get.toNamed('/notifications');
                             },
-
                             child: MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: Stack(
@@ -147,9 +147,13 @@ class _HomeScreenState extends State<HomeScreen>
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                            color: Theme.of(context).brightness == Brightness.dark
-                                                ? Theme.of(context).colorScheme.onPrimary
-                                                : Colors.white,
+                                            color:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .onPrimary
+                                                    : Colors.white,
                                             width: 2,
                                           ),
                                         ),
@@ -159,7 +163,9 @@ class _HomeScreenState extends State<HomeScreen>
                                           child: Text(
                                             '?',
                                             style: TextStyle(
-                                              color: Theme.of(context).colorScheme.primary,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
                                               fontSize: 20.sp,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -167,14 +173,19 @@ class _HomeScreenState extends State<HomeScreen>
                                         ),
                                       );
                                     }
-                                    final profilePic = authController.profilePic.value;
-                                    final fullName = authController.fullName.value;
+                                    final profilePic =
+                                        authController.profilePic.value;
+                                    final fullName =
+                                        authController.fullName.value;
                                     return Container(
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Theme.of(context).colorScheme.onPrimary
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary
                                               : Colors.white,
                                           width: 2,
                                         ),
@@ -186,21 +197,36 @@ class _HomeScreenState extends State<HomeScreen>
                                             ? ClipOval(
                                                 child: CachedNetworkImage(
                                                   imageUrl: profilePic,
-                                                  width: isPortrait ? 40.sp : 32.sp,
-                                                  height: isPortrait ? 40.sp : 32.sp,
+                                                  width: isPortrait
+                                                      ? 40.sp
+                                                      : 32.sp,
+                                                  height: isPortrait
+                                                      ? 40.sp
+                                                      : 32.sp,
                                                   fit: BoxFit.cover,
-                                                  placeholder: (context, url) => CircularProgressIndicator(
+                                                  placeholder: (context, url) =>
+                                                      CircularProgressIndicator(
                                                     strokeWidth: 2,
-                                                    color: Theme.of(context).colorScheme.primary,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .primary,
                                                   ),
-                                                  errorWidget: (context, url, error) => Text(
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Text(
                                                     fullName.isNotEmpty
-                                                        ? fullName[0].toUpperCase()
+                                                        ? fullName[0]
+                                                            .toUpperCase()
                                                         : '?',
                                                     style: TextStyle(
-                                                      color: Theme.of(context).colorScheme.primary,
-                                                      fontSize: isPortrait ? 20.sp : 16.sp,
-                                                      fontWeight: FontWeight.bold,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .primary,
+                                                      fontSize: isPortrait
+                                                          ? 20.sp
+                                                          : 16.sp,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ),
@@ -210,8 +236,12 @@ class _HomeScreenState extends State<HomeScreen>
                                                     ? fullName[0].toUpperCase()
                                                     : '?',
                                                 style: TextStyle(
-                                                  color: Theme.of(context).colorScheme.primary,
-                                                  fontSize: isPortrait ? 20.sp : 16.sp,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                                  fontSize: isPortrait
+                                                      ? 20.sp
+                                                      : 16.sp,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -225,15 +255,19 @@ class _HomeScreenState extends State<HomeScreen>
                                     child: Obx(
                                       () {
                                         // Add safety check to ensure controller is registered
-                                        if (!Get.isRegistered<NotificationController>()) {
+                                        if (!Get.isRegistered<
+                                            NotificationController>()) {
                                           return const SizedBox();
                                         }
-                                        
-                                        final unreadCount = notificationController.unreadCount.value;
-                                        
+
+                                        final unreadCount =
+                                            notificationController
+                                                .unreadCount.value;
+
                                         return unreadCount > 0
                                             ? Container(
-                                                padding: const EdgeInsets.all(4),
+                                                padding:
+                                                    const EdgeInsets.all(4),
                                                 decoration: BoxDecoration(
                                                   color: Colors.red,
                                                   shape: BoxShape.circle,
@@ -253,7 +287,8 @@ class _HomeScreenState extends State<HomeScreen>
                                                     style: TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 10.sp,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ),
@@ -271,34 +306,34 @@ class _HomeScreenState extends State<HomeScreen>
                       // Second Row: Greeting + Email
                       Padding(
                         padding: EdgeInsets.only(
-                          left: 8.w, 
+                          left: 8.w,
                           top: isPortrait ? 8.h : 4.h,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Obx(() => Center(
-                              child: Text(
-                                "${'hello'.tr}, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'user'.tr}",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isPortrait ? 20.sp : 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Raleway',
-                                ),
-                              ),
-                            )),
+                                  child: Text(
+                                    "${'hello'.tr}, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'user'.tr}",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isPortrait ? 20.sp : 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Raleway',
+                                    ),
+                                  ),
+                                )),
                             SizedBox(height: isPortrait ? 4.h : 2.h),
                             Obx(() => Center(
-                              child: Text(
-                                authController.currentUser?.email ?? '',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isPortrait ? 14.sp : 12.sp,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )),
+                                  child: Text(
+                                    authController.currentUser?.email ?? '',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isPortrait ? 14.sp : 12.sp,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                )),
                           ],
                         ),
                       ),
@@ -313,7 +348,8 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         Center(
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w, vertical: 8.h),
                             constraints: const BoxConstraints(maxWidth: 500),
                             child: StreamBuilder<QuerySnapshot>(
                               stream: FirebaseFirestore.instance
@@ -327,15 +363,22 @@ class _HomeScreenState extends State<HomeScreen>
                                       .where('isOnline', isEqualTo: true)
                                       .snapshots(),
                                   builder: (context, onlineSnapshot) {
-                                    final onlineUsersCount = onlineSnapshot.data?.docs.length ?? 0;
+                                    final onlineUsersCount =
+                                        onlineSnapshot.data?.docs.length ?? 0;
                                     return StreamBuilder<int>(
-                                      stream: taskController.assignedTasksCountStream(userId),
+                                      stream: taskController
+                                          .assignedTasksCountStream(userId),
                                       builder: (context, createdSnapshot) {
                                         return UserDashboardCardsWidget(
-                                          assignedTasksCount: notificationController.taskAssignmentUnreadCount,
-                                          onlineUsersStream: Stream.value(onlineUsersCount),
-                                          tasksCreatedStream: taskController.createdTasksCountStream(userId),
-                                          newsFeedStream: Stream.value(3), // Static for now, can be replaced with a real stream
+                                          assignedTasksCount:
+                                              notificationController
+                                                  .taskAssignmentUnreadCount,
+                                          onlineUsersStream:
+                                              Stream.value(onlineUsersCount),
+                                          tasksCreatedStream: taskController
+                                              .createdTasksCountStream(userId),
+                                          newsFeedStream: Stream.value(
+                                              3), // Static for now, can be replaced with a real stream
                                           onAssignedTasksTap: () {
                                             _tabController.animateTo(0);
                                             setState(() {
@@ -388,7 +431,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Theme.of(context).colorScheme.surface,
-Theme.of(context).colorScheme.surfaceContainerHighest
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest
                                     ],
                                   )
                                 : LinearGradient(
@@ -396,7 +441,9 @@ Theme.of(context).colorScheme.surfaceContainerHighest
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Theme.of(context).colorScheme.surface,
-Theme.of(context).colorScheme.surfaceContainerHighest
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest
                                     ],
                                   ),
                             borderRadius: const BorderRadius.only(
@@ -417,7 +464,7 @@ Theme.of(context).colorScheme.surfaceContainerHighest
                   ),
                 ),
                 // UserNavBar at the bottom, outside scrollable area
-                 UserNavBar(
+                UserNavBar(
                   currentIndex: 0, // Home screen is index 0
                 ),
               ],
