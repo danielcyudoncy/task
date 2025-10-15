@@ -53,9 +53,10 @@ class AppError {
 class ErrorHandlingService extends GetxService {
   static const int maxRetryAttempts = 3;
   static const Duration retryDelay = Duration(seconds: 2);
-  
-  final ConnectivityService _connectivityService = Get.find<ConnectivityService>();
-  
+
+  final ConnectivityService _connectivityService =
+      Get.find<ConnectivityService>();
+
   // Error categorization
   AppError categorizeError(dynamic error, [StackTrace? stackTrace]) {
     if (error is SocketException || error is TimeoutException) {
@@ -68,11 +69,11 @@ class ErrorHandlingService extends GetxService {
         isRetryable: true,
       );
     }
-    
+
     if (error is FirebaseException) {
       return _handleFirebaseError(error, stackTrace);
     }
-    
+
     if (error is FormatException || error is ArgumentError) {
       return AppError(
         type: ErrorType.validation,
@@ -83,7 +84,7 @@ class ErrorHandlingService extends GetxService {
         isRetryable: false,
       );
     }
-    
+
     return AppError(
       type: ErrorType.unknown,
       message: 'Unknown error: ${error.toString()}',
@@ -93,8 +94,9 @@ class ErrorHandlingService extends GetxService {
       isRetryable: false,
     );
   }
-  
-  AppError _handleFirebaseError(FirebaseException error, StackTrace? stackTrace) {
+
+  AppError _handleFirebaseError(
+      FirebaseException error, StackTrace? stackTrace) {
     switch (error.code) {
       case 'permission-denied':
         return AppError(
@@ -135,7 +137,7 @@ class ErrorHandlingService extends GetxService {
         );
     }
   }
-  
+
   // Execute operation with retry logic
   Future<T> executeWithRetry<T>(
     Future<T> Function() operation, {
@@ -144,25 +146,27 @@ class ErrorHandlingService extends GetxService {
     bool Function(AppError)? shouldRetry,
   }) async {
     AppError? lastError;
-    
+
     for (int attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error, stackTrace) {
-        lastError = categorizeError(error, stackTrace).copyWith(retryCount: attempt);
-        
+        lastError =
+            categorizeError(error, stackTrace).copyWith(retryCount: attempt);
+
         // Log error for debugging
-        debugPrint('ErrorHandlingService: Attempt ${attempt + 1} failed: ${lastError.message}');
-        
+        debugPrint(
+            'ErrorHandlingService: Attempt ${attempt + 1} failed: ${lastError.message}');
+
         // Check if we should retry
-        bool canRetry = attempt < maxRetries && 
-                       lastError.isRetryable && 
-                       (shouldRetry?.call(lastError) ?? true);
-        
+        bool canRetry = attempt < maxRetries &&
+            lastError.isRetryable &&
+            (shouldRetry?.call(lastError) ?? true);
+
         if (!canRetry) {
           break;
         }
-        
+
         // Check network connectivity before retrying
         if (lastError.type == ErrorType.network) {
           bool isConnected = await _connectivityService.isConnected();
@@ -178,21 +182,21 @@ class ErrorHandlingService extends GetxService {
             break;
           }
         }
-        
+
         // Wait before retrying
         await Future.delayed(delay * (attempt + 1));
       }
     }
-    
+
     // If we get here, all retries failed
     if (lastError != null) {
       handleError(lastError);
       throw lastError;
     }
-    
+
     throw Exception('Operation failed without specific error');
   }
-  
+
   // Handle and display error to user
   void handleError(AppError error, {bool showSnackbar = true}) {
     // Log error for debugging
@@ -200,12 +204,12 @@ class ErrorHandlingService extends GetxService {
     if (error.stackTrace != null && kDebugMode) {
       debugPrint('Stack trace: ${error.stackTrace}');
     }
-    
+
     // Show user-friendly message
     if (showSnackbar) {
       SnackbarUtils.showError(error.userMessage);
     }
-    
+
     // Handle specific error types
     switch (error.type) {
       case ErrorType.authentication:
@@ -218,16 +222,16 @@ class ErrorHandlingService extends GetxService {
         break;
     }
   }
-  
+
   void _handleAuthenticationError() {
     // Navigate to login screen or refresh token
     Get.offAllNamed('/login');
   }
-  
+
   void _handlePermissionError() {
     // Could show permission request dialog or navigate to settings
   }
-  
+
   // Wrapper for common operations
   Future<T> safeExecute<T>(
     Future<T> Function() operation, {
@@ -243,17 +247,17 @@ class ErrorHandlingService extends GetxService {
           barrierDismissible: false,
         );
       }
-      
+
       final result = await executeWithRetry(operation);
-      
+
       if (showLoading) {
         Get.back(); // Close loading dialog
       }
-      
+
       if (successMessage != null) {
         SnackbarUtils.showSuccess(successMessage);
       }
-      
+
       return result;
     } catch (error) {
       if (showLoading) {

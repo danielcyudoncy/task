@@ -56,7 +56,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12.h),
-          
+
           // Second row - News and Tasks
           Row(
             children: [
@@ -66,7 +66,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                   'News Articles',
                   adminController.newsCount.value.toString(),
                   Icons.article,
-                 Colors.orange,
+                  Colors.orange,
                   'Published articles',
                   onNewsFeedTap,
                 ),
@@ -86,7 +86,7 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12.h),
-          
+
           // Third row - Performance metrics
           Row(
             children: [
@@ -94,11 +94,11 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                 child: _buildDashboardCard(
                   context,
                   'Avg Performance',
-                  performanceController.isLoading.value 
-                      ? '--' 
+                  performanceController.isLoading.value
+                      ? '--'
                       : '${performanceController.averageCompletionRate.value.toStringAsFixed(1)}%',
                   Icons.trending_up,
-                 const Color(0xFFFFD700),
+                  const Color(0xFFFFD700),
                   'Overall completion rate',
                   null,
                 ),
@@ -108,8 +108,8 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
                 child: _buildDashboardCard(
                   context,
                   'Top Performers',
-                  performanceController.isLoading.value 
-                      ? '--' 
+                  performanceController.isLoading.value
+                      ? '--'
                       : performanceController.topPerformers.length.toString(),
                   Icons.star,
                   const Color(0xFFFFD700),
@@ -120,10 +120,11 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16.h),
-          
+
           // Performance distribution summary
           if (!performanceController.isLoading.value)
-            _buildPerformanceDistributionSummary(context, performanceController),
+            _buildPerformanceDistributionSummary(
+                context, performanceController),
         ],
       );
     });
@@ -138,322 +139,321 @@ class EnhancedDashboardCardsWidget extends StatelessWidget {
     String subtitle,
     VoidCallback? onTap,
   ) {
-    
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.1),
-            color.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24.sp,
-                ),
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withValues(alpha: 0.1),
+                color.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: color.withValues(alpha: 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+                spreadRadius: 0,
               ),
-              const Spacer(),
-              if (title == 'Online Users')
-                Container(
-                  width: 8.w,
-                  height: 8.h,
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.green.withValues(alpha: 0.5),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
             ],
           ),
-          SizedBox(height: 12.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 28.sp,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: Colors.grey[300],
-            ),
-            
-          ),
-        ],
-      ),
-    ));
-  }
-  }
-
-  Widget _buildPerformanceDistributionSummary(
-    BuildContext context,
-    PerformanceController controller,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final distribution = controller.getPerformanceDistribution();
-    
-    // Calculate high performers (A+ and A grades)
-    final highPerformers = (distribution['A+'] ?? 0) + (distribution['A'] ?? 0);
-    final totalUsers = controller.totalUsers.value;
-    final highPerformerPercentage = totalUsers > 0 ? (highPerformers / totalUsers) * 100 : 0.0;
-    
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer.withValues(alpha: 0.3),
-            colorScheme.primaryContainer.withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.analytics,
-                color: colorScheme.onSurface,
-                size: 20.sp,
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: 24.sp,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (title == 'Online Users')
+                    Container(
+                      width: 8.w,
+                      height: 8.h,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withValues(alpha: 0.5),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-              SizedBox(width: 8.w),
+              SizedBox(height: 12.h),
               Text(
-                'Performance Analytics',
+                value,
                 style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 28.sp,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onPrimary,
+                  color: color,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          
-          Row(
-            
-           
-            children: [
-              Expanded(
-                flex: 1,
-                child: _buildQuickStat(
-                  context,
-                  'High Performers',
-                  '$highPerformers users',
-                  '${highPerformerPercentage.toStringAsFixed(1)}%',
-                  const Color(0xFF4CAF50),
+              SizedBox(height: 4.h),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                flex: 1,
-                child: _buildQuickStat(
-                  context,
-                  'Needs Improvement',
-                  '${(distribution['C'] ?? 0) + (distribution['D'] ?? 0)} users',
-                  'Grades C-D',
-                  Colors.orange,
+              SizedBox(height: 2.h),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.grey[300],
                 ),
               ),
             ],
           ),
-          
-          SizedBox(height: 12.h),
-          
-          // Quick grade distribution
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: distribution.entries.map((entry) {
-                final grade = entry.key;
-                final count = entry.value;
-                return Padding(
-                  padding: EdgeInsets.only(right: 8.w),
-                  child: _buildGradeBadge(context, grade, count),
-                );
-              }).toList(),
-            ),
-          ),
+        ));
+  }
+}
+
+Widget _buildPerformanceDistributionSummary(
+  BuildContext context,
+  PerformanceController controller,
+) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final distribution = controller.getPerformanceDistribution();
+
+  // Calculate high performers (A+ and A grades)
+  final highPerformers = (distribution['A+'] ?? 0) + (distribution['A'] ?? 0);
+  final totalUsers = controller.totalUsers.value;
+  final highPerformerPercentage =
+      totalUsers > 0 ? (highPerformers / totalUsers) * 100 : 0.0;
+
+  return Container(
+    padding: EdgeInsets.all(16.w),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          colorScheme.primaryContainer.withValues(alpha: 0.3),
+          colorScheme.primaryContainer.withValues(alpha: 0.1),
         ],
       ),
-    );
-  }
-
-  Widget _buildQuickStat(
-    BuildContext context,
-    String label,
-    String value,
-    String subtitle,
-    Color color,
-  ) {
-    return Container(
-      constraints: BoxConstraints(maxWidth: 150.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: color.withValues(alpha: 0.9), // Use the stat color with high opacity
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w500,
-              color: color.withValues(alpha: 0.8), // Use same color as the stat with high opacity
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+      borderRadius: BorderRadius.circular(16.r),
+      border: Border.all(
+        color: colorScheme.primary.withValues(alpha: 0.2),
+        width: 1,
       ),
-    );
-  }
-
-  Widget _buildGradeBadge(BuildContext context, String grade, int count) {
-    final color = _getGradeColor(grade);
-    
-    return Column(
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 32.w,
-          height: 32.h,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(
-              color: color.withValues(alpha: 0.5),
-              width: 1,
+        Row(
+          children: [
+            Icon(
+              Icons.analytics,
+              color: colorScheme.onSurface,
+              size: 20.sp,
             ),
-          ),
-          child: Center(
-            child: Text(
-              grade,
+            SizedBox(width: 8.w),
+            Text(
+              'Performance Analytics',
               style: TextStyle(
-                fontSize: 10.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.bold,
-                color: color,
+                color: colorScheme.onPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+        SizedBox(height: 12.h),
+
+        Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: _buildQuickStat(
+                context,
+                'High Performers',
+                '$highPerformers users',
+                '${highPerformerPercentage.toStringAsFixed(1)}%',
+                const Color(0xFF4CAF50),
               ),
             ),
-          ),
+            SizedBox(width: 12.w),
+            Expanded(
+              flex: 1,
+              child: _buildQuickStat(
+                context,
+                'Needs Improvement',
+                '${(distribution['C'] ?? 0) + (distribution['D'] ?? 0)} users',
+                'Grades C-D',
+                Colors.orange,
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: 4.h),
-        Text(
-          count.toString(),
-          style: TextStyle(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.w600,
-            color: color, // Use the same grade color for better visibility
+
+        SizedBox(height: 12.h),
+
+        // Quick grade distribution
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: distribution.entries.map((entry) {
+              final grade = entry.key;
+              final count = entry.value;
+              return Padding(
+                padding: EdgeInsets.only(right: 8.w),
+                child: _buildGradeBadge(context, grade, count),
+              );
+            }).toList(),
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
-  Color _getGradeColor(String grade) {
-    switch (grade) {
-      case 'A+':
-        return const Color(0xFF4CAF50);
-      case 'A':
-        return const Color(0xFF8BC34A);
-      case 'B+':
-        return const Color(0xFF2196F3);
-      case 'B':
-        return const Color(0xFF03A9F4);
-      case 'C+':
-        return const Color(0xFFFF9800);
-      case 'C':
-        return const Color(0xFFFF5722);
-      case 'D':
-        return const Color(0xFFF44336);
-      default:
-        return const Color(0xFF9E9E9E);
-    }
+Widget _buildQuickStat(
+  BuildContext context,
+  String label,
+  String value,
+  String subtitle,
+  Color color,
+) {
+  return Container(
+    constraints: BoxConstraints(maxWidth: 150.w),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: color.withValues(
+                alpha: 0.9), // Use the stat color with high opacity
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.w500,
+            color: color.withValues(
+                alpha: 0.8), // Use same color as the stat with high opacity
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildGradeBadge(BuildContext context, String grade, int count) {
+  final color = _getGradeColor(grade);
+
+  return Column(
+    children: [
+      Container(
+        width: 32.w,
+        height: 32.h,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(
+            color: color.withValues(alpha: 0.5),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            grade,
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ),
+      ),
+      SizedBox(height: 4.h),
+      Text(
+        count.toString(),
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w600,
+          color: color, // Use the same grade color for better visibility
+        ),
+      ),
+    ],
+  );
+}
+
+Color _getGradeColor(String grade) {
+  switch (grade) {
+    case 'A+':
+      return const Color(0xFF4CAF50);
+    case 'A':
+      return const Color(0xFF8BC34A);
+    case 'B+':
+      return const Color(0xFF2196F3);
+    case 'B':
+      return const Color(0xFF03A9F4);
+    case 'C+':
+      return const Color(0xFFFF9800);
+    case 'C':
+      return const Color(0xFFFF5722);
+    case 'D':
+      return const Color(0xFFF44336);
+    default:
+      return const Color(0xFF9E9E9E);
   }
+}

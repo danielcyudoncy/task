@@ -23,7 +23,6 @@ class TaskCard extends StatelessWidget {
     required this.onAction,
     super.key,
   });
-  
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +34,10 @@ class TaskCard extends StatelessWidget {
     final title = data['title'] ?? 'no_title'.tr;
     final description = data['description'] ?? 'no_description'.tr;
     final status = data['status'] ?? 'no_status'.tr;
-    final creatorName = data['creatorName'] ?? data['createdBy'] ?? 'unknown'.tr;
+    final creatorName =
+        data['creatorName'] ?? data['createdBy'] ?? 'unknown'.tr;
     final creatorAvatar = data['creatorAvatar'];
-    
+
     // Robust timestamp extraction & formatting
     final dynamic timestampRaw = data['timestamp'];
     String formattedTimestamp = '';
@@ -109,8 +109,10 @@ class TaskCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: (creatorAvatar != null && creatorAvatar.isNotEmpty && 
-                            (creatorAvatar.startsWith('http://') || creatorAvatar.startsWith('https://')))
+                        child: (creatorAvatar != null &&
+                                creatorAvatar.isNotEmpty &&
+                                (creatorAvatar.startsWith('http://') ||
+                                    creatorAvatar.startsWith('https://')))
                             ? ClipOval(
                                 child: CachedNetworkImage(
                                   imageUrl: creatorAvatar,
@@ -121,18 +123,25 @@ class TaskCard extends StatelessWidget {
                                     radius: isLargeScreen ? 25 : 18,
                                     backgroundColor: avatarBg,
                                     child: Text(
-                                      (creatorName.isNotEmpty ? creatorName[0] : "?").toUpperCase(),
+                                      (creatorName.isNotEmpty
+                                              ? creatorName[0]
+                                              : "?")
+                                          .toUpperCase(),
                                       style: TextStyle(
                                         color: accent,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
-                                  errorWidget: (context, url, error) => CircleAvatar(
+                                  errorWidget: (context, url, error) =>
+                                      CircleAvatar(
                                     radius: isLargeScreen ? 25 : 18,
                                     backgroundColor: avatarBg,
                                     child: Text(
-                                      (creatorName.isNotEmpty ? creatorName[0] : "?").toUpperCase(),
+                                      (creatorName.isNotEmpty
+                                              ? creatorName[0]
+                                              : "?")
+                                          .toUpperCase(),
                                       style: TextStyle(
                                         color: accent,
                                         fontWeight: FontWeight.bold,
@@ -145,26 +154,29 @@ class TaskCard extends StatelessWidget {
                                 radius: isLargeScreen ? 25 : 18,
                                 backgroundColor: avatarBg,
                                 child: Text(
-                                  (creatorName.isNotEmpty ? creatorName[0] : "?").toUpperCase(),
+                                  (creatorName.isNotEmpty
+                                          ? creatorName[0]
+                                          : "?")
+                                      .toUpperCase(),
                                   style: TextStyle(
-                                     color: accent,
-                                     fontWeight: FontWeight.bold,
-                                     fontSize: isLargeScreen
-                                         ? 20.sp * textScale
-                                         : 15.sp * textScale,
-                                   ),
-                                 ),
-                               ),
-                        ),
-                      
+                                    color: accent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: isLargeScreen
+                                        ? 20.sp * textScale
+                                        : 15.sp * textScale,
+                                  ),
+                                ),
+                              ),
+                      ),
                       SizedBox(width: isLargeScreen ? 20 : 12),
                       Expanded(
                         child: Text(
                           creatorName,
                           style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            fontSize:
-                                isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
+                            fontSize: isLargeScreen
+                                ? 18.sp * textScale
+                                : 14.sp * textScale,
                             color: mainText,
                           ),
                         ),
@@ -177,7 +189,8 @@ class TaskCard extends StatelessWidget {
                     title,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: isLargeScreen ? 20.sp * textScale : 16.sp * textScale,
+                      fontSize:
+                          isLargeScreen ? 20.sp * textScale : 16.sp * textScale,
                       color: mainText,
                     ),
                   ),
@@ -185,12 +198,14 @@ class TaskCard extends StatelessWidget {
                   Text(
                     description,
                     style: textTheme.bodyMedium?.copyWith(
-                      fontSize: isLargeScreen ? 16.sp * textScale : 13.sp * textScale,
+                      fontSize:
+                          isLargeScreen ? 16.sp * textScale : 13.sp * textScale,
                       color: mainText,
                     ),
                   ),
                   // Category
-                  if (data['category'] != null && data['category'].toString().isNotEmpty)
+                  if (data['category'] != null &&
+                      data['category'].toString().isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 6.0, bottom: 2.0),
                       child: Row(
@@ -216,7 +231,9 @@ class TaskCard extends StatelessWidget {
                       ),
                     ),
                   // Tags
-                  if (data['tags'] != null && data['tags'] is List && (data['tags'] as List).isNotEmpty)
+                  if (data['tags'] != null &&
+                      data['tags'] is List &&
+                      (data['tags'] as List).isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2.0, bottom: 2.0),
                       child: Wrap(
@@ -230,10 +247,12 @@ class TaskCard extends StatelessWidget {
                               fontSize: 12.sp * textScale,
                             ),
                           ),
-                          ...List<Widget>.from((data['tags'] as List).map((tag) => Chip(
-                                label: Text(tag.toString()),
-                                backgroundColor: colorScheme.primaryContainer,
-                              ))),
+                          ...List<Widget>.from(
+                              (data['tags'] as List).map((tag) => Chip(
+                                    label: Text(tag.toString()),
+                                    backgroundColor:
+                                        colorScheme.primaryContainer,
+                                  ))),
                         ],
                       ),
                     ),
@@ -254,15 +273,7 @@ class TaskCard extends StatelessWidget {
                     ),
                   // Due Date (prefer dueDate, fallback to timestamp)
                   Text(
-                    "Due Date: ${data['dueDate'] != null && data['dueDate'].toString().isNotEmpty
-                        ? DateFormat('yyyy-MM-dd').format(DateTime.tryParse(data['dueDate'].toString()) ?? DateTime.now())
-                        : (data['timestamp'] != null
-                            ? (data['timestamp'] is DateTime
-                                ? DateFormat('yyyy-MM-dd').format(data['timestamp'])
-                                : (data['timestamp'].toDate != null
-                                    ? DateFormat('yyyy-MM-dd').format(data['timestamp'].toDate())
-                                    : 'N/A'))
-                            : 'N/A')}",
+                    "Due Date: ${data['dueDate'] != null && data['dueDate'].toString().isNotEmpty ? DateFormat('yyyy-MM-dd').format(DateTime.tryParse(data['dueDate'].toString()) ?? DateTime.now()) : (data['timestamp'] != null ? (data['timestamp'] is DateTime ? DateFormat('yyyy-MM-dd').format(data['timestamp']) : (data['timestamp'].toDate != null ? DateFormat('yyyy-MM-dd').format(data['timestamp'].toDate()) : 'N/A')) : 'N/A')}",
                     style: textTheme.bodySmall?.copyWith(
                       color: subText,
                       fontSize: 13.sp * textScale,
@@ -277,4 +288,3 @@ class TaskCard extends StatelessWidget {
     );
   }
 }
-

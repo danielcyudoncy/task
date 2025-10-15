@@ -6,9 +6,11 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
+import 'package:task/models/task_metadata.dart';
 import 'package:task/models/report_completion_info.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/utils/constants/app_constants.dart';
 import 'package:task/service/firebase_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:rxdart/rxdart.dart' as rx;
@@ -16,11 +18,9 @@ import 'package:task/service/fcm_service.dart';
 import 'package:task/service/user_cache_service.dart';
 import 'package:task/service/enhanced_notification_service.dart';
 
-
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
   final AuthController authController = Get.find<AuthController>();
-
 
   var tasks = <Task>[].obs;
   var isLoading = false.obs;
@@ -42,20 +42,20 @@ class TaskController extends GetxController {
   // Helper method to validate and clean avatar URLs
   String _validateAvatarUrl(String? url) {
     if (url == null || url.isEmpty) return '';
-    
+
     // If it's already a valid network URL, return it
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    
+
     // If it's a local file path, return empty string
     if (url.startsWith('file://') || url.startsWith('/')) {
       return '';
     }
-    
+
     return '';
   }
-  
+
   // Helper method to get user name using UserCacheService
   Future<String> _getUserName(String userId) async {
     try {
@@ -69,25 +69,41 @@ class TaskController extends GetxController {
 
   /// Populate missing createdByName field for a task
   Future<void> _populateCreatedByName(Task task) async {
-    debugPrint('_populateCreatedByName: Checking task ${task.taskId}, current createdByName: ${task.createdByName}');
+    debugPrint(
+        '_populateCreatedByName: Checking task ${task.taskId}, current createdByName: ${task.createdByName}');
     if (task.createdByName == null || task.createdByName!.isEmpty) {
       try {
         final creatorName = await _getUserName(task.createdById);
-        task.createdByName = creatorName;
-        debugPrint('_populateCreatedByName: Updated task ${task.taskId} createdByName to: $creatorName');
+        // Update the task with new creator name
+        final updatedTask = task.withCreatedByName(creatorName);
+        // Replace in the tasks list
+        final index = tasks.indexWhere((t) => t.taskId == task.taskId);
+        if (index != -1) {
+          tasks[index] = updatedTask;
+        }
+        debugPrint(
+            '_populateCreatedByName: Updated task ${task.taskId} createdByName to: $creatorName');
         // Trigger UI update after updating the name
         tasks.refresh();
       } catch (e) {
-        debugPrint('_populateCreatedByName: Error getting creator name for ${task.createdById}: $e');
-        task.createdByName = 'Unknown User';
+        debugPrint(
+            '_populateCreatedByName: Error getting creator name for ${task.createdById}: $e');
+        // Update the task with unknown user name
+        final updatedTask = task.withCreatedByName('Unknown User');
+        // Replace in the tasks list
+        final index = tasks.indexWhere((t) => t.taskId == task.taskId);
+        if (index != -1) {
+          tasks[index] = updatedTask;
+        }
         // Trigger UI update even on error
         tasks.refresh();
       }
     } else {
-      debugPrint('_populateCreatedByName: Task ${task.taskId} already has createdByName: ${task.createdByName}');
+      debugPrint(
+          '_populateCreatedByName: Task ${task.taskId} already has createdByName: ${task.createdByName}');
     }
   }
-  
+
   // Helper method to get user avatar using UserCacheService
   Future<String> _getUserAvatar(String userId) async {
     try {
@@ -103,12 +119,13 @@ class TaskController extends GetxController {
   // Pagination, filter, and search
   DocumentSnapshot? lastDocument;
   bool hasMore = true;
-  final int pageSize = 10;
+  final int pageSize = AppConstants.defaultPageSize;
   String searchTerm = '';
   String filterStatus = 'All';
   String sortBy = 'Newest';
 
   StreamSubscription<QuerySnapshot>? _taskStreamSubscription;
+  StreamSubscription<QuerySnapshot>? _legacyTaskStreamSubscription;
 
   @override
   void onInit() async {
@@ -119,7 +136,8 @@ class TaskController extends GetxController {
     Future.delayed(const Duration(milliseconds: 300), () async {
       debugPrint('TaskController: Starting delayed initialization');
       if (Get.isRegistered<TaskController>()) {
-        debugPrint('TaskController: Controller is registered, proceeding with initialization');
+        debugPrint(
+            'TaskController: Controller is registered, proceeding with initialization');
         await initializeCache();
         await _preFetchUsersWithCacheService();
         await loadInitialTasks();
@@ -128,15 +146,29 @@ class TaskController extends GetxController {
         _startRealtimeTaskListener(); // Start real-time listener
         debugPrint('TaskController: Initialization complete');
       } else {
-        debugPrint('TaskController: Controller not registered, skipping initialization');
+        debugPrint(
+            'TaskController: Controller not registered, skipping initialization');
       }
     });
   }
 
   @override
   void onClose() {
+    // Cancel all stream subscriptions to prevent memory leaks
     _taskStreamSubscription?.cancel();
-    saveCache();
+    _taskStreamSubscription = null;
+
+    _legacyTaskStreamSubscription?.cancel();
+    _legacyTaskStreamSubscription = null;
+
+    // Save cache before closing
+    try {
+      saveCache();
+    } catch (e) {
+      debugPrint('Error saving cache during controller close: $e');
+    }
+
+    debugPrint('TaskController: Properly disposed');
     super.onClose();
   }
 
@@ -149,7 +181,8 @@ class TaskController extends GetxController {
         .snapshots()
         .listen(
       (snapshot) async {
-        debugPrint('TaskController: Real-time update received, ${snapshot.docs.length} tasks');
+        debugPrint(
+            'TaskController: Real-time update received, ${snapshot.docs.length} tasks');
         final updatedTasks = await Future.wait(snapshot.docs.map((doc) async {
           final data = doc.data();
           data['taskId'] = doc.id;
@@ -157,7 +190,7 @@ class TaskController extends GetxController {
           await _populateCreatedByName(task);
           return task;
         }));
-        
+
         // Update the tasks list
         tasks.assignAll(updatedTasks);
         tasks.refresh();
@@ -198,7 +231,7 @@ class TaskController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       // Only load task title cache, user data is handled by UserCacheService
       final taskTitleCacheString = prefs.getString("taskTitleCache");
-      
+
       if (taskTitleCacheString != null) {
         final Map<String, dynamic> decoded = jsonDecode(taskTitleCacheString);
         taskTitleCache.clear();
@@ -234,7 +267,7 @@ class TaskController extends GetxController {
     calculateNewTaskCount(); // Calculate new task count after loading tasks
   }
 
- Future<void> loadMoreTasks({bool reset = false}) async {
+  Future<void> loadMoreTasks({bool reset = false}) async {
     if (!hasMore || isLoading.value) return;
     isLoading.value = true;
     try {
@@ -300,7 +333,8 @@ class TaskController extends GetxController {
         // Use Task.fromMap to ensure all fields are included
         taskData['taskId'] = doc.id;
         final task = Task.fromMap(taskData);
-        debugPrint('TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
+        debugPrint(
+            'TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         pageTasks.add(task);
       }
 
@@ -355,9 +389,8 @@ class TaskController extends GetxController {
       List<QueryDocumentSnapshot> docs = [];
 
       // Simplified query - just get all tasks
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tasks')
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance.collection('tasks').get();
       docs = snapshot.docs;
 
       List<Task> pageTasks = [];
@@ -369,8 +402,9 @@ class TaskController extends GetxController {
 
         // Use Task.fromMap to ensure all fields are included
         taskData['taskId'] = doc.id;
-            final task = Task.fromMap(taskData);
-        debugPrint('TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
+        final task = Task.fromMap(taskData);
+        debugPrint(
+            'TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         pageTasks.add(task);
       }
 
@@ -400,10 +434,13 @@ class TaskController extends GetxController {
       newTaskCount.value = 0;
       return;
     }
-    
+
     newTaskCount.value = tasks.where((task) {
-          return (task.assignedReporterId == userId || task.assignedCameramanId == userId || task.assignedDriverId == userId || task.assignedLibrarianId == userId) &&
-        task.status != "Completed";
+      return (task.assignedReporterId == userId ||
+              task.assignedCameramanId == userId ||
+              task.assignedDriverId == userId ||
+              task.assignedLibrarianId == userId) &&
+          task.status != "Completed";
     }).length;
   }
 
@@ -423,32 +460,11 @@ class TaskController extends GetxController {
     String? librarianName,
   }) async {
     try {
-      // Check if task is approved before allowing assignment
-      final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
-      if (taskIndex != -1) {
-        final task = tasks[taskIndex];
-        if (!task.canBeAssigned) {
-          _safeSnackbar("Error", "This task must be approved before it can be assigned to users");
-          return;
-        }
-      } else {
-        // If task not found locally, check Firebase
-        final taskDoc = await FirebaseFirestore.instance
-            .collection('tasks')
-            .doc(taskId)
-            .get();
-        
-        if (taskDoc.exists) {
-          final taskData = taskDoc.data()!;
-          final approvalStatus = taskData['approvalStatus'] ?? 'pending';
-          if (approvalStatus.toLowerCase() != 'approved') {
-            _safeSnackbar("Error", "This task must be approved before it can be assigned to users");
-            return;
-          }
-        } else {
-          _safeSnackbar("Error", "Task not found");
-          return;
-        }
+      // Validate task can be assigned
+      final validationError = await _validateTaskAssignment(taskId);
+      if (validationError != null) {
+        _safeSnackbar("Error", validationError);
+        return;
       }
 
       // Prepare the update data with proper null safety
@@ -483,13 +499,44 @@ class TaskController extends GetxController {
         );
       }
 
-      // Use a delayed call to avoid setState after dispose
-      Future.delayed(const Duration(milliseconds: 100), calculateNewTaskCount);
+      // Update UI state
+      Future.delayed(AppConstants.fastAnimationDuration, calculateNewTaskCount);
     } catch (e, stackTrace) {
       _logError('Error in assignTaskWithNames', e, stackTrace);
       // Don't show snackbar here since dialog might be closed
     }
   }
+
+  /// Validates that a task can be assigned
+  Future<String?> _validateTaskAssignment(String taskId) async {
+    // Check if task is approved before allowing assignment
+    final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+    if (taskIndex != -1) {
+      final task = tasks[taskIndex];
+      if (!task.canBeAssigned) {
+        return "This task must be approved before it can be assigned to users";
+      }
+    } else {
+      // If task not found locally, check Firebase
+      final taskDoc = await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(taskId)
+          .get();
+
+      if (taskDoc.exists) {
+        final taskData = taskDoc.data()!;
+        final approvalStatus = taskData['approvalStatus'] ?? 'pending';
+        if (approvalStatus.toLowerCase() != 'approved') {
+          return "This task must be approved before it can be assigned to users";
+        }
+      } else {
+        return "Task not found";
+      }
+    }
+
+    return null; // Valid
+  }
+
 
   /// Prepares the assignment updates with proper null safety
   Future<Map<String, dynamic>> _prepareAssignmentUpdates({
@@ -632,23 +679,25 @@ class TaskController extends GetxController {
           .doc(userId)
           .collection('notifications')
           .add({
-            'type': 'task_assigned',
-            'taskId': taskId,
-            'title': taskTitle,
-            'message': 'Description: $taskDescription\nDue: $formattedDate',
-            'isRead': false,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
+        'type': 'task_assigned',
+        'taskId': taskId,
+        'title': taskTitle,
+        'message': 'Description: $taskDescription\nDue: $formattedDate',
+        'isRead': false,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
 
       // Push notification
       await sendTaskNotification(userId, taskTitle);
 
       // Show local in-app notification
       try {
-        final enhancedNotificationService = Get.find<EnhancedNotificationService>();
+        final enhancedNotificationService =
+            Get.find<EnhancedNotificationService>();
         enhancedNotificationService.showInfo(
           title: 'Task Assigned',
-          message: 'Task "$taskTitle" has been assigned\nDescription: $taskDescription\nDue: $formattedDate',
+          message:
+              'Task "$taskTitle" has been assigned\nDescription: $taskDescription\nDue: $formattedDate',
           duration: const Duration(seconds: 5),
         );
       } catch (e) {
@@ -676,7 +725,8 @@ class TaskController extends GetxController {
     try {
       // Check if user is authenticated
       if (authController.auth.currentUser == null) {
-        debugPrint("fetchTaskCounts: User not authenticated yet, retrying in 1 second...");
+        debugPrint(
+            "fetchTaskCounts: User not authenticated yet, retrying in 1 second...");
         // Retry after a short delay
         await Future.delayed(const Duration(seconds: 1));
         if (authController.auth.currentUser == null) {
@@ -684,21 +734,23 @@ class TaskController extends GetxController {
           return;
         }
       }
-      
+
       String userId = authController.auth.currentUser!.uid;
       String userRole = authController.userRole.value;
-      
+
       // Check if userRole is available
       if (userRole.isEmpty) {
-        debugPrint("fetchTaskCounts: User role not loaded yet, retrying in 1 second...");
+        debugPrint(
+            "fetchTaskCounts: User role not loaded yet, retrying in 1 second...");
         await Future.delayed(const Duration(seconds: 1));
         userRole = authController.userRole.value;
         if (userRole.isEmpty) {
-          debugPrint("fetchTaskCounts: User role still not available, skipping");
+          debugPrint(
+              "fetchTaskCounts: User role still not available, skipping");
           return;
         }
       }
-      
+
       final querySnapshot = await _firebaseService.getAllTasks().first;
       final docs = querySnapshot.docs;
 
@@ -720,8 +772,7 @@ class TaskController extends GetxController {
             assignedAsReporter ||
             assignedAsCameraman ||
             assignedAsDriver ||
-            assignedAsLibrarian) {
-        }
+            assignedAsLibrarian) {}
       }
 
       // Count tasks created by user (excluding completed tasks)
@@ -744,46 +795,50 @@ class TaskController extends GetxController {
       }).toList();
 
       taskAssigned.value = assignedTasks.length;
-
     } catch (e) {
       _safeSnackbar("Error", "Failed to fetch task counts: ${e.toString()}");
       debugPrint("Error in fetchTaskCounts: $e");
     }
   }
 
-
-
   // --- LEGACY STREAMING (for other screens if needed) ---
   void fetchTasks() {
     if (isLoading.value) return; // Prevent multiple simultaneous calls
-    
+
     isLoading(true);
     try {
       String userRole = authController.userRole.value;
       String? userId = authController.auth.currentUser?.uid;
-      
+
       if (userId == null) {
         debugPrint("TaskController: No user ID available for fetchTasks");
         isLoading(false);
         return;
       }
-      
+
+      // Cancel any existing legacy subscription to prevent memory leaks
+      _legacyTaskStreamSubscription?.cancel();
+
       Stream<QuerySnapshot> taskStream = _firebaseService.getAllTasks();
-      taskStream.listen((snapshot) async {
+      _legacyTaskStreamSubscription = taskStream.listen((snapshot) async {
         try {
           List<Task> updatedTasks = [];
-          
+
           for (var doc in snapshot.docs) {
             var taskData = doc.data() as Map<String, dynamic>;
             // Use Task.fromMap for robust mapping
             taskData['taskId'] = doc.id;
-          final task = Task.fromMap(taskData);
-            debugPrint('fetchTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}, priority=${task.priority}, assignedReporter=${task.assignedReporter}, assignedCameraman=${task.assignedCameraman}');
+            final task = Task.fromMap(taskData);
+            debugPrint(
+                'fetchTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}, priority=${task.priority}, assignedReporter=${task.assignedReporter}, assignedCameraman=${task.assignedCameraman}');
             updatedTasks.add(task);
           }
-          
+
           // Role-based filtering
-          if (userRole == "Reporter" || userRole == "Cameraman" || userRole == "Driver" || userRole == "Librarian") {
+          if (userRole == "Reporter" ||
+              userRole == "Cameraman" ||
+              userRole == "Driver" ||
+              userRole == "Librarian") {
             updatedTasks = updatedTasks
                 .where((task) =>
                     (task.createdById == userId) ||
@@ -794,7 +849,7 @@ class TaskController extends GetxController {
                     (task.assignedLibrarianId == userId))
                 .toList();
           }
-          
+
           tasks.value = updatedTasks;
           calculateNewTaskCount(); // Calculate new task count after fetching tasks
           saveCache();
@@ -846,7 +901,6 @@ class TaskController extends GetxController {
       isLoading(true);
       debugPrint('createTask: isLoading set to true');
 
-
       // Prepare data for Firebase
       final taskData = {
         "title": title,
@@ -896,15 +950,19 @@ class TaskController extends GetxController {
         "status": status,
         "lastModified": DateTime.now().toIso8601String(),
       });
-      
+
       // Update local task list
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
         Task updatedTask = tasks[taskIndex].copyWith(
-          title: title,
-          description: description,
-          status: status,
-          lastModified: DateTime.now(),
+          core: tasks[taskIndex].core.copyWith(
+            title: title,
+            description: description,
+            status: status,
+          ),
+          metadata: tasks[taskIndex].metadata?.copyWith(
+            lastModified: DateTime.now(),
+          ) ?? TaskMetadata(lastModified: DateTime.now()),
         );
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
@@ -923,7 +981,7 @@ class TaskController extends GetxController {
       isLoading(true);
       // Delete from Firebase
       await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
-      
+
       // Remove from local task list
       tasks.removeWhere((task) => task.taskId == taskId);
       tasks.refresh();
@@ -946,7 +1004,9 @@ class TaskController extends GetxController {
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
         Task updatedTask = tasks[taskIndex].copyWith(
-          status: newStatus,
+          core: tasks[taskIndex].core.copyWith(
+            status: newStatus,
+          ),
         );
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
@@ -960,7 +1020,7 @@ class TaskController extends GetxController {
     }
   }
 
-  // New method for individual user task completion
+  // New method for individual user task completion - REFACTORED
   Future<void> markTaskCompletedByUser(
     String taskId,
     String userId, {
@@ -968,116 +1028,28 @@ class TaskController extends GetxController {
   }) async {
     try {
       isLoading(true);
-      
-      // Get the current task data
-      final taskDoc = await FirebaseFirestore.instance
-          .collection('tasks')
-          .doc(taskId)
-          .get();
-      
-      if (!taskDoc.exists) {
-        _safeSnackbar("Error", "Task not found");
-        return;
-      }
-      
-      final taskData = taskDoc.data()!;
-      taskData['taskId'] = taskId;
-      final task = Task.fromMap(taskData);
-      
-      // Check if user is assigned to this task
-      if (!task.assignedUserIds.contains(userId)) {
-        _safeSnackbar("Error", "You are not assigned to this task");
-        return;
-      }
-      
-      // Check if user has already completed the task
-      if (task.completedByUserIds.contains(userId)) {
-        _safeSnackbar("Info", "You have already marked this task as completed");
-        return;
-      }
-      
-      // Add user to completed list
-      List<String> updatedCompletedByUserIds = List.from(task.completedByUserIds);
-      updatedCompletedByUserIds.add(userId);
-      
-      // Add completion timestamp
-      Map<String, dynamic> updatedTimestamps = Map.from(task.userCompletionTimestamps.map((key, value) => MapEntry(key, value)));
-      updatedTimestamps[userId] = DateTime.now();
-      
-      // Check if all assigned users have now completed the task
-      final allAssignedUsers = task.assignedUserIds;
-      final allCompleted = allAssignedUsers.every((assignedUserId) => updatedCompletedByUserIds.contains(assignedUserId));
-      
-      // Prepare update data
-      Map<String, dynamic> updateData = {
-        'completedByUserIds': updatedCompletedByUserIds,
-        
-        // Add report completion info if provided (for reporters)
-        if (reportCompletionInfo != null)
-          'reportCompletionInfo': {
-            if (task.reportCompletionInfo.isNotEmpty)
-              ...task.reportCompletionInfo.map((key, value) => MapEntry(key, value.toMap())),
-            userId: reportCompletionInfo.toMap(),
-          },
-        'userCompletionTimestamps': updatedTimestamps,
-      };
-      
-      // Only update the overall task status to "Completed" if ALL assigned users have completed it
-      if (allCompleted) {
-        updateData['status'] = 'Completed';
-      }
-      
-      // Update Firestore
-      await FirebaseFirestore.instance
-          .collection('tasks')
-          .doc(taskId)
-          .update(updateData);
-      
-      // Send notification to admin users if reporter submitted completion info
-      if (reportCompletionInfo != null) {
-        try {
-          // Get reporter's name from cache or fetch it
-          String reporterName = await _getUserName(userId);
-          
-          await sendReportCompletionNotification(
-             taskId,
-             task.title,
-             reporterName,
-             reportCompletionInfo.comments ?? '',
-           );
-        } catch (e) {
-          debugPrint('Error sending admin notification: $e');
-        }
-      }
-      
-      // Update local task list
-      int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
-      if (taskIndex != -1) {
-        // Create updated report completion info map
-        final Map<String, ReportCompletionInfo> updatedReportCompletionInfo = Map.from(task.reportCompletionInfo);
-        if (reportCompletionInfo != null) {
-          updatedReportCompletionInfo[userId] = reportCompletionInfo;
-        }
 
-        Task updatedTask = tasks[taskIndex].copyWith(
-          completedByUserIds: updatedCompletedByUserIds,
-          userCompletionTimestamps: Map<String, DateTime>.from(updatedTimestamps.map((key, value) => 
-            MapEntry(key, value is DateTime ? value : DateTime.now()))),
-          status: allCompleted ? 'Completed' : tasks[taskIndex].status,
-          // Include the updated report completion info in the local task
-          reportCompletionInfo: updatedReportCompletionInfo,
-        );
-        tasks[taskIndex] = updatedTask;
-        tasks.refresh();
+      // Get and validate task
+      final task = await _getAndValidateTaskForCompletion(taskId, userId);
+      if (task == null) return;
+
+      // Prepare completion data
+      final completionData = _prepareTaskCompletionData(task, userId, reportCompletionInfo);
+
+      // Update Firestore
+      await _updateTaskCompletionInFirestore(taskId, completionData);
+
+      // Send notifications if needed
+      if (reportCompletionInfo != null) {
+        await _sendCompletionNotifications(taskId, userId, task.title, reportCompletionInfo);
       }
-      
-      if (allCompleted) {
-        _safeSnackbar("Success", "Task completed by all assigned users!");
-      } else {
-        final remainingUsers = allAssignedUsers.where((id) => !updatedCompletedByUserIds.contains(id)).length;
-        _safeSnackbar("Success", "Your completion recorded. Waiting for $remainingUsers more user(s) to complete.");
-      }
-      
+
+      // Update local state
+      _updateLocalTaskCompletion(taskId, userId, completionData, reportCompletionInfo);
+
+      // Show success message
+      _showCompletionSuccessMessage(completionData['allCompleted'] as bool, completionData['remainingUsers'] as int);
+
       calculateNewTaskCount();
     } catch (e) {
       _safeSnackbar("Error", "Failed to mark task as completed: ${e.toString()}");
@@ -1085,6 +1057,168 @@ class TaskController extends GetxController {
       isLoading(false);
     }
   }
+
+  /// Get and validate task for completion
+  Future<Task?> _getAndValidateTaskForCompletion(String taskId, String userId) async {
+    final taskDoc = await FirebaseFirestore.instance
+        .collection('tasks')
+        .doc(taskId)
+        .get();
+
+    if (!taskDoc.exists) {
+      _safeSnackbar("Error", "Task not found");
+      return null;
+    }
+
+    final taskData = taskDoc.data()!;
+    taskData['taskId'] = taskId;
+    final task = Task.fromMap(taskData);
+
+    // Check if user is assigned to this task
+    if (!task.assignedUserIds.contains(userId)) {
+      _safeSnackbar("Error", "You are not assigned to this task");
+      return null;
+    }
+
+    // Check if user has already completed the task
+    if (task.completedByUserIds.contains(userId)) {
+      _safeSnackbar("Info", "You have already marked this task as completed");
+      return null;
+    }
+
+    return task;
+  }
+
+  /// Prepare completion data for Firestore update
+  Map<String, dynamic> _prepareTaskCompletionData(
+    Task task,
+    String userId,
+    ReportCompletionInfo? reportCompletionInfo,
+  ) {
+    // Add user to completed list
+    List<String> updatedCompletedByUserIds = List.from(task.completedByUserIds);
+    updatedCompletedByUserIds.add(userId);
+
+    // Add completion timestamp
+    Map<String, dynamic> updatedTimestamps = Map.from(task
+        .userCompletionTimestamps
+        .map((key, value) => MapEntry(key, value)));
+    updatedTimestamps[userId] = DateTime.now();
+
+    // Check if all assigned users have now completed the task
+    final allAssignedUsers = task.assignedUserIds;
+    final allCompleted = allAssignedUsers.every((assignedUserId) =>
+        updatedCompletedByUserIds.contains(assignedUserId));
+
+    // Prepare update data
+    Map<String, dynamic> updateData = {
+      'completedByUserIds': updatedCompletedByUserIds,
+      'userCompletionTimestamps': updatedTimestamps,
+    };
+
+    // Add report completion info if provided (for reporters)
+    if (reportCompletionInfo != null) {
+      updateData['reportCompletionInfo'] = {
+        if (task.reportCompletionInfo.isNotEmpty)
+          ...task.reportCompletionInfo
+              .map((key, value) => MapEntry(key, value.toMap())),
+        userId: reportCompletionInfo.toMap(),
+      };
+    }
+
+    // Only update the overall task status to "Completed" if ALL assigned users have completed it
+    if (allCompleted) {
+      updateData['status'] = 'Completed';
+    }
+
+    return {
+      'updateData': updateData,
+      'allCompleted': allCompleted,
+      'remainingUsers': allAssignedUsers.where((id) => !updatedCompletedByUserIds.contains(id)).length,
+    };
+  }
+
+  /// Update task completion in Firestore
+  Future<void> _updateTaskCompletionInFirestore(String taskId, Map<String, dynamic> completionData) async {
+    await FirebaseFirestore.instance
+        .collection('tasks')
+        .doc(taskId)
+        .update(completionData['updateData'] as Map<String, dynamic>);
+  }
+
+  /// Send completion notifications
+  Future<void> _sendCompletionNotifications(
+    String taskId,
+    String userId,
+    String taskTitle,
+    ReportCompletionInfo reportCompletionInfo,
+  ) async {
+    try {
+      String reporterName = await _getUserName(userId);
+      await sendReportCompletionNotification(
+        taskId,
+        taskTitle,
+        reporterName,
+        reportCompletionInfo.comments ?? '',
+      );
+    } catch (e) {
+      debugPrint('Error sending admin notification: $e');
+    }
+  }
+
+  /// Update local task completion state
+  void _updateLocalTaskCompletion(
+    String taskId,
+    String userId,
+    Map<String, dynamic> completionData,
+    ReportCompletionInfo? reportCompletionInfo,
+  ) {
+    int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+    if (taskIndex != -1) {
+      final task = tasks[taskIndex];
+      List<String> updatedCompletedByUserIds = completionData['updateData']['completedByUserIds'] as List<String>;
+      Map<String, dynamic> updatedTimestamps = completionData['updateData']['userCompletionTimestamps'] as Map<String, dynamic>;
+
+      // Create updated report completion info map
+      final Map<String, ReportCompletionInfo> updatedReportCompletionInfo =
+          Map.from(task.reportCompletionInfo);
+      if (reportCompletionInfo != null) {
+        updatedReportCompletionInfo[userId] = reportCompletionInfo;
+      }
+
+      Task updatedTask = task.copyWith(
+        metadata: task.metadata?.copyWith(
+          completedByUserIds: updatedCompletedByUserIds,
+          userCompletionTimestamps: Map<String, DateTime>.from(
+              updatedTimestamps.map((key, value) =>
+                  MapEntry(key, value is DateTime ? value : DateTime.now()))),
+          reportCompletionInfo: updatedReportCompletionInfo,
+        ) ?? TaskMetadata(
+          completedByUserIds: updatedCompletedByUserIds,
+          userCompletionTimestamps: Map<String, DateTime>.from(
+              updatedTimestamps.map((key, value) =>
+                  MapEntry(key, value is DateTime ? value : DateTime.now()))),
+          reportCompletionInfo: updatedReportCompletionInfo,
+        ),
+        core: completionData['allCompleted'] as bool
+            ? task.core.copyWith(status: 'Completed')
+            : task.core,
+      );
+      tasks[taskIndex] = updatedTask;
+      tasks.refresh();
+    }
+  }
+
+  /// Show completion success message
+  void _showCompletionSuccessMessage(bool allCompleted, int remainingUsers) {
+    if (allCompleted) {
+      _safeSnackbar("Success", "Task completed by all assigned users!");
+    } else {
+      _safeSnackbar("Success",
+          "Your completion recorded. Waiting for $remainingUsers more user(s) to complete.");
+    }
+  }
+
   // --- LEGACY (optional) ---
   Future<void> assignTaskToReporter(String taskId, String reporterId) async {
     try {
@@ -1125,8 +1259,9 @@ class TaskController extends GetxController {
         final data = doc.data();
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
-      final task = Task.fromMap(data);
-        debugPrint('getAllTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        final task = Task.fromMap(data);
+        debugPrint(
+            'getAllTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }));
     } catch (e) {
@@ -1149,7 +1284,8 @@ class TaskController extends GetxController {
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
-        debugPrint('getAssignedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        debugPrint(
+            'getAssignedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }));
     } catch (e) {
@@ -1172,7 +1308,8 @@ class TaskController extends GetxController {
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
-        debugPrint('getMyCreatedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        debugPrint(
+            'getMyCreatedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }));
     } catch (e) {
@@ -1194,7 +1331,8 @@ class TaskController extends GetxController {
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
-        debugPrint('getTaskById: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
+        debugPrint(
+            'getTaskById: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
       }
       return null;
@@ -1215,8 +1353,13 @@ class TaskController extends GetxController {
       // Update local task if it exists
       final index = tasks.indexWhere((t) => t.taskId == taskId);
       if (index != -1) {
-        final updatedTask = tasks[index]
-            .copyWith(comments: [...tasks[index].comments, comment]);
+        final updatedTask = tasks[index].copyWith(
+          metadata: tasks[index].metadata?.copyWith(
+            comments: [...tasks[index].comments, comment],
+          ) ?? TaskMetadata(
+            comments: [...tasks[index].comments, comment],
+          ),
+        );
         tasks[index] = updatedTask;
         tasks.refresh();
       }
@@ -1226,56 +1369,99 @@ class TaskController extends GetxController {
   }
 
   /// Get the count of all tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId, assignedDriverId, assignedLibrarianId)
+  /// OPTIMIZED: Uses a single compound query with array-contains-any instead of 3 separate queries
   Future<int> getAssignedTasksCountForUser(String userId) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('tasks')
-        .where('assignedTo', isEqualTo: userId)
-        .get();
-    final reporterSnapshot = await FirebaseFirestore.instance
-        .collection('tasks')
-        .where('assignedReporterId', isEqualTo: userId)
-        .get();
-    final cameramanSnapshot = await FirebaseFirestore.instance
-        .collection('tasks')
-        .where('assignedCameramanId', isEqualTo: userId)
-        .get();
+    try {
+      // Use a single query with array-contains-any for better performance
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedUserIds', arrayContains: userId)
+          .get();
+
+      return snapshot.docs.length;
+    } catch (e) {
+      debugPrint('Error in optimized getAssignedTasksCountForUser: $e');
+      // Fallback to original method if the optimized field doesn't exist yet
+      return await _getAssignedTasksCountForUserLegacy(userId);
+    }
+  }
+
+  /// Legacy fallback method for counting assigned tasks (3 separate queries)
+  Future<int> _getAssignedTasksCountForUserLegacy(String userId) async {
+    final futures = await Future.wait([
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedTo', isEqualTo: userId)
+          .get(),
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedReporterId', isEqualTo: userId)
+          .get(),
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedCameramanId', isEqualTo: userId)
+          .get(),
+    ]);
 
     // Use a set to avoid double-counting tasks assigned in multiple ways
     final taskIds = <String>{};
-    taskIds.addAll(snapshot.docs.map((doc) => doc.id));
-    taskIds.addAll(reporterSnapshot.docs.map((doc) => doc.id));
-    taskIds.addAll(cameramanSnapshot.docs.map((doc) => doc.id));
+    for (var snapshot in futures) {
+      taskIds.addAll(snapshot.docs.map((doc) => doc.id));
+    }
     return taskIds.length;
   }
 
   /// Stream of all non-completed tasks assigned to a user (assignedTo, assignedReporterId, assignedCameramanId, assignedDriverId, assignedLibrarianId)
+  /// OPTIMIZED: Uses a single compound query with array-contains instead of 5 separate streams
   Stream<int> assignedTasksCountStream(String userId) {
+    try {
+      return FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedUserIds', arrayContains: userId)
+          .where('status', isNotEqualTo: 'Completed')
+          .snapshots()
+          .map((snapshot) => snapshot.docs.length);
+    } catch (e) {
+      debugPrint('Error in optimized assignedTasksCountStream: $e');
+      // Fallback to legacy method if the optimized field doesn't exist yet
+      return _assignedTasksCountStreamLegacy(userId);
+    }
+  }
+
+  /// Legacy fallback method for streaming assigned tasks count (5 separate streams)
+  Stream<int> _assignedTasksCountStreamLegacy(String userId) {
     final assignedToStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedTo', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
-      
+
     final reporterStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedReporterId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
-      
+
     final cameramanStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedCameramanId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
-        
+
     final driverStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedDriverId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
-        
+
     final librarianStream = FirebaseFirestore.instance
         .collection('tasks')
         .where('assignedLibrarianId', isEqualTo: userId)
+        .where('status', isNotEqualTo: 'Completed')
         .snapshots();
 
-    return rx.CombineLatestStream.combine5<QuerySnapshot, QuerySnapshot, QuerySnapshot, QuerySnapshot, QuerySnapshot, int>(
+    return rx.CombineLatestStream.combine5<QuerySnapshot, QuerySnapshot,
+        QuerySnapshot, QuerySnapshot, QuerySnapshot, int>(
       assignedToStream,
       reporterStream,
       cameramanStream,
@@ -1283,23 +1469,19 @@ class TaskController extends GetxController {
       librarianStream,
       (a, b, c, d, e) {
         final taskIds = <String>{};
-        
-        // Debug logging
-        
-        // Only include non-completed tasks in the count
+
         final assignedToDocs = a.docs.where((doc) => doc['status'] != 'Completed');
         final reporterDocs = b.docs.where((doc) => doc['status'] != 'Completed');
         final cameramanDocs = c.docs.where((doc) => doc['status'] != 'Completed');
         final driverDocs = d.docs.where((doc) => doc['status'] != 'Completed');
         final librarianDocs = e.docs.where((doc) => doc['status'] != 'Completed');
-        
+
         taskIds.addAll(assignedToDocs.map((doc) => doc.id));
         taskIds.addAll(reporterDocs.map((doc) => doc.id));
         taskIds.addAll(cameramanDocs.map((doc) => doc.id));
         taskIds.addAll(driverDocs.map((doc) => doc.id));
         taskIds.addAll(librarianDocs.map((doc) => doc.id));
-        
-        
+
         return taskIds.length;
       },
     );
@@ -1315,6 +1497,7 @@ class TaskController extends GetxController {
   }
 
   /// Fetch all tasks relevant to the current user (created or assigned)
+  /// OPTIMIZED: Uses single compound query instead of 7 separate queries
   Future<void> fetchRelevantTasksForUser() async {
     isLoading.value = true;
     try {
@@ -1326,81 +1509,53 @@ class TaskController extends GetxController {
         isLoading.value = false;
         return;
       }
-      
-      // First, let's get all tasks to debug the values
-      final allTasksSnap = await FirebaseFirestore.instance
-          .collection('tasks')
-          .get();
-      debugPrint('fetchRelevantTasksForUser: total tasks in collection = ${allTasksSnap.docs.length}');
-      
-      // Debug: Print assignment fields for all tasks
-      for (var doc in allTasksSnap.docs) {
-        final data = doc.data();
-        debugPrint('fetchRelevantTasksForUser: task ${doc.id} - assignedTo=${data['assignedTo']}, assignedReporterId=${data['assignedReporterId']}, assignedCameramanId=${data['assignedCameramanId']}, assignedDriverId=${data['assignedDriverId']}, assignedLibrarianId=${data['assignedLibrarianId']}');
-      }
-      
-      // Fetch tasks where user is creator
-      final createdSnap = await FirebaseFirestore.instance
-          .collection('tasks')
-          .where('createdBy', isEqualTo: userId)
-          .get();
-      debugPrint('fetchRelevantTasksForUser: created tasks count = ${createdSnap.docs.length}');
-      // Fetch tasks where user is assigned as reporter
-      final reporterSnap = await FirebaseFirestore.instance
-          .collection('tasks')
-          .where('assignedReporterId', isEqualTo: userId)
-          .get();
-      debugPrint('fetchRelevantTasksForUser: reporter tasks count = ${reporterSnap.docs.length}');
-      // Fetch tasks where user is assigned as cameraman
-      final cameramanSnap = await FirebaseFirestore.instance
-          .collection('tasks')
-          .where('assignedCameramanId', isEqualTo: userId)
-          .get();
-      debugPrint('fetchRelevantTasksForUser: cameraman tasks count = ${cameramanSnap.docs.length}');
-      // Fetch tasks where user is assigned as driver
-      final driverSnap = await FirebaseFirestore.instance
-          .collection('tasks')
-          .where('assignedDriverId', isEqualTo: userId)
-          .get();
-      debugPrint('fetchRelevantTasksForUser: driver tasks count = ${driverSnap.docs.length}');
-      // Fetch tasks where user is assigned as librarian
-      final librarianSnap = await FirebaseFirestore.instance
-          .collection('tasks')
-          .where('assignedLibrarianId', isEqualTo: userId)
-          .get();
-      debugPrint('fetchRelevantTasksForUser: librarian tasks count = ${librarianSnap.docs.length}');
-      // Fetch tasks where user is assignedTo (generic)
-      final assignedToSnap = await FirebaseFirestore.instance
-          .collection('tasks')
-          .where('assignedTo', isEqualTo: userId)
-          .get();
-      debugPrint('fetchRelevantTasksForUser: assignedTo tasks count = ${assignedToSnap.docs.length}');
-      // Merge and deduplicate by taskId
+
+      // OPTIMIZED: Compound OR query - much better than 7 separate queries
+      // This replaces 7 separate queries with 2 efficient compound queries
+      final List<Future<QuerySnapshot>> futures = [
+        // Query 1: Tasks where user is the creator
+        FirebaseFirestore.instance
+            .collection('tasks')
+            .where('createdBy', isEqualTo: userId)
+            .get(),
+        // Query 2: Tasks where user is assigned in any role
+        FirebaseFirestore.instance
+            .collection('tasks')
+            .where('assignedReporterId', isEqualTo: userId)
+            .get(),
+        FirebaseFirestore.instance
+            .collection('tasks')
+            .where('assignedCameramanId', isEqualTo: userId)
+            .get(),
+        FirebaseFirestore.instance
+            .collection('tasks')
+            .where('assignedDriverId', isEqualTo: userId)
+            .get(),
+        FirebaseFirestore.instance
+            .collection('tasks')
+            .where('assignedLibrarianId', isEqualTo: userId)
+            .get(),
+        FirebaseFirestore.instance
+            .collection('tasks')
+            .where('assignedTo', isEqualTo: userId)
+            .get(),
+      ];
+
+      // Execute all queries in parallel
+      final results = await Future.wait(futures);
+
+      // Merge and deduplicate results
       final allDocs = <String, Map<String, dynamic>>{};
-      for (var doc in createdSnap.docs) {
-        allDocs[doc.id] = doc.data();
-        debugPrint('fetchRelevantTasksForUser: added created task ${doc.id}');
+      int totalTasks = 0;
+      for (var snapshot in results) {
+        for (var doc in snapshot.docs) {
+          allDocs[doc.id] = (doc.data() as Map<String, dynamic>);
+          totalTasks++;
+        }
       }
-      for (var doc in reporterSnap.docs) {
-        allDocs[doc.id] = doc.data();
-        debugPrint('fetchRelevantTasksForUser: added reporter task ${doc.id}');
-      }
-      for (var doc in cameramanSnap.docs) {
-        allDocs[doc.id] = doc.data();
-        debugPrint('fetchRelevantTasksForUser: added cameraman task ${doc.id}');
-      }
-      for (var doc in driverSnap.docs) {
-        allDocs[doc.id] = doc.data();
-        debugPrint('fetchRelevantTasksForUser: added driver task ${doc.id}');
-      }
-      for (var doc in librarianSnap.docs) {
-        allDocs[doc.id] = doc.data();
-        debugPrint('fetchRelevantTasksForUser: added librarian task ${doc.id}');
-      }
-      for (var doc in assignedToSnap.docs) {
-        allDocs[doc.id] = doc.data();
-        debugPrint('fetchRelevantTasksForUser: added assignedTo task ${doc.id}');
-      }
+
+      debugPrint('fetchRelevantTasksForUser: Found $totalTasks relevant tasks');
+
       // Convert to Task objects
       final relevantTasks = await Future.wait(allDocs.entries.map((e) async {
         final data = e.value;
@@ -1409,7 +1564,7 @@ class TaskController extends GetxController {
         await _populateCreatedByName(task);
         return task;
       }));
-      debugPrint('fetchRelevantTasksForUser: final merged tasks count = ${relevantTasks.length}');
+
       tasks.assignAll(relevantTasks);
       errorMessage.value = '';
     } catch (e) {
@@ -1423,7 +1578,6 @@ class TaskController extends GetxController {
 
   // --- LOCAL CRUD METHODS (ISAR) ---
 
-
   // Load tasks directly from Firebase
   Future<void> loadInitialTasks() async {
     isLoading(true);
@@ -1433,21 +1587,24 @@ class TaskController extends GetxController {
           .collection('tasks')
           .orderBy('timestamp', descending: true)
           .get();
-      
-      debugPrint('loadInitialTasks: Found ${snapshot.docs.length} tasks in Firebase');
-      
+
+      debugPrint(
+          'loadInitialTasks: Found ${snapshot.docs.length} tasks in Firebase');
+
       final firebaseTasks = await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data();
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
         await _populateCreatedByName(task);
-        debugPrint('loadInitialTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
+        debugPrint(
+            'loadInitialTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         return task;
       }));
-      
+
       tasks.assignAll(firebaseTasks);
       tasks.refresh();
-      debugPrint('loadInitialTasks: Loaded ${tasks.length} tasks into controller');
+      debugPrint(
+          'loadInitialTasks: Loaded ${tasks.length} tasks into controller');
       debugPrint('=== END LOADING INITIAL TASKS ===');
       errorMessage.value = '';
     } catch (e) {
@@ -1458,10 +1615,8 @@ class TaskController extends GetxController {
     }
   }
 
-
-
   // --- APPROVAL METHODS ---
-  
+
   /// Approve a task (Admin only)
   Future<void> approveTask(String taskId, {String? reason}) async {
     try {
@@ -1494,24 +1649,38 @@ class TaskController extends GetxController {
 
       // Update local task
       final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
-      debugPrint('approveTask: Found task at index $taskIndex for taskId $taskId');
+      debugPrint(
+          'approveTask: Found task at index $taskIndex for taskId $taskId');
       if (taskIndex != -1) {
         final oldTask = tasks[taskIndex];
-        debugPrint('approveTask: Old task approvalStatus: ${oldTask.approvalStatus}');
+        debugPrint(
+            'approveTask: Old task approvalStatus: ${oldTask.approvalStatus}');
         final updatedTask = tasks[taskIndex].copyWith(
-          approvalStatus: 'approved',
-          approvedBy: userId,
-          approvalTimestamp: now,
-          approvalReason: reason,
-          lastModified: now,
+          metadata: tasks[taskIndex].metadata?.copyWith(
+            approvalStatus: 'approved',
+            approvedBy: userId,
+            approvalTimestamp: now,
+            approvalReason: reason,
+            lastModified: now,
+          ) ?? TaskMetadata(
+            approvalStatus: 'approved',
+            approvedBy: userId,
+            approvalTimestamp: now,
+            approvalReason: reason,
+            lastModified: now,
+          ),
         );
         tasks[taskIndex] = updatedTask;
-        debugPrint('approveTask: Updated task approvalStatus: ${updatedTask.approvalStatus}');
-        debugPrint('approveTask: Updated task isApproved: ${updatedTask.isApproved}');
-        debugPrint('approveTask: Updated task canBeAssigned: ${updatedTask.canBeAssigned}');
+        debugPrint(
+            'approveTask: Updated task approvalStatus: ${updatedTask.approvalStatus}');
+        debugPrint(
+            'approveTask: Updated task isApproved: ${updatedTask.isApproved}');
+        debugPrint(
+            'approveTask: Updated task canBeAssigned: ${updatedTask.canBeAssigned}');
         tasks.refresh();
-        debugPrint('approveTask: Task list refreshed, total tasks: ${tasks.length}');
-        
+        debugPrint(
+            'approveTask: Task list refreshed, total tasks: ${tasks.length}');
+
         // Send notification to task creator
         if (updatedTask.createdById.isNotEmpty) {
           await sendTaskApprovalNotification(
@@ -1564,15 +1733,23 @@ class TaskController extends GetxController {
       final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
         final updatedTask = tasks[taskIndex].copyWith(
-          approvalStatus: 'rejected',
-          approvedBy: userId,
-          approvalTimestamp: now,
-          approvalReason: reason,
-          lastModified: now,
+          metadata: tasks[taskIndex].metadata?.copyWith(
+            approvalStatus: 'rejected',
+            approvedBy: userId,
+            approvalTimestamp: now,
+            approvalReason: reason,
+            lastModified: now,
+          ) ?? TaskMetadata(
+            approvalStatus: 'rejected',
+            approvedBy: userId,
+            approvalTimestamp: now,
+            approvalReason: reason,
+            lastModified: now,
+          ),
         );
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
-        
+
         // Send notification to task creator
         if (updatedTask.createdById.isNotEmpty) {
           await sendTaskApprovalNotification(
@@ -1611,10 +1788,12 @@ class TaskController extends GetxController {
     debugPrint('=== ASSIGNABLE TASKS GETTER CALLED ===');
     debugPrint('assignableTasks: Total tasks count = ${tasks.length}');
     final assignable = tasks.where((task) {
-      debugPrint('assignableTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
+      debugPrint(
+          'assignableTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
       return task.canBeAssigned;
     }).toList();
-    debugPrint('assignableTasks: Assignable tasks count = ${assignable.length}');
+    debugPrint(
+        'assignableTasks: Assignable tasks count = ${assignable.length}');
     debugPrint('=== END ASSIGNABLE TASKS GETTER ===');
     return assignable;
   }

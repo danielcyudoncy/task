@@ -2,11 +2,12 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/fcm_service.dart';
 import 'package:task/service/enhanced_notification_service.dart';
@@ -51,6 +52,9 @@ class AdminController extends GetxController {
   // Add a statistics RxMap for dashboard compatibility
   final RxMap<String, dynamic> statistics = <String, dynamic>{}.obs;
 
+  // Stream subscriptions for proper cleanup
+  StreamSubscription<QuerySnapshot>? _dashboardMetricsSubscription;
+
   // Safe snackbar method
   void _safeSnackbar(String title, String message) {
     SnackbarUtils.showSnackbar(title, message);
@@ -67,7 +71,10 @@ class AdminController extends GetxController {
   }
 
   void startRealtimeUpdates() {
-    _firestore.collection('dashboard_metrics').snapshots().listen((snapshot) {
+    // Cancel any existing subscription to prevent memory leaks
+    _dashboardMetricsSubscription?.cancel();
+
+    _dashboardMetricsSubscription = _firestore.collection('dashboard_metrics').snapshots().listen((snapshot) {
       if (snapshot.docs.isNotEmpty) {
         final data = snapshot.docs.first.data();
         totalUsers.value = data['totalUsers'] ?? 0;
@@ -101,7 +108,8 @@ class AdminController extends GetxController {
       try {
         final userCacheService = Get.find<UserCacheService>();
         for (final data in allDocs) {
-          final creatorId = (data['createdById'] ?? data['createdBy'] ?? '').toString();
+          final creatorId =
+              (data['createdById'] ?? data['createdBy'] ?? '').toString();
           if (creatorId.isNotEmpty) {
             final name = userCacheService.getUserNameSync(creatorId);
             if (name != 'Unknown User') {
@@ -126,23 +134,28 @@ class AdminController extends GetxController {
         bool isTaskCompleted = false;
         if (status == 'completed') {
           // Check if all assigned users have completed the task
-          final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+          final completedByUserIds =
+              List<String>.from(doc['completedByUserIds'] ?? []);
           final assignedUserIds = <String>[];
-          
+
           // Collect all assigned user IDs
-          if (doc['assignedReporterId'] != null && doc['assignedReporterId'].toString().isNotEmpty) {
+          if (doc['assignedReporterId'] != null &&
+              doc['assignedReporterId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedReporterId'].toString());
           }
-          if (doc['assignedCameramanId'] != null && doc['assignedCameramanId'].toString().isNotEmpty) {
+          if (doc['assignedCameramanId'] != null &&
+              doc['assignedCameramanId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedCameramanId'].toString());
           }
-          if (doc['assignedDriverId'] != null && doc['assignedDriverId'].toString().isNotEmpty) {
+          if (doc['assignedDriverId'] != null &&
+              doc['assignedDriverId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedDriverId'].toString());
           }
-          if (doc['assignedLibrarianId'] != null && doc['assignedLibrarianId'].toString().isNotEmpty) {
+          if (doc['assignedLibrarianId'] != null &&
+              doc['assignedLibrarianId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedLibrarianId'].toString());
           }
-          
+
           // If no users are assigned, treat as completed (backward compatibility)
           if (assignedUserIds.isEmpty) {
             isTaskCompleted = true;
@@ -151,7 +164,8 @@ class AdminController extends GetxController {
             isTaskCompleted = true;
           } else {
             // Check if all assigned users have completed the task
-            isTaskCompleted = assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+            isTaskCompleted = assignedUserIds
+                .every((userId) => completedByUserIds.contains(userId));
           }
         }
 
@@ -279,41 +293,47 @@ class AdminController extends GetxController {
       newsCount.value = newsSnapshot.count ?? 0;
 
       totalTasks.value = taskDocs.length;
-      
+
       // Updated logic: Only count tasks as completed if ALL assigned users have completed them
       completedTasks.value = taskDocs.where((doc) {
         final status = (doc['status'] ?? '').toString().toLowerCase();
         if (status == 'completed') {
           // For backward compatibility, if it's marked as completed, check if it uses new logic
-          final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+          final completedByUserIds =
+              List<String>.from(doc['completedByUserIds'] ?? []);
           final assignedUserIds = <String>[];
-          
+
           // Collect all assigned user IDs
-          if (doc['assignedReporterId'] != null && doc['assignedReporterId'].toString().isNotEmpty) {
+          if (doc['assignedReporterId'] != null &&
+              doc['assignedReporterId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedReporterId'].toString());
           }
-          if (doc['assignedCameramanId'] != null && doc['assignedCameramanId'].toString().isNotEmpty) {
+          if (doc['assignedCameramanId'] != null &&
+              doc['assignedCameramanId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedCameramanId'].toString());
           }
-          if (doc['assignedDriverId'] != null && doc['assignedDriverId'].toString().isNotEmpty) {
+          if (doc['assignedDriverId'] != null &&
+              doc['assignedDriverId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedDriverId'].toString());
           }
-          if (doc['assignedLibrarianId'] != null && doc['assignedLibrarianId'].toString().isNotEmpty) {
+          if (doc['assignedLibrarianId'] != null &&
+              doc['assignedLibrarianId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedLibrarianId'].toString());
           }
-          
+
           // If no users are assigned, treat as completed (backward compatibility)
           if (assignedUserIds.isEmpty) return true;
-          
+
           // If completedByUserIds is empty, it's using old logic, so count as completed
           if (completedByUserIds.isEmpty) return true;
-          
+
           // Check if all assigned users have completed the task
-          return assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+          return assignedUserIds
+              .every((userId) => completedByUserIds.contains(userId));
         }
         return false;
       }).length;
-      
+
       pendingTasks.value = taskDocs
           .where((doc) =>
               (doc['status'] ?? '').toString().toLowerCase() != 'completed')
@@ -344,10 +364,10 @@ class AdminController extends GetxController {
       statistics['completed'] = completedTasks.value;
       statistics['pending'] = pendingTasks.value;
       statistics['overdue'] = overdueTasks.value;
-          } on TimeoutException {
-        _safeSnackbar('Error', 'Fetching statistics timed out');
-      } catch (e) {
-        _safeSnackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
+    } on TimeoutException {
+      _safeSnackbar('Error', 'Fetching statistics timed out');
+    } catch (e) {
+      _safeSnackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
     } finally {
       isStatsLoading(false);
     }
@@ -365,31 +385,37 @@ class AdminController extends GetxController {
           final status = (doc['status'] ?? '').toString().toLowerCase();
           if (status == 'completed') {
             // Check if all assigned users have completed the task
-            final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+            final completedByUserIds =
+                List<String>.from(doc['completedByUserIds'] ?? []);
             final assignedUserIds = <String>[];
-            
+
             // Collect all assigned user IDs
-            if (doc['assignedReporterId'] != null && doc['assignedReporterId'].toString().isNotEmpty) {
+            if (doc['assignedReporterId'] != null &&
+                doc['assignedReporterId'].toString().isNotEmpty) {
               assignedUserIds.add(doc['assignedReporterId'].toString());
             }
-            if (doc['assignedCameramanId'] != null && doc['assignedCameramanId'].toString().isNotEmpty) {
+            if (doc['assignedCameramanId'] != null &&
+                doc['assignedCameramanId'].toString().isNotEmpty) {
               assignedUserIds.add(doc['assignedCameramanId'].toString());
             }
-            if (doc['assignedDriverId'] != null && doc['assignedDriverId'].toString().isNotEmpty) {
+            if (doc['assignedDriverId'] != null &&
+                doc['assignedDriverId'].toString().isNotEmpty) {
               assignedUserIds.add(doc['assignedDriverId'].toString());
             }
-            if (doc['assignedLibrarianId'] != null && doc['assignedLibrarianId'].toString().isNotEmpty) {
+            if (doc['assignedLibrarianId'] != null &&
+                doc['assignedLibrarianId'].toString().isNotEmpty) {
               assignedUserIds.add(doc['assignedLibrarianId'].toString());
             }
-            
+
             // If no users are assigned, treat as completed (backward compatibility)
             if (assignedUserIds.isEmpty) return true;
-            
+
             // If completedByUserIds is empty, it's using old logic, so count as completed
             if (completedByUserIds.isEmpty) return true;
-            
+
             // Check if all assigned users have completed the task
-            return assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+            return assignedUserIds
+                .every((userId) => completedByUserIds.contains(userId));
           }
           return false;
         })
@@ -557,8 +583,7 @@ class AdminController extends GetxController {
   Future<void> fetchTasks() async {
     try {
       var snapshot = await FirebaseFirestore.instance.collection('tasks').get();
-      var tasks =
-          snapshot.docs.map((doc) {
+      var tasks = snapshot.docs.map((doc) {
         final data = doc.data();
         data['taskId'] = doc.id;
         return Task.fromMap(data);
@@ -630,10 +655,12 @@ class AdminController extends GetxController {
 
       // Show local in-app notification
       try {
-        final enhancedNotificationService = Get.find<EnhancedNotificationService>();
+        final enhancedNotificationService =
+            Get.find<EnhancedNotificationService>();
         enhancedNotificationService.showInfo(
           title: 'Task Assigned',
-          message: 'Task "$taskTitle" has been assigned to $assignedName\nDue: ${DateFormat('yyyy-MM-dd – kk:mm').format(dueDate)}',
+          message:
+              'Task "$taskTitle" has been assigned to $assignedName\nDue: ${DateFormat('yyyy-MM-dd – kk:mm').format(dueDate)}',
           duration: const Duration(seconds: 5),
         );
       } catch (e) {
@@ -677,5 +704,15 @@ class AdminController extends GetxController {
     } catch (e) {
       _safeSnackbar("Error", "Failed to reject task: ${e.toString()}");
     }
+  }
+
+  @override
+  void onClose() {
+    // Cancel stream subscriptions to prevent memory leaks
+    _dashboardMetricsSubscription?.cancel();
+    _dashboardMetricsSubscription = null;
+
+    debugPrint('AdminController: Properly disposed');
+    super.onClose();
   }
 }

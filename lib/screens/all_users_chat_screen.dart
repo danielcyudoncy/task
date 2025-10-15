@@ -27,7 +27,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
   String searchQuery = '';
   bool isRefreshing = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final WallpaperController _wallpaperController = Get.find<WallpaperController>();
+  final WallpaperController _wallpaperController =
+      Get.find<WallpaperController>();
 
   @override
   void initState() {
@@ -116,13 +117,14 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     if (!mounted) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    
+
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final theme = Theme.of(context);
 
     final isDark = theme.brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.primary;
+    final backgroundColor = isDark
+        ? theme.colorScheme.surfaceContainerHighest
+        : theme.colorScheme.primary;
 
     if (currentUserId == null) {
       return const Scaffold(
@@ -146,7 +148,9 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
             ),
           );
         } else if (wallpaperValue.startsWith('#')) {
-          decoration = BoxDecoration(color: Color(int.parse('FF${wallpaperValue.substring(1)}', radix: 16)));
+          decoration = BoxDecoration(
+              color: Color(
+                  int.parse('FF${wallpaperValue.substring(1)}', radix: 16)));
         } else {
           decoration = BoxDecoration(color: backgroundColor);
         }
@@ -156,21 +160,23 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
             children: [
               AppBar(
                 backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.grey[900]!, Colors.grey[800]!]
-                      .reduce((value, element) => value)
-                  : Theme.of(context).colorScheme.primary,
+                    ? [Colors.grey[900]!, Colors.grey[800]!]
+                        .reduce((value, element) => value)
+                    : Theme.of(context).colorScheme.primary,
                 elevation: 1,
                 leading: IconButton(
-                  icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
+                  icon: Icon(Icons.arrow_back,
+                      color: theme.colorScheme.onPrimary),
                   onPressed: () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
                   },
                 ),
-                title: Text('Chat With Users', style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                )),
+                title: Text('Chat With Users',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    )),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.wallpaper),
@@ -178,7 +184,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                     tooltip: 'Change Chat Wallpaper',
                     onPressed: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const WallpaperScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const WallpaperScreen()),
                       );
                     },
                   ),
@@ -194,7 +201,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context, String currentUserId, ThemeData theme) {
+  Widget _buildBody(
+      BuildContext context, String currentUserId, ThemeData theme) {
     return Column(
       children: [
         Padding(
@@ -235,13 +243,17 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final users = snapshot.data!.docs.where((doc) => doc['uid'] != currentUserId).toList();
+                final users = snapshot.data!.docs
+                    .where((doc) => doc['uid'] != currentUserId)
+                    .toList();
                 if (users.isEmpty) {
                   return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('No one is online', style: TextStyle(color: Colors.grey)),
+                      child: Text('No one is online',
+                          style: TextStyle(color: Colors.grey)),
                     ),
                   );
                 }
@@ -263,8 +275,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOut,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 12.w, vertical: 8.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                       child: Card(
                         color: theme.colorScheme.surface,
                         shape: RoundedRectangleBorder(
@@ -278,8 +290,11 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(context).brightness == Brightness.dark
-                                        ? Theme.of(context).colorScheme.onPrimary
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary
                                         : Theme.of(context).colorScheme.primary,
                                     width: 2,
                                   ),
@@ -291,22 +306,30 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                                           width: 48.r,
                                           height: 48.r,
                                           fit: BoxFit.cover,
-                                          placeholder: (context, url) => CircleAvatar(
+                                          placeholder: (context, url) =>
+                                              CircleAvatar(
                                             radius: 24.r,
                                             child: Text(
-                                              name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                              name.isNotEmpty
+                                                  ? name[0].toUpperCase()
+                                                  : '?',
                                               style: TextStyle(
-                                                color: theme.colorScheme.onSurface,
+                                                color:
+                                                    theme.colorScheme.onSurface,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
-                                          errorWidget: (context, url, error) => CircleAvatar(
+                                          errorWidget: (context, url, error) =>
+                                              CircleAvatar(
                                             radius: 24.r,
                                             child: Text(
-                                              name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                              name.isNotEmpty
+                                                  ? name[0].toUpperCase()
+                                                  : '?',
                                               style: TextStyle(
-                                                color: theme.colorScheme.onSurface,
+                                                color:
+                                                    theme.colorScheme.onSurface,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -316,15 +339,16 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                                     : CircleAvatar(
                                         radius: 24.r,
                                         child: Text(
-                                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                          name.isNotEmpty
+                                              ? name[0].toUpperCase()
+                                              : '?',
                                           style: TextStyle(
                                             color: theme.colorScheme.onSurface,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
-                                ),
-                              
+                              ),
                               if (isOnline)
                                 Positioned(
                                   bottom: 0,

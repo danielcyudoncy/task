@@ -31,7 +31,8 @@ class NotificationController extends GetxController {
         if (FirebaseAuth.instance.currentUser != null) {
           fetchNotifications();
         } else {
-          debugPrint('NotificationController: User not authenticated, skipping notification fetch');
+          debugPrint(
+              'NotificationController: User not authenticated, skipping notification fetch');
         }
       }
     });
@@ -75,7 +76,8 @@ class NotificationController extends GetxController {
                   'type': data['type']?.toString(),
                   'taskId': data['taskId'],
                 };
-                debugPrint('Parsed notification: ${notification['type']} - ${notification['taskId']}');
+                debugPrint(
+                    'Parsed notification: ${notification['type']} - ${notification['taskId']}');
                 return notification;
               } catch (e) {
                 debugPrint('Error parsing notification  [${doc.id}]: $e');
@@ -89,7 +91,8 @@ class NotificationController extends GetxController {
               }
             }).toList();
 
-            debugPrint('About to call _updateValidNotifications with ${parsedNotifications.length} notifications');
+            debugPrint(
+                'About to call _updateValidNotifications with ${parsedNotifications.length} notifications');
             await _updateValidNotifications(parsedNotifications);
             debugPrint('Finished _updateValidNotifications call');
             updateUnreadCount(parsedNotifications);
@@ -108,43 +111,59 @@ class NotificationController extends GetxController {
     }
   }
 
-  Future<void> _updateValidNotifications(List<Map<String, dynamic>> notificationsList) async {
+  Future<void> _updateValidNotifications(
+      List<Map<String, dynamic>> notificationsList) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       validNotifications.value = [];
       validUnreadCount.value = 0;
       return;
     }
-    
-    debugPrint('_updateValidNotifications: Processing ${notificationsList.length} notifications for user $uid');
-    
+
+    debugPrint(
+        '_updateValidNotifications: Processing ${notificationsList.length} notifications for user $uid');
+
     List<Map<String, dynamic>> valid = [];
     for (final n in notificationsList) {
       final type = n['type']?.toString();
       debugPrint('_updateValidNotifications: Notification type: $type');
-      
+
       if (type == 'task_assigned' || type == 'task_assignment') {
         final taskId = n['taskId']?.toString();
         debugPrint('_updateValidNotifications: Task ID: $taskId');
-        
+
         if (taskId != null && taskId.isNotEmpty) {
-          final taskDoc = await FirebaseFirestore.instance.collection('tasks').doc(taskId).get();
+          final taskDoc = await FirebaseFirestore.instance
+              .collection('tasks')
+              .doc(taskId)
+              .get();
           if (taskDoc.exists) {
             final data = taskDoc.data() as Map<String, dynamic>;
-            debugPrint('_updateValidNotifications: Task data keys: ${data.keys.toList()}');
-            debugPrint('_updateValidNotifications: assignedReporterId: ${data['assignedReporterId']}');
-            debugPrint('_updateValidNotifications: assignedCameramanId: ${data['assignedCameramanId']}');
-            debugPrint('_updateValidNotifications: assignedTo: ${data['assignedTo']}');
+            debugPrint(
+                '_updateValidNotifications: Task data keys: ${data.keys.toList()}');
+            debugPrint(
+                '_updateValidNotifications: assignedReporterId: ${data['assignedReporterId']}');
+            debugPrint(
+                '_updateValidNotifications: assignedCameramanId: ${data['assignedCameramanId']}');
+            debugPrint(
+                '_updateValidNotifications: assignedTo: ${data['assignedTo']}');
             debugPrint('_updateValidNotifications: Current user ID: $uid');
-            
-            if (data['assignedReporterId'] == uid || data['assignedCameramanId'] == uid || data['assignedDriverId'] == uid || data['assignedLibrarianId'] == uid || data['assignedTo'] == uid) {
-              debugPrint('_updateValidNotifications: Task assignment matches! Adding notification');
+
+            if (data['assignedReporterId'] == uid ||
+                data['assignedCameramanId'] == uid ||
+                data['assignedDriverId'] == uid ||
+                data['assignedLibrarianId'] == uid ||
+                data['assignedTo'] == uid) {
+              debugPrint(
+                  '_updateValidNotifications: Task assignment matches! Adding notification');
               valid.add(n);
             } else {
-              debugPrint('_updateValidNotifications: Task assignment does not match');
+              debugPrint(
+                  '_updateValidNotifications: Task assignment does not match');
             }
           } else {
-            debugPrint('_updateValidNotifications: Task document does not exist');
+            debugPrint(
+                '_updateValidNotifications: Task document does not exist');
           }
         } else {
           debugPrint('_updateValidNotifications: Task ID is null or empty');
@@ -152,25 +171,32 @@ class NotificationController extends GetxController {
       } else if (type == 'task_approved' || type == 'task_rejected') {
         // For approval notifications, we don't need to validate against a task
         // since they are sent directly to the task creator
-        debugPrint('_updateValidNotifications: Task approval/rejection notification, adding directly');
+        debugPrint(
+            '_updateValidNotifications: Task approval/rejection notification, adding directly');
         valid.add(n);
       } else {
-        debugPrint('_updateValidNotifications: Non-task notification, adding directly');
+        debugPrint(
+            '_updateValidNotifications: Non-task notification, adding directly');
         valid.add(n);
       }
     }
-    
-    debugPrint('_updateValidNotifications: Final valid notifications: ${valid.length}');
+
+    debugPrint(
+        '_updateValidNotifications: Final valid notifications: ${valid.length}');
     validNotifications.value = valid;
-    validUnreadCount.value = valid.where((n) => !(n['isRead'] as bool? ?? true)).length;
-    
+    validUnreadCount.value =
+        valid.where((n) => !(n['isRead'] as bool? ?? true)).length;
+
     // Calculate task assignment unread count specifically
     final taskAssignmentNotifications = valid.where((n) {
       final type = n['type']?.toString();
       return type == 'task_assigned' || type == 'task_assignment';
     }).toList();
-    taskAssignmentUnreadCount.value = taskAssignmentNotifications.where((n) => !(n['isRead'] as bool? ?? true)).length;
-    debugPrint('_updateValidNotifications: Task assignment unread count: ${taskAssignmentUnreadCount.value}');
+    taskAssignmentUnreadCount.value = taskAssignmentNotifications
+        .where((n) => !(n['isRead'] as bool? ?? true))
+        .length;
+    debugPrint(
+        '_updateValidNotifications: Task assignment unread count: ${taskAssignmentUnreadCount.value}');
   }
 
   void updateUnreadCount(List<Map<String, dynamic>>? currentNotifications) {
@@ -268,7 +294,9 @@ class NotificationController extends GetxController {
       // Update counts
       totalNotifications.value = notifications.length;
       updateUnreadCount(notifications);
-      validUnreadCount.value = validNotifications.where((n) => !(n['isRead'] as bool? ?? true)).length;
+      validUnreadCount.value = validNotifications
+          .where((n) => !(n['isRead'] as bool? ?? true))
+          .length;
 
       _safeSnackbar('Success', 'Notification deleted');
     } catch (e) {

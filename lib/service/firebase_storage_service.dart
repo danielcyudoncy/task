@@ -6,17 +6,17 @@ import 'package:get/get.dart';
 
 class FirebaseStorageService extends GetxService {
   static FirebaseStorageService get to => Get.find();
-  
+
   final FirebaseStorage _storage;
   bool _isInitialized = false;
-  
-  FirebaseStorageService({FirebaseStorage? storage}) 
+
+  FirebaseStorageService({FirebaseStorage? storage})
       : _storage = storage ?? FirebaseStorage.instance;
-  
+
   /// Initializes the FirebaseStorageService
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     try {
       // Initialize any dependencies here
       _isInitialized = true;
@@ -33,10 +33,10 @@ class FirebaseStorageService extends GetxService {
   }) async {
     try {
       debugPrint('Firebase Storage: Uploading to bucket: $bucket, path: $path');
-      
+
       // Create a reference to the file location
       final storageRef = _storage.ref().child('$bucket/$path');
-      
+
       // Upload the file
       final uploadTask = storageRef.putFile(
         file,
@@ -50,10 +50,10 @@ class FirebaseStorageService extends GetxService {
 
       // Wait for the upload to complete
       final snapshot = await uploadTask;
-      
+
       // Get the download URL
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       debugPrint('Firebase Storage: Upload successful, URL: $downloadUrl');
       return downloadUrl;
     } catch (e, stack) {
@@ -77,7 +77,8 @@ class FirebaseStorageService extends GetxService {
     required String path,
   }) async {
     try {
-      debugPrint('Firebase Storage: Deleting file from bucket: $bucket, path: $path');
+      debugPrint(
+          'Firebase Storage: Deleting file from bucket: $bucket, path: $path');
       await _storage.ref().child('$bucket/$path').delete();
       debugPrint('Firebase Storage: File deleted successfully');
     } catch (e) {
@@ -91,19 +92,20 @@ class FirebaseStorageService extends GetxService {
     required String userId,
   }) async {
     try {
-      debugPrint('Firebase Storage: Uploading profile picture for user: $userId');
-      
+      debugPrint(
+          'Firebase Storage: Uploading profile picture for user: $userId');
+
       // Create a unique filename with timestamp
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'profile_pictures/${userId}_$timestamp.jpg';
-      
+
       // Upload to Firebase Storage
       final downloadUrl = await uploadFile(
         bucket: 'user-profiles',
         path: fileName,
         file: imageFile,
       );
-      
+
       if (downloadUrl != null) {
         debugPrint('Firebase Storage: Profile picture uploaded successfully');
         return downloadUrl;
@@ -124,15 +126,16 @@ class FirebaseStorageService extends GetxService {
     required String userId,
   }) async {
     try {
-      debugPrint('Firebase Storage: Uploading profile picture from bytes for user: $userId');
-      
+      debugPrint(
+          'Firebase Storage: Uploading profile picture from bytes for user: $userId');
+
       // Create a unique filename with timestamp
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final storageFileName = 'profile_pictures/${userId}_$timestamp.jpg';
-      
+
       // Create a reference to the file location
       final storageRef = _storage.ref().child('user-profiles/$storageFileName');
-      
+
       // Upload the bytes
       final uploadTask = storageRef.putData(
         bytes,
@@ -147,14 +150,16 @@ class FirebaseStorageService extends GetxService {
 
       // Wait for the upload to complete
       final snapshot = await uploadTask;
-      
+
       // Get the download URL
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      
-      debugPrint('Firebase Storage: Profile picture uploaded successfully from bytes');
+
+      debugPrint(
+          'Firebase Storage: Profile picture uploaded successfully from bytes');
       return downloadUrl;
     } catch (e) {
-      debugPrint('Firebase Storage: Profile picture upload from bytes error: $e');
+      debugPrint(
+          'Firebase Storage: Profile picture upload from bytes error: $e');
       return null;
     }
   }
@@ -170,14 +175,15 @@ class FirebaseStorageService extends GetxService {
       // Extract the path from the Firebase Storage URL
       final uri = Uri.parse(imageUrl);
       final pathSegments = uri.pathSegments;
-      
+
       // Find the storage path after the project ID
       final storageIndex = pathSegments.indexOf('o');
       if (storageIndex != -1 && storageIndex + 1 < pathSegments.length) {
         final filePath = pathSegments[storageIndex + 1];
         final decodedPath = Uri.decodeComponent(filePath);
-        
-        debugPrint('Firebase Storage: Deleting old profile picture: $decodedPath');
+
+        debugPrint(
+            'Firebase Storage: Deleting old profile picture: $decodedPath');
         await deleteFile(
           bucket: 'user-profiles',
           path: decodedPath,
@@ -187,4 +193,4 @@ class FirebaseStorageService extends GetxService {
       debugPrint('Firebase Storage: Error deleting old profile picture: $e');
     }
   }
-} 
+}

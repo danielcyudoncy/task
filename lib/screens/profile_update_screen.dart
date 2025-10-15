@@ -1,9 +1,10 @@
-// views/profile_update_screen.dart
+// screens/profile_update_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/app_lock_controller.dart';
 // import 'package:task/utils/constants/app_icons.dart';
 import '../widgets/image_picker_widget.dart';
 
@@ -41,9 +42,9 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
         height: double.infinity,
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.grey[900]!, Colors.grey[800]!]
-                      .reduce((value, element) => value)
-                  : Theme.of(context).colorScheme.primary,
+              ? [Colors.grey[900]!, Colors.grey[800]!]
+                  .reduce((value, element) => value)
+              : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -55,9 +56,20 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary),
+                    icon: Icon(Icons.arrow_back,
+                        color: Theme.of(context).colorScheme.onPrimary),
                     color: Theme.of(context).colorScheme.onPrimary,
-                    onPressed: () {Get.find<SettingsController>().triggerFeedback(); Get.back();},
+                    onPressed: () {
+                      Get.find<SettingsController>().triggerFeedback();
+                      // Track user activity to prevent app lock
+                      try {
+                        final AppLockController appLockController = Get.find<AppLockController>();
+                        appLockController.trackUserActivity();
+                      } catch (e) {
+                        // Ignore if AppLockController is not available
+                      }
+                      Get.back();
+                    },
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -250,18 +262,26 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                                       backgroundColor: const Color(0xFF2F80ED),
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12.r),
+                                        borderRadius:
+                                            BorderRadius.circular(12.r),
                                       ),
                                     ),
                                     onPressed: () async {
                                       Get.find<SettingsController>()
                                           .triggerFeedback();
+                                      // Track user activity to prevent app lock
+                                      try {
+                                        final AppLockController appLockController = Get.find<AppLockController>();
+                                        appLockController.trackUserActivity();
+                                      } catch (e) {
+                                        // Ignore if AppLockController is not available
+                                      }
                                       if (_formKey.currentState!.validate()) {
                                         await auth.completeProfile();
                                         // Profile completion will handle navigation automatically
                                       }
                                     },
-                                    child:  Text(
+                                    child: Text(
                                       'save_changes'.tr,
                                       style: TextStyle(
                                         fontSize: 16.sp,

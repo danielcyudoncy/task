@@ -19,7 +19,7 @@ class NewsCategoryFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       child: Wrap(
@@ -47,14 +47,14 @@ class NewsCategoryFilter extends StatelessWidget {
               onSelected: (selected) {
                 onCategoryChanged(category);
               },
-              backgroundColor: isSelected 
-                ? colorScheme.primary
-                : colorScheme.surfaceContainerHighest,
+              backgroundColor: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.surfaceContainerHighest,
               selectedColor: colorScheme.primary,
               labelStyle: TextStyle(
-                color: isSelected 
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
                 fontSize: 12.sp,
               ),
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),

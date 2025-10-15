@@ -14,6 +14,7 @@ import 'utils/localization/translations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // Removed Isar import - using SQLite now
 import 'package:task/routes/global_bindings.dart';
+import 'package:task/widgets/error_boundary.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -47,7 +48,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     debugPrint('App lifecycle state changed: $state');
-    
+
     switch (state) {
       case AppLifecycleState.resumed:
         debugPrint('App resumed - preserving state');
@@ -72,28 +73,29 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Future<bool> _showExitConfirmationDialog() async {
     return await showDialog(
-      context: Get.context!,
-      builder: (context) => AlertDialog(
-        title: const Text('Exit App'),
-        content: const Text('Are you sure you want to exit?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onSurface,
-            ),
-            child: const Text('No'),
+          context: Get.context!,
+          builder: (context) => AlertDialog(
+            title: const Text('Exit App'),
+            content: const Text('Are you sure you want to exit?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
+                ),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                ),
+                child: const Text('Yes'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.primary,
-            ),
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   @override
@@ -102,10 +104,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       builder: (context, constraints) {
         // Get current orientation to set appropriate design size
         final orientation = MediaQuery.of(context).orientation;
-        final designSize = orientation == Orientation.portrait 
-            ? const Size(375, 812)  // Portrait design size
+        final designSize = orientation == Orientation.portrait
+            ? const Size(375, 812) // Portrait design size
             : const Size(812, 375); // Landscape design size
-        
+
         return ScreenUtilInit(
           designSize: designSize,
           minTextAdapt: true,
@@ -113,74 +115,82 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           useInheritedMediaQuery: true,
           ensureScreenSize: true,
           builder: (context, child) {
-            final ThemeController themeController = Get.find<ThemeController>();
-            
-            return Obx(() {
-              try {
-                final currentThemeMode = themeController.isDarkMode.value
-                    ? ThemeMode.dark
-                    : ThemeMode.light;
-                
-                final AppLockController appLockController = Get.find<AppLockController>();
-                
-                return PopScope(
-                  canPop: false,
-                  onPopInvokedWithResult: (didPop, result) async {
-                    if (didPop) return;
-                    final shouldExit = await _showExitConfirmationDialog();
-                    if (shouldExit) {
-                      SystemNavigator.pop();
-                    }
-                  },
-                  child: GetMaterialApp(
-                    debugShowCheckedModeBanner: false,
-                    title: 'Assignment Logging App',
-                    theme: AppTheme.lightTheme,
-                    darkTheme: AppTheme.darkTheme,
-                    themeMode: currentThemeMode,
-                    initialBinding: GlobalBindings(),
-                    initialRoute: "/",
-                    getPages: AppRoutes.routes,
-                    translations: AppTranslations(),
-                    locale: AppLocalizations.instance.currentLocale,
-                    fallbackLocale: AppLocalizations.defaultLocale,
-                    supportedLocales: AppLocalizations.supportedLocales,
-                    localizationsDelegates: const [
-                      GlobalMaterialLocalizations.delegate,
-                      GlobalWidgetsLocalizations.delegate,
-                      GlobalCupertinoLocalizations.delegate,
-                    ],
-                    home: appLockController.isAppLocked.value
-                        ? const AppLockScreen()
-                        : null,
-                    builder: (context, widget) {
-                      ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
-                        return Scaffold(
+            return ErrorBoundary(
+              onError: () {
+                debugPrint(
+                    'Error boundary triggered - reporting to Crashlytics');
+              },
+              child: Builder(
+                builder: (context) {
+                  final ThemeController themeController =
+                      Get.find<ThemeController>();
+
+                  return Obx(() {
+                    try {
+                      final currentThemeMode = themeController.isDarkMode.value
+                          ? ThemeMode.dark
+                          : ThemeMode.light;
+
+                      final AppLockController appLockController =
+                          Get.find<AppLockController>();
+
+                      return PopScope(
+                        canPop: false,
+                        onPopInvokedWithResult: (didPop, result) async {
+                          if (didPop) return;
+                          final shouldExit =
+                              await _showExitConfirmationDialog();
+                          if (shouldExit) {
+                            SystemNavigator.pop();
+                          }
+                        },
+                        child: GetMaterialApp(
+                          debugShowCheckedModeBanner: false,
+                          title: 'Assignment Logging App',
+                          theme: AppTheme.lightTheme,
+                          darkTheme: AppTheme.darkTheme,
+                          themeMode: currentThemeMode,
+                          initialBinding: GlobalBindings(),
+                          initialRoute: "/",
+                          getPages: AppRoutes.routes,
+                          translations: AppTranslations(),
+                          locale: AppLocalizations.instance.currentLocale,
+                          fallbackLocale: AppLocalizations.defaultLocale,
+                          supportedLocales: AppLocalizations.supportedLocales,
+                          localizationsDelegates: const [
+                            GlobalMaterialLocalizations.delegate,
+                            GlobalWidgetsLocalizations.delegate,
+                            GlobalCupertinoLocalizations.delegate,
+                          ],
+                          home: appLockController.isAppLocked.value
+                              ? const AppLockScreen()
+                              : null,
+                          builder: (context, widget) {
+                            return widget!;
+                          },
+                        ),
+                      );
+                    } catch (e, stack) {
+                      debugPrint('Error in app initialization: $e');
+                      debugPrint('Stack trace: $stack');
+
+                      // Error already handled by ErrorWidget.builder in ErrorBoundary
+
+                      return MaterialApp(
+                        home: Scaffold(
                           body: Center(
-                            child: Text('An error occurred: ${errorDetails.exception}'),
+                            child: Text('Error initializing app: $e'),
                           ),
-                        );
-                      };
-                      return widget!;
-                    },
-                  ),
-                );
-              } catch (e, stack) {
-                debugPrint('Error in app initialization: $e');
-                debugPrint('Stack trace: $stack');
-                return MaterialApp(
-                  home: Scaffold(
-                    body: Center(
-                      child: Text('Error initializing app: $e'),
-                    ),
-                  ),
-                );
-              }
-            });
+                        ),
+                      );
+                    }
+                  });
+                },
+              ),
+            );
           },
         );
       },
     );
   }
-
 }

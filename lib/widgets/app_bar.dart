@@ -6,16 +6,11 @@ import 'package:task/controllers/settings_controller.dart';
 class AppBarWidget extends StatelessWidget {
   final double basePadding;
   final GlobalKey<ScaffoldState>? scaffoldKey;
-  
-  const AppBarWidget({
-    required this.basePadding, 
-    this.scaffoldKey,
-    super.key
-  });
+
+  const AppBarWidget({required this.basePadding, this.scaffoldKey, super.key});
 
   @override
   Widget build(BuildContext context) {
-
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: basePadding, vertical: 10),
       child: Row(

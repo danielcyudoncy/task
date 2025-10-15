@@ -73,7 +73,6 @@ class _AuthSocialButtonState extends State<AuthSocialButton>
                 widget.isGoogle
                     ? FontAwesomeIcons.google
                     : FontAwesomeIcons.apple,
-
                 size: 20,
                 color: widget.isGoogle ? Colors.red : Colors.black,
               ),

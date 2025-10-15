@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Added import
 import '../controllers/auth_controller.dart';
+import '../controllers/app_lock_controller.dart';
 import '../utils/constants/app_colors.dart';
 import '../utils/snackbar_utils.dart';
 import 'package:flutter/foundation.dart';
@@ -58,14 +59,17 @@ class ImagePickerWidget extends StatelessWidget {
                   child: profilePic.isNotEmpty && _isValidUrl(profilePic)
                       ? CachedNetworkImage(
                           imageUrl: profilePic,
-                          placeholder: (context, url) => CircularProgressIndicator(
+                          placeholder: (context, url) =>
+                              CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               AppColors.primaryColor,
                             ),
                           ),
-                          errorWidget: (context, url, error) => _buildFallbackAvatar(context),
-                          imageBuilder: (context, imageProvider) => CircleAvatar(
+                          errorWidget: (context, url, error) =>
+                              _buildFallbackAvatar(context),
+                          imageBuilder: (context, imageProvider) =>
+                              CircleAvatar(
                             radius: radius,
                             backgroundImage: imageProvider,
                             backgroundColor: Colors.grey[200],
@@ -133,6 +137,15 @@ class ImagePickerWidget extends StatelessWidget {
   }
 
   Future<void> _handleImageSelection(BuildContext context) async {
+    // Track user activity to prevent app lock during image selection
+    try {
+      // Import AppLockController if not already imported
+      final AppLockController appLockController = Get.find<AppLockController>();
+      appLockController.trackUserActivity();
+    } catch (e) {
+      // Ignore if AppLockController is not available
+    }
+
     try {
       final XFile? pickedImage = await _showImagePickerDialog(context);
       if (pickedImage != null) {
@@ -140,9 +153,11 @@ class ImagePickerWidget extends StatelessWidget {
           // For web, read as bytes
           try {
             final bytes = await pickedImage.readAsBytes();
-            await controller.uploadProfilePictureFromBytes(bytes, pickedImage.name);
+            await controller.uploadProfilePictureFromBytes(
+                bytes, pickedImage.name);
           } catch (e) {
-            SnackbarUtils.showSnackbar("Error", "Failed to read image: ${e.toString()}");
+            SnackbarUtils.showSnackbar(
+                "Error", "Failed to read image: ${e.toString()}");
           }
         } else {
           // For mobile, use File
@@ -151,15 +166,18 @@ class ImagePickerWidget extends StatelessWidget {
             if (await imageFile.exists()) {
               await controller.uploadProfilePicture(imageFile);
             } else {
-              SnackbarUtils.showSnackbar("Error", "Selected image doesn't exist");
+              SnackbarUtils.showSnackbar(
+                  "Error", "Selected image doesn't exist");
             }
           } catch (e) {
-            SnackbarUtils.showSnackbar("Error", "Failed to process image: ${e.toString()}");
+            SnackbarUtils.showSnackbar(
+                "Error", "Failed to process image: ${e.toString()}");
           }
         }
       }
     } catch (e) {
-      SnackbarUtils.showSnackbar("Error", "Failed to select image: ${e.toString()}");
+      SnackbarUtils.showSnackbar(
+          "Error", "Failed to select image: ${e.toString()}");
     }
   }
 

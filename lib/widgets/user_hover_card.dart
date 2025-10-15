@@ -31,7 +31,9 @@ class UserHoverCard extends StatelessWidget {
         final isHovered = controller.isHovered[index];
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          margin: EdgeInsets.symmetric(vertical: isLargeScreen ? 12.h : 8.h, horizontal: isLargeScreen ? 32.w : 16.w),
+          margin: EdgeInsets.symmetric(
+              vertical: isLargeScreen ? 12.h : 8.h,
+              horizontal: isLargeScreen ? 32.w : 16.w),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -65,7 +67,8 @@ class UserHoverCard extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
-                      fontSize: isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
+                      fontSize:
+                          isLargeScreen ? 18.sp * textScale : 14.sp * textScale,
                     ),
                   ),
                 ),
@@ -73,16 +76,16 @@ class UserHoverCard extends StatelessWidget {
             ),
             title: Text(
               user['fullname'],
-              style: TextStyle(fontSize: 16.sp * textScale, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 16.sp * textScale, fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               "Role: ${user['role']}",
               style: TextStyle(
-                fontSize: 14.sp * textScale,
-                color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.grey[400] 
-                  : Colors.grey[600]
-              ),
+                  fontSize: 14.sp * textScale,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : Colors.grey[600]),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -104,7 +107,8 @@ class UserHoverCard extends StatelessWidget {
                       Get.find<SettingsController>().triggerFeedback();
                       final confirm = await Get.defaultDialog<bool>(
                         title: "Delete User",
-                        middleText: "Are you sure you want to delete this user?",
+                        middleText:
+                            "Are you sure you want to delete this user?",
                         textCancel: "Cancel",
                         textConfirm: "Delete",
                         confirmTextColor: Colors.white,
@@ -139,7 +143,8 @@ class UserHoverCard extends StatelessWidget {
     if (names.length == 1) {
       return names.first.substring(0, 1).toUpperCase();
     } else {
-      return names[0].substring(0, 1).toUpperCase() + names[1].substring(0, 1).toUpperCase();
+      return names[0].substring(0, 1).toUpperCase() +
+          names[1].substring(0, 1).toUpperCase();
     }
   }
 }

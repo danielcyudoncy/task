@@ -7,19 +7,21 @@ import 'version_service.dart';
 class IOSUpdateService {
   // Replace with your actual App Store ID
   static const String _appStoreId = '1234567890';
-  static const String _appStoreUrl = 'https://apps.apple.com/app/id$_appStoreId';
-  static const String _appStoreReviewUrl = 'https://apps.apple.com/app/id$_appStoreId?action=write-review';
-  
+  static const String _appStoreUrl =
+      'https://apps.apple.com/app/id$_appStoreId';
+  static const String _appStoreReviewUrl =
+      'https://apps.apple.com/app/id$_appStoreId?action=write-review';
+
   /// Check for iOS updates
   static Future<void> checkForIOSUpdate({
     bool showDialog = true,
     bool forceUpdate = false,
   }) async {
     if (!Platform.isIOS) return;
-    
+
     try {
       final updateInfo = await VersionService.checkForUpdate();
-      
+
       if (updateInfo != null) {
         if (showDialog) {
           _showUpdateDialog(
@@ -35,7 +37,7 @@ class IOSUpdateService {
       debugPrint('Error checking for iOS update: $e');
     }
   }
-  
+
   /// Show update dialog for iOS
   static void _showUpdateDialog({
     required UpdateInfo updateInfo,
@@ -119,12 +121,12 @@ class IOSUpdateService {
       barrierDismissible: !forceUpdate && !updateInfo.isForced,
     );
   }
-  
+
   /// Open App Store for update
   static Future<void> _openAppStore() async {
     try {
       final uri = Uri.parse(_appStoreUrl);
-      
+
       if (await canLaunchUrl(uri)) {
         await launchUrl(
           uri,
@@ -138,12 +140,12 @@ class IOSUpdateService {
       _showAppStoreError();
     }
   }
-  
+
   /// Open App Store review page
   static Future<void> openAppStoreReview() async {
     try {
       final uri = Uri.parse(_appStoreReviewUrl);
-      
+
       if (await canLaunchUrl(uri)) {
         await launchUrl(
           uri,
@@ -157,7 +159,7 @@ class IOSUpdateService {
       _showAppStoreError();
     }
   }
-  
+
   /// Show App Store error
   static void _showAppStoreError() {
     Get.snackbar(
@@ -169,7 +171,7 @@ class IOSUpdateService {
       duration: const Duration(seconds: 3),
     );
   }
-  
+
   /// Show update reminder
   static void showUpdateReminder(UpdateInfo updateInfo) {
     Get.snackbar(
@@ -194,7 +196,7 @@ class IOSUpdateService {
       ),
     );
   }
-  
+
   /// Check if app was recently updated
   static Future<bool> wasRecentlyUpdated() async {
     try {

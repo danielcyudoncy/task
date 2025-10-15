@@ -36,10 +36,10 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
   Future<void> _handleEmailLink() async {
     // Get the email link from various sources
     String? emailLink;
-    
+
     // Check for link in route parameters
     emailLink = Get.parameters['link'];
-    
+
     // Check for link in arguments
     if (emailLink == null) {
       final args = Get.arguments;
@@ -49,7 +49,7 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
         emailLink = args['link'];
       }
     }
-    
+
     // Check for link in current URI (for web/deep links)
     if (emailLink == null) {
       final uri = Uri.base;
@@ -59,7 +59,7 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
         emailLink = uri.toString();
       }
     }
-    
+
     if (emailLink != null && _emailController.text.isNotEmpty) {
       await _signInWithEmailLink(emailLink);
     }
@@ -86,7 +86,8 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
         emailLink,
       );
     } catch (e) {
-      _safeSnackbar('Error', 'Failed to sign in with email link. Please try again.');
+      _safeSnackbar(
+          'Error', 'Failed to sign in with email link. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -139,7 +140,7 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
                     child: Column(
                       children: [
                         const SizedBox(height: 60),
-                        
+
                         // App Logo
                         Center(
                           child: ClipRRect(
@@ -187,7 +188,8 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
                                   'Please confirm your email address to complete the sign-in process.',
                                   style: textTheme.bodyMedium?.copyWith(
                                     fontSize: 14.sp,
-                                    color: textTheme.bodyMedium?.color?.withAlpha(7),
+                                    color: textTheme.bodyMedium?.color
+                                        ?.withAlpha(7),
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -241,45 +243,56 @@ class _EmailLinkSignInScreenState extends State<EmailLinkSignInScreen> {
 
                                 // Complete Sign In Button
                                 Obx(() => ElevatedButton(
-                                  onPressed: _isProcessing || _authController.isLoading.value
-                                      ? null
-                                      : () async {
-                                          if (_formKey.currentState!.validate()) {
-                                            final String? emailLink = Get.parameters['link'] ?? Get.arguments as String?;
-                                            if (emailLink != null) {
-                                              await _signInWithEmailLink(emailLink);
-                                            } else {
-                                              _safeSnackbar('Error', 'Invalid email link. Please try again.');
-                                            }
-                                          }
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: colorScheme.primary,
-                                    foregroundColor: colorScheme.onPrimary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                  ),
-                                  child: _isProcessing || _authController.isLoading.value
-                                      ? SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              colorScheme.onPrimary,
-                                            ),
-                                          ),
-                                        )
-                                      : Text(
-                                          'Complete Sign In',
-                                          style: TextStyle(
-                                            fontSize: 16.sp,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                      onPressed: _isProcessing ||
+                                              _authController.isLoading.value
+                                          ? null
+                                          : () async {
+                                              if (_formKey.currentState!
+                                                  .validate()) {
+                                                final String? emailLink = Get
+                                                        .parameters['link'] ??
+                                                    Get.arguments as String?;
+                                                if (emailLink != null) {
+                                                  await _signInWithEmailLink(
+                                                      emailLink);
+                                                } else {
+                                                  _safeSnackbar('Error',
+                                                      'Invalid email link. Please try again.');
+                                                }
+                                              }
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: colorScheme.primary,
+                                        foregroundColor: colorScheme.onPrimary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
-                                )),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                      ),
+                                      child: _isProcessing ||
+                                              _authController.isLoading.value
+                                          ? SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(
+                                                  colorScheme.onPrimary,
+                                                ),
+                                              ),
+                                            )
+                                          : Text(
+                                              'Complete Sign In',
+                                              style: TextStyle(
+                                                fontSize: 16.sp,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                    )),
                                 const SizedBox(height: 16),
 
                                 // Back to Login Button

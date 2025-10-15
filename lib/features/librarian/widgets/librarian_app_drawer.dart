@@ -84,7 +84,9 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
                                     style: TextStyle(
                                       fontSize: 28.sp,
                                       fontFamily: 'Raleway',
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                     ),
                                   )
                                 : null,
@@ -139,8 +141,8 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
                     color:
                         _showCalendar ? Theme.of(context).primaryColor : null,
                   ),
-                  title:
-                      Text(_showCalendar ? 'hide_calendar'.tr : 'show_calendar'.tr),
+                  title: Text(
+                      _showCalendar ? 'hide_calendar'.tr : 'show_calendar'.tr),
                   onTap: () {
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _showCalendar = !_showCalendar);
@@ -179,8 +181,9 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
                             shape: BoxShape.circle,
                           ),
                           selectedDecoration: BoxDecoration(
-                            color:
-                                Theme.of(context).primaryColor.withAlpha((0.6 * 255).toInt()),
+                            color: Theme.of(context)
+                                .primaryColor
+                                .withAlpha((0.6 * 255).toInt()),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -198,25 +201,21 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 children: [
-
                   _drawerTile(Icons.person_outline, 'Profile', () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
                     Get.toNamed('/profile');
                   }),
-
                   _drawerTile(Icons.settings_outlined, 'Settings', () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
                     Get.toNamed('/settings');
                   }),
-
                   _drawerTile(Icons.build_outlined, 'Fix Notifications', () {
                     Get.find<SettingsController>().triggerFeedback();
                     Get.back();
                     Get.toNamed('/notification-fix');
                   }),
-
                   _buildDarkModeCard(isDark),
                 ],
               ),
@@ -241,7 +240,8 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
                     ),
                     title: Text(
                       'Logout',
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
                     ),
                     onTap: _confirmLogout,
                   ),
@@ -268,15 +268,15 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: Obx(() => SwitchListTile(
-        title: Text('dark_mode'.tr,
-            style: TextStyle(
-                fontSize: 16.sp,
-                color: Theme.of(context).textTheme.bodyLarge?.color)),
-        value: themeController.isDarkMode.value,
-        onChanged: (value) {
-          themeController.toggleTheme(value);
-        },
-      )),
+            title: Text('dark_mode'.tr,
+                style: TextStyle(
+                    fontSize: 16.sp,
+                    color: Theme.of(context).textTheme.bodyLarge?.color)),
+            value: themeController.isDarkMode.value,
+            onChanged: (value) {
+              themeController.toggleTheme(value);
+            },
+          )),
     );
   }
 

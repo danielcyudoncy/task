@@ -6,12 +6,10 @@ import 'package:task/service/user_deletion_service.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/snackbar_utils.dart';
 
-
 class UserController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AuthController authController = Get.find<AuthController>();
   final UserDeletionService userDeletionService;
-  
 
   // Existing observables
   var reporters = <Map<String, dynamic>>[].obs;

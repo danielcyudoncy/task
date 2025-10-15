@@ -14,15 +14,23 @@ class AuthMiddleware extends GetMiddleware {
 
     debugPrint("AuthMiddleware: Checking route: $route");
     debugPrint("AuthMiddleware: auth.currentUser: ${auth.currentUser?.uid}");
-    debugPrint("AuthMiddleware: auth.auth.currentUser: ${auth.auth.currentUser?.uid}");
+    debugPrint(
+        "AuthMiddleware: auth.auth.currentUser: ${auth.auth.currentUser?.uid}");
     debugPrint("AuthMiddleware: auth.userRole.value: ${auth.userRole.value}");
-    debugPrint("AuthMiddleware: auth.isProfileComplete.value: ${auth.isProfileComplete.value}");
+    debugPrint(
+        "AuthMiddleware: auth.isProfileComplete.value: ${auth.isProfileComplete.value}");
 
     // skip redirect if logout
     if (args?['fromLogout'] == true) return null;
 
     // Public routes - ensure login is always accessible
-    const publicRoutes = ['/', '/login', '/signup', '/forgot-password', '/onboarding'];
+    const publicRoutes = [
+      '/',
+      '/login',
+      '/signup',
+      '/forgot-password',
+      '/onboarding'
+    ];
     if (publicRoutes.contains(route)) {
       debugPrint("AuthMiddleware: Allowing access to public route: $route");
       return null;
@@ -36,7 +44,8 @@ class AuthMiddleware extends GetMiddleware {
 
     // If user is logged in but role is not loaded yet, allow access temporarily
     if (auth.userRole.value.isEmpty && auth.auth.currentUser != null) {
-      debugPrint("AuthMiddleware: User logged in but role not loaded, allowing access temporarily");
+      debugPrint(
+          "AuthMiddleware: User logged in but role not loaded, allowing access temporarily");
       return null;
     }
 
@@ -63,7 +72,8 @@ class AuthMiddleware extends GetMiddleware {
 
     // Handle librarian dashboard access
     if (route == '/librarian-dashboard' && role != 'Librarian') {
-      debugPrint("AuthMiddleware: Redirecting non-librarian from librarian dashboard");
+      debugPrint(
+          "AuthMiddleware: Redirecting non-librarian from librarian dashboard");
       return const RouteSettings(name: '/home');
     }
 
