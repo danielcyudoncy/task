@@ -30,7 +30,6 @@ import 'package:task/controllers/chat_controller.dart';
 import 'package:task/controllers/manage_users_controller.dart';
 import 'package:task/controllers/notification_controller.dart';
 import 'package:task/controllers/privacy_controller.dart';
-import 'package:task/controllers/quarterly_transition_controller.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/controllers/theme_controller.dart';
@@ -47,7 +46,6 @@ import 'package:task/service/presence_service.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
 import 'package:task/service/archive_service.dart';
-import 'package:task/service/logging_service.dart';
 import 'package:task/utils/constants/app_constants.dart';
 import 'package:task/service/task_attachment_service.dart';
 import 'package:task/service/bulk_operations_service.dart';
@@ -135,8 +133,7 @@ Future<void> bootstrapApp() async {
       return true;
     };
 
-    // Load environment variables
-
+    // Load environment variables (can be done in parallel with other operations)
     await dotenv.load(fileName: "assets/.env");
 
     // Initialize Firebase
@@ -161,201 +158,125 @@ Future<void> bootstrapApp() async {
       useFirebaseEmulator(emulatorHost);
     }
 
-    // Initialize Firebase services
+    // Initialize CRITICAL services only (parallel for speed)
+    debugPrint("🚀 BOOTSTRAP: Initializing CRITICAL services in parallel");
+    await Future.wait([
+      _initializeService(() => AuthController(), 'AuthController'),
+      _initializeService(() => ThemeController(), 'ThemeController'),
+      _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService'),
+    ]);
 
-    await _verifyFirebaseServices();
-
-    // Initialize User Cache Service early for better performance
-
+    // Initialize User Cache Service early for better performance (but don't pre-fetch yet)
     final userCacheService = UserCacheService();
     await userCacheService.initialize();
     Get.put(userCacheService, permanent: true);
 
-    // Pre-fetch all user names and avatars for immediate display
+    // Defer heavy operations to background (don't block startup)
+    Future(() async {
+      try {
+        await _verifyFirebaseServices();
+        debugPrint('🚀 BOOTSTRAP: Firebase verification completed in background');
+      } catch (e) {
+        debugPrint('⚠️ BOOTSTRAP: Background Firebase verification failed: $e');
+      }
+    });
 
-    try {
-      await userCacheService.preFetchAllUsers();
-      debugPrint('🚀 BOOTSTRAP: Pre-fetched user data for immediate display');
-    } catch (e) {
-      debugPrint('⚠️ BOOTSTRAP: Failed to pre-fetch user data: $e');
-      // Continue bootstrap even if pre-fetch fails
-    }
+    // Defer user data pre-fetching to background (don't block startup)
+    Future(() async {
+      try {
+        await userCacheService.preFetchAllUsers();
+        debugPrint('🚀 BOOTSTRAP: User data pre-fetched in background');
+      } catch (e) {
+        debugPrint('⚠️ BOOTSTRAP: Background user pre-fetch failed: $e');
+      }
+    });
 
-    // Initialize Firebase Messaging Service
-
+    // Initialize Firebase Messaging in background (don't block startup)
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    final firebaseMessagingService = FirebaseMessagingService();
-    await firebaseMessagingService.initialize();
-    Get.put(firebaseMessagingService, permanent: true);
+    Future.microtask(() async {
+      try {
+        final firebaseMessagingService = FirebaseMessagingService();
+        await firebaseMessagingService.initialize();
+        Get.put(firebaseMessagingService, permanent: true);
+        debugPrint('🚀 BOOTSTRAP: Firebase Messaging initialized in background');
+      } catch (e) {
+        debugPrint('⚠️ BOOTSTRAP: Firebase Messaging initialization failed: $e');
+      }
+    });
 
-    // Initialize other services
+    // Initialize TaskService in background using microtask for even faster startup
+    Future.microtask(() async {
+      try {
+        final taskService = TaskService();
+        await taskService.initialize();
+        Get.put(taskService, permanent: true);
+        debugPrint('🚀 BOOTSTRAP: TaskService initialized in background');
+      } catch (e) {
+        debugPrint('⚠️ BOOTSTRAP: TaskService initialization failed: $e');
+        Get.put(TaskService(), permanent: true); // Still register even if init fails
+      }
+    });
 
-    final taskService = TaskService();
-    await taskService.initialize();
-    Get.put(taskService, permanent: true);
-
-    // Initialize audio player
-
+    // Initialize audio player (can run in parallel)
     final audioPlayer = await _initializeAudioPlayer();
 
-    // Initialize services
-    debugPrint("🚀 BOOTSTRAP: Initializing services");
-    await _initializeService(
-        () => QuarterlyTransitionService(), 'QuarterlyTransitionService');
+    // Initialize CRITICAL services first (parallel)
+    debugPrint("🚀 BOOTSTRAP: Initializing CRITICAL services in parallel");
+    await Future.wait([
+      _initializeService(() => AuthController(), 'AuthController'),
+      _initializeService(() => ThemeController(), 'ThemeController'),
+      _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService'),
+    ]);
 
-    // Initialize other services with proper error handling
-    await _initializeService<FirebaseStorageService>(
-      () => FirebaseStorageService(),
-      'FirebaseStorageService',
-    );
+    // Initialize ESSENTIAL services (parallel)
+    debugPrint("🚀 BOOTSTRAP: Initializing ESSENTIAL services in parallel");
+    await Future.wait([
+      _initializeService<FirebaseStorageService>(() => FirebaseStorageService(), 'FirebaseStorageService'),
+      _initializeService<ExportService>(() => ExportService(), 'ExportService'),
+      _initializeService<ArchiveService>(() => ArchiveService(), 'ArchiveService'),
+    ]);
 
-    await _initializeService<ExportService>(
-      () => ExportService(),
-      'ExportService',
-    );
-
-    await _initializeService<ArchiveService>(
-      () => ArchiveService(),
-      'ArchiveService',
-    );
-
-    await _initializeService<TaskAttachmentService>(
-      () => TaskAttachmentService(),
-      'TaskAttachmentService',
-    );
-
-    await _initializeService<PdfExportService>(
-      () => PdfExportService(),
-      'PdfExportService',
-      needsInitialization: true,
-    );
-
-    await _initializeService<VersionControlService>(
-      () => VersionControlService(),
-      'VersionControlService',
-    );
-
-    await _initializeService<DuplicateDetectionService>(
-      () => DuplicateDetectionService(),
-      'DuplicateDetectionService',
-    );
-
-    await _initializeService<CloudFunctionUserDeletionService>(
-      () => CloudFunctionUserDeletionService(),
-      'UserDeletionService',
-    );
+    // Initialize OPTIONAL services (parallel, non-blocking)
+    debugPrint("🚀 BOOTSTRAP: Initializing OPTIONAL services in parallel");
+    await Future.wait([
+      _initializeService<TaskAttachmentService>(() => TaskAttachmentService(), 'TaskAttachmentService'),
+      _initializeService<PdfExportService>(() => PdfExportService(), 'PdfExportService', needsInitialization: true),
+      _initializeService<VersionControlService>(() => VersionControlService(), 'VersionControlService'),
+      _initializeService<DuplicateDetectionService>(() => DuplicateDetectionService(), 'DuplicateDetectionService'),
+      _initializeService<CloudFunctionUserDeletionService>(() => CloudFunctionUserDeletionService(), 'UserDeletionService'),
+      _initializeService<NewsService>(() => NewsService(), 'NewsService'),
+      _initializeService<DailyTaskNotificationService>(() => DailyTaskNotificationService(), 'DailyTaskNotificationService'),
+      _initializeService<AccessControlService>(() => AccessControlService(), 'AccessControlService'),
+    ]);
 
     // Register the service by interface type as well
-    Get.put<UserDeletionService>(Get.find<CloudFunctionUserDeletionService>(),
-        permanent: true);
+    Get.put<UserDeletionService>(Get.find<CloudFunctionUserDeletionService>(), permanent: true);
 
-    await _initializeService<NewsService>(
-      () => NewsService(),
-      'NewsService',
-    );
-
-    await _initializeService<DailyTaskNotificationService>(
-      () => DailyTaskNotificationService(),
-      'DailyTaskNotificationService',
-    );
-
-    await _initializeService<AccessControlService>(
-      () => AccessControlService(),
-      'AccessControlService',
-    );
-
-    // Initialize new architecture services
-    await _initializeService<StartupOptimizationService>(
-      () => StartupOptimizationService(),
-      'StartupOptimizationService',
-    );
-
-    // Initialize ResponsiveController
-    await _initializeService<ResponsiveController>(
-      () => ResponsiveController(),
-      'ResponsiveController',
-    );
-
-    await _initializeService<IntelligentCacheService>(
-      () => IntelligentCacheService(),
-      'IntelligentCacheService',
-    );
-
-    await _initializeService<CacheManager>(
-      () => CacheManager(),
-      'CacheManager',
-    );
-
-    await _initializeService<CachedTaskService>(
-      () => CachedTaskService(),
-      'CachedTaskService',
-    );
-
-    await _initializeService<EnhancedNotificationService>(
-      () => EnhancedNotificationService(),
-      'EnhancedNotificationService',
-    );
-
-    await _initializeService<NetworkService>(
-      () => NetworkService(),
-      'NetworkService',
-    );
-
-    await _initializeService<ConnectivityService>(
-      () => ConnectivityService(),
-      'ConnectivityService',
-    );
-
-    await _initializeService<ErrorHandlingService>(
-      () => ErrorHandlingService(),
-      'ErrorHandlingService',
-    );
-
-    await _initializeService<LoadingStateService>(
-      () => LoadingStateService(),
-      'LoadingStateService',
-    );
-
-    await _initializeService<OfflineDataService>(
-      () => OfflineDataService(),
-      'OfflineDataService',
-    );
-
-    // Initialize LoggingService early for better debugging
-    await _initializeService<LoggingService>(
-      () => LoggingService(),
-      'LoggingService',
-    );
+    // Initialize new architecture services (parallel)
+    await Future.wait([
+      _initializeService<StartupOptimizationService>(() => StartupOptimizationService(), 'StartupOptimizationService'),
+      _initializeService<ResponsiveController>(() => ResponsiveController(), 'ResponsiveController'),
+      _initializeService<IntelligentCacheService>(() => IntelligentCacheService(), 'IntelligentCacheService'),
+      _initializeService<CacheManager>(() => CacheManager(), 'CacheManager'),
+      _initializeService<CachedTaskService>(() => CachedTaskService(), 'CachedTaskService'),
+      _initializeService<EnhancedNotificationService>(() => EnhancedNotificationService(), 'EnhancedNotificationService'),
+      _initializeService<NetworkService>(() => NetworkService(), 'NetworkService'),
+      _initializeService<ConnectivityService>(() => ConnectivityService(), 'ConnectivityService'),
+      _initializeService<ErrorHandlingService>(() => ErrorHandlingService(), 'ErrorHandlingService'),
+      _initializeService<LoadingStateService>(() => LoadingStateService(), 'LoadingStateService'),
+      _initializeService<OfflineDataService>(() => OfflineDataService(), 'OfflineDataService'),
+    ]);
 
     // Initialize BiometricService early for app lock functionality
-    await _initializeService<BiometricService>(
-      () => BiometricService(),
-      'BiometricService',
-    );
+    await _initializeService<BiometricService>(() => BiometricService(), 'BiometricService');
 
-    // Initialize controllers that depend on services
-
-    Get.put(AuthController(), permanent: true);
-
+    // Initialize controllers that depend on services (skip already initialized ones)
     Get.put(AppLockController(), permanent: true);
-
-    // ThemeController already initialized at line 98
-
     Get.put(SettingsController(audioPlayer), permanent: true);
-
-    // Initialize QuarterlyTransitionController
-
-    Get.put(QuarterlyTransitionController(), permanent: true);
-
     Get.put(TaskController(), permanent: true);
-
-    Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()),
-        permanent: true);
-
+    Get.put(UserController(Get.find<CloudFunctionUserDeletionService>()), permanent: true);
     Get.put(PresenceService(), permanent: true);
-
     Get.put(AdminController(), permanent: true);
-
     Get.put(ChatController(), permanent: true);
 
     // Initialize services that depend on controllers
@@ -380,13 +301,19 @@ Future<void> bootstrapApp() async {
 
     // Mark bootstrap as complete
     _isBootstrapComplete = true;
+    final bootstrapEndTime = DateTime.now();
+    final totalBootTime = bootstrapEndTime.difference(_bootstrapStartTime!);
+    debugPrint('🚀 BOOTSTRAP: App bootstrap completed in ${totalBootTime.inMilliseconds}ms');
 
-    // Execute startup optimization
-    try {
-      await StartupOptimizationService.to.executeStartup();
-    } catch (e) {
-      debugPrint('Startup optimization failed: $e');
-    }
+    // Execute startup optimization in background (don't block app launch)
+    Future(() async {
+      try {
+        await StartupOptimizationService.to.executeStartup();
+        debugPrint('🚀 BOOTSTRAP: Startup optimization completed in background');
+      } catch (e) {
+        debugPrint('⚠️ BOOTSTRAP: Startup optimization failed: $e');
+      }
+    });
 
     // Run the app
     runApp(const MyApp());
