@@ -5,20 +5,21 @@ import 'package:shimmer/shimmer.dart';
 class TaskSkeletonList extends StatelessWidget {
   final bool isLargeScreen;
   final double textScale;
-  const TaskSkeletonList({required this.isLargeScreen, required this.textScale, super.key});
+  const TaskSkeletonList(
+      {required this.isLargeScreen, required this.textScale, super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Theme-aware skeleton colors
     final baseColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
     final highlightColor = isDark ? Colors.grey[600]! : Colors.grey[100]!;
     final skeletonColor = isDark ? Colors.grey[800]! : Colors.white;
     final dividerColor = theme.dividerColor;
-    
+
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: 6,
@@ -29,7 +30,8 @@ class TaskSkeletonList extends StatelessWidget {
         endIndent: 16,
       ),
       itemBuilder: (context, index) => Padding(
-        padding: EdgeInsets.symmetric(horizontal: isLargeScreen ? 16 : 8.0, vertical: 4.0),
+        padding: EdgeInsets.symmetric(
+            horizontal: isLargeScreen ? 16 : 8.0, vertical: 4.0),
         child: Shimmer.fromColors(
           baseColor: baseColor,
           highlightColor: highlightColor,

@@ -11,7 +11,7 @@ import 'package:task/widgets/chip_input_field.dart';
 
 class TaskFiltersSheet extends StatefulWidget {
   final TaskFilters initialFilters;
-  
+
   const TaskFiltersSheet({
     super.key,
     required this.initialFilters,
@@ -27,39 +27,40 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
   final UserController _userController = Get.find<UserController>();
   final RxList<String> _availableCategories = <String>[].obs;
   final RxList<String> _availableTags = <String>[].obs;
-  final RxList<Map<String, dynamic>> _availableUsers = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> _availableUsers =
+      <Map<String, dynamic>>[].obs;
   final RxBool _isLoading = false.obs;
-  
+
   @override
   void initState() {
     super.initState();
     _filters = widget.initialFilters;
     _loadFilterOptions();
   }
-  
+
   Future<void> _loadFilterOptions() async {
     try {
       _isLoading.value = true;
-      
+
       // Load categories and tags from tasks
       final tasks = await _taskController.getAllTasks();
-      
+
       // Extract unique categories
       final categories = tasks
           .map((task) => task.category)
           .whereType<String>()
           .toSet()
           .toList();
-      
+
       // Extract unique tags
       final tags = <String>{};
       for (final task in tasks) {
         tags.addAll(task.tags);
       }
-      
+
       // Load users from UserController's allUsers observable
       final users = _userController.allUsers;
-      
+
       _availableCategories.value = categories;
       _availableTags.value = tags.toList();
       _availableUsers.value = users
@@ -80,13 +81,14 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       _isLoading.value = false;
     }
   }
-  
+
   Future<void> _selectDateRange(BuildContext context) async {
     final initialDateRange = DateTimeRange(
-      start: _filters.startDate ?? DateTime.now().subtract(const Duration(days: 30)),
+      start: _filters.startDate ??
+          DateTime.now().subtract(const Duration(days: 30)),
       end: _filters.endDate ?? DateTime.now(),
     );
-    
+
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2000),
@@ -99,14 +101,15 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               primary: Theme.of(context).primaryColor,
               onPrimary: Colors.white,
               surface: Theme.of(context).scaffoldBackgroundColor,
-              onSurface: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
+              onSurface:
+                  Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black,
             ),
           ),
           child: child!,
         );
       },
     );
-    
+
     if (picked != null) {
       // Validate date range
       if (picked.start.isAfter(picked.end)) {
@@ -117,7 +120,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
         );
         return;
       }
-      
+
       setState(() {
         _filters = _filters.copyWith(
           startDate: picked.start,
@@ -126,7 +129,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       });
     }
   }
-  
+
   void _toggleStatus(String status) {
     setState(() {
       final statuses = _filters.statuses?.toList() ?? [];
@@ -138,7 +141,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       _filters = _filters.copyWith(statuses: statuses);
     });
   }
-  
+
   void _toggleCategory(String category) {
     setState(() {
       final categories = _filters.categories?.toList() ?? [];
@@ -150,20 +153,21 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       _filters = _filters.copyWith(categories: categories);
     });
   }
-  
+
   void _addTag(String tag) {
     final trimmedTag = tag.trim();
     if (trimmedTag.isEmpty) return;
-    
+
     setState(() {
       final tags = _filters.tags?.toList() ?? [];
-      if (!tags.any((existingTag) => existingTag.toLowerCase() == trimmedTag.toLowerCase())) {
+      if (!tags.any((existingTag) =>
+          existingTag.toLowerCase() == trimmedTag.toLowerCase())) {
         tags.add(trimmedTag);
         _filters = _filters.copyWith(tags: tags);
       }
     });
   }
-  
+
   void _removeTag(String tag) {
     setState(() {
       final tags = _filters.tags?.toList() ?? [];
@@ -171,7 +175,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       _filters = _filters.copyWith(tags: tags);
     });
   }
-  
+
   void _toggleUser(String userId) {
     setState(() {
       final userIds = _filters.assignedToUserIds?.toList() ?? [];
@@ -183,20 +187,20 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       _filters = _filters.copyWith(assignedToUserIds: userIds);
     });
   }
-  
+
   void _resetFilters() {
     setState(() {
       _filters = TaskFilters();
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dateRangeText = _filters.startDate != null || _filters.endDate != null
         ? '${_filters.startDate != null ? DateFormat('MMM d, y').format(_filters.startDate!) : 'Start'} - ${_filters.endDate != null ? DateFormat('MMM d, y').format(_filters.endDate!) : 'End'}'
         : 'Any date';
-    
+
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.4,
@@ -211,293 +215,308 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Filter Tasks',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Filter Tasks',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                TextButton(
-                  onPressed: _filters.hasActiveFilters ? _resetFilters : null,
-                  child: const Text('Reset'),
-                ),
-              ],
+                  TextButton(
+                    onPressed: _filters.hasActiveFilters ? _resetFilters : null,
+                    child: const Text('Reset'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          
-          const Divider(height: 1),
-          
-          // Content
-          Expanded(
-            child: Obx(() {
-              if (_isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              
-              return SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Status filter
-                    _buildSectionTitle('Status'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildFilterChip(
-                          label: 'Pending',
-                          selected: _filters.statuses?.contains('Pending') ?? false,
-                          onSelected: (_) => _toggleStatus('Pending'),
-                        ),
-                        _buildFilterChip(
-                          label: 'In Progress',
-                          selected: _filters.statuses?.contains('In Progress') ?? false,
-                          onSelected: (_) => _toggleStatus('In Progress'),
-                        ),
-                        _buildFilterChip(
-                          label: 'Completed',
-                          selected: _filters.statuses?.contains('Completed') ?? false,
-                          onSelected: (_) => _toggleStatus('Completed'),
-                        ),
-                        _buildFilterChip(
-                          label: 'Archived',
-                          selected: _filters.statuses?.contains('Archived') ?? false,
-                          onSelected: (_) => _toggleStatus('Archived'),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Date range filter
-                    _buildSectionTitle('Date Range'),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () => _selectDateRange(context),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: theme.dividerColor.withValues(alpha: 0.5),
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.calendar_today_outlined, 
-                                 size: 20, 
-                                 color: theme.colorScheme.onSurface),
-                            const SizedBox(width: 12),
-                            Text(
-                              dateRangeText,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_filters.startDate != null || _filters.endDate != null)
-                              IconButton(
-                                icon: Icon(Icons.close, 
-                                          size: 18, 
-                                          color: theme.colorScheme.onSurface),
-                                onPressed: () {
-                                  setState(() {
-                                    _filters = _filters.copyWith(
-                                      clearStartDate: true,
-                                      clearEndDate: true,
-                                    );
-                                  });
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                iconSize: 18,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Categories filter
-                    _buildSectionTitle('Categories'),
-                    const SizedBox(height: 8),
-                    if (_availableCategories.isEmpty)
-                      _buildEmptyState('No categories available')
-                    else
+
+            const Divider(height: 1),
+
+            // Content
+            Expanded(
+              child: Obx(() {
+                if (_isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Status filter
+                      _buildSectionTitle('Status'),
+                      const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: _availableCategories
-                            .map((category) => _buildFilterChip(
-                                  label: category,
-                                  selected: _filters.categories?.contains(category) ?? false,
-                                  onSelected: (_) => _toggleCategory(category),
-                                ))
-                            .toList(),
+                        children: [
+                          _buildFilterChip(
+                            label: 'Pending',
+                            selected:
+                                _filters.statuses?.contains('Pending') ?? false,
+                            onSelected: (_) => _toggleStatus('Pending'),
+                          ),
+                          _buildFilterChip(
+                            label: 'In Progress',
+                            selected:
+                                _filters.statuses?.contains('In Progress') ??
+                                    false,
+                            onSelected: (_) => _toggleStatus('In Progress'),
+                          ),
+                          _buildFilterChip(
+                            label: 'Completed',
+                            selected:
+                                _filters.statuses?.contains('Completed') ??
+                                    false,
+                            onSelected: (_) => _toggleStatus('Completed'),
+                          ),
+                          _buildFilterChip(
+                            label: 'Archived',
+                            selected: _filters.statuses?.contains('Archived') ??
+                                false,
+                            onSelected: (_) => _toggleStatus('Archived'),
+                          ),
+                        ],
                       ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Tags filter
-                    _buildSectionTitle('Tags'),
-                    const SizedBox(height: 8),
-                    if (_availableTags.isEmpty)
-                      _buildEmptyState('No tags available')
-                    else
-                      ChipInputField<String>(
-                        initialItems: _filters.tags?.toList() ?? [],
-                        availableSuggestions: _availableTags
-                            .where((tag) =>
-                                !(_filters.tags?.any((selectedTag) =>
-                                    selectedTag.toLowerCase() == tag.toLowerCase()) ?? false))
-                            .toList(),
-                        itemBuilder: (context, tag) {
-                          return Chip(
-                            label: Text(tag),
-                            onDeleted: () => _removeTag(tag),
-                            deleteIcon: const Icon(Icons.close, size: 16),
-                            backgroundColor: theme.colorScheme.primaryContainer,
-                            labelStyle: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          );
-                        },
-                        suggestionBuilder: (context, tag) {
-                          return ListTile(
-                            title: Text(tag, 
-                                        style: TextStyle(
-                                          color: theme.colorScheme.onSurface,
-                                        )),
-                            onTap: () => _addTag(tag),
-                          );
-                        },
-                        onChanged: (tags) {
-                          setState(() {
-                            _filters = _filters.copyWith(tags: tags);
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Add tags...',
-                          hintStyle: TextStyle(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: theme.dividerColor.withValues(alpha: 0.5),
-                              width: 1,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: theme.dividerColor.withValues(alpha: 0.5),
-                              width: 1,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: theme.primaryColor,
-                              width: 1.5,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+
+                      const SizedBox(height: 24),
+
+                      // Date range filter
+                      _buildSectionTitle('Date Range'),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _selectDateRange(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
                             vertical: 12,
                           ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: theme.dividerColor.withValues(alpha: 0.5),
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.calendar_today_outlined,
+                                  size: 20, color: theme.colorScheme.onSurface),
+                              const SizedBox(width: 12),
+                              Text(
+                                dateRangeText,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              const Spacer(),
+                              if (_filters.startDate != null ||
+                                  _filters.endDate != null)
+                                IconButton(
+                                  icon: Icon(Icons.close,
+                                      size: 18,
+                                      color: theme.colorScheme.onSurface),
+                                  onPressed: () {
+                                    setState(() {
+                                      _filters = _filters.copyWith(
+                                        clearStartDate: true,
+                                        clearEndDate: true,
+                                      );
+                                    });
+                                  },
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  iconSize: 18,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Assigned users filter
-                    _buildSectionTitle('Assigned To'),
-                    const SizedBox(height: 8),
-                    if (_availableUsers.isEmpty)
-                      _buildEmptyState('No users available')
-                    else
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _availableUsers
-                            .map((user) => _buildUserChip(
-                                  user: user,
-                                  selected: _filters.assignedToUserIds
-                                          ?.contains(user['id']) ??
-                                      false,
-                                  onSelected: (_) => _toggleUser(user['id']),
-                                ))
-                            .toList(),
+
+                      const SizedBox(height: 24),
+
+                      // Categories filter
+                      _buildSectionTitle('Categories'),
+                      const SizedBox(height: 8),
+                      if (_availableCategories.isEmpty)
+                        _buildEmptyState('No categories available')
+                      else
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _availableCategories
+                              .map((category) => _buildFilterChip(
+                                    label: category,
+                                    selected: _filters.categories
+                                            ?.contains(category) ??
+                                        false,
+                                    onSelected: (_) =>
+                                        _toggleCategory(category),
+                                  ))
+                              .toList(),
+                        ),
+
+                      const SizedBox(height: 24),
+
+                      // Tags filter
+                      _buildSectionTitle('Tags'),
+                      const SizedBox(height: 8),
+                      if (_availableTags.isEmpty)
+                        _buildEmptyState('No tags available')
+                      else
+                        ChipInputField<String>(
+                          initialItems: _filters.tags?.toList() ?? [],
+                          availableSuggestions: _availableTags
+                              .where((tag) => !(_filters.tags?.any(
+                                      (selectedTag) =>
+                                          selectedTag.toLowerCase() ==
+                                          tag.toLowerCase()) ??
+                                  false))
+                              .toList(),
+                          itemBuilder: (context, tag) {
+                            return Chip(
+                              label: Text(tag),
+                              onDeleted: () => _removeTag(tag),
+                              deleteIcon: const Icon(Icons.close, size: 16),
+                              backgroundColor:
+                                  theme.colorScheme.primaryContainer,
+                              labelStyle: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onPrimaryContainer,
+                              ),
+                            );
+                          },
+                          suggestionBuilder: (context, tag) {
+                            return ListTile(
+                              title: Text(tag,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface,
+                                  )),
+                              onTap: () => _addTag(tag),
+                            );
+                          },
+                          onChanged: (tags) {
+                            setState(() {
+                              _filters = _filters.copyWith(tags: tags);
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Add tags...',
+                            hintStyle: TextStyle(
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color:
+                                    theme.dividerColor.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color:
+                                    theme.dividerColor.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: theme.primaryColor,
+                                width: 1.5,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(height: 24),
+
+                      // Assigned users filter
+                      _buildSectionTitle('Assigned To'),
+                      const SizedBox(height: 8),
+                      if (_availableUsers.isEmpty)
+                        _buildEmptyState('No users available')
+                      else
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _availableUsers
+                              .map((user) => _buildUserChip(
+                                    user: user,
+                                    selected: _filters.assignedToUserIds
+                                            ?.contains(user['id']) ??
+                                        false,
+                                    onSelected: (_) => _toggleUser(user['id']),
+                                  ))
+                              .toList(),
+                        ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                );
+              }),
+            ),
+
+            // Footer with apply button
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: theme.dividerColor),
                       ),
-                    
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              );
-            }),
-          ),
-          
-          // Footer with apply button
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: theme.dividerColor),
+                      child: const Text('Cancel'),
                     ),
-                    child: const Text('Cancel'),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(_filters),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: theme.primaryColor,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(_filters),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: theme.primaryColor,
+                      ),
+                      child: const Text('Apply Filters'),
                     ),
-                    child: const Text('Apply Filters'),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
-  
+
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -507,7 +526,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
           ),
     );
   }
-  
+
   Widget _buildFilterChip({
     required String label,
     required bool selected,
@@ -533,7 +552,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     );
   }
-  
+
   Widget _buildUserChip({
     required Map<String, dynamic> user,
     required bool selected,
@@ -543,7 +562,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
     final name = user['name'] ?? 'Unknown User';
     final email = user['email'] ?? '';
     final role = user['role'] ?? 'user';
-    
+
     Color getRoleColor() {
       switch (role.toLowerCase()) {
         case 'admin':
@@ -562,7 +581,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
           return theme.primaryColor;
       }
     }
-    
+
     return Tooltip(
       message: '$name\n$email\nRole: $role',
       child: FilterChip(
@@ -593,7 +612,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
       ),
     );
   }
-  
+
   Widget _buildEmptyState(String message) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

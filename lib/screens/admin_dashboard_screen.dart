@@ -23,7 +23,6 @@ import '../widgets/dialogs/pending_tasks_dialog.dart';
 import '../widgets/tabs/admin_tabs.dart';
 import '../widgets/tabs/task_approval_tab.dart' as approval_tab;
 
-
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -49,14 +48,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
-    
+
     // Initialize performance controller
     performanceController = Get.put(PerformanceController());
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       adminController.fetchDashboardData();
       adminController.fetchStatistics();
-  // No need to manually fetch users; ManageUsersController now uses a real-time stream.
+      // No need to manually fetch users; ManageUsersController now uses a real-time stream.
     });
   }
 
@@ -89,8 +88,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         });
         return {"name": name, "role": role};
       }
-    // ignore: empty_catches
-    } catch (e) {}
+    } catch (e) {
+      debugPrint('Failed to fetch user data for $userId: $e');
+      // Continue with fallback data
+    }
     userCache[userId] = {"name": userId, "role": "Unknown"};
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -99,10 +100,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     });
     return {"name": userId, "role": "Unknown"};
   }
-
-
-
-
 
   void _showTaskDetailDialog(String title) {
     TaskDetailDialog.show(
@@ -114,8 +111,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-
-
   void _showAllPendingTasksDialog() {
     PendingTasksDialog.show(
       context: context,
@@ -124,8 +119,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       onTaskTap: _showTaskDetailDialog,
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +131,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       if (!mounted) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
-      
+
       if (adminController.isLoading.value ||
           adminController.isStatsLoading.value) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -160,11 +153,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 UserHeader(isDark: isDark, scaffoldKey: _scaffoldKey),
-                
                 const Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                  
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
@@ -253,7 +243,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         height: 34.h,
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? Theme.of(context).colorScheme.onPrimary
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary
                                               : const Color(0xFF3739B7),
                                           shape: BoxShape.circle,
                                         ),
@@ -262,7 +254,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                           size: 22.sp,
                                           color: isDark
                                               ? const Color(0xFF3739B7)
-                                              : Theme.of(context).colorScheme.onPrimary,
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
                                         ),
                                       ),
                                     ),
@@ -277,8 +271,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 labelColor: isDark
                                     ? Theme.of(context).colorScheme.onPrimary
                                     : Theme.of(context).colorScheme.primary,
-                                unselectedLabelColor:
-                                    isDark ? const Color(0xFFB0B0B0) : Colors.black54,
+                                unselectedLabelColor: isDark
+                                    ? const Color(0xFFB0B0B0)
+                                    : Colors.black54,
                                 labelStyle: const TextStyle(
                                     fontWeight: FontWeight.w500, fontSize: 15),
                                 isScrollable: true,
@@ -299,13 +294,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                     TasksTab(
                                       userCache: userCache,
                                       getUserNameAndRole: getUserNameAndRole,
-                                      showTaskDetailDialog: _showTaskDetailDialog,
+                                      showTaskDetailDialog:
+                                          _showTaskDetailDialog,
                                       taskType: 'pending',
                                     ),
                                     TasksTab(
                                       userCache: userCache,
                                       getUserNameAndRole: getUserNameAndRole,
-                                      showTaskDetailDialog: _showTaskDetailDialog,
+                                      showTaskDetailDialog:
+                                          _showTaskDetailDialog,
                                       taskType: 'completed',
                                     ),
                                     approval_tab.TaskApprovalTab(
@@ -328,7 +325,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             ),
           ),
         ),
-        bottomNavigationBar:  UserNavBar(currentIndex: 0),
+        bottomNavigationBar: UserNavBar(currentIndex: 0),
       );
     });
   }

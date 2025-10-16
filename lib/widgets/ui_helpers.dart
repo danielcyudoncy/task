@@ -113,7 +113,8 @@ class UIHelpers {
   }
 
   /// Builds a detail row for displaying key-value pairs
-  static Widget buildDetailRow(BuildContext context, String label, String value) {
+  static Widget buildDetailRow(
+      BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -220,14 +221,14 @@ class UIHelpers {
   /// Formats date string consistently
   static String formatDate(dynamic dateValue) {
     if (dateValue == null) return 'Unknown';
-    
+
     DateTime dt;
     if (dateValue is DateTime) {
       dt = dateValue;
     } else {
       dt = DateTime.tryParse(dateValue.toString()) ?? DateTime.now();
     }
-    
+
     return "${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
   }
 

@@ -175,7 +175,8 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               );
             });
           },
-          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          selectedColor:
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           checkmarkColor: Theme.of(context).colorScheme.primary,
         );
       }).toList(),
@@ -206,7 +207,8 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               );
             });
           },
-          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          selectedColor:
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           checkmarkColor: Theme.of(context).colorScheme.primary,
         );
       }).toList(),
@@ -237,7 +239,8 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
               );
             });
           },
-          selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          selectedColor:
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           checkmarkColor: Theme.of(context).colorScheme.primary,
         );
       }).toList(),
@@ -270,18 +273,19 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                 return Theme(
                   data: Theme.of(context).copyWith(
                     colorScheme: Theme.of(context).colorScheme.copyWith(
-                      primary: Theme.of(context).colorScheme.primary,
-                      onPrimary: Theme.of(context).colorScheme.onPrimary,
-                      surface: Theme.of(context).colorScheme.surface,
-                      onSurface: Theme.of(context).colorScheme.onSurface,
-                    ),
+                          primary: Theme.of(context).colorScheme.primary,
+                          onPrimary: Theme.of(context).colorScheme.onPrimary,
+                          surface: Theme.of(context).colorScheme.surface,
+                          onSurface: Theme.of(context).colorScheme.onSurface,
+                        ),
                     textButtonTheme: TextButtonThemeData(
-                       style: TextButton.styleFrom(
-                         foregroundColor: Theme.of(context).brightness == Brightness.dark 
-                             ? Colors.white 
-                             : Theme.of(context).colorScheme.primary,
-                       ),
-                     ),
+                      style: TextButton.styleFrom(
+                        foregroundColor:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
                   ),
                   child: child!,
                 );
@@ -316,18 +320,19 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
                 return Theme(
                   data: Theme.of(context).copyWith(
                     colorScheme: Theme.of(context).colorScheme.copyWith(
-                      primary: Theme.of(context).colorScheme.primary,
-                      onPrimary: Theme.of(context).colorScheme.onPrimary,
-                      surface: Theme.of(context).colorScheme.surface,
-                      onSurface: Theme.of(context).colorScheme.onSurface,
-                    ),
+                          primary: Theme.of(context).colorScheme.primary,
+                          onPrimary: Theme.of(context).colorScheme.onPrimary,
+                          surface: Theme.of(context).colorScheme.surface,
+                          onSurface: Theme.of(context).colorScheme.onSurface,
+                        ),
                     textButtonTheme: TextButtonThemeData(
-                       style: TextButton.styleFrom(
-                         foregroundColor: Theme.of(context).brightness == Brightness.dark 
-                             ? Colors.white 
-                             : Theme.of(context).colorScheme.primary,
-                       ),
-                     ),
+                      style: TextButton.styleFrom(
+                        foregroundColor:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
                   ),
                   child: child!,
                 );
@@ -362,7 +367,7 @@ class _TaskFiltersSheetState extends State<TaskFiltersSheet> {
 
   void _resetFilters() {
     setState(() {
-      _filters =  TaskFilters();
+      _filters = TaskFilters();
     });
   }
 

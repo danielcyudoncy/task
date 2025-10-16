@@ -4,7 +4,14 @@ import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 
 Widget buildRoleDropdown(AuthController controller) {
-  const List<String> roles = ['Admin', 'Assignment Head', 'HODs', 'DOPs', 'Driver', 'Librarian'];
+  const List<String> roles = [
+    'Admin',
+    'Assignment Head',
+    'HODs',
+    'DOPs',
+    'Driver',
+    'Librarian'
+  ];
 
   final inputDecoration = InputDecoration(
     labelText: 'Role',
@@ -22,7 +29,9 @@ Widget buildRoleDropdown(AuthController controller) {
       borderRadius: BorderRadius.circular(12),
     ),
     child: Obx(() => DropdownButtonFormField<String>(
-          initialValue: controller.userRole.value.isEmpty ? null : controller.userRole.value,
+          initialValue: controller.userRole.value.isEmpty
+              ? null
+              : controller.userRole.value,
           onChanged: (newValue) {
             controller.userRole.value = newValue!;
           },

@@ -42,14 +42,19 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.colorScheme.primary;
-    final assignableTasks = widget.adminController.taskSnapshotDocs.where((task) {
-      final completed = (task['status'] ?? '').toString().toLowerCase() == 'completed';
+    final assignableTasks =
+        widget.adminController.taskSnapshotDocs.where((task) {
+      final completed =
+          (task['status'] ?? '').toString().toLowerCase() == 'completed';
       final approvalStatus = task['approvalStatus']?.toString().toLowerCase();
       final isApproved = approvalStatus == 'approved';
-      final legacyApproved = (task['approved'] ?? false) == true || (task['isApproved'] ?? false) == true;
+      final legacyApproved = (task['approved'] ?? false) == true ||
+          (task['isApproved'] ?? false) == true;
       final finalApproved = isApproved || legacyApproved;
-      final hasReporter = task['assignedReporterId'] != null && task['assignedReporterId'].toString().isNotEmpty;
-      final hasCameraman = task['assignedCameramanId'] != null && task['assignedCameramanId'].toString().isNotEmpty;
+      final hasReporter = task['assignedReporterId'] != null &&
+          task['assignedReporterId'].toString().isNotEmpty;
+      final hasCameraman = task['assignedCameramanId'] != null &&
+          task['assignedCameramanId'].toString().isNotEmpty;
       final fullyAssigned = hasReporter && hasCameraman;
       return finalApproved && !completed && !fullyAssigned;
     }).toList();
@@ -160,12 +165,16 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
+                              color: isDark
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: selectedTaskTitle != null
                                     ? primaryColor
-                                    : (isDark ? const Color(0xFF4A4A4A) : const Color(0xFFE0E0E0)),
+                                    : (isDark
+                                        ? const Color(0xFF4A4A4A)
+                                        : const Color(0xFFE0E0E0)),
                                 width: selectedTaskTitle != null ? 2 : 1.5,
                               ),
                               boxShadow: [
@@ -173,7 +182,8 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                   color: selectedTaskTitle != null
                                       ? const Color(0xFF9E9E9E)
                                       : const Color(0xFFF5F5F5),
-                                  blurRadius: selectedTaskTitle != null ? 15 : 10,
+                                  blurRadius:
+                                      selectedTaskTitle != null ? 15 : 10,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
@@ -183,14 +193,19 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                 isExpanded: true,
                                 value: selectedTaskTitle,
                                 menuMaxHeight: 200,
-                                dropdownColor: isDark ? const Color(0xFF2A2A3E) : Colors.white,
+                                dropdownColor: isDark
+                                    ? const Color(0xFF2A2A3E)
+                                    : Colors.white,
                                 hint: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
                                   child: Row(
                                     children: [
                                       Icon(
                                         Icons.task_alt,
-                                        color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                        color: isDark
+                                            ? Colors.white54
+                                            : Colors.grey.shade600,
                                         size: 20,
                                       ),
                                       const SizedBox(width: 8),
@@ -198,7 +213,9 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                         child: Text(
                                           "Select task",
                                           style: TextStyle(
-                                            color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                            color: isDark
+                                                ? Colors.white54
+                                                : Colors.grey.shade600,
                                             fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -228,7 +245,10 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                 borderRadius: BorderRadius.circular(16),
                                 items: assignableTasks.map((task) {
                                   final title = task['title'] ?? '';
-                                  final creatorName = (task['creatorName'] ?? task['creator'] ?? '').toString();
+                                  final creatorName = (task['creatorName'] ??
+                                          task['creator'] ??
+                                          '')
+                                      .toString();
                                   final description = task['description'] ?? '';
                                   final dueDate = task['dueDate'];
                                   return DropdownMenuItem<String>(
@@ -246,7 +266,8 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                   );
                                 }).toList(),
                                 onChanged: (val) {
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
                                     setState(() => selectedTaskTitle = val);
                                   });
                                 },
@@ -262,7 +283,9 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                                   context,
                                   "Cancel",
                                   Icons.close,
-                                  isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                                  isDark
+                                      ? Colors.grey.shade700
+                                      : Colors.grey.shade300,
                                   isDark ? Colors.white : Colors.black87,
                                   () => Get.back(),
                                   isOutlined: true,
@@ -378,10 +401,12 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
           SizedBox(
             width: 20,
             height: 20,
-            child: task['creatorPhotoUrl'] != null && _isValidUrl(task['creatorPhotoUrl'])
+            child: task['creatorPhotoUrl'] != null &&
+                    _isValidUrl(task['creatorPhotoUrl'])
                 ? CachedNetworkImage(
                     imageUrl: task['creatorPhotoUrl'],
-                    placeholder: (context, url) => const CircularProgressIndicator(
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(
                       strokeWidth: 1,
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
@@ -399,7 +424,10 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [primaryColor, primaryColor.withAlpha((0.7 * 255).round())],
+                          colors: [
+                            primaryColor,
+                            primaryColor.withAlpha((0.7 * 255).round())
+                          ],
                         ),
                         image: DecorationImage(
                           image: imageProvider,
@@ -412,7 +440,10 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [primaryColor, primaryColor.withAlpha((0.7 * 255).round())],
+                        colors: [
+                          primaryColor,
+                          primaryColor.withAlpha((0.7 * 255).round())
+                        ],
                       ),
                     ),
                     child: Center(
@@ -471,21 +502,26 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        gradient: isOutlined ? null : LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [backgroundColor, backgroundColor],
-        ),
+        gradient: isOutlined
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [backgroundColor, backgroundColor],
+              ),
         color: isOutlined ? Colors.transparent : backgroundColor,
         borderRadius: BorderRadius.circular(16),
-        border: isOutlined ? Border.all(color: backgroundColor, width: 2) : null,
-        boxShadow: isOutlined ? null : [
-          BoxShadow(
-            color: const Color(0xFF9E9E9E),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border:
+            isOutlined ? Border.all(color: backgroundColor, width: 2) : null,
+        boxShadow: isOutlined
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF9E9E9E),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -533,12 +569,12 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       );
       return;
     }
-    
+
     if (widget.user == null) {
       Get.back();
       return;
     }
-    
+
     final userId = widget.user?['uid'] ?? widget.user?['id'];
     if (userId == null) {
       Get.snackbar(
@@ -551,7 +587,7 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       );
       return;
     }
-    
+
     final selectedTaskDoc = assignableTasks.firstWhere(
       (d) => d['title'] == selectedTaskTitle,
       orElse: () => <String, dynamic>{},
@@ -586,7 +622,8 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
       if (userIndex != -1) {
         manageUsersController.usersList[userIndex]['hasTask'] = true;
         // Re-apply filters to update filteredUsersList and trigger UI refresh
-        manageUsersController.searchUsers(manageUsersController.currentSearchQuery.value);
+        manageUsersController
+            .searchUsers(manageUsersController.currentSearchQuery.value);
       }
 
       Get.snackbar(

@@ -8,49 +8,51 @@ import '../widgets/update_dialog.dart';
 /// Example of how to integrate the update mechanism into your app
 class UpdateIntegrationExample extends StatefulWidget {
   const UpdateIntegrationExample({super.key});
-  
+
   @override
-  State<UpdateIntegrationExample> createState() => _UpdateIntegrationExampleState();
+  State<UpdateIntegrationExample> createState() =>
+      _UpdateIntegrationExampleState();
 }
 
-class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> with WidgetsBindingObserver {
+class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample>
+    with WidgetsBindingObserver {
   bool _isCheckingForUpdates = false;
   Map<String, dynamic>? _updateStatus;
-  
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
+
     // Initialize update service
     _initializeUpdateService();
-    
+
     // Check for updates when app starts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForUpdatesOnStartup();
     });
   }
-  
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
-  
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     // Check for updates when app comes to foreground
     if (state == AppLifecycleState.resumed) {
       _checkForUpdatesInBackground();
     }
   }
-  
+
   Future<void> _initializeUpdateService() async {
     await UpdateService.initialize();
   }
-  
+
   Future<void> _checkForUpdatesOnStartup() async {
     // Check for updates silently on app startup
     await UpdateService.checkForUpdates(
@@ -58,29 +60,29 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
       showDialog: true,
     );
   }
-  
+
   Future<void> _checkForUpdatesInBackground() async {
     // Background check - shows subtle notifications
     await UpdateService.checkForUpdatesInBackground();
   }
-  
+
   Future<void> _checkForUpdatesManually() async {
     setState(() {
       _isCheckingForUpdates = true;
     });
-    
+
     try {
       await UpdateService.checkForUpdates(
         forceCheck: true,
         showDialog: true,
       );
-      
+
       // Get update status for display
       final status = await UpdateService.getUpdateStatus();
       setState(() {
         _updateStatus = status;
       });
-      
+
       if (!status['hasUpdate']) {
         Get.snackbar(
           'No Updates',
@@ -104,7 +106,7 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,7 +140,9 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
-                      onPressed: _isCheckingForUpdates ? null : _checkForUpdatesManually,
+                      onPressed: _isCheckingForUpdates
+                          ? null
+                          : _checkForUpdatesManually,
                       icon: _isCheckingForUpdates
                           ? const SizedBox(
                               width: 16,
@@ -147,7 +151,9 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
                             )
                           : const Icon(Icons.refresh),
                       label: Text(
-                        _isCheckingForUpdates ? 'Checking...' : 'Check for Updates',
+                        _isCheckingForUpdates
+                            ? 'Checking...'
+                            : 'Check for Updates',
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -207,11 +213,13 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
                         const SizedBox(height: 8),
                         _buildStatusItem(
                           'Current Version',
-                          _updateStatus!['updateInfo']['currentVersion'] ?? 'Unknown',
+                          _updateStatus!['updateInfo']['currentVersion'] ??
+                              'Unknown',
                         ),
                         _buildStatusItem(
                           'Latest Version',
-                          _updateStatus!['updateInfo']['latestVersion'] ?? 'Unknown',
+                          _updateStatus!['updateInfo']['latestVersion'] ??
+                              'Unknown',
                         ),
                         _buildStatusItem(
                           'Forced Update',
@@ -266,7 +274,7 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
       ),
     );
   }
-  
+
   Widget _buildStatusItem(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -290,7 +298,7 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
       ),
     );
   }
-  
+
   void _showCustomUpdateDialog() {
     // Show a preview of the update dialog with mock data
     final mockUpdateInfo = UpdateInfo(
@@ -302,7 +310,7 @@ class _UpdateIntegrationExampleState extends State<UpdateIntegrationExample> wit
           '• Bug fixes and improvements\n'
           '• Enhanced user experience',
     );
-    
+
     UpdateDialog.show(
       updateInfo: mockUpdateInfo,
       forceUpdate: false,

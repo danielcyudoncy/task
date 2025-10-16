@@ -33,7 +33,7 @@ class StatsSection extends StatelessWidget {
                   color: isDark ? Colors.white : AppColors.secondaryColor,
                 );
               }
-              
+
               try {
                 final totalTasks = taskController.totalTaskCreated.value;
                 return _statCard(
@@ -63,9 +63,8 @@ class StatsSection extends StatelessWidget {
                 icon: Icons.rss_feed,
                 label: "News Feed",
                 value: "", // No value shown
-                color: isDark
-                    ? const Color(0xFF9FA8DA)
-                    : AppColors.secondaryColor,
+                color:
+                    isDark ? const Color(0xFF9FA8DA) : AppColors.secondaryColor,
               ),
             ),
           ),

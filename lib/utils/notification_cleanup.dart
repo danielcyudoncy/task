@@ -22,36 +22,40 @@ class NotificationCleanup {
           .collection('notifications')
           .get();
 
-      debugPrint('NotificationCleanup: Found ${notificationsSnapshot.docs.length} notifications');
+      debugPrint(
+          'NotificationCleanup: Found ${notificationsSnapshot.docs.length} notifications');
 
       int deletedCount = 0;
-      
+
       for (final notifDoc in notificationsSnapshot.docs) {
         final data = notifDoc.data();
         final type = data['type']?.toString();
         final taskId = data['taskId'];
-        
+
         // Delete task_assignment notifications without valid taskId
-        if (type == 'task_assignment' && (taskId == null || taskId.toString().isEmpty)) {
-          debugPrint('NotificationCleanup: Deleting invalid notification ${notifDoc.id}');
-          
+        if (type == 'task_assignment' &&
+            (taskId == null || taskId.toString().isEmpty)) {
+          debugPrint(
+              'NotificationCleanup: Deleting invalid notification ${notifDoc.id}');
+
           await FirebaseFirestore.instance
               .collection('users')
               .doc(uid)
               .collection('notifications')
               .doc(notifDoc.id)
               .delete();
-          
+
           deletedCount++;
         }
       }
-      
-      debugPrint('NotificationCleanup: Deleted $deletedCount invalid notifications');
+
+      debugPrint(
+          'NotificationCleanup: Deleted $deletedCount invalid notifications');
     } catch (e) {
       debugPrint('NotificationCleanup: Error during cleanup: $e');
     }
   }
-  
+
   /// Create new task_assignment notifications for tasks assigned to the current user
   static Future<void> createMissingTaskAssignmentNotifications() async {
     try {
@@ -61,28 +65,29 @@ class NotificationCleanup {
         return;
       }
 
-      debugPrint('NotificationCleanup: Creating missing notifications for user $uid');
+      debugPrint(
+          'NotificationCleanup: Creating missing notifications for user $uid');
 
       // Find all tasks assigned to this user
       final tasksSnapshot = await FirebaseFirestore.instance
           .collection('tasks')
           .where('assignedTo', isEqualTo: uid)
           .get();
-      
+
       // Also check other assignment fields
       final reporterTasksSnapshot = await FirebaseFirestore.instance
           .collection('tasks')
           .where('assignedReporterId', isEqualTo: uid)
           .get();
-      
+
       final cameramanTasksSnapshot = await FirebaseFirestore.instance
           .collection('tasks')
           .where('assignedCameramanId', isEqualTo: uid)
           .get();
-      
+
       // Combine all assigned tasks
       final allAssignedTasks = <String, Map<String, dynamic>>{};
-      
+
       for (final doc in tasksSnapshot.docs) {
         allAssignedTasks[doc.id] = doc.data();
       }
@@ -92,9 +97,10 @@ class NotificationCleanup {
       for (final doc in cameramanTasksSnapshot.docs) {
         allAssignedTasks[doc.id] = doc.data();
       }
-      
-      debugPrint('NotificationCleanup: Found ${allAssignedTasks.length} assigned tasks');
-      
+
+      debugPrint(
+          'NotificationCleanup: Found ${allAssignedTasks.length} assigned tasks');
+
       // Get existing notifications to avoid duplicates
       final existingNotificationsSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -102,24 +108,26 @@ class NotificationCleanup {
           .collection('notifications')
           .where('type', isEqualTo: 'task_assignment')
           .get();
-      
+
       final existingTaskIds = existingNotificationsSnapshot.docs
           .map((doc) => doc.data()['taskId']?.toString())
           .where((taskId) => taskId != null && taskId.isNotEmpty)
           .toSet();
-      
-      debugPrint('NotificationCleanup: Found ${existingTaskIds.length} existing valid notifications');
-      
+
+      debugPrint(
+          'NotificationCleanup: Found ${existingTaskIds.length} existing valid notifications');
+
       int createdCount = 0;
-      
+
       // Create notifications for tasks that don't have them
       for (final entry in allAssignedTasks.entries) {
         final taskId = entry.key;
         final taskData = entry.value;
-        
+
         if (!existingTaskIds.contains(taskId)) {
-          debugPrint('NotificationCleanup: Creating notification for task $taskId');
-          
+          debugPrint(
+              'NotificationCleanup: Creating notification for task $taskId');
+
           await FirebaseFirestore.instance
               .collection('users')
               .doc(uid)
@@ -128,34 +136,36 @@ class NotificationCleanup {
             'type': 'task_assignment',
             'taskId': taskId,
             'title': taskData['title'] ?? 'Task Assignment',
-            'message': 'You have been assigned to a task: ${taskData['description'] ?? 'No description'}',
+            'message':
+                'You have been assigned to a task: ${taskData['description'] ?? 'No description'}',
             'isRead': false,
             'timestamp': FieldValue.serverTimestamp(),
           });
-          
+
           createdCount++;
         }
       }
-      
-      debugPrint('NotificationCleanup: Created $createdCount new notifications');
+
+      debugPrint(
+          'NotificationCleanup: Created $createdCount new notifications');
     } catch (e) {
       debugPrint('NotificationCleanup: Error creating notifications: $e');
     }
   }
-  
+
   /// Complete cleanup and recreation process
   static Future<void> performCompleteCleanup() async {
     debugPrint('NotificationCleanup: Starting complete cleanup process');
-    
+
     // Step 1: Delete invalid notifications
     await deleteInvalidTaskAssignmentNotifications();
-    
+
     // Step 2: Wait a moment for deletions to propagate
     await Future.delayed(const Duration(milliseconds: 1000));
-    
+
     // Step 3: Create missing notifications
     await createMissingTaskAssignmentNotifications();
-    
+
     debugPrint('NotificationCleanup: Complete cleanup process finished');
   }
 }

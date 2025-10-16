@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:task/controllers/settings_controller.dart';
 import './task_action_utility.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import '../service/user_cache_service.dart';

@@ -20,40 +20,40 @@ class UrlLauncherHelper {
     try {
       // Clean and validate the URL
       String cleanUrl = url.trim();
-      
+
       // Add https:// if no protocol is specified
       if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
         cleanUrl = 'https://$cleanUrl';
       }
-      
+
       debugPrint('UrlLauncherHelper: Attempting to open URL: $cleanUrl');
-      
+
       final uri = Uri.parse(cleanUrl);
-      
+
       // Try different launch modes
       bool launched = false;
-      
+
       // First try: External application (browser) - skip canLaunchUrl check
       try {
         debugPrint('UrlLauncherHelper: Attempting external launch directly...');
         launched = await launchUrl(
-          uri, 
+          uri,
           mode: LaunchMode.inAppBrowserView,
-      browserConfiguration: const BrowserConfiguration(
-        showTitle: true,
-      ),
+          browserConfiguration: const BrowserConfiguration(
+            showTitle: true,
+          ),
         );
         debugPrint('UrlLauncherHelper: External launch result: $launched');
       } catch (e) {
         debugPrint('UrlLauncherHelper: External launch failed: $e');
       }
-      
+
       // Second try: In-app browser if external failed
       if (!launched) {
         try {
           debugPrint('UrlLauncherHelper: Trying in-app WebView...');
           launched = await launchUrl(
-            uri, 
+            uri,
             mode: LaunchMode.inAppWebView,
             webViewConfiguration: const WebViewConfiguration(
               enableJavaScript: true,
@@ -65,7 +65,7 @@ class UrlLauncherHelper {
           debugPrint('UrlLauncherHelper: In-app launch failed: $e');
         }
       }
-      
+
       // Third try: Platform default
       if (!launched) {
         try {
@@ -76,41 +76,47 @@ class UrlLauncherHelper {
           debugPrint('UrlLauncherHelper: Default launch failed: $e');
         }
       }
-      
+
       if (!launched) {
-        debugPrint('UrlLauncherHelper: All launch methods failed for URL: $cleanUrl');
-        
+        debugPrint(
+            'UrlLauncherHelper: All launch methods failed for URL: $cleanUrl');
+
         // Try one more approach - use a simpler URL format
         try {
-          debugPrint('UrlLauncherHelper: Trying with simplified URL approach...');
+          debugPrint(
+              'UrlLauncherHelper: Trying with simplified URL approach...');
           final simpleUri = Uri.parse(cleanUrl.replaceAll(' ', '%20'));
-          launched = await launchUrl(simpleUri, mode: LaunchMode.inAppBrowserView,
-      browserConfiguration: const BrowserConfiguration(
-        showTitle: true,
-      ));
-          debugPrint('UrlLauncherHelper: Simplified URL launch result: $launched');
+          launched = await launchUrl(simpleUri,
+              mode: LaunchMode.inAppBrowserView,
+              browserConfiguration: const BrowserConfiguration(
+                showTitle: true,
+              ));
+          debugPrint(
+              'UrlLauncherHelper: Simplified URL launch result: $launched');
         } catch (e) {
           debugPrint('UrlLauncherHelper: Simplified URL launch failed: $e');
         }
-        
+
         // Try platform-specific approach for Android
         if (!launched && Platform.isAndroid) {
           try {
-            debugPrint('UrlLauncherHelper: Trying Android-specific approach...');
+            debugPrint(
+                'UrlLauncherHelper: Trying Android-specific approach...');
             // Try with a different mode that might work better on Android
             launched = await launchUrl(
               uri,
               mode: LaunchMode.inAppBrowserView,
-      browserConfiguration: const BrowserConfiguration(
-        showTitle: true,
-      ),
+              browserConfiguration: const BrowserConfiguration(
+                showTitle: true,
+              ),
             );
-            debugPrint('UrlLauncherHelper: Android-specific launch result: $launched');
+            debugPrint(
+                'UrlLauncherHelper: Android-specific launch result: $launched');
           } catch (e) {
             debugPrint('UrlLauncherHelper: Android-specific launch failed: $e');
           }
         }
-        
+
         if (!launched) {
           Get.snackbar(
             'Error',
@@ -130,7 +136,6 @@ class UrlLauncherHelper {
           );
         }
       }
-      
     } catch (e) {
       debugPrint('UrlLauncherHelper: Error opening URL: $e');
       Get.snackbar(

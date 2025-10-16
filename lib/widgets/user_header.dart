@@ -21,10 +21,10 @@ class UserHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final orientation = MediaQuery.of(context).orientation;
     final isPortrait = orientation == Orientation.portrait;
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: 16.w, 
+        horizontal: 16.w,
         vertical: isPortrait ? 16.h : 8.h,
       ),
       child: Column(
@@ -35,8 +35,8 @@ class UserHeader extends StatelessWidget {
             children: [
               IconButton(
                 icon: Icon(
-                  Icons.menu, 
-                  color: Colors.white, 
+                  Icons.menu,
+                  color: Colors.white,
                   size: isPortrait ? 28.sp : 24.sp,
                 ),
                 onPressed: () {
@@ -76,19 +76,22 @@ class UserHeader extends StatelessWidget {
                                       backgroundColor: Colors.white,
                                       child: Text(
                                         authController.fullName.value.isNotEmpty
-                                            ? authController.fullName.value[0].toUpperCase()
+                                            ? authController.fullName.value[0]
+                                                .toUpperCase()
                                             : '?',
                                         style: TextStyle(
                                           color: Colors.grey[600],
                                         ),
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) => CircleAvatar(
+                                    errorWidget: (context, url, error) =>
+                                        CircleAvatar(
                                       radius: isPortrait ? 20.sp : 16.sp,
                                       backgroundColor: Colors.white,
                                       child: Text(
                                         authController.fullName.value.isNotEmpty
-                                            ? authController.fullName.value[0].toUpperCase()
+                                            ? authController.fullName.value[0]
+                                                .toUpperCase()
                                             : '?',
                                         style: TextStyle(
                                           color: Colors.grey[600],
@@ -102,17 +105,18 @@ class UserHeader extends StatelessWidget {
                                   backgroundColor: Colors.white,
                                   child: Text(
                                     authController.fullName.value.isNotEmpty
-                                        ? authController.fullName.value[0].toUpperCase()
+                                        ? authController.fullName.value[0]
+                                            .toUpperCase()
                                         : '?',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       fontSize: isPortrait ? 20.sp : 16.sp,
                                       fontFamily: 'Raleway',
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                          
                         );
                       }),
                       Positioned(
@@ -158,14 +162,14 @@ class UserHeader extends StatelessWidget {
           /// Greeting Row
           Padding(
             padding: EdgeInsets.only(
-              left: 8.w, 
+              left: 8.w,
               top: isPortrait ? 8.h : 4.h,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() => Center(
-                  child: Text(
+                      child: Text(
                         "${'hello'.tr}, ${authController.fullName.value}!",
                         style: TextStyle(
                           color: Colors.white,
@@ -174,10 +178,10 @@ class UserHeader extends StatelessWidget {
                           fontFamily: 'Raleway',
                         ),
                       ),
-                )),
+                    )),
                 SizedBox(height: isPortrait ? 4.h : 2.h),
                 Obx(() => Center(
-                  child: Text(
+                      child: Text(
                         authController.currentUser?.email ?? '',
                         style: TextStyle(
                           color: Colors.white,
@@ -185,7 +189,7 @@ class UserHeader extends StatelessWidget {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                )),
+                    )),
               ],
             ),
           ),

@@ -7,7 +7,6 @@ import '../controllers/task_controller.dart';
 import '../controllers/user_controller.dart';
 import '../controllers/auth_controller.dart';
 
-
 class TaskAssignmentScreen extends StatelessWidget {
   final TaskController taskController = Get.find<TaskController>();
   final UserController userController = Get.find<UserController>();
@@ -21,7 +20,6 @@ class TaskAssignmentScreen extends StatelessWidget {
     // Use app theme's default background for the scaffold
     final scaffoldBg = Theme.of(context).colorScheme.surface;
 
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Assign Tasks"),
@@ -32,17 +30,18 @@ class TaskAssignmentScreen extends StatelessWidget {
       backgroundColor: scaffoldBg,
       body: Obx(() {
         // Add safety check to ensure controllers are registered
-        if (!Get.isRegistered<TaskController>() || !Get.isRegistered<AuthController>()) {
+        if (!Get.isRegistered<TaskController>() ||
+            !Get.isRegistered<AuthController>()) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (taskController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
         // Get only approved tasks that can be assigned
         final assignableTasks = taskController.assignableTasks;
-        
+
         if (assignableTasks.isEmpty) {
           return Center(
             child: Text(
@@ -92,8 +91,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                       ),
                       subtitle: Text(
                         task.description,
-                        style: TextStyle(
-                            color: colorScheme.onSurface),
+                        style: TextStyle(color: colorScheme.onSurface),
                       ),
                       trailing: authController.canAssignTask
                           ? ElevatedButton(
@@ -107,8 +105,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                             )
                           : Text(
                               "No Permission",
-                              style: TextStyle(
-                                  color: colorScheme.onSurface),
+                              style: TextStyle(color: colorScheme.onSurface),
                             ),
                     ),
                   );
@@ -160,13 +157,16 @@ class TaskAssignmentScreen extends StatelessWidget {
                   return Text("Loading tasks...",
                       style: TextStyle(color: colorScheme.onSurface));
                 }
-                
+
                 // Show approved tasks that don't have all three roles assigned (reporter, cameraman, and driver)
                 final unassignedTasks = taskController.assignableTasks
                     .where((task) =>
-                        (task.assignedReporterId == null || task.assignedReporterId!.isEmpty) ||
-                        (task.assignedCameramanId == null || task.assignedCameramanId!.isEmpty) ||
-                        (task.assignedDriverId == null || task.assignedDriverId!.isEmpty))
+                        (task.assignedReporterId == null ||
+                            task.assignedReporterId!.isEmpty) ||
+                        (task.assignedCameramanId == null ||
+                            task.assignedCameramanId!.isEmpty) ||
+                        (task.assignedDriverId == null ||
+                            task.assignedDriverId!.isEmpty))
                     .toList();
 
                 if (unassignedTasks.isEmpty) {
@@ -204,7 +204,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                 return Text("Loading reporters...",
                     style: TextStyle(color: colorScheme.onSurface));
               }
-              
+
               if (userController.reporters.isEmpty) {
                 return Text("No reporters available",
                     style: TextStyle(color: colorScheme.onSurface));
@@ -245,7 +245,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                 return Text("Loading cameramen...",
                     style: TextStyle(color: colorScheme.onSurface));
               }
-              
+
               if (userController.cameramen.isEmpty) {
                 return Text("No cameramen available",
                     style: TextStyle(color: colorScheme.onSurface));
@@ -286,7 +286,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                 return Text("Loading drivers...",
                     style: TextStyle(color: colorScheme.onSurface));
               }
-              
+
               if (userController.drivers.isEmpty) {
                 return Text("No drivers available",
                     style: TextStyle(color: colorScheme.onSurface));
@@ -323,7 +323,8 @@ class TaskAssignmentScreen extends StatelessWidget {
             // Assign button
             Obx(() {
               // Add safety check to ensure controllers are registered
-              if (!Get.isRegistered<TaskController>() || !Get.isRegistered<SettingsController>()) {
+              if (!Get.isRegistered<TaskController>() ||
+                  !Get.isRegistered<SettingsController>()) {
                 return Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -335,7 +336,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                   ),
                 );
               }
-              
+
               return Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -349,8 +350,10 @@ class TaskAssignmentScreen extends StatelessWidget {
                       Get.snackbar("Error", "Please select a task.");
                       return;
                     }
-                    
-                    if (selectedReporterId == null || selectedCameramanId == null || selectedDriverId == null) {
+
+                    if (selectedReporterId == null ||
+                        selectedCameramanId == null ||
+                        selectedDriverId == null) {
                       Get.snackbar(
                         "Incomplete Assignment",
                         "Please assign a reporter, cameraman, and driver to this task.",
@@ -362,7 +365,7 @@ class TaskAssignmentScreen extends StatelessWidget {
                     try {
                       // Store context before async operation
                       final currentContext = context;
-                      
+
                       // Close the dialog BEFORE calling the assignment
                       Get.back();
 
@@ -379,20 +382,20 @@ class TaskAssignmentScreen extends StatelessWidget {
 
                         // Show success message
                         Get.snackbar(
-                          "Success", 
+                          "Success",
                           "Task assigned successfully!",
                           duration: const Duration(seconds: 2),
                         );
-                        
+
                         // Refresh the task list to reflect the changes
                         taskController.fetchTasks();
                       } catch (e) {
                         // Reopen the dialog if there was an error
                         if (currentContext.mounted) {
                           _showAssignmentDialog(
-                            currentContext, 
-                            selectedTaskId, 
-                            colorScheme, 
+                            currentContext,
+                            selectedTaskId,
+                            colorScheme,
                             scaffoldBg,
                           );
                         }
@@ -402,7 +405,6 @@ class TaskAssignmentScreen extends StatelessWidget {
                       Get.snackbar("Error", "Failed to assign task: $e");
                     }
                   },
-
                   child: const Text("Assign Task"),
                 ),
               );

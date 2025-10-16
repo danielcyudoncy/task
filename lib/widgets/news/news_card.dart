@@ -41,7 +41,10 @@ class NewsCard extends StatelessWidget {
                       vertical: 4.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -77,13 +80,15 @@ class NewsCard extends StatelessWidget {
               ),
               SizedBox(height: 8.h),
               // News Image or Logo (if present)
-              if (article['imageUrl'] != null && article['imageUrl'].toString().isNotEmpty)
+              if (article['imageUrl'] != null &&
+                  article['imageUrl'].toString().isNotEmpty)
                 Center(
                   child: Container(
                     height: 80.h,
                     width: double.infinity,
                     margin: EdgeInsets.only(bottom: 8.h),
-                    padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       color: Colors.grey[100],
@@ -91,20 +96,24 @@ class NewsCard extends StatelessWidget {
                     clipBehavior: Clip.hardEdge,
                     child: FittedBox(
                       fit: BoxFit.contain,
-                      child: article['imageUrl'].toString().startsWith('assets/')
-                        ? Image.asset(
-                            article['imageUrl'],
-                            height: 40.h,
-                            width: 100.w,
-                            fit: BoxFit.contain,
-                          )
-                        : Image.network(
-                            article['imageUrl'],
-                            height: 40.h,
-                            width: 100.w,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.broken_image, size: 40, color: Colors.grey)),
-                          ),
+                      child:
+                          article['imageUrl'].toString().startsWith('assets/')
+                              ? Image.asset(
+                                  article['imageUrl'],
+                                  height: 40.h,
+                                  width: 100.w,
+                                  fit: BoxFit.contain,
+                                )
+                              : Image.network(
+                                  article['imageUrl'],
+                                  height: 40.h,
+                                  width: 100.w,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Center(
+                                          child: Icon(Icons.broken_image,
+                                              size: 40, color: Colors.grey)),
+                                ),
                     ),
                   ),
                 ),

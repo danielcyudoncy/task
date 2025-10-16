@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:get/get.dart';
+import 'package:task/utils/constants/app_constants.dart';
 
 class PresenceService extends GetxService {
   DatabaseReference? _presenceRef;
@@ -23,7 +24,7 @@ class PresenceService extends GetxService {
   Future<void> _initializePresence() async {
     try {
       Get.log('PresenceService: Starting initialization...');
-      
+
       // Wait for auth to be ready
       await FirebaseAuth.instance.authStateChanges().firstWhere((user) => true);
 
@@ -34,11 +35,11 @@ class PresenceService extends GetxService {
       }
 
       Get.log('PresenceService: Initializing database connection...');
-      
+
       // Initialize with correct database URL
       final database = FirebaseDatabase.instanceFor(
         app: Firebase.app(),
-        databaseURL: 'https://task-e5a96-default-rtdb.firebaseio.com',
+        databaseURL: ExternalUrls.firebaseRtdbUrl,
       );
 
       _presenceRef = database.ref('.info/connected');
@@ -46,7 +47,7 @@ class PresenceService extends GetxService {
 
       Get.log('PresenceService: Setting up connection listener...');
       _setupConnectionListener();
-      
+
       _isInitialized = true;
       Get.log('PresenceService initialized for user $_currentUserId');
     } catch (e) {
@@ -58,10 +59,11 @@ class PresenceService extends GetxService {
 
   void _setupConnectionListener() {
     if (_presenceRef == null) {
-      Get.log('PresenceService: _presenceRef is null, skipping connection listener');
+      Get.log(
+          'PresenceService: _presenceRef is null, skipping connection listener');
       return;
     }
-    
+
     _presenceRef!.onValue.listen((event) async {
       final isConnected = event.snapshot.value as bool? ?? false;
       Get.log('PresenceService: Connection status changed: $isConnected');
@@ -89,17 +91,19 @@ class PresenceService extends GetxService {
   Future<void> _setupDisconnectHandler() async {
     try {
       if (_userStatusRef == null) {
-        Get.log('PresenceService: _userStatusRef is null, skipping disconnect handler');
+        Get.log(
+            'PresenceService: _userStatusRef is null, skipping disconnect handler');
         return;
       }
-      
+
       // Check if user is still authenticated
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
-        Get.log('PresenceService: User not authenticated, skipping disconnect handler');
+        Get.log(
+            'PresenceService: User not authenticated, skipping disconnect handler');
         return;
       }
-      
+
       await _userStatusRef!.onDisconnect().update({
         'status': 'offline',
         'lastSeen': ServerValue.timestamp,
@@ -108,9 +112,12 @@ class PresenceService extends GetxService {
     } catch (e) {
       Get.log('Failed to setup disconnect handler: $e', isError: true);
       // Don't throw error for permission issues - just continue without disconnect handler
-      if (!e.toString().contains('permission') && !e.toString().contains('denied')) {
+      if (!e.toString().contains('permission') &&
+          !e.toString().contains('denied')) {
         // Only log non-permission errors as actual errors
-        Get.log('PresenceService: Non-permission error in disconnect handler: $e', isError: true);
+        Get.log(
+            'PresenceService: Non-permission error in disconnect handler: $e',
+            isError: true);
       }
     }
   }
@@ -120,16 +127,18 @@ class PresenceService extends GetxService {
       Get.log('PresenceService: Not initialized, skipping setOnline');
       return;
     }
-    
+
     if (_userStatusRef == null || _currentUserId == null) {
-      Get.log('PresenceService: Required references are null, skipping setOnline');
+      Get.log(
+          'PresenceService: Required references are null, skipping setOnline');
       return;
     }
 
     // Check if user is still authenticated
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null || currentUser.uid != _currentUserId) {
-      Get.log('PresenceService: User not authenticated or UID mismatch, skipping setOnline');
+      Get.log(
+          'PresenceService: User not authenticated or UID mismatch, skipping setOnline');
       _status.value = 'offline';
       return;
     }
@@ -146,7 +155,8 @@ class PresenceService extends GetxService {
     } catch (e) {
       Get.log('Failed to set online status: $e', isError: true);
       // Don't set status to error for permission issues - just stay offline
-      if (e.toString().contains('permission') || e.toString().contains('denied')) {
+      if (e.toString().contains('permission') ||
+          e.toString().contains('denied')) {
         Get.log('PresenceService: Permission denied, staying offline silently');
         _status.value = 'offline';
       } else {
@@ -160,7 +170,7 @@ class PresenceService extends GetxService {
       Get.log('PresenceService: Not initialized, skipping setOffline');
       return;
     }
-    
+
     if (_userStatusRef == null) {
       Get.log('PresenceService: _userStatusRef is null, skipping setOffline');
       return;
@@ -185,7 +195,8 @@ class PresenceService extends GetxService {
     } catch (e) {
       Get.log('Failed to set offline status: $e', isError: true);
       // Don't set status to error for permission issues - just stay offline
-      if (e.toString().contains('permission') || e.toString().contains('denied')) {
+      if (e.toString().contains('permission') ||
+          e.toString().contains('denied')) {
         Get.log('PresenceService: Permission denied, staying offline silently');
         _status.value = 'offline';
       } else {

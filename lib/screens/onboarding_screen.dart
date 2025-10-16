@@ -40,7 +40,7 @@ class OnboardingScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Page content
             Expanded(
               child: PageView.builder(
@@ -53,7 +53,7 @@ class OnboardingScreen extends StatelessWidget {
                 },
               ),
             ),
-            
+
             // Bottom navigation
             _buildBottomNavigation(context, isDark, theme),
           ],
@@ -62,7 +62,8 @@ class OnboardingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPage(BuildContext context, OnboardingPage page, bool isDark, ThemeData theme) {
+  Widget _buildPage(
+      BuildContext context, OnboardingPage page, bool isDark, ThemeData theme) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 24.w),
       child: Column(
@@ -86,9 +87,9 @@ class OnboardingScreen extends StatelessWidget {
               color: page.color,
             ),
           ),
-          
+
           SizedBox(height: 40.h),
-          
+
           // Title
           Text(
             page.title,
@@ -100,9 +101,9 @@ class OnboardingScreen extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // Subtitle
           Text(
             page.subtitle,
@@ -113,40 +114,41 @@ class OnboardingScreen extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           SizedBox(height: 40.h),
-          
+
           // CTA Button
           Obx(() => SizedBox(
-            width: double.infinity,
-            height: 50.h,
-            child: ElevatedButton(
-              onPressed: controller.isLastPage.value 
-                  ? controller.completeOnboarding 
-                  : controller.nextPage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: page.color,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+                width: double.infinity,
+                height: 50.h,
+                child: ElevatedButton(
+                  onPressed: controller.isLastPage.value
+                      ? controller.completeOnboarding
+                      : controller.nextPage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: page.color,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    page.ctaText,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-                elevation: 2,
-              ),
-              child: Text(
-                page.ctaText,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          )),
+              )),
         ],
       ),
     );
   }
 
-  Widget _buildBottomNavigation(BuildContext context, bool isDark, ThemeData theme) {
+  Widget _buildBottomNavigation(
+      BuildContext context, bool isDark, ThemeData theme) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
       child: Row(
@@ -157,19 +159,21 @@ class OnboardingScreen extends StatelessWidget {
             children: List.generate(
               controller.pages.length,
               (index) => Obx(() => Container(
-                width: 12.w,
-                height: 12.h,
-                margin: EdgeInsets.only(right: 8.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: controller.currentPage.value == index
-                      ? (isDark ? Colors.blue.shade300 : Colors.blue.shade600)
-                      : (isDark ? Colors.white24 : Colors.grey.shade300),
-                ),
-              )),
+                    width: 12.w,
+                    height: 12.h,
+                    margin: EdgeInsets.only(right: 8.w),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: controller.currentPage.value == index
+                          ? (isDark
+                              ? Colors.blue.shade300
+                              : Colors.blue.shade600)
+                          : (isDark ? Colors.white24 : Colors.grey.shade300),
+                    ),
+                  )),
             ),
           ),
-          
+
           // Navigation buttons
           Row(
             children: [
@@ -184,11 +188,12 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                     )
                   : SizedBox(width: 48.w)),
-              
+
               SizedBox(width: 8.w),
-              
+
               // Next button
-              Obx(() => controller.currentPage.value < controller.pages.length - 1
+              Obx(() => controller.currentPage.value <
+                      controller.pages.length - 1
                   ? IconButton(
                       onPressed: controller.nextPage,
                       icon: Icon(

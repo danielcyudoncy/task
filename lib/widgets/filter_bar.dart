@@ -62,7 +62,9 @@ class FilterBarWidget extends StatelessWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(24),
                 borderSide: BorderSide(
-                  color: isLightMode ? Colors.blue.withAlpha(3) : Colors.white.withAlpha(3),
+                  color: isLightMode
+                      ? Colors.blue.withAlpha(3)
+                      : Colors.white.withAlpha(3),
                   width: 2,
                 ),
               ),

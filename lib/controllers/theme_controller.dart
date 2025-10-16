@@ -16,20 +16,20 @@ enum AppThemeMode {
 class ThemeController extends GetxController {
   // Observable for current theme mode
   var currentThemeMode = AppThemeMode.light.obs;
-  
+
   // Observable for actual dark mode state (computed based on theme mode and system)
   var isDarkMode = false.obs;
-  
+
   // Observable for system dark mode state
   var isSystemDark = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    
+
     // Listen to system theme changes
     _updateSystemTheme();
-    
+
     // Add a small delay to ensure proper initialization
     Future.delayed(const Duration(milliseconds: 100), () {
       loadTheme();
@@ -40,7 +40,7 @@ class ThemeController extends GetxController {
   void _updateSystemTheme() {
     final window = WidgetsBinding.instance.platformDispatcher;
     isSystemDark.value = window.platformBrightness == Brightness.dark;
-    
+
     // Listen for system theme changes
     window.onPlatformBrightnessChanged = () {
       isSystemDark.value = window.platformBrightness == Brightness.dark;
@@ -51,7 +51,7 @@ class ThemeController extends GetxController {
   // Load theme preference from local storage
   Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Try to load the new theme mode preference
     final savedThemeName = prefs.getString('appThemeMode');
     if (savedThemeName != null) {
@@ -67,7 +67,8 @@ class ThemeController extends GetxController {
       // Migrate from old format
       final oldSavedTheme = prefs.getBool('isDarkMode');
       if (oldSavedTheme != null) {
-        currentThemeMode.value = oldSavedTheme ? AppThemeMode.dark : AppThemeMode.light;
+        currentThemeMode.value =
+            oldSavedTheme ? AppThemeMode.dark : AppThemeMode.light;
         // Save in new format and remove old
         await _saveThemePreference();
         await prefs.remove('isDarkMode');
@@ -76,7 +77,8 @@ class ThemeController extends GetxController {
       }
     }
 
-    debugPrint("ThemeController: Loading theme - mode: ${currentThemeMode.value.displayName}");
+    debugPrint(
+        "ThemeController: Loading theme - mode: ${currentThemeMode.value.displayName}");
     _applyTheme();
   }
 
@@ -84,7 +86,7 @@ class ThemeController extends GetxController {
   void _applyTheme() {
     ThemeMode themeMode;
     bool shouldBeDark;
-    
+
     switch (currentThemeMode.value) {
       case AppThemeMode.light:
         themeMode = ThemeMode.light;
@@ -99,24 +101,26 @@ class ThemeController extends GetxController {
         shouldBeDark = isSystemDark.value;
         break;
     }
-    
+
     isDarkMode.value = shouldBeDark;
     Get.changeThemeMode(themeMode);
-    
-    debugPrint("ThemeController: Applied theme - mode: ${currentThemeMode.value.displayName}, dark: $shouldBeDark");
+
+    debugPrint(
+        "ThemeController: Applied theme - mode: ${currentThemeMode.value.displayName}, dark: $shouldBeDark");
   }
 
   // Save theme preference
   Future<void> _saveThemePreference() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('appThemeMode', currentThemeMode.value.name);
-    debugPrint("ThemeController: Theme preference saved - ${currentThemeMode.value.displayName}");
+    debugPrint(
+        "ThemeController: Theme preference saved - ${currentThemeMode.value.displayName}");
   }
 
   // Set theme mode
   Future<void> setThemeMode(AppThemeMode mode) async {
     debugPrint("ThemeController: Setting theme mode to ${mode.displayName}");
-    
+
     currentThemeMode.value = mode;
     _applyTheme();
     await _saveThemePreference();

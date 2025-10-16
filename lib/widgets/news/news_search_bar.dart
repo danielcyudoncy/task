@@ -19,7 +19,7 @@ class NewsSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -48,7 +48,8 @@ class NewsSearchBar extends StatelessWidget {
           ),
           filled: true,
           fillColor: colorScheme.surfaceContainerHighest,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          contentPadding:
+              EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         ),
         onChanged: onChanged,
         onSubmitted: (value) {

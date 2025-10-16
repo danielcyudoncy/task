@@ -65,9 +65,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     child: Text(
                       totalUnread.toString(),
                       style: TextStyle(
-                  fontSize: 10.sp, 
-                  color: Theme.of(context).colorScheme.onPrimary
-                ),
+                          fontSize: 10.sp,
+                          color: Theme.of(context).colorScheme.onPrimary),
                     ),
                   ),
                 )
@@ -114,23 +113,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final users = snapshot.data!.docs.where((doc) => doc['uid'] != currentUserId).toList();
+                final users = snapshot.data!.docs
+                    .where((doc) => doc['uid'] != currentUserId)
+                    .toList();
                 if (users.isEmpty) {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('No one is online', style: TextStyle(
-          color: Theme.of(context).brightness == Brightness.dark 
-            ? Colors.grey[400] 
-            : Colors.grey[600]
-        )),
+                      child: Text('No one is online',
+                          style: TextStyle(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600])),
                     ),
                   );
                 }
                 return ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
                   itemCount: users.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 16),
                   itemBuilder: (context, index) {
@@ -143,7 +147,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? Theme.of(context).colorScheme.onPrimary
                                   : Theme.of(context).colorScheme.primary,
                               width: 2,
@@ -158,17 +163,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     fit: BoxFit.cover,
                                     placeholder: (context, url) => CircleAvatar(
                                       radius: 26,
-                                      child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+                                      child: Text(name.isNotEmpty
+                                          ? name[0].toUpperCase()
+                                          : '?'),
                                     ),
-                                    errorWidget: (context, url, error) => CircleAvatar(
+                                    errorWidget: (context, url, error) =>
+                                        CircleAvatar(
                                       radius: 26,
-                                      child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+                                      child: Text(name.isNotEmpty
+                                          ? name[0].toUpperCase()
+                                          : '?'),
                                     ),
                                   ),
                                 )
                               : CircleAvatar(
                                   radius: 26,
-                                  child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+                                  child: Text(name.isNotEmpty
+                                      ? name[0].toUpperCase()
+                                      : '?'),
                                 ),
                         ),
                         const SizedBox(height: 4),
@@ -177,11 +189,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           child: Text(
                             name.split(' ').first,
                             style: TextStyle(
-              fontSize: 12, 
-              color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.grey[400] 
-                : Colors.grey[600]
-            ),
+                                fontSize: 12,
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600]),
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
@@ -224,9 +236,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         Text(
                           'No conversations yet',
                           style: TextStyle(
-              fontSize: 16.sp, 
-              color: Theme.of(context).colorScheme.primary
-            ),
+                              fontSize: 16.sp,
+                              color: Theme.of(context).colorScheme.primary),
                         ),
                       ],
                     ),
@@ -234,8 +245,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 }
 
                 docs.sort((a, b) {
-                  final aPinned = (a['pinnedUsers'] ?? []).contains(currentUserId);
-                  final bPinned = (b['pinnedUsers'] ?? []).contains(currentUserId);
+                  final aPinned =
+                      (a['pinnedUsers'] ?? []).contains(currentUserId);
+                  final bPinned =
+                      (b['pinnedUsers'] ?? []).contains(currentUserId);
                   if (aPinned && !bPinned) return -1;
                   if (!aPinned && bPinned) return 1;
                   return 0;
@@ -249,8 +262,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final data = conversation.data() as Map<String, dynamic>;
                     final participants =
                         List<String>.from(data['participants'] ?? []);
-                    final receiverId = participants
-                        .firstWhere((id) => id != currentUserId);
+                    final receiverId =
+                        participants.firstWhere((id) => id != currentUserId);
                     final lastMessage = data['lastMessage'] as String? ?? '';
                     final lastMessageTime =
                         (data['lastMessageTime'] as Timestamp?)?.toDate();
@@ -259,7 +272,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final unreadCount =
                         ((unreadCountMap[currentUserId] ?? 0) as num).toInt();
 
-                    final pinnedList = List<String>.from(data['pinnedUsers'] ?? []);
+                    final pinnedList =
+                        List<String>.from(data['pinnedUsers'] ?? []);
                     final pinned = pinnedList.contains(currentUserId);
 
                     totalUnread += unreadCount;
@@ -276,8 +290,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
                         final userData =
                             userSnapshot.data!.data() as Map<String, dynamic>;
-                        final userName = userData['fullName'] as String? ?? 'Unknown';
-                        final userAvatar = userData['photoUrl'] as String? ?? '';
+                        final userName =
+                            userData['fullName'] as String? ?? 'Unknown';
+                        final userAvatar =
+                            userData['photoUrl'] as String? ?? '';
                         final isOnline = userData['isOnline'] as bool? ?? false;
                         final lastSeenTimestamp =
                             (userData['lastSeen'] as Timestamp?)?.toDate();
@@ -297,7 +313,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             alignment: Alignment.centerRight,
                             padding: EdgeInsets.only(right: 20.w),
                             color: Colors.red,
-                            child: const Icon(Icons.delete, color: Colors.white),
+                            child:
+                                const Icon(Icons.delete, color: Colors.white),
                           ),
                           onDismissed: (_) {
                             FirebaseFirestore.instance
@@ -476,9 +493,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
             child: Text(
               unreadCount.toString(),
               style: TextStyle(
-                    fontSize: 10.sp, 
-                    color: Theme.of(context).colorScheme.onPrimary
-                  ),
+                  fontSize: 10.sp,
+                  color: Theme.of(context).colorScheme.onPrimary),
             ),
           ),
       ],
@@ -504,7 +520,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
         receiverId: receiverId,
         receiverName: name,
         receiverAvatar: avatarUrl,
-        conversationId: conversationId, otherUserId: '', otherUserName: null, otherUser: const {}, chatId: '', chatBackground: '',
+        conversationId: conversationId,
+        otherUserId: '',
+        otherUserName: null,
+        otherUser: const {},
+        chatId: '',
+        chatBackground: '',
       ),
     );
   }
