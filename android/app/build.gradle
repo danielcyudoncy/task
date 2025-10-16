@@ -80,6 +80,9 @@ dependencies {
     // Required for Google Play Services integration
     implementation 'com.google.android.gms:play-services-base:18.4.0'
 
+    // Required for Google Sign-In
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+
     // Optional core library
     implementation 'com.google.firebase:firebase-core:21.1.1'
 

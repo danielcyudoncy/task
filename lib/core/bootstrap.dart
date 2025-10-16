@@ -4,11 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:task/service/export_service.dart';
 import 'package:task/service/network_service.dart';
 import 'package:task/service/connectivity_service.dart';
@@ -146,9 +147,6 @@ Future<void> bootstrapApp() async {
     
     
     // Initialize Firebase services (skip verification for faster boot)
-
-    // TODO: Move Firebase verification to background after app starts
-    // await _verifyFirebaseServices(); // Temporarily disabled for performance
     
     
     // Initialize User Cache Service early for better performance
@@ -302,8 +300,13 @@ Future<void> bootstrapApp() async {
     
     // Run the app
     runApp(const MyApp());
-   
-    
+
+    // Schedule Firebase verification to run in background after app starts
+    Future.delayed(const Duration(seconds: 2), () async {
+      await _verifyFirebaseServices();
+    });
+
+
   } catch (e) {
     
     
@@ -341,6 +344,76 @@ Future<void> _initializeService<T>(
   } catch (e) {
    
     rethrow;
+  }
+}
+
+/// Verifies that Firebase services are working properly
+Future<void> _verifyFirebaseServices() async {
+  try {
+    debugPrint('🔥 BOOTSTRAP: Starting Firebase services verification');
+
+    // Verify Firebase Core is initialized
+    if (Firebase.apps.isEmpty) {
+      throw Exception('Firebase Core is not initialized');
+    }
+
+    // Verify Firebase Auth is accessible (if user is authenticated)
+    try {
+      final auth = FirebaseAuth.instance;
+      await auth.currentUser?.reload(); // Test if auth is working
+      debugPrint('✅ BOOTSTRAP: Firebase Auth verification passed');
+    } catch (e) {
+      debugPrint('⚠️ BOOTSTRAP: Firebase Auth verification failed: $e');
+      // Don't throw - auth might not be configured or user might not be logged in
+    }
+
+    // Verify Firestore is accessible (if available)
+    try {
+      final firestore = FirebaseFirestore.instance;
+      await firestore.collection('_health_check').limit(1).get();
+      debugPrint('✅ BOOTSTRAP: Firebase Firestore verification passed');
+    } catch (e) {
+      debugPrint('⚠️ BOOTSTRAP: Firebase Firestore verification failed: $e');
+      // Don't throw - firestore might not be configured or accessible
+    }
+
+    // Verify Firebase Storage is accessible (if available)
+    try {
+      final storage = FirebaseStorage.instance;
+      final ref = storage.ref().child('_health_check');
+      // Test if we can create a reference and perform basic operations
+      try {
+        await ref.getDownloadURL();
+        debugPrint('✅ BOOTSTRAP: Firebase Storage verification passed');
+      } catch (e) {
+        // Expected to fail for non-existent file, but connection should work
+        if (e.toString().contains('object-not-found') ||
+            e.toString().contains('Object does not exist')) {
+          debugPrint('✅ BOOTSTRAP: Firebase Storage verification passed (file not found but connection works)');
+        } else {
+          rethrow; // Re-throw if it's a different error, preserving stack trace
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ BOOTSTRAP: Firebase Storage verification failed: $e');
+      // Don't throw - storage might not be configured
+    }
+
+    // Verify Firebase Messaging is working (if available)
+    try {
+      final messaging = FirebaseMessaging.instance;
+      await messaging.getToken();
+      debugPrint('✅ BOOTSTRAP: Firebase Messaging verification passed');
+    } catch (e) {
+      debugPrint('⚠️ BOOTSTRAP: Firebase Messaging verification failed: $e');
+      // Don't throw - messaging might not be configured or permissions denied
+    }
+
+    debugPrint('🔥 BOOTSTRAP: Firebase services verification completed');
+
+  } catch (e) {
+    debugPrint('❌ BOOTSTRAP: Firebase services verification failed: $e');
+    // Don't rethrow - we don't want verification failures to crash the app
   }
 }
 
