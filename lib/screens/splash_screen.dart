@@ -157,7 +157,7 @@ class _SplashScreenState extends State<SplashScreen>
               FadeTransition(
                 opacity: _textOpacityAnimation,
                 child: Text(
-                  'Informing the Nigerian People'.tr,
+                  'Your Home For The News'.tr,
                   style: textTheme.headlineSmall?.copyWith(
                     color: colorScheme.onPrimary,
                     fontFamily: 'Raleway',

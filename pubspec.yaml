@@ -55,7 +55,7 @@ dependencies:
   font_awesome_flutter: ^10.8.0
   get: ^4.7.2
   google_fonts: ^6.2.1
-  google_sign_in: ^6.2.1
+  google_sign_in: ^6.1.6
   sign_in_with_apple: ^6.1.1
   crypto: ^3.0.3
   html: ^0.15.6
@@ -89,7 +89,7 @@ dependencies:
   infinite_scroll_pagination: ^5.1.0
   share_plus: ^11.0.0
   pdf: ^3.11.3
-  file_picker: ^10.2.0
+  file_picker: ^8.1.2
   # In-app update dependencies
   in_app_update: ^4.2.3
   package_info_plus: ^8.0.2
