@@ -13,7 +13,8 @@ class TaskDetailDialog {
     required String title,
     required List<Map<String, dynamic>> taskSnapshotDocs,
     required Map<String, Map<String, String>> userCache,
-    required Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole,
+    required Future<Map<String, String>> Function(String, VoidCallback)
+        getUserNameAndRole,
   }) {
     final doc = taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
 
@@ -62,7 +63,8 @@ class TaskDetailDialog {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildHeader(context),
-                _buildContent(context, title, creatorId, dateStr, userCache, getUserNameAndRole),
+                _buildContent(context, title, creatorId, dateStr, userCache,
+                    getUserNameAndRole),
               ],
             ),
           ),
@@ -86,7 +88,10 @@ class TaskDetailDialog {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onPrimary
+                  .withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -115,7 +120,10 @@ class TaskDetailDialog {
               size: 24,
             ),
             style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .onPrimary
+                  .withValues(alpha: 0.2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -132,7 +140,8 @@ class TaskDetailDialog {
     String creatorId,
     String dateStr,
     Map<String, Map<String, String>> userCache,
-    Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole,
+    Future<Map<String, String>> Function(String, VoidCallback)
+        getUserNameAndRole,
   ) {
     return Flexible(
       child: Padding(
@@ -146,11 +155,14 @@ class TaskDetailDialog {
               });
             }
             // First try to get createdByName from the task document, then fall back to userCache
-            final doc = Get.find<AdminController>().taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
-            final creatorName = doc?['createdByName'] ?? userInfo?["name"] ?? 'Unknown';
+            final doc = Get.find<AdminController>()
+                .taskSnapshotDocs
+                .firstWhereOrNull((d) => d['title'] == title);
+            final creatorName =
+                doc?['createdByName'] ?? userInfo?["name"] ?? 'Unknown';
             final creatorRole = userInfo?["role"] ?? "Unknown";
             final taskStatus = _getTaskStatus(title, context);
-            
+
             return SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -163,7 +175,8 @@ class TaskDetailDialog {
                   _buildCreatorSection(context, creatorName, creatorRole),
                   const SizedBox(height: 12),
                   _buildDateSection(context, dateStr),
-                  if (taskStatus == 'Completed') ..._buildCompletionComments(context, title),
+                  if (taskStatus == 'Completed')
+                    ..._buildCompletionComments(context, title),
                 ],
               ),
             );
@@ -294,7 +307,8 @@ class TaskDetailDialog {
     );
   }
 
-  static Widget _buildCreatorSection(BuildContext context, String creatorName, String creatorRole) {
+  static Widget _buildCreatorSection(
+      BuildContext context, String creatorName, String creatorRole) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -359,7 +373,8 @@ class TaskDetailDialog {
               const SizedBox(width: 4),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(10),
@@ -433,21 +448,24 @@ class TaskDetailDialog {
     );
   }
 
-  static List<Widget> _buildCompletionComments(BuildContext context, String title) {
+  static List<Widget> _buildCompletionComments(
+      BuildContext context, String title) {
     try {
       final adminController = Get.find<AdminController>();
-      final doc = adminController.taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
-      
+      final doc = adminController.taskSnapshotDocs
+          .firstWhereOrNull((d) => d['title'] == title);
+
       if (doc == null || doc['reportCompletionInfo'] == null) {
         return [];
       }
-      
-      final reportCompletionInfoMap = Map<String, dynamic>.from(doc['reportCompletionInfo'] ?? {});
-      
+
+      final reportCompletionInfoMap =
+          Map<String, dynamic>.from(doc['reportCompletionInfo'] ?? {});
+
       if (reportCompletionInfoMap.isEmpty) {
         return [];
       }
-      
+
       List<Widget> widgets = [
         const SizedBox(height: 12),
         Container(
@@ -486,17 +504,25 @@ class TaskDetailDialog {
               ),
               const SizedBox(height: 12),
               ...reportCompletionInfoMap.entries.map((entry) {
-                final completionData = Map<String, dynamic>.from(entry.value ?? {});
-                final reportCompletionInfo = ReportCompletionInfo.fromMap(completionData);
-                
+                final completionData =
+                    Map<String, dynamic>.from(entry.value ?? {});
+                final reportCompletionInfo =
+                    ReportCompletionInfo.fromMap(completionData);
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -504,12 +530,12 @@ class TaskDetailDialog {
                     children: [
                       Text(
                         'Has Aired: ${reportCompletionInfo.hasAired ? "Yes" : "No"}',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
+                      ),
                       if (reportCompletionInfo.airTime != null)
                         Text(
                           'Air Time: ${DateFormat('MMM dd, yyyy HH:mm').format(reportCompletionInfo.airTime!)}',
@@ -519,7 +545,8 @@ class TaskDetailDialog {
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                      if (reportCompletionInfo.videoEditorName != null && reportCompletionInfo.videoEditorName!.isNotEmpty)
+                      if (reportCompletionInfo.videoEditorName != null &&
+                          reportCompletionInfo.videoEditorName!.isNotEmpty)
                         Text(
                           'Video Editor: ${reportCompletionInfo.videoEditorName}',
                           style: TextStyle(
@@ -528,7 +555,8 @@ class TaskDetailDialog {
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                      if (reportCompletionInfo.comments != null && reportCompletionInfo.comments!.isNotEmpty)
+                      if (reportCompletionInfo.comments != null &&
+                          reportCompletionInfo.comments!.isNotEmpty)
                         Container(
                           margin: const EdgeInsets.only(top: 8),
                           padding: const EdgeInsets.all(8),
@@ -552,7 +580,7 @@ class TaskDetailDialog {
           ),
         ),
       ];
-      
+
       return widgets;
     } catch (e) {
       return [];
@@ -563,45 +591,52 @@ class TaskDetailDialog {
     try {
       // Get AdminController to access task documents
       final adminController = Get.find<AdminController>();
-      final doc = adminController.taskSnapshotDocs.firstWhereOrNull((d) => d['title'] == title);
-      
+      final doc = adminController.taskSnapshotDocs
+          .firstWhereOrNull((d) => d['title'] == title);
+
       if (doc == null) return 'Unknown';
-      
+
       final status = (doc['status'] ?? '').toString().toLowerCase();
       if (status != 'completed') {
         return 'Not Completed';
       }
-      
+
       // Check if all assigned users have completed the task (same logic as AdminController)
-      final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+      final completedByUserIds =
+          List<String>.from(doc['completedByUserIds'] ?? []);
       final assignedUserIds = <String>[];
-      
+
       // Collect all assigned user IDs
-      if (doc['assignedReporterId'] != null && doc['assignedReporterId'].toString().isNotEmpty) {
+      if (doc['assignedReporterId'] != null &&
+          doc['assignedReporterId'].toString().isNotEmpty) {
         assignedUserIds.add(doc['assignedReporterId'].toString());
       }
-      if (doc['assignedCameramanId'] != null && doc['assignedCameramanId'].toString().isNotEmpty) {
+      if (doc['assignedCameramanId'] != null &&
+          doc['assignedCameramanId'].toString().isNotEmpty) {
         assignedUserIds.add(doc['assignedCameramanId'].toString());
       }
-      if (doc['assignedDriverId'] != null && doc['assignedDriverId'].toString().isNotEmpty) {
+      if (doc['assignedDriverId'] != null &&
+          doc['assignedDriverId'].toString().isNotEmpty) {
         assignedUserIds.add(doc['assignedDriverId'].toString());
       }
-      if (doc['assignedLibrarianId'] != null && doc['assignedLibrarianId'].toString().isNotEmpty) {
+      if (doc['assignedLibrarianId'] != null &&
+          doc['assignedLibrarianId'].toString().isNotEmpty) {
         assignedUserIds.add(doc['assignedLibrarianId'].toString());
       }
-      
+
       // If no users are assigned, treat as completed (backward compatibility)
       if (assignedUserIds.isEmpty) {
         return 'Completed';
       }
-      
+
       // If completedByUserIds is empty, it's using old logic, so count as completed
       if (completedByUserIds.isEmpty) {
         return 'Completed';
       }
-      
+
       // Check if all assigned users have completed the task
-      final allCompleted = assignedUserIds.every((userId) => completedByUserIds.contains(userId));
+      final allCompleted = assignedUserIds
+          .every((userId) => completedByUserIds.contains(userId));
       return allCompleted ? 'Completed' : 'Not Completed';
     } catch (e) {
       return 'Unknown';

@@ -52,15 +52,36 @@ class UserDashboardCardsWidget extends StatelessWidget {
     final onlineNowHeight = baseHeight * 0.75;  // 75% of base height
     final taskCreatedHeight = baseHeight * 0.75; // 75% of base height
     
+
+    // Responsive card dimensions based on orientation
+    final cardWidth = orientation == Orientation.portrait
+        ? (screenWidth - 48) / 2.2 // Portrait: smaller cards
+        : (screenWidth - 48) / 4.5; // Landscape: even smaller cards
+
+    final assignedTaskHeight =
+        orientation == Orientation.portrait ? 160.0 : 120.0;
+    final newsFeedHeight = orientation == Orientation.portrait ? 160.0 : 120.0;
+    final onlineNowHeight = orientation == Orientation.portrait ? 120.0 : 100.0;
+    final taskCreatedHeight =
+        orientation == Orientation.portrait ? 120.0 : 100.0;
+
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: orientation == Orientation.portrait
-          ? _buildPortraitLayout(cardWidth, assignedTaskHeight, taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor)
-          : _buildLandscapeLayout(cardWidth, assignedTaskHeight, taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor),
+          ? _buildPortraitLayout(cardWidth, assignedTaskHeight,
+              taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor)
+          : _buildLandscapeLayout(cardWidth, assignedTaskHeight,
+              taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor),
     );
   }
-  
-  Widget _buildPortraitLayout(double cardWidth, double assignedTaskHeight, double taskCreatedHeight, double onlineNowHeight, double newsFeedHeight, Color cardColor) {
+
+  Widget _buildPortraitLayout(
+      double cardWidth,
+      double assignedTaskHeight,
+      double taskCreatedHeight,
+      double onlineNowHeight,
+      double newsFeedHeight,
+      Color cardColor) {
     return IntrinsicHeight(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -150,8 +171,14 @@ class UserDashboardCardsWidget extends StatelessWidget {
       ),
     );
   }
-  
-  Widget _buildLandscapeLayout(double cardWidth, double assignedTaskHeight, double taskCreatedHeight, double onlineNowHeight, double newsFeedHeight, Color cardColor) {
+
+  Widget _buildLandscapeLayout(
+      double cardWidth,
+      double assignedTaskHeight,
+      double taskCreatedHeight,
+      double onlineNowHeight,
+      double newsFeedHeight,
+      Color cardColor) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -260,7 +287,7 @@ class _DashboardGridCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha:0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),

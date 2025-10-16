@@ -34,12 +34,11 @@ class SignUpScreen extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-         color: Theme.of(context).brightness == Brightness.dark
+          color: Theme.of(context).brightness == Brightness.dark
               ? [Colors.grey[900]!, Colors.grey[800]!]
                   .reduce((value, element) => value)
               : Theme.of(context).colorScheme.primary,
         ),
-
         child: SafeArea(
           child: Stack(
             children: [
@@ -59,7 +58,6 @@ class SignUpScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(24.w),
@@ -304,14 +302,16 @@ class SignUpScreen extends StatelessWidget {
 
                               Row(
                                 children: [
-                                  const Expanded(child: Divider(color: Colors.white)),
+                                  const Expanded(
+                                      child: Divider(color: Colors.white)),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8),
                                     child: Text('or_sign_up_with'.tr,
                                         style: textTheme.bodyMedium),
                                   ),
-                                  const Expanded(child: Divider(color: Colors.white)),
+                                  const Expanded(
+                                      child: Divider(color: Colors.white)),
                                 ],
                               ),
                               SizedBox(height: 16.h),
@@ -339,8 +339,10 @@ class SignUpScreen extends StatelessWidget {
                                         'Coming Soon',
                                         'Apple Sign-In will be available soon!',
                                         snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: Get.theme.colorScheme.surface,
-                                        colorText: Get.theme.colorScheme.onSurface,
+                                        backgroundColor:
+                                            Get.theme.colorScheme.surface,
+                                        colorText:
+                                            Get.theme.colorScheme.onSurface,
                                       );
                                     },
                                   ),
@@ -353,7 +355,11 @@ class SignUpScreen extends StatelessWidget {
                                   Text('already_have_account'.tr,
                                       style: textTheme.bodyMedium),
                                   GestureDetector(
-                                    onTap: () {Get.find<SettingsController>().triggerFeedback(); Get.toNamed('/login');},
+                                    onTap: () {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
+                                      Get.toNamed('/login');
+                                    },
                                     child: Text(
                                       'sign_in'.tr,
                                       style: textTheme.bodyMedium?.copyWith(
@@ -381,7 +387,10 @@ class SignUpScreen extends StatelessWidget {
                 left: 20.w,
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: colorScheme.primary),
-                  onPressed: () {Get.find<SettingsController>().triggerFeedback(); Get.back();},
+                  onPressed: () {
+                    Get.find<SettingsController>().triggerFeedback();
+                    Get.back();
+                  },
                 ),
               ),
             ],
@@ -432,7 +441,6 @@ class SignUpScreen extends StatelessWidget {
       ),
     );
   }
-
 
   void _signUp(BuildContext context) {
     AppDevices.hideKeyboard(context);

@@ -54,7 +54,8 @@ class OnboardingController extends GetxController {
   }
 
   void nextPage() {
-    debugPrint("OnboardingController: nextPage called, current page: ${currentPage.value}");
+    debugPrint(
+        "OnboardingController: nextPage called, current page: ${currentPage.value}");
     if (currentPage.value < pages.length - 1) {
       pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -64,7 +65,8 @@ class OnboardingController extends GetxController {
   }
 
   void previousPage() {
-    debugPrint("OnboardingController: previousPage called, current page: ${currentPage.value}");
+    debugPrint(
+        "OnboardingController: previousPage called, current page: ${currentPage.value}");
     if (currentPage.value > 0) {
       pageController.previousPage(
         duration: const Duration(milliseconds: 300),
@@ -118,4 +120,4 @@ class OnboardingPage {
     required this.icon,
     required this.color,
   });
-} 
+}

@@ -42,4 +42,4 @@ class NewsAppBar extends StatelessWidget {
       ),
     );
   }
-} 
+}

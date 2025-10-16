@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'package:task/controllers/task_controller.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/widgets/app_bar.dart';
 import 'package:task/widgets/app_drawer.dart';
 import 'package:task/widgets/empty_state_widget.dart';
@@ -48,12 +48,12 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
     ever(taskController.tasks, (_) {
       _filterTasks();
     });
-    
+
     // Listen to search query changes for real-time filtering
     ever(_searchQuery, (_) {
       _filterTasks();
     });
-    
+
     // Listen to filter changes
     ever(_selectedFilter, (_) {
       _filterTasks();
@@ -68,18 +68,23 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
           task.description.toLowerCase().contains(searchLower) ||
           task.createdBy.toLowerCase().contains(searchLower) ||
           task.status.toLowerCase().contains(searchLower) ||
-          (task.assignedReporter?.toLowerCase().contains(searchLower) ?? false) ||
-          (task.assignedCameraman?.toLowerCase().contains(searchLower) ?? false) ||
+          (task.assignedReporter?.toLowerCase().contains(searchLower) ??
+              false) ||
+          (task.assignedCameraman?.toLowerCase().contains(searchLower) ??
+              false) ||
           (task.assignedDriver?.toLowerCase().contains(searchLower) ?? false) ||
-          (task.assignedLibrarian?.toLowerCase().contains(searchLower) ?? false) ||
+          (task.assignedLibrarian?.toLowerCase().contains(searchLower) ??
+              false) ||
           (task.category?.toLowerCase().contains(searchLower) ?? false) ||
           (task.priority?.toLowerCase().contains(searchLower) ?? false) ||
           task.tags.any((tag) => tag.toLowerCase().contains(searchLower)) ||
-          task.comments.any((comment) => comment.toLowerCase().contains(searchLower));
+          task.comments
+              .any((comment) => comment.toLowerCase().contains(searchLower));
 
       final matchesFilter = _selectedFilter.value == 'All' ||
           (_selectedFilter.value == 'Completed' &&
-              task.status == 'Completed' && task.isCompletedByAllAssignedUsers) ||
+              task.status == 'Completed' &&
+              task.isCompletedByAllAssignedUsers) ||
           (_selectedFilter.value == 'Pending' && task.status == 'Pending');
 
       return matchesSearch && matchesFilter;
@@ -140,23 +145,26 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                           decoration: InputDecoration(
                             hintText: 'Search tasks...',
                             hintStyle: TextStyle(
-                              color: isDark ? Colors.grey[300] : Colors.grey[600],
+                              color:
+                                  isDark ? Colors.grey[300] : Colors.grey[600],
                             ),
                             prefixIcon: Icon(Icons.search,
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
                                 size: isTablet ? 24 : 20),
                             filled: true,
                             fillColor:
                                 isDark ? Colors.grey[900] : Colors.grey[200],
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+                              borderRadius:
+                                  BorderRadius.circular(isTablet ? 16 : 12),
                               borderSide: BorderSide.none,
                             ),
-                            contentPadding:
-                                EdgeInsets.symmetric(
-                                  vertical: isTablet ? 16 : 12,
-                                  horizontal: isTablet ? 16 : 12,
-                                ),
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: isTablet ? 16 : 12,
+                              horizontal: isTablet ? 16 : 12,
+                            ),
                           ),
                           style: TextStyle(
                             fontSize: isTablet ? 16 : 14,
@@ -222,7 +230,8 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
                     },
                     child: ListView.separated(
                       padding: EdgeInsets.symmetric(
-                          horizontal: isTablet ? 24.w : (isLargeScreen ? 16.w : 8.w),
+                          horizontal:
+                              isTablet ? 24.w : (isLargeScreen ? 16.w : 8.w),
                           vertical: isTablet ? 20 : 16),
                       itemCount: _filteredTasks.length +
                           (taskController.hasMore ? 1 : 0),
@@ -254,7 +263,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
           ),
         ),
       ),
-      bottomNavigationBar:  UserNavBar(currentIndex: 1),
+      bottomNavigationBar: UserNavBar(currentIndex: 1),
     );
   }
 }

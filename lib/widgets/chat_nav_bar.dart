@@ -35,4 +35,4 @@ class ChatNavBar extends StatelessWidget {
       ],
     );
   }
-} 
+}

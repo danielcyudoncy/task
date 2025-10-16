@@ -6,7 +6,7 @@ import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart'
     as dtp;
 import 'package:task/utils/devices/app_devices.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../models/task_model.dart';
+import '../models/task.dart';
 
 class TaskCreationScreen extends StatefulWidget {
   final Task? task;

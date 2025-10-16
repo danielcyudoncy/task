@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/models/report_completion_info.dart';
 import 'package:task/service/user_cache_service.dart';
 import 'status_chip.dart';
@@ -139,9 +139,9 @@ class MinimalTaskCard extends StatelessWidget {
       if (task.createdByName != null && task.createdByName!.isNotEmpty) {
         return task.createdByName!;
       }
-      
+
       final userCacheService = Get.find<UserCacheService>();
-      
+
       // Then check if we have a cached name for the creator ID
       if (task.createdById.isNotEmpty) {
         final cachedName = userCacheService.getUserNameSync(task.createdById);
@@ -149,12 +149,12 @@ class MinimalTaskCard extends StatelessWidget {
           return cachedName;
         }
       }
-      
+
       // Fallback to createdBy field (user ID)
       if (task.createdBy.isNotEmpty) {
         return task.createdBy;
       }
-      
+
       return 'Unknown';
     } catch (e) {
       return 'Unknown';
@@ -348,7 +348,8 @@ class MinimalTaskCard extends StatelessWidget {
     }
 
     // Show completion comments for completed tasks
-    final ReportCompletionInfo completionInfo = task.reportCompletionInfo.values.first;
+    final ReportCompletionInfo completionInfo =
+        task.reportCompletionInfo.values.first;
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Row(
@@ -356,9 +357,7 @@ class MinimalTaskCard extends StatelessWidget {
           Icon(
             Icons.check_circle_outline,
             size: 16,
-            color: isDark
-                ? Colors.green[300]
-                : Colors.green[600],
+            color: isDark ? Colors.green[300] : Colors.green[600],
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -413,17 +412,20 @@ class MinimalTaskCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text('Category: ${task.category ?? 'N/A'}'),
                 const SizedBox(height: 8),
-                Text('Due Date: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
+                Text(
+                    'Due Date: ${task.dueDate != null ? DateFormat('yyyy-MM-dd – kk:mm').format(task.dueDate!) : 'N/A'}'),
                 const SizedBox(height: 8),
-                Text('Tags: ${task.tags.isNotEmpty ? task.tags.join(', ') : 'None'}'),
+                Text(
+                    'Tags: ${task.tags.isNotEmpty ? task.tags.join(', ') : 'None'}'),
                 const SizedBox(height: 16),
                 if (task.comments.isNotEmpty) ...[
-                  const Text('Comments:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Comments:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   ...task.comments.map((comment) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text('• $comment'),
-                  )),
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text('• $comment'),
+                      )),
                 ] else
                   const Text('No comments available.'),
               ],
@@ -435,10 +437,10 @@ class MinimalTaskCard extends StatelessWidget {
               child: Text(
                 'Close',
                 style: TextStyle(
-                   color: Theme.of(context).brightness == Brightness.dark
-                                ? Theme.of(context).colorScheme.onPrimaryContainer
-                                : Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w500,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Theme.of(context).colorScheme.onPrimaryContainer
+                      : Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),

@@ -7,7 +7,6 @@ import '../../controllers/admin_controller.dart';
 import '../models/report_completion_info.dart';
 import 'package:intl/intl.dart';
 
-
 class TaskDetailsDialog extends StatelessWidget {
   final String title;
   final AdminController adminController;
@@ -32,26 +31,44 @@ class TaskDetailsDialog extends StatelessWidget {
               children: [
                 Text('title'.trParams({'title': title})),
                 const SizedBox(height: 6),
-                Text('status'.trParams({'status': doc['status'] ?? 'unknown'.tr})),
+                Text('status'
+                    .trParams({'status': doc['status'] ?? 'unknown'.tr})),
                 const SizedBox(height: 6),
-                Text('created_by'.trParams({'name': doc['creatorName'] ?? doc['creator'] ?? 'unknown'.tr})),
+                Text('created_by'.trParams({
+                  'name': doc['creatorName'] ?? doc['creator'] ?? 'unknown'.tr
+                })),
                 const SizedBox(height: 6),
-                Text('due_date'.trParams({'date': formatDueDate(doc['dueDate'])})),
+                Text('due_date'
+                    .trParams({'date': formatDueDate(doc['dueDate'])})),
                 const SizedBox(height: 6),
-                Text('category'.trParams({'category': doc['category'] ?? 'No category'})),
+                Text('category'
+                    .trParams({'category': doc['category'] ?? 'No category'})),
                 const SizedBox(height: 6),
-                Text('priority'.trParams({'priority': doc['priority'] ?? 'No priority'})),
+                Text('priority'
+                    .trParams({'priority': doc['priority'] ?? 'No priority'})),
                 const SizedBox(height: 6),
-                Text('reporter'.trParams({'name': doc['assignedReporterName'] ?? 'Not Assigned'})),
+                Text('reporter'.trParams(
+                    {'name': doc['assignedReporterName'] ?? 'Not Assigned'})),
                 const SizedBox(height: 6),
-                Text('cameraman'.trParams({'name': doc['assignedCameramanName'] ?? 'Not Assigned'})),
+                Text('cameraman'.trParams(
+                    {'name': doc['assignedCameramanName'] ?? 'Not Assigned'})),
                 const SizedBox(height: 6),
-                Text('tags'.trParams({'tags': (doc['tags'] is List && (doc['tags'] as List).isNotEmpty) ? (doc['tags'] as List).join(', ') : 'None'})),
+                Text('tags'.trParams({
+                  'tags':
+                      (doc['tags'] is List && (doc['tags'] as List).isNotEmpty)
+                          ? (doc['tags'] as List).join(', ')
+                          : 'None'
+                })),
                 const SizedBox(height: 6),
-                Text('comments'.trParams({'count': (doc['comments'] is List) ? (doc['comments'] as List).length.toString() : '0'})),
+                Text('comments'.trParams({
+                  'count': (doc['comments'] is List)
+                      ? (doc['comments'] as List).length.toString()
+                      : '0'
+                })),
                 const SizedBox(height: 6),
                 // Display completion comments if task is completed
-                if (doc['status']?.toString().toLowerCase() == 'completed' && doc['reportCompletionInfo'] != null)
+                if (doc['status']?.toString().toLowerCase() == 'completed' &&
+                    doc['reportCompletionInfo'] != null)
                   _buildCompletionComments(doc['reportCompletionInfo']),
               ],
             )
@@ -88,7 +105,7 @@ class TaskDetailsDialog extends StatelessWidget {
           final userId = entry.key;
           final completionData = entry.value as Map<String, dynamic>;
           final completionInfo = ReportCompletionInfo.fromMap(completionData);
-          
+
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
@@ -109,29 +126,32 @@ class TaskDetailsDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text('Has Aired: ${completionInfo.hasAired ? "Yes" : "No"}'),
-                 if (completionInfo.airTime != null) ...[
-                   const SizedBox(height: 2),
-                   Text('Air Time: ${DateFormat('MMM dd, yyyy HH:mm').format(completionInfo.airTime!)}'),
-                 ],
-                 if (completionInfo.videoEditorName != null && completionInfo.videoEditorName!.isNotEmpty) ...[
-                   const SizedBox(height: 2),
-                   Text('Video Editor: ${completionInfo.videoEditorName}'),
-                 ],
-                 if (completionInfo.comments != null && completionInfo.comments!.isNotEmpty) ...[
-                   const SizedBox(height: 4),
-                   Text(
-                     'Comments:',
-                     style: const TextStyle(fontWeight: FontWeight.w500),
-                   ),
-                   const SizedBox(height: 2),
-                   Text(
-                     completionInfo.comments!,
-                     style: TextStyle(
-                       color: Colors.grey[700],
-                       fontStyle: FontStyle.italic,
-                     ),
-                   ),
-                 ]
+                if (completionInfo.airTime != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                      'Air Time: ${DateFormat('MMM dd, yyyy HH:mm').format(completionInfo.airTime!)}'),
+                ],
+                if (completionInfo.videoEditorName != null &&
+                    completionInfo.videoEditorName!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text('Video Editor: ${completionInfo.videoEditorName}'),
+                ],
+                if (completionInfo.comments != null &&
+                    completionInfo.comments!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Comments:',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    completionInfo.comments!,
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ]
               ],
             ),
           );

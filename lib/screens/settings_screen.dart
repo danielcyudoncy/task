@@ -19,16 +19,14 @@ class SettingsScreen extends StatelessWidget {
   // Get dynamic background color based on theme mode
   Color _getBackgroundColor(BuildContext context) {
     final themeController = Get.find<ThemeController>();
-    
 
     switch (themeController.currentThemeMode.value) {
       case AppThemeMode.light:
         return Colors.white;
       case AppThemeMode.dark:
-        return 
-          Colors.grey[900]!;
-          
-         // App primary blue for dark mode
+        return Colors.grey[900]!;
+
+      // App primary blue for dark mode
       case AppThemeMode.system:
         return themeController.isSystemDark.value
             ? const Color(0xFF424242) // Gray gradient for system dark
@@ -59,9 +57,9 @@ class SettingsScreen extends StatelessWidget {
           appBar: AppBar(
             elevation: 0,
             backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? [Colors.grey[900]!, Colors.grey[800]!]
-                      .reduce((value, element) => value)
-                  : Theme.of(context).colorScheme.primary,
+                ? [Colors.grey[900]!, Colors.grey[800]!]
+                    .reduce((value, element) => value)
+                : Theme.of(context).colorScheme.primary,
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
               onPressed: () => Get.back(),
@@ -306,7 +304,7 @@ class SettingsScreen extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
     final textColor = _getTextColor(context);
-    
+
     return Card(
       color: Colors.transparent,
       elevation: 0,

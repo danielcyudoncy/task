@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:task/utils/constants/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/task_controller.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import './task_list_tab.dart';
 
 class TasksSection extends StatelessWidget {
@@ -26,7 +26,7 @@ class TasksSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -57,7 +57,7 @@ class TasksSection extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Padding(
       padding: const EdgeInsets.only(top: 18, left: 16, right: 16, bottom: 10),
       child: Row(
@@ -72,8 +72,7 @@ class TasksSection extends StatelessWidget {
                   width: 34.w,
                   height: 34.h,
                   decoration: BoxDecoration(
-                    color:
-                          isDark ? colorScheme.onPrimary : colorScheme.primary,
+                    color: isDark ? colorScheme.onPrimary : colorScheme.primary,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -85,8 +84,7 @@ class TasksSection extends StatelessWidget {
                   ),
                   child: Icon(
                     Icons.add,
-                    color:
-                          isDark ? colorScheme.primary : colorScheme.onPrimary,
+                    color: isDark ? colorScheme.primary : colorScheme.onPrimary,
                     size: 22.sp,
                   ),
                 ),
@@ -94,11 +92,10 @@ class TasksSection extends StatelessWidget {
                 Text(
                   'Add Task',
                   style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                    color:
-                          isDark ? colorScheme.onPrimary : colorScheme.primary
-                  ),
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          isDark ? colorScheme.onPrimary : colorScheme.primary),
                 ),
               ],
             ),
@@ -111,7 +108,7 @@ class TasksSection extends StatelessWidget {
   Widget _buildTabBar(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return TabBar(
       controller: tabController,
       isScrollable: false,
@@ -122,7 +119,9 @@ class TasksSection extends StatelessWidget {
       indicatorSize: TabBarIndicatorSize.tab,
       indicatorPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
       labelColor: isDark ? colorScheme.surface : AppColors.white,
-      unselectedLabelColor: isDark ? colorScheme.onPrimary.withValues(alpha: 0.7) : AppColors.black,
+      unselectedLabelColor: isDark
+          ? colorScheme.onPrimary.withValues(alpha: 0.7)
+          : AppColors.black,
       labelStyle: TextStyle(
         fontWeight: FontWeight.w600,
         fontSize: 15.sp,
@@ -143,14 +142,16 @@ class TasksSection extends StatelessWidget {
       controller: tabController,
       children: [
         Obx(() {
-          if (!Get.isRegistered<AuthController>() || !Get.isRegistered<TaskController>()) {
+          if (!Get.isRegistered<AuthController>() ||
+              !Get.isRegistered<TaskController>()) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           final userId = authController.auth.currentUser?.uid ?? "";
           final tasks = taskController.tasks;
           debugPrint('TasksSection: userId = $userId');
-          debugPrint('TasksSection: total tasks in controller = ${tasks.length}');
+          debugPrint(
+              'TasksSection: total tasks in controller = ${tasks.length}');
           final taskMap = {for (var task in tasks) task.taskId: task};
           final notCompletedTasks = taskMap.values.where((t) {
             final isRelevant = (t.createdById == userId ||
@@ -160,10 +161,12 @@ class TasksSection extends StatelessWidget {
                 t.assignedDriverId == userId ||
                 t.assignedLibrarianId == userId);
             final isNotCompleted = t.status.toLowerCase() != "completed";
-            debugPrint('TasksSection: task ${t.taskId} - createdById=${t.createdById}, assignedTo=${t.assignedTo}, assignedReporterId=${t.assignedReporterId}, assignedCameramanId=${t.assignedCameramanId}, assignedDriverId=${t.assignedDriverId}, assignedLibrarianId=${t.assignedLibrarianId}, status=${t.status}, isRelevant=$isRelevant, isNotCompleted=$isNotCompleted');
+            debugPrint(
+                'TasksSection: task ${t.taskId} - createdById=${t.createdById}, assignedTo=${t.assignedTo}, assignedReporterId=${t.assignedReporterId}, assignedCameramanId=${t.assignedCameramanId}, assignedDriverId=${t.assignedDriverId}, assignedLibrarianId=${t.assignedLibrarianId}, status=${t.status}, isRelevant=$isRelevant, isNotCompleted=$isNotCompleted');
             return isNotCompleted && isRelevant;
           }).toList();
-          debugPrint('TasksSection: notCompletedTasks count = ${notCompletedTasks.length}');
+          debugPrint(
+              'TasksSection: notCompletedTasks count = ${notCompletedTasks.length}');
 
           return TaskListTab(
             isCompleted: false,
@@ -172,35 +175,34 @@ class TasksSection extends StatelessWidget {
           );
         }),
         Obx(() {
-          if (!Get.isRegistered<AuthController>() || !Get.isRegistered<TaskController>()) {
+          if (!Get.isRegistered<AuthController>() ||
+              !Get.isRegistered<TaskController>()) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           final userId = authController.auth.currentUser?.uid ?? "";
           final tasks = taskController.tasks;
           final taskMap = {for (var task in tasks) task.taskId: task};
 
-          final completedTasks = taskMap.values
-              .where((t) {
-                // Check if user is related to this task
-                final isUserRelated = t.createdById == userId ||
-                    t.assignedTo == userId ||
-                    t.assignedReporterId == userId ||
-                    t.assignedCameramanId == userId ||
-                    t.assignedDriverId == userId ||
-                    t.assignedLibrarianId == userId;
-                
-                if (!isUserRelated) return false;
-                
-                // Check if task is truly completed using new multi-user logic
-                 if (t.status.toLowerCase() == "completed") {
-                   // Use the helper property from Task model to check if all assigned users completed
-                   return t.isCompletedByAllAssignedUsers;
-                 }
-                
-                return false;
-              })
-              .toList();
+          final completedTasks = taskMap.values.where((t) {
+            // Check if user is related to this task
+            final isUserRelated = t.createdById == userId ||
+                t.assignedTo == userId ||
+                t.assignedReporterId == userId ||
+                t.assignedCameramanId == userId ||
+                t.assignedDriverId == userId ||
+                t.assignedLibrarianId == userId;
+
+            if (!isUserRelated) return false;
+
+            // Check if task is truly completed using new multi-user logic
+            if (t.status.toLowerCase() == "completed") {
+              // Use the helper property from Task model to check if all assigned users completed
+              return t.isCompletedByAllAssignedUsers;
+            }
+
+            return false;
+          }).toList();
 
           return TaskListTab(
             isCompleted: true,

@@ -343,7 +343,6 @@ class _AppDrawerState extends State<AppDrawer> {
     );
   }
 
-  
   Widget _drawerTile(IconData icon, String label, VoidCallback onTap) {
     return Card(
       elevation: 3,
@@ -408,7 +407,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       : Theme.of(context)
                           .colorScheme
                           .outline
-                          .withValues(alpha:0.3),
+                          .withValues(alpha: 0.3),
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -478,9 +477,11 @@ class _AppDrawerState extends State<AppDrawer> {
         content: Text(
           'are_you_sure'.tr,
           style: TextStyle(
-            color:
-                Theme.of(Get.context!).colorScheme.onSurface.withValues(alpha: 0.8),
-                 fontSize: 14.sp,
+            color: Theme.of(Get.context!)
+                .colorScheme
+                .onSurface
+                .withValues(alpha: 0.8),
+            fontSize: 14.sp,
           ),
           textAlign: TextAlign.center,
         ),
@@ -527,7 +528,6 @@ class _AppDrawerState extends State<AppDrawer> {
       });
     }
   }
-
 }
 
 class ConcentricCirclePainter extends CustomPainter {

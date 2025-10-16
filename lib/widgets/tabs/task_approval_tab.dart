@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/task_controller.dart';
 import '../../controllers/auth_controller.dart';
-import '../../models/task_model.dart';
+import '../../models/task.dart';
 import '../ui_helpers.dart';
 
 class TaskApprovalTab extends StatelessWidget {
   final Map<String, Map<String, String>> userCache;
-  final Future<Map<String, String>> Function(String, VoidCallback) getUserNameAndRole;
+  final Future<Map<String, String>> Function(String, VoidCallback)
+      getUserNameAndRole;
 
   const TaskApprovalTab({
     super.key,
@@ -29,7 +30,7 @@ class TaskApprovalTab extends StatelessWidget {
       }
 
       final pendingTasks = taskController.pendingApprovalTasks;
-      
+
       if (pendingTasks.isEmpty) {
         return _buildEmptyState(context);
       }
@@ -53,28 +54,36 @@ class TaskApprovalTab extends StatelessWidget {
           Icon(
             Icons.approval_outlined,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No tasks pending approval',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7),
+                ),
           ),
           const SizedBox(height: 8),
           Text(
             'All tasks have been reviewed',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.5),
+                ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTaskCard(BuildContext context, Task task, AuthController authController) {
+  Widget _buildTaskCard(
+      BuildContext context, Task task, AuthController authController) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 3,
@@ -117,11 +126,13 @@ class TaskApprovalTab extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.orange.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                        border: Border.all(
+                            color: Colors.orange.withValues(alpha: 0.4)),
                       ),
                       child: Text(
                         'Pending Approval',
@@ -140,7 +151,10 @@ class TaskApprovalTab extends StatelessWidget {
                     task.description,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onPrimary
+                          .withValues(alpha: 0.8),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -152,7 +166,10 @@ class TaskApprovalTab extends StatelessWidget {
                     Icon(
                       Icons.person_outline,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onPrimary
+                          .withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -160,12 +177,16 @@ class TaskApprovalTab extends StatelessWidget {
                         future: getUserNameAndRole(task.createdById, () {}),
                         builder: (context, snapshot) {
                           if (snapshot.hasData) {
-                            final creatorName = snapshot.data!['name'] ?? 'Unknown';
+                            final creatorName =
+                                snapshot.data!['name'] ?? 'Unknown';
                             return Text(
                               'Created by $creatorName',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimary
+                                    .withValues(alpha: 0.8),
                               ),
                             );
                           }
@@ -173,7 +194,10 @@ class TaskApprovalTab extends StatelessWidget {
                             'Loading creator...',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimary
+                                  .withValues(alpha: 0.6),
                             ),
                           );
                         },
@@ -182,14 +206,20 @@ class TaskApprovalTab extends StatelessWidget {
                     Icon(
                       Icons.access_time,
                       size: 16,
-                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onPrimary
+                          .withValues(alpha: 0.7),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       UIHelpers.formatDate(task.timestamp),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onPrimary
+                            .withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -200,12 +230,19 @@ class TaskApprovalTab extends StatelessWidget {
                     children: [
                       if (task.category != null) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimary
+                                .withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.3),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimary
+                                  .withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(
@@ -221,12 +258,15 @@ class TaskApprovalTab extends StatelessWidget {
                       ],
                       if (task.priority != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: _getPriorityColor(task.priority!).withValues(alpha: 0.2),
+                            color: _getPriorityColor(task.priority!)
+                                .withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: _getPriorityColor(task.priority!).withValues(alpha: 0.4),
+                              color: _getPriorityColor(task.priority!)
+                                  .withValues(alpha: 0.4),
                             ),
                           ),
                           child: Text(
@@ -265,12 +305,12 @@ class TaskApprovalTab extends StatelessWidget {
   void _showTaskApprovalDialog(BuildContext context, Task task) async {
     final TaskController taskController = Get.find<TaskController>();
     final TextEditingController commentController = TextEditingController();
-    
+
     // Get creator info
     final creatorInfo = await getUserNameAndRole(task.createdById, () {});
     final creatorName = creatorInfo['name'] ?? 'Unknown';
     final creatorRole = creatorInfo['role'] ?? 'Unknown';
-    
+
     // Format creator display text
     String creatorDisplay;
     if (creatorName != 'Unknown') {
@@ -284,9 +324,9 @@ class TaskApprovalTab extends StatelessWidget {
       // If no name available, show 'Unknown'
       creatorDisplay = 'Unknown';
     }
-    
+
     if (!context.mounted) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -324,24 +364,31 @@ class TaskApprovalTab extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.approval_outlined,
-                            color: Theme.of(dialogContext).colorScheme.onPrimary,
+                            color:
+                                Theme.of(dialogContext).colorScheme.onPrimary,
                             size: 24,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Task Approval',
-                              style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
-                                color: Theme.of(dialogContext).colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(dialogContext)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    color: Theme.of(dialogContext)
+                                        .colorScheme
+                                        .onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ),
                           IconButton(
                             onPressed: () => Navigator.of(dialogContext).pop(),
                             icon: Icon(
                               Icons.close,
-                              color: Theme.of(dialogContext).colorScheme.onPrimary,
+                              color:
+                                  Theme.of(dialogContext).colorScheme.onPrimary,
                             ),
                           ),
                         ],
@@ -349,9 +396,13 @@ class TaskApprovalTab extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         task.title,
-                        style: Theme.of(dialogContext).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(dialogContext).colorScheme.onPrimary,
-                        ),
+                        style: Theme.of(dialogContext)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                              color:
+                                  Theme.of(dialogContext).colorScheme.onPrimary,
+                            ),
                       ),
                     ],
                   ),
@@ -369,12 +420,21 @@ class TaskApprovalTab extends StatelessWidget {
                           'Task Details',
                           Icons.assignment,
                           [
-                            _buildDetailRow(dialogContext, 'Description', task.description),
-                            _buildDetailRow(dialogContext, 'Created by', creatorDisplay),
-                            _buildDetailRow(dialogContext, 'Status', task.status),
-                            if (task.category != null) _buildDetailRow(dialogContext, 'Category', task.category!),
-                            if (task.priority != null) _buildDetailRow(dialogContext, 'Priority', task.priority!),
-                            if (task.dueDate != null) _buildDetailRow(dialogContext, 'Due Date', UIHelpers.formatDate(task.dueDate!)),
+                            _buildDetailRow(
+                                dialogContext, 'Description', task.description),
+                            _buildDetailRow(
+                                dialogContext, 'Created by', creatorDisplay),
+                            _buildDetailRow(
+                                dialogContext, 'Status', task.status),
+                            if (task.category != null)
+                              _buildDetailRow(
+                                  dialogContext, 'Category', task.category!),
+                            if (task.priority != null)
+                              _buildDetailRow(
+                                  dialogContext, 'Priority', task.priority!),
+                            if (task.dueDate != null)
+                              _buildDetailRow(dialogContext, 'Due Date',
+                                  UIHelpers.formatDate(task.dueDate!)),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -389,34 +449,46 @@ class TaskApprovalTab extends StatelessWidget {
                               controller: commentController,
                               maxLines: 4,
                               style: TextStyle(
-                                color: Theme.of(dialogContext).colorScheme.onSurface,
+                                color: Theme.of(dialogContext)
+                                    .colorScheme
+                                    .onSurface,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'Add your comments here (optional)...',
+                                hintText:
+                                    'Add your comments here (optional)...',
                                 hintStyle: TextStyle(
-                                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(dialogContext)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   borderSide: BorderSide(
-                                    color: Theme.of(dialogContext).colorScheme.outline,
+                                    color: Theme.of(dialogContext)
+                                        .colorScheme
+                                        .outline,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   borderSide: BorderSide(
-                                    color: Theme.of(dialogContext).colorScheme.outline,
+                                    color: Theme.of(dialogContext)
+                                        .colorScheme
+                                        .outline,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   borderSide: BorderSide(
-                                    color: Theme.of(dialogContext).colorScheme.primary,
+                                    color: Theme.of(dialogContext)
+                                        .colorScheme
+                                        .primary,
                                     width: 2,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(dialogContext).colorScheme.surface,
+                                fillColor:
+                                    Theme.of(dialogContext).colorScheme.surface,
                               ),
                             ),
                           ],
@@ -445,19 +517,26 @@ class TaskApprovalTab extends StatelessWidget {
                             final comment = commentController.text.trim();
                             await taskController.rejectTask(
                               task.taskId,
-                              reason: comment.isEmpty ? 'Rejected by admin' : comment,
+                              reason: comment.isEmpty
+                                  ? 'Rejected by admin'
+                                  : comment,
                             );
                             // Refresh tasks to update UI
                             await taskController.refreshTasks();
                             if (dialogContext.mounted) navigator.pop();
                           },
-                          icon: Icon(Icons.close, color: Theme.of(dialogContext).colorScheme.error),
+                          icon: Icon(Icons.close,
+                              color: Theme.of(dialogContext).colorScheme.error),
                           label: Text(
                             'Reject',
-                            style: TextStyle(color: Theme.of(dialogContext).colorScheme.error),
+                            style: TextStyle(
+                                color:
+                                    Theme.of(dialogContext).colorScheme.error),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Theme.of(dialogContext).colorScheme.error),
+                            side: BorderSide(
+                                color:
+                                    Theme.of(dialogContext).colorScheme.error),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
@@ -470,7 +549,9 @@ class TaskApprovalTab extends StatelessWidget {
                             final comment = commentController.text.trim();
                             await taskController.approveTask(
                               task.taskId,
-                              reason: comment.isEmpty ? 'Approved by admin' : comment,
+                              reason: comment.isEmpty
+                                  ? 'Approved by admin'
+                                  : comment,
                             );
                             // Refresh tasks to update UI
                             await taskController.refreshTasks();
@@ -479,8 +560,10 @@ class TaskApprovalTab extends StatelessWidget {
                           icon: const Icon(Icons.check),
                           label: const Text('Approve'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(dialogContext).colorScheme.primary,
-                            foregroundColor: Theme.of(dialogContext).colorScheme.onPrimary,
+                            backgroundColor:
+                                Theme.of(dialogContext).colorScheme.primary,
+                            foregroundColor:
+                                Theme.of(dialogContext).colorScheme.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
@@ -496,7 +579,8 @@ class TaskApprovalTab extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailSection(BuildContext context, String title, IconData icon, List<Widget> children) {
+  Widget _buildDetailSection(BuildContext context, String title, IconData icon,
+      List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -511,9 +595,9 @@ class TaskApprovalTab extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
             ),
           ],
         ),
@@ -525,7 +609,8 @@ class TaskApprovalTab extends StatelessWidget {
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+              color:
+                  Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
               width: 1,
             ),
           ),

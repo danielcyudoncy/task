@@ -62,14 +62,13 @@ class ProfileScreen extends StatelessWidget {
                           onPressed: () {
                             // Trigger sound/vibration feedback
                             Get.find<SettingsController>().triggerFeedback();
-                            
+
                             // Open the drawer
                             if (_scaffoldKey.currentState != null) {
                               _scaffoldKey.currentState!.openDrawer();
                             }
                           },
                         ),
-
                       ),
                       // Settings Icon
                       Container(
@@ -150,7 +149,8 @@ class ProfileScreen extends StatelessWidget {
                 // Card with Info and Profile Actions
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 18.w),
-                  padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 20.w),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 24.h, horizontal: 20.w),
                   decoration: BoxDecoration(
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(28.r),
@@ -180,7 +180,9 @@ class ProfileScreen extends StatelessWidget {
                         onTap: () {
                           AppDevices.copyToClipboard(phone);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Phone number copied to clipboard')),
+                            SnackBar(
+                                content:
+                                    Text('Phone number copied to clipboard')),
                           );
                         },
                         child: Row(
@@ -201,7 +203,8 @@ class ProfileScreen extends StatelessWidget {
                             Icon(
                               Icons.copy,
                               size: 16,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ],
                         ),
@@ -211,7 +214,8 @@ class ProfileScreen extends StatelessWidget {
                         onTap: () {
                           AppDevices.copyToClipboard(email);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Email copied to clipboard')),
+                            SnackBar(
+                                content: Text('Email copied to clipboard')),
                           );
                         },
                         child: Row(
@@ -232,7 +236,8 @@ class ProfileScreen extends StatelessWidget {
                             Icon(
                               Icons.copy,
                               size: 16,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ],
                         ),
@@ -255,8 +260,7 @@ class ProfileScreen extends StatelessWidget {
                           color: colorScheme.onSurface,
                         ),
                         title: Text("push_notifications".tr,
-                            style: TextStyle(
-                                color: colorScheme.onSurface)),
+                            style: TextStyle(color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
                           color: colorScheme.onSurface,
@@ -273,8 +277,7 @@ class ProfileScreen extends StatelessWidget {
                           color: colorScheme.onSurface,
                         ),
                         title: Text("update_profile".tr,
-                            style: TextStyle(
-                                color: colorScheme.onSurface)),
+                            style: TextStyle(color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
                           color: colorScheme.onSurface,
@@ -291,15 +294,14 @@ class ProfileScreen extends StatelessWidget {
                           color: colorScheme.onSurface,
                         ),
                         title: Text("check_for_updates".tr,
-                            style: TextStyle(
-                                color: colorScheme.onSurface)),
+                            style: TextStyle(color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
                           color: colorScheme.onSurface,
                         ),
                         onTap: () async {
                           Get.find<SettingsController>().triggerFeedback();
-                          
+
                           // Show loading indicator
                           Get.dialog(
                             const Center(
@@ -307,19 +309,20 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             barrierDismissible: false,
                           );
-                          
+
                           try {
                             // Check for updates
                             await UpdateService.checkForUpdates(
                               forceCheck: true,
                               showDialog: true,
                             );
-                            
+
                             // Close loading dialog
                             Get.back();
-                            
+
                             // Show success message if no updates found
-                            final updateStatus = await UpdateService.getUpdateStatus();
+                            final updateStatus =
+                                await UpdateService.getUpdateStatus();
                             if (!updateStatus['hasUpdate']) {
                               Get.snackbar(
                                 'No Updates',
@@ -333,7 +336,7 @@ class ProfileScreen extends StatelessWidget {
                           } catch (e) {
                             // Close loading dialog
                             Get.back();
-                            
+
                             // Show error message
                             Get.snackbar(
                               'Update Check Failed',
@@ -371,9 +374,9 @@ class ProfileScreen extends StatelessWidget {
                           icon: const Icon(Icons.logout, color: Colors.white),
                           label: Text("log_out".tr,
                               style: TextStyle(
-                  fontSize: 18.sp, 
-                  color: Theme.of(context).colorScheme.onPrimary
-                )),
+                                  fontSize: 18.sp,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary)),
                           onPressed: () {
                             Get.find<SettingsController>().triggerFeedback();
                             authController.logout();
@@ -385,7 +388,8 @@ class ProfileScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.error,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.error,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -397,10 +401,10 @@ class ProfileScreen extends StatelessWidget {
                               color: Colors.white),
                           label: Text("delete_account".tr,
                               style: TextStyle(
-                  fontSize: 18.sp, 
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onPrimary
-                )),
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary)),
                           onPressed: () async {
                             Get.find<SettingsController>().triggerFeedback();
                             final confirmed = await showDialog<bool>(
@@ -408,20 +412,28 @@ class ProfileScreen extends StatelessWidget {
                               builder: (context) => AlertDialog(
                                 title: Text('delete_account'.tr),
                                 content: Text(
-                                    'are_you_sure_you_want_to_delete_your_account'.tr),
+                                    'are_you_sure_you_want_to_delete_your_account'
+                                        .tr),
                                 actions: [
                                   TextButton(
-                                    onPressed: () {Get.find<SettingsController>().triggerFeedback();
-                                        Navigator.of(context).pop(false);},
+                                    onPressed: () {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
+                                      Navigator.of(context).pop(false);
+                                    },
                                     child: Text('cancel'.tr),
                                   ),
                                   TextButton(
-                                    onPressed: () {Get.find<SettingsController>().triggerFeedback();
-                                        Navigator.of(context).pop(true);},
+                                    onPressed: () {
+                                      Get.find<SettingsController>()
+                                          .triggerFeedback();
+                                      Navigator.of(context).pop(true);
+                                    },
                                     child: Text('delete'.tr,
                                         style: TextStyle(
-                  color: Theme.of(context).colorScheme.error
-                )),
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .error)),
                                   ),
                                 ],
                               ),

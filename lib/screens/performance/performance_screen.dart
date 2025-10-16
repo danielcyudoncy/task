@@ -29,10 +29,10 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
     // Clear cached network images
     PaintingBinding.instance.imageCache.clear();
     PaintingBinding.instance.imageCache.clearLiveImages();
-    
+
     // Clear CachedNetworkImage cache
     DefaultCacheManager().emptyCache();
-    
+
     // Force rebuild to reload images
     if (mounted) {
       setState(() {});
@@ -81,11 +81,13 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
           if (_authController.currentUser != null)
             PopupMenuButton<String>(
               icon: Obx(() => _buildCachedAvatar(
-                imageUrl: _authController.currentUser?.photoURL,
-                fallbackText: _authController.currentUser?.email?[0].toUpperCase() ?? 'U',
-                backgroundColor: Theme.of(context).primaryColor,
-                textColor: Colors.white,
-              )),
+                    imageUrl: _authController.currentUser?.photoURL,
+                    fallbackText:
+                        _authController.currentUser?.email?[0].toUpperCase() ??
+                            'U',
+                    backgroundColor: Theme.of(context).primaryColor,
+                    textColor: Colors.white,
+                  )),
               onSelected: (value) {
                 if (value == 'logout') {
                   _signOut();
@@ -95,7 +97,8 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                 PopupMenuItem<String>(
                   value: 'profile',
                   enabled: false,
-                  child: Text('Signed in as ${_authController.currentUser?.email ?? 'User'}'),
+                  child: Text(
+                      'Signed in as ${_authController.currentUser?.email ?? 'User'}'),
                 ),
                 const PopupMenuItem<String>(
                   value: 'logout',
@@ -112,9 +115,13 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('users')
-            .where('role', whereNotIn: ['admin', 'reporter', 'cameraman', 'driver', 'librarian'])
-            .snapshots(),
+        stream: _firestore.collection('users').where('role', whereNotIn: [
+          'admin',
+          'reporter',
+          'cameraman',
+          'driver',
+          'librarian'
+        ]).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -149,8 +156,8 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                   child: Text(
                     'Welcome, ${_authController.currentUser?.email ?? 'User'},',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: _getTitleTextColor(context),
-                    ),
+                          color: _getTitleTextColor(context),
+                        ),
                   ),
                 ),
               Expanded(
@@ -159,17 +166,21 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                   itemBuilder: (context, index) {
                     final user = users[index];
                     final userData = user.data() as Map<String, dynamic>;
-                    final fullName = userData['fullName'] as String? ?? 'No Name';
+                    final fullName =
+                        userData['fullName'] as String? ?? 'No Name';
                     final role = userData['role'] as String? ?? 'No Role';
                     final photoUrl = userData['photoUrl'] as String?;
 
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       color: _getCardBackgroundColor(context),
                       child: ListTile(
                         leading: _buildCachedAvatar(
                           imageUrl: photoUrl,
-                          fallbackText: fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
+                          fallbackText: fullName.isNotEmpty
+                              ? fullName[0].toUpperCase()
+                              : '?',
                           backgroundColor: _getAvatarBackgroundColor(context),
                           textColor: _getAvatarTextColor(context),
                         ),
@@ -191,7 +202,8 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                           size: 16,
                           color: _getIconColor(context),
                         ),
-                        onTap: () => _showPerformanceDetails(context, user.id, fullName),
+                        onTap: () =>
+                            _showPerformanceDetails(context, user.id, fullName),
                       ),
                     );
                   },
@@ -205,41 +217,34 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   }
 
   Color _getCardBackgroundColor(BuildContext context) {
-      return _themeController.isDarkMode.value
-          ? const Color(0xFF2D2D2D) // Gradient grey for dark mode
-          : const Color(0xFF002060); // Specific dark blue for light mode
-    }
- 
-   Color _getAvatarBackgroundColor(BuildContext context) {
-      return _themeController.isDarkMode.value
-    ? Theme.of(context).primaryColor.withValues(alpha: 0.3)
-    : Colors.white.withValues(alpha: 0.2);
+    return _themeController.isDarkMode.value
+        ? const Color(0xFF2D2D2D) // Gradient grey for dark mode
+        : const Color(0xFF002060); // Specific dark blue for light mode
+  }
 
-    }
+  Color _getAvatarBackgroundColor(BuildContext context) {
+    return _themeController.isDarkMode.value
+        ? Theme.of(context).primaryColor.withValues(alpha: 0.3)
+        : Colors.white.withValues(alpha: 0.2);
+  }
 
   Color _getAvatarTextColor(BuildContext context) {
-     return _themeController.isDarkMode.value
-         ? Colors.white
-         : const Color(0xFF002060);
-   }
+    return _themeController.isDarkMode.value
+        ? Colors.white
+        : const Color(0xFF002060);
+  }
 
   Color _getTitleTextColor(BuildContext context) {
-     return _themeController.isDarkMode.value
-         ? Colors.white
-         : Colors.white;
-   }
+    return _themeController.isDarkMode.value ? Colors.white : Colors.white;
+  }
 
   Color _getSubtitleTextColor(BuildContext context) {
-     return _themeController.isDarkMode.value
-         ? Colors.white70
-         : Colors.white70;
-   }
+    return _themeController.isDarkMode.value ? Colors.white70 : Colors.white70;
+  }
 
   Color _getIconColor(BuildContext context) {
-     return _themeController.isDarkMode.value
-         ? Colors.white70
-         : Colors.white70;
-   }
+    return _themeController.isDarkMode.value ? Colors.white70 : Colors.white70;
+  }
 
   // Helper method to build cached network image avatar
   Widget _buildCachedAvatar({
@@ -249,8 +254,8 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
     required Color textColor,
     double radius = 20,
   }) {
-    final bool hasValidUrl = imageUrl != null && 
-        imageUrl.isNotEmpty && 
+    final bool hasValidUrl = imageUrl != null &&
+        imageUrl.isNotEmpty &&
         Uri.tryParse(imageUrl)?.hasScheme == true;
 
     return CircleAvatar(
@@ -288,7 +293,8 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
     );
   }
 
-  void _showPerformanceDetails(BuildContext context, String userId, String userName) {
+  void _showPerformanceDetails(
+      BuildContext context, String userId, String userName) {
     final currentQuarter = (DateTime.now().month - 1) ~/ 3 + 1;
     Navigator.push(
       context,
@@ -316,7 +322,8 @@ class PerformanceDetailsDialog extends StatefulWidget {
   });
 
   @override
-  State<PerformanceDetailsDialog> createState() => _PerformanceDetailsDialogState();
+  State<PerformanceDetailsDialog> createState() =>
+      _PerformanceDetailsDialogState();
 }
 
 class _PerformanceDetailsDialogState extends State<PerformanceDetailsDialog> {
@@ -329,7 +336,10 @@ class _PerformanceDetailsDialogState extends State<PerformanceDetailsDialog> {
       content: SizedBox(
         width: double.maxFinite,
         child: StreamBuilder<DocumentSnapshot>(
-          stream: _firestore.collection('user_performance').doc(widget.userId).snapshots(),
+          stream: _firestore
+              .collection('user_performance')
+              .doc(widget.userId)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
@@ -343,7 +353,8 @@ class _PerformanceDetailsDialogState extends State<PerformanceDetailsDialog> {
               return const Text('No performance data available');
             }
 
-            final performanceData = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+            final performanceData =
+                snapshot.data!.data() as Map<String, dynamic>? ?? {};
             final year = DateTime.now().year;
 
             return SingleChildScrollView(
@@ -358,8 +369,10 @@ class _PerformanceDetailsDialogState extends State<PerformanceDetailsDialog> {
                       initiallyExpanded: quarter == widget.currentQuarter,
                       children: [
                         _buildQuarterlyPerformance(
-                          performanceData['$year-Q$quarter'] is Map<String, dynamic>
-                              ? performanceData['$year-Q$quarter'] as Map<String, dynamic>
+                          performanceData['$year-Q$quarter']
+                                  is Map<String, dynamic>
+                              ? performanceData['$year-Q$quarter']
+                                  as Map<String, dynamic>
                               : <String, dynamic>{},
                           quarter == widget.currentQuarter,
                         ),
@@ -382,7 +395,8 @@ class _PerformanceDetailsDialogState extends State<PerformanceDetailsDialog> {
     );
   }
 
-  Widget _buildQuarterlyPerformance(Map<String, dynamic> data, bool isCurrentQuarter) {
+  Widget _buildQuarterlyPerformance(
+      Map<String, dynamic> data, bool isCurrentQuarter) {
     final tasksCompleted = data['tasks_completed'];
     final tasksAssigned = data['tasks_assigned'];
     final onTimeRate = data['on_time_rate'];
@@ -403,15 +417,16 @@ class _PerformanceDetailsDialogState extends State<PerformanceDetailsDialog> {
           const SizedBox(height: 8),
         ],
         ...metrics.entries.map((e) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(e.key),
-              Text(e.value, style: const TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-        )),
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(e.key),
+                  Text(e.value,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            )),
       ],
     );
   }

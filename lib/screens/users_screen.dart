@@ -50,19 +50,23 @@ class UserScreen extends StatelessWidget {
                           value: task,
                           child: Text(
                             task,
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface),
                           ),
                         );
                       }).toList(),
                       decoration: InputDecoration(
                         labelText: 'select_task'.tr,
-                        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                        labelStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary),
                         border: const OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.onPrimary),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.onPrimary),
                         ),
                       ),
                       onChanged: (value) {
@@ -74,14 +78,16 @@ class UserScreen extends StatelessWidget {
                       if (!Get.isRegistered<UserController>()) {
                         return Text(
                           'no_users_available'.tr,
-                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary),
                         );
                       }
-                      
+
                       if (userController.allUsers.isEmpty) {
                         return Text(
                           'no_users_available'.tr,
-                          style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary),
                         );
                       }
                       return DropdownButtonFormField<String>(
@@ -93,19 +99,24 @@ class UserScreen extends StatelessWidget {
                             value: user['id'],
                             child: Text(
                               user['name'],
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                              style: TextStyle(
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface),
                             ),
                           );
                         }).toList(),
                         decoration: InputDecoration(
                           labelText: 'assign_to'.tr,
-                          labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                          labelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary),
                           border: const OutlineInputBorder(),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
+                            borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onPrimary),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
+                            borderSide: BorderSide(
+                                color: Theme.of(context).colorScheme.onPrimary),
                           ),
                         ),
                         onChanged: (value) {
@@ -121,7 +132,7 @@ class UserScreen extends StatelessWidget {
                           child: Text('assign_task'.tr),
                         );
                       }
-                      
+
                       return auth.isLoading.value
                           ? const CircularProgressIndicator()
                           : ElevatedButton(
@@ -131,8 +142,8 @@ class UserScreen extends StatelessWidget {
                                   auth.assignTask(
                                       selectedTask.value, selectedUser.value);
                                 } else {
-                                  Get.snackbar(
-                                      'Error', 'Please select a task and a user');
+                                  Get.snackbar('Error',
+                                      'Please select a task and a user');
                                 }
                               },
                               child: Text('assign_task'.tr),
@@ -145,14 +156,16 @@ class UserScreen extends StatelessWidget {
                 if (!Get.isRegistered<ManageUsersController>()) {
                   return Text(
                     'no_users_to_display'.tr,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary),
                   );
                 }
-                
+
                 if (manageUsersController.usersList.isEmpty) {
                   return Text(
                     'no_users_to_display'.tr,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary),
                   );
                 }
                 return Column(
@@ -160,7 +173,8 @@ class UserScreen extends StatelessWidget {
                   children: [
                     Text(
                       'manage_users'.tr,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary),
                     ),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
@@ -172,19 +186,23 @@ class UserScreen extends StatelessWidget {
                           value: user['id'],
                           child: Text(
                             user['fullname'],
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface),
                           ),
                         );
                       }).toList(),
                       decoration: InputDecoration(
                         labelText: 'select_user'.tr,
-                        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                        labelStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary),
                         border: const OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.onPrimary),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.onPrimary),
+                          borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.onPrimary),
                         ),
                       ),
                       onChanged: (value) {
@@ -202,7 +220,7 @@ class UserScreen extends StatelessWidget {
                           child: Text('delete_user'.tr),
                         );
                       }
-                      
+
                       return ElevatedButton(
                         onPressed: () {
                           if (selectedManagedUser.value.isNotEmpty) {
@@ -228,7 +246,7 @@ class UserScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar:  UserNavBar(currentIndex: 2),
+      bottomNavigationBar: UserNavBar(currentIndex: 2),
     );
   }
 }

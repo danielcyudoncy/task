@@ -10,43 +10,43 @@ import 'package:local_auth/error_codes.dart' as auth_error;
 class BiometricService extends GetxService {
   static BiometricService get to => Get.find<BiometricService>();
   final LocalAuthentication _auth = LocalAuthentication();
-  
+
   // Observable variables
   final RxBool isBiometricAvailable = false.obs;
   final RxList<BiometricType> availableBiometrics = <BiometricType>[].obs;
-  
+
   @override
   void onInit() {
     super.onInit();
     _checkBiometricAvailability();
   }
-  
+
   @override
   void onReady() {
     super.onReady();
     // Double-check availability when service is ready
     _checkBiometricAvailability();
   }
-  
+
   /// Check and update biometric availability
   Future<void> _checkBiometricAvailability() async {
     try {
       debugPrint('BiometricService: Checking biometric availability...');
-      
+
       final canCheck = await _auth.canCheckBiometrics;
       debugPrint('BiometricService: canCheckBiometrics = $canCheck');
-      
+
       final isSupported = await _auth.isDeviceSupported();
       debugPrint('BiometricService: isDeviceSupported = $isSupported');
-      
+
       final biometrics = await _auth.getAvailableBiometrics();
       debugPrint('BiometricService: getAvailableBiometrics = $biometrics');
-      
+
       final isAvailable = canCheck && isSupported && biometrics.isNotEmpty;
-      
+
       isBiometricAvailable.value = isAvailable;
       availableBiometrics.value = biometrics;
-      
+
       debugPrint('BiometricService: Final availability = $isAvailable');
       debugPrint('BiometricService: Available types = $biometrics');
     } catch (e) {
@@ -61,16 +61,17 @@ class BiometricService extends GetxService {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
       final biometrics = await _auth.getAvailableBiometrics();
-      
-      debugPrint('BiometricService: canCheckBiometrics=$canCheck, isDeviceSupported=$isSupported');
+
+      debugPrint(
+          'BiometricService: canCheckBiometrics=$canCheck, isDeviceSupported=$isSupported');
       debugPrint('BiometricService: Available biometrics: $biometrics');
-      
+
       // Check if any biometric is available (fingerprint, face, or other)
       if (biometrics.isEmpty) {
         debugPrint('BiometricService: No biometrics available');
         return false;
       }
-      
+
       return canCheck && isSupported;
     } catch (e) {
       debugPrint('BiometricService: Error in canCheckBiometrics: $e');
@@ -89,32 +90,36 @@ class BiometricService extends GetxService {
     }
   }
 
-  Future<bool> authenticate({String reason = 'Please authenticate to unlock the app', bool biometricOnly = false}) async {
+  Future<bool> authenticate(
+      {String reason = 'Please authenticate to unlock the app',
+      bool biometricOnly = false}) async {
     try {
       debugPrint('BiometricService: Starting authentication check...');
-      
+
       // First check if we can use biometrics
       final canCheck = await _auth.canCheckBiometrics;
       debugPrint('BiometricService: canCheckBiometrics = $canCheck');
-      
+
       final isSupported = await _auth.isDeviceSupported();
       debugPrint('BiometricService: isDeviceSupported = $isSupported');
-      
+
       final availableBiometrics = await _auth.getAvailableBiometrics();
-      debugPrint('BiometricService: availableBiometrics = $availableBiometrics');
-      
+      debugPrint(
+          'BiometricService: availableBiometrics = $availableBiometrics');
+
       if (!canCheck || !isSupported) {
         debugPrint('BiometricService: Device does not support biometrics');
         return false;
       }
-      
+
       if (availableBiometrics.isEmpty) {
         debugPrint('BiometricService: No biometrics enrolled on device');
         return false;
       }
-      
-      debugPrint('BiometricService: Starting authentication with reason: $reason, biometricOnly: $biometricOnly');
-      
+
+      debugPrint(
+          'BiometricService: Starting authentication with reason: $reason, biometricOnly: $biometricOnly');
+
       const authMessages = [
         AndroidAuthMessages(
           signInTitle: 'Biometric Authentication Required',
@@ -149,44 +154,53 @@ class BiometricService extends GetxService {
           sensitiveTransaction: true, // Treat as sensitive operation
         ),
       );
-      
+
       debugPrint('BiometricService: Authentication result: $didAuthenticate');
       return didAuthenticate;
     } on PlatformException catch (e) {
-      debugPrint('BiometricService: Platform exception: ${e.code} - ${e.message}');
-      
+      debugPrint(
+          'BiometricService: Platform exception: ${e.code} - ${e.message}');
+
       // Handle specific error codes and show user-friendly messages
       switch (e.code) {
         case auth_error.notAvailable:
-          debugPrint('BiometricService: Biometric authentication not available');
-          _showErrorSnackbar('Biometric authentication is not available on this device');
+          debugPrint(
+              'BiometricService: Biometric authentication not available');
+          _showErrorSnackbar(
+              'Biometric authentication is not available on this device');
           break;
         case auth_error.notEnrolled:
           debugPrint('BiometricService: No biometrics enrolled on device');
-          _showErrorSnackbar('No biometrics enrolled. Please set up fingerprint or face unlock in device settings');
+          _showErrorSnackbar(
+              'No biometrics enrolled. Please set up fingerprint or face unlock in device settings');
           break;
         case auth_error.lockedOut:
           debugPrint('BiometricService: Biometric authentication locked out');
-          _showErrorSnackbar('Biometric authentication is temporarily locked. Please try again later');
+          _showErrorSnackbar(
+              'Biometric authentication is temporarily locked. Please try again later');
           break;
         case auth_error.permanentlyLockedOut:
-          debugPrint('BiometricService: Biometric authentication permanently locked out');
-          _showErrorSnackbar('Biometric authentication is permanently locked. Please use device passcode');
+          debugPrint(
+              'BiometricService: Biometric authentication permanently locked out');
+          _showErrorSnackbar(
+              'Biometric authentication is permanently locked. Please use device passcode');
           break;
         default:
           debugPrint('BiometricService: Unknown platform exception: ${e.code}');
-          if (e.code != 'UserCancel') { // Don't show error for user cancellation
+          if (e.code != 'UserCancel') {
+            // Don't show error for user cancellation
             _showErrorSnackbar('Biometric authentication failed: ${e.message}');
           }
       }
       return false;
     } catch (e) {
       debugPrint('BiometricService: Authentication error: $e');
-      _showErrorSnackbar('An unexpected error occurred during biometric authentication');
+      _showErrorSnackbar(
+          'An unexpected error occurred during biometric authentication');
       return false;
     }
   }
-  
+
   /// Get the primary biometric icon for UI display
   IconData getBiometricIcon() {
     if (availableBiometrics.contains(BiometricType.fingerprint)) {
@@ -199,13 +213,13 @@ class BiometricService extends GetxService {
       return Icons.security;
     }
   }
-  
+
   /// Get user-friendly string for available biometric types
   String getBiometricTypeString() {
     if (availableBiometrics.isEmpty) return 'None';
-    
+
     List<String> types = [];
-    
+
     if (availableBiometrics.contains(BiometricType.fingerprint)) {
       types.add('Fingerprint');
     }
@@ -221,15 +235,15 @@ class BiometricService extends GetxService {
     if (availableBiometrics.contains(BiometricType.weak)) {
       types.add('Weak Biometric');
     }
-    
+
     return types.join(', ');
   }
-  
+
   /// Refresh biometric availability (useful after settings changes)
   Future<void> refreshBiometricAvailability() async {
     await _checkBiometricAvailability();
   }
-  
+
   /// Show error snackbar
   void _showErrorSnackbar(String message) {
     if (Get.context != null) {
@@ -247,18 +261,18 @@ class BiometricService extends GetxService {
   /// Debug method to test biometric functionality
   Future<Map<String, dynamic>> debugBiometricStatus() async {
     final result = <String, dynamic>{};
-    
+
     try {
       result['canCheckBiometrics'] = await _auth.canCheckBiometrics;
       result['isDeviceSupported'] = await _auth.isDeviceSupported();
       result['availableBiometrics'] = await _auth.getAvailableBiometrics();
-      
+
       debugPrint('BiometricService Debug: $result');
     } catch (e) {
       result['error'] = e.toString();
       debugPrint('BiometricService Debug Error: $e');
     }
-    
+
     return result;
   }
 
@@ -268,19 +282,19 @@ class BiometricService extends GetxService {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
       final availableBiometrics = await _auth.getAvailableBiometrics();
-      
+
       if (!isSupported) {
         return 'Device does not support biometric authentication';
       }
-      
+
       if (!canCheck) {
         return 'Biometric authentication not available';
       }
-      
+
       if (availableBiometrics.isEmpty) {
         return 'No biometric methods enrolled on device';
       }
-      
+
       return 'Biometric authentication ready';
     } catch (e) {
       return 'Error checking biometric status: $e';

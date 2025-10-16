@@ -15,7 +15,7 @@ class NewsSearchSuggestions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -43,30 +43,33 @@ class NewsSearchSuggestions extends StatelessWidget {
               'Climate',
               'AI',
               'Economy',
-            ].map((topic) => GestureDetector(
-              onTap: () {
-                searchController.text = topic;
-                onTopicSelected(topic);
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  topic,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            )).toList(),
+            ]
+                .map((topic) => GestureDetector(
+                      onTap: () {
+                        searchController.text = topic;
+                        onTopicSelected(topic);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 6.h),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          topic,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ))
+                .toList(),
           ),
         ],
       ),

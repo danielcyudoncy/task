@@ -31,24 +31,29 @@ class ResponsiveDemoContent extends StatelessWidget {
           children: [
             // Screen info section
             const _ScreenInfoSection(),
-            const ResponsiveSpacing.vertical(mobile: 24, tablet: 32, desktop: 40),
-            
+            const ResponsiveSpacing.vertical(
+                mobile: 24, tablet: 32, desktop: 40),
+
             // Responsive grid section
             const _ResponsiveGridSection(),
-            const ResponsiveSpacing.vertical(mobile: 24, tablet: 32, desktop: 40),
-            
+            const ResponsiveSpacing.vertical(
+                mobile: 24, tablet: 32, desktop: 40),
+
             // Responsive text section
             const _ResponsiveTextSection(),
-            const ResponsiveSpacing.vertical(mobile: 24, tablet: 32, desktop: 40),
-            
+            const ResponsiveSpacing.vertical(
+                mobile: 24, tablet: 32, desktop: 40),
+
             // Responsive cards section
             const _ResponsiveCardsSection(),
-            const ResponsiveSpacing.vertical(mobile: 24, tablet: 32, desktop: 40),
-            
+            const ResponsiveSpacing.vertical(
+                mobile: 24, tablet: 32, desktop: 40),
+
             // Responsive form section
             const _ResponsiveFormSection(),
-            const ResponsiveSpacing.vertical(mobile: 24, tablet: 32, desktop: 40),
-            
+            const ResponsiveSpacing.vertical(
+                mobile: 24, tablet: 32, desktop: 40),
+
             // Responsive buttons section
             const _ResponsiveButtonsSection(),
           ],
@@ -82,7 +87,11 @@ class _ScreenInfoSection extends StatelessWidget {
               children: [
                 _InfoRow(
                   'Device Type',
-                  controller.deviceType.toString().split('.').last.toUpperCase(),
+                  controller.deviceType
+                      .toString()
+                      .split('.')
+                      .last
+                      .toUpperCase(),
                 ),
                 _InfoRow(
                   'Screen Width',
@@ -96,7 +105,7 @@ class _ScreenInfoSection extends StatelessWidget {
                   'Orientation',
                   controller.isPortrait
                       ? 'orientation_portrait'.tr
-                       : 'orientation_landscape'.tr,
+                      : 'orientation_landscape'.tr,
                 ),
                 _InfoRow(
                   'Is Mobile',
@@ -122,7 +131,7 @@ class _ScreenInfoSection extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-  
+
   const _InfoRow(this.label, this.value);
 
   @override
@@ -174,20 +183,22 @@ class _ResponsiveGridSection extends StatelessWidget {
           tabletColumns: 2,
           desktopColumns: 3,
           largeDesktopColumns: 4,
-          children: List.generate(8, (index) => ResponsiveCard(
-            child: SizedBox(
-              height: 100,
-              child: Center(
-                child: ResponsiveText(
-                  'Item ${index + 1}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  mobileFontSize: 16,
-                  tabletFontSize: 18,
-                  desktopFontSize: 20,
-                ),
-              ),
-            ),
-          )),
+          children: List.generate(
+              8,
+              (index) => ResponsiveCard(
+                    child: SizedBox(
+                      height: 100,
+                      child: Center(
+                        child: ResponsiveText(
+                          'Item ${index + 1}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          mobileFontSize: 16,
+                          tabletFontSize: 18,
+                          desktopFontSize: 20,
+                        ),
+                      ),
+                    ),
+                  )),
         ),
       ],
     );
@@ -270,7 +281,8 @@ class _ResponsiveCardsSection extends StatelessWidget {
                       ),
                       color: Theme.of(context).primaryColor,
                     ),
-                    const ResponsiveSpacing.vertical(mobile: 8, tablet: 12, desktop: 16),
+                    const ResponsiveSpacing.vertical(
+                        mobile: 8, tablet: 12, desktop: 16),
                     ResponsiveText(
                       'mobile_view'.tr,
                       style: const TextStyle(fontWeight: FontWeight.bold),
@@ -282,7 +294,8 @@ class _ResponsiveCardsSection extends StatelessWidget {
                 ),
               ),
             ),
-            const ResponsiveSpacing.horizontal(mobile: 8, tablet: 12, desktop: 16),
+            const ResponsiveSpacing.horizontal(
+                mobile: 8, tablet: 12, desktop: 16),
             Expanded(
               child: ResponsiveCard(
                 child: Column(
@@ -296,7 +309,8 @@ class _ResponsiveCardsSection extends StatelessWidget {
                       ),
                       color: Theme.of(context).primaryColor,
                     ),
-                    const ResponsiveSpacing.vertical(mobile: 8, tablet: 12, desktop: 16),
+                    const ResponsiveSpacing.vertical(
+                        mobile: 8, tablet: 12, desktop: 16),
                     ResponsiveText(
                       'tablet_view'.tr,
                       style: const TextStyle(fontWeight: FontWeight.bold),
@@ -308,7 +322,8 @@ class _ResponsiveCardsSection extends StatelessWidget {
                 ),
               ),
             ),
-            const ResponsiveSpacing.horizontal(mobile: 8, tablet: 12, desktop: 16),
+            const ResponsiveSpacing.horizontal(
+                mobile: 8, tablet: 12, desktop: 16),
             Expanded(
               child: ResponsiveCard(
                 child: Column(
@@ -322,7 +337,8 @@ class _ResponsiveCardsSection extends StatelessWidget {
                       ),
                       color: Theme.of(context).primaryColor,
                     ),
-                    const ResponsiveSpacing.vertical(mobile: 8, tablet: 12, desktop: 16),
+                    const ResponsiveSpacing.vertical(
+                        mobile: 8, tablet: 12, desktop: 16),
                     ResponsiveText(
                       'desktop_view'.tr,
                       style: const TextStyle(fontWeight: FontWeight.bold),

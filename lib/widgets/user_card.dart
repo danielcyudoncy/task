@@ -53,20 +53,22 @@ class _UserCardState extends State<UserCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.user['fullname'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Role: ${widget.user['role']}", 
-                style: TextStyle(
-                  fontSize: 14, 
-                  color: Theme.of(context).brightness == Brightness.dark 
-                    ? Colors.grey[400] 
-                    : Colors.grey[600]
-                )
-              ),
+                      Text(widget.user['fullname'],
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text("Role: ${widget.user['role']}",
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600])),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.assignment_turned_in, color: Colors.green),
+                  icon: const Icon(Icons.assignment_turned_in,
+                      color: Colors.green),
                   tooltip: 'Assign Task',
                   onPressed: () {
                     Get.find<SettingsController>().triggerFeedback();
@@ -88,15 +90,20 @@ class _UserCardState extends State<UserCard> {
                       onCancel: () => Get.back(result: false),
                     );
                     if (confirm == true) {
-                      final success = await widget.controller.deleteUser(widget.user['id']);
+                      final success =
+                          await widget.controller.deleteUser(widget.user['id']);
                       if (success) {
-                        Get.snackbar('Success', 'User deleted successfully', 
+                        Get.snackbar(
+                          'Success',
+                          'User deleted successfully',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: Get.theme.colorScheme.primary,
                           colorText: Get.theme.colorScheme.onPrimary,
                         );
                       } else {
-                        Get.snackbar('Error', 'Failed to delete user', 
+                        Get.snackbar(
+                          'Error',
+                          'Failed to delete user',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: Get.theme.colorScheme.error,
                           colorText: Get.theme.colorScheme.onError,
@@ -123,9 +130,12 @@ class _UserCardState extends State<UserCard> {
                   onChanged: (value) async {
                     setState(() => selectedTaskId = value);
                     if (value != null) {
-                      await widget.controller.assignTaskToUser(widget.user['id'], value);
+                      await widget.controller
+                          .assignTaskToUser(widget.user['id'], value);
                       setState(() => showTaskDropdown = false);
-                      Get.snackbar('Success', 'Task assigned successfully', 
+                      Get.snackbar(
+                        'Success',
+                        'Task assigned successfully',
                         snackPosition: SnackPosition.BOTTOM,
                         backgroundColor: Get.theme.colorScheme.primary,
                         colorText: Get.theme.colorScheme.onPrimary,

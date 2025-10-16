@@ -7,7 +7,7 @@ class LazyLoadingController extends GetxController {
   final Map<String, dynamic> _cache = {};
   final Map<String, Future<dynamic>> _pendingLoads = {};
   final Set<String> _preloadKeys = {};
-  
+
   // Get cached item or load it lazily
   Future<T> getOrLoad<T>(
     String key,
@@ -19,22 +19,22 @@ class LazyLoadingController extends GetxController {
     if (!forceReload && _cache.containsKey(key)) {
       final cachedItem = _cache[key];
       if (cachedItem is _CachedItem<T>) {
-        if (cacheDuration == null || 
+        if (cacheDuration == null ||
             DateTime.now().difference(cachedItem.timestamp) < cacheDuration) {
           return cachedItem.value;
         }
       }
     }
-    
+
     // Check if already loading
     if (_pendingLoads.containsKey(key)) {
       return await _pendingLoads[key] as T;
     }
-    
+
     // Start loading
     final future = _loadAndCache<T>(key, loader, cacheDuration);
     _pendingLoads[key] = future;
-    
+
     try {
       final result = await future;
       return result;
@@ -42,7 +42,7 @@ class LazyLoadingController extends GetxController {
       _pendingLoads.remove(key);
     }
   }
-  
+
   Future<T> _loadAndCache<T>(
     String key,
     Future<T> Function() loader,
@@ -52,7 +52,7 @@ class LazyLoadingController extends GetxController {
     _cache[key] = _CachedItem<T>(result, DateTime.now());
     return result;
   }
-  
+
   // Preload items in background
   void preload<T>(
     String key,
@@ -62,9 +62,9 @@ class LazyLoadingController extends GetxController {
     if (_preloadKeys.contains(key) || _cache.containsKey(key)) {
       return;
     }
-    
+
     _preloadKeys.add(key);
-    
+
     // Run in background
     Future.microtask(() async {
       try {
@@ -76,7 +76,7 @@ class LazyLoadingController extends GetxController {
       }
     });
   }
-  
+
   // Clear cache
   void clearCache([String? key]) {
     if (key != null) {
@@ -85,7 +85,7 @@ class LazyLoadingController extends GetxController {
       _cache.clear();
     }
   }
-  
+
   // Get cache statistics
   Map<String, dynamic> getCacheStats() {
     return {
@@ -100,7 +100,7 @@ class LazyLoadingController extends GetxController {
 class _CachedItem<T> {
   final T value;
   final DateTime timestamp;
-  
+
   _CachedItem(this.value, this.timestamp);
 }
 
@@ -112,7 +112,7 @@ class LazyLoadWidget extends StatefulWidget {
   final Duration? delay;
   final bool preload;
   final String? cacheKey;
-  
+
   const LazyLoadWidget({
     super.key,
     required this.builder,
@@ -131,23 +131,23 @@ class _LazyLoadWidgetState extends State<LazyLoadWidget> {
   bool _isVisible = false;
   bool _isLoaded = false;
   Widget? _cachedWidget;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     if (widget.preload) {
       _loadWidget();
     }
   }
-  
+
   void _loadWidget() async {
     if (_isLoaded) return;
-    
+
     if (widget.delay != null) {
       await Future.delayed(widget.delay!);
     }
-    
+
     if (mounted) {
       setState(() {
         _cachedWidget = widget.builder();
@@ -155,7 +155,7 @@ class _LazyLoadWidgetState extends State<LazyLoadWidget> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return VisibilityDetector(
@@ -168,9 +168,7 @@ class _LazyLoadWidgetState extends State<LazyLoadWidget> {
           }
         }
       },
-      child: _cachedWidget ?? 
-             widget.placeholder ?? 
-             const SizedBox.shrink(),
+      child: _cachedWidget ?? widget.placeholder ?? const SizedBox.shrink(),
     );
   }
 }
@@ -179,7 +177,7 @@ class _LazyLoadWidgetState extends State<LazyLoadWidget> {
 class VisibilityDetector extends StatefulWidget {
   final Widget child;
   final Function(VisibilityInfo) onVisibilityChanged;
-  
+
   const VisibilityDetector({
     required super.key,
     required this.child,
@@ -194,7 +192,7 @@ class _VisibilityDetectorState extends State<VisibilityDetector> {
   @override
   void initState() {
     super.initState();
-    
+
     // Simulate visibility detection
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -202,7 +200,7 @@ class _VisibilityDetectorState extends State<VisibilityDetector> {
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return widget.child;
@@ -211,7 +209,7 @@ class _VisibilityDetectorState extends State<VisibilityDetector> {
 
 class VisibilityInfo {
   final double visibleFraction;
-  
+
   VisibilityInfo({required this.visibleFraction});
 }
 
@@ -225,7 +223,7 @@ class LazyListView extends StatefulWidget {
   final bool shrinkWrap;
   final ScrollPhysics? physics;
   final int preloadBuffer;
-  
+
   const LazyListView({
     super.key,
     required this.itemCount,
@@ -246,14 +244,14 @@ class _LazyListViewState extends State<LazyListView> {
   final Set<int> _loadedItems = {};
   final Map<int, Widget> _cachedWidgets = {};
   late ScrollController _scrollController;
-  
+
   @override
   void initState() {
     super.initState();
     _scrollController = widget.controller ?? ScrollController();
     _scrollController.addListener(_onScroll);
   }
-  
+
   @override
   void dispose() {
     if (widget.controller == null) {
@@ -263,33 +261,36 @@ class _LazyListViewState extends State<LazyListView> {
     }
     super.dispose();
   }
-  
+
   void _onScroll() {
     // Preload items based on scroll position
     final viewportHeight = _scrollController.position.viewportDimension;
     final scrollOffset = _scrollController.offset;
-    
+
     // Estimate visible range (simplified)
     final estimatedItemHeight = viewportHeight / 10; // Rough estimate
     final startIndex = (scrollOffset / estimatedItemHeight).floor();
-    final endIndex = ((scrollOffset + viewportHeight) / estimatedItemHeight).ceil();
-    
+    final endIndex =
+        ((scrollOffset + viewportHeight) / estimatedItemHeight).ceil();
+
     // Preload buffer
-    final preloadStart = (startIndex - widget.preloadBuffer).clamp(0, widget.itemCount - 1);
-    final preloadEnd = (endIndex + widget.preloadBuffer).clamp(0, widget.itemCount - 1);
-    
+    final preloadStart =
+        (startIndex - widget.preloadBuffer).clamp(0, widget.itemCount - 1);
+    final preloadEnd =
+        (endIndex + widget.preloadBuffer).clamp(0, widget.itemCount - 1);
+
     for (int i = preloadStart; i <= preloadEnd; i++) {
       if (!_loadedItems.contains(i)) {
         _loadItem(i);
       }
     }
   }
-  
+
   void _loadItem(int index) {
     if (_loadedItems.contains(index)) return;
-    
+
     _loadedItems.add(index);
-    
+
     // Load item in next frame to avoid blocking
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -299,7 +300,7 @@ class _LazyListViewState extends State<LazyListView> {
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -312,24 +313,24 @@ class _LazyListViewState extends State<LazyListView> {
         if (_cachedWidgets.containsKey(index)) {
           return _cachedWidgets[index]!;
         }
-        
+
         // Load item if not loaded
         if (!_loadedItems.contains(index)) {
           _loadItem(index);
         }
-        
+
         // Return placeholder while loading
         return widget.placeholderBuilder?.call(context, index) ??
-               const SizedBox(
-                 height: 60,
-                 child: Center(
-                   child: SizedBox(
-                     width: 20,
-                     height: 20,
-                     child: CircularProgressIndicator(strokeWidth: 2),
-                   ),
-                 ),
-               );
+            const SizedBox(
+              height: 60,
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
       },
     );
   }
@@ -344,7 +345,7 @@ class LazyImage extends StatefulWidget {
   final double? width;
   final double? height;
   final bool preload;
-  
+
   const LazyImage({
     super.key,
     required this.imageUrl,
@@ -363,16 +364,16 @@ class LazyImage extends StatefulWidget {
 class _LazyImageState extends State<LazyImage> {
   bool _isLoaded = false;
   bool _hasError = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     if (widget.preload) {
       _preloadImage();
     }
   }
-  
+
   void _preloadImage() {
     if (widget.imageUrl.startsWith('http')) {
       // For network images, we'd use a proper image caching library
@@ -401,23 +402,23 @@ class _LazyImageState extends State<LazyImage> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
-      return widget.errorWidget ?? 
-             Container(
-               width: widget.width,
-               height: widget.height,
-               color: Colors.grey[300],
-               child: const Icon(Icons.error),
-             );
+      return widget.errorWidget ??
+          Container(
+            width: widget.width,
+            height: widget.height,
+            color: Colors.grey[300],
+            child: const Icon(Icons.error),
+          );
     }
-    
+
     if (!_isLoaded && !widget.preload) {
       _preloadImage();
     }
-    
+
     return VisibilityDetector(
       key: Key('lazy_image_${widget.imageUrl}'),
       onVisibilityChanged: (info) {
@@ -433,13 +434,13 @@ class _LazyImageState extends State<LazyImage> {
                   width: widget.width,
                   height: widget.height,
                   errorBuilder: (context, error, stackTrace) {
-                    return widget.errorWidget ?? 
-                           Container(
-                             width: widget.width,
-                             height: widget.height,
-                             color: Colors.grey[300],
-                             child: const Icon(Icons.error),
-                           );
+                    return widget.errorWidget ??
+                        Container(
+                          width: widget.width,
+                          height: widget.height,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.error),
+                        );
                   },
                 )
               : Image.asset(
@@ -449,70 +450,72 @@ class _LazyImageState extends State<LazyImage> {
                   height: widget.height,
                 ))
           : widget.placeholder ??
-            Container(
-              width: widget.width,
-              height: widget.height,
-              color: Colors.grey[200],
-              child: const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+              Container(
+                width: widget.width,
+                height: widget.height,
+                color: Colors.grey[200],
+                child: const Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               ),
-            ),
     );
   }
 }
 
 // Utility functions
 class LazyLoadingUtils {
-  static final LazyLoadingController _controller = Get.put(LazyLoadingController());
-  
+  static final LazyLoadingController _controller =
+      Get.put(LazyLoadingController());
+
   // Get the lazy loading controller
   static LazyLoadingController get controller => _controller;
-  
+
   // Debounce function calls
   static Timer? _debounceTimer;
-  
+
   static void debounce(Duration duration, VoidCallback callback) {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(duration, callback);
   }
-  
+
   // Throttle function calls
   static DateTime? _lastThrottleTime;
-  
+
   static void throttle(Duration duration, VoidCallback callback) {
     final now = DateTime.now();
-    if (_lastThrottleTime == null || 
+    if (_lastThrottleTime == null ||
         now.difference(_lastThrottleTime!) >= duration) {
       _lastThrottleTime = now;
       callback();
     }
   }
-  
+
   // Batch operations
-  static void batchOperations(List<VoidCallback> operations, {
+  static void batchOperations(
+    List<VoidCallback> operations, {
     int batchSize = 10,
     Duration delay = const Duration(milliseconds: 16),
   }) {
     int index = 0;
-    
+
     void processBatch() {
       final endIndex = (index + batchSize).clamp(0, operations.length);
-      
+
       for (int i = index; i < endIndex; i++) {
         operations[i]();
       }
-      
+
       index = endIndex;
-      
+
       if (index < operations.length) {
         Future.delayed(delay, processBatch);
       }
     }
-    
+
     processBatch();
   }
 }

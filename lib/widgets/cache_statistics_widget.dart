@@ -8,31 +8,32 @@ import '../service/cache_manager.dart';
 class CacheStatisticsWidget extends StatefulWidget {
   final bool showDetailedStats;
   final VoidCallback? onOptimizeCache;
-  
+
   const CacheStatisticsWidget({
     super.key,
     this.showDetailedStats = false,
     this.onOptimizeCache,
   });
-  
+
   @override
   State<CacheStatisticsWidget> createState() => _CacheStatisticsWidgetState();
 }
 
 class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
-  final IntelligentCacheService _cacheService = Get.find<IntelligentCacheService>();
+  final IntelligentCacheService _cacheService =
+      Get.find<IntelligentCacheService>();
   final CacheManager _cacheManager = Get.find<CacheManager>();
-  
+
   Map<String, dynamic> _stats = {};
   bool _isLoading = true;
   bool _isOptimizing = false;
-  
+
   @override
   void initState() {
     super.initState();
     _loadStatistics();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -53,8 +54,8 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
                 Text(
                   'cache_statistics'.tr,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 const Spacer(),
                 IconButton(
@@ -64,9 +65,9 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             if (_isLoading)
               const Center(
                 child: Padding(
@@ -81,43 +82,43 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
       ),
     );
   }
-  
+
   Widget _buildStatisticsContent() {
     return Column(
       children: [
         // Overview metrics
         _buildOverviewMetrics(),
-        
+
         const SizedBox(height: 16),
-        
+
         // Performance metrics
         _buildPerformanceMetrics(),
-        
+
         if (widget.showDetailedStats) const SizedBox(height: 16),
         if (widget.showDetailedStats) _buildDetailedStats(),
-        
+
         const SizedBox(height: 16),
-        
+
         // Action buttons
         _buildActionButtons(),
       ],
     );
   }
-  
+
   Widget _buildOverviewMetrics() {
     final totalEntries = _stats['totalEntries'] ?? 0;
     final memoryUsage = _stats['memoryUsage'] ?? 0;
     final hitRate = _stats['hitRate'] ?? 0.0;
     final expiredEntries = _stats['expiredEntries'] ?? 0;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'overview'.tr,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -149,7 +150,11 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
                 'hit_rate'.tr,
                 '${(hitRate * 100).toStringAsFixed(1)}%',
                 Icons.trending_up,
-                hitRate > 0.8 ? Colors.green : hitRate > 0.6 ? Colors.orange : Colors.red,
+                hitRate > 0.8
+                    ? Colors.green
+                    : hitRate > 0.6
+                        ? Colors.orange
+                        : Colors.red,
               ),
             ),
             const SizedBox(width: 8),
@@ -166,21 +171,21 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
       ],
     );
   }
-  
+
   Widget _buildPerformanceMetrics() {
     final avgAccessTime = _stats['avgAccessTime'] ?? 0.0;
     final totalRequests = _stats['totalRequests'] ?? 0;
     final cacheHits = _stats['cacheHits'] ?? 0;
     final cacheMisses = _stats['cacheMisses'] ?? 0;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'performance'.tr,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -190,7 +195,11 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
                 'avg_access_time'.tr,
                 '${avgAccessTime.toStringAsFixed(2)}ms',
                 Icons.speed,
-                avgAccessTime < 10 ? Colors.green : avgAccessTime < 50 ? Colors.orange : Colors.red,
+                avgAccessTime < 10
+                    ? Colors.green
+                    : avgAccessTime < 50
+                        ? Colors.orange
+                        : Colors.red,
               ),
             ),
             const SizedBox(width: 8),
@@ -229,129 +238,131 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
       ],
     );
   }
-  
+
   Widget _buildDetailedStats() {
-    final categoryStats = _stats['categoryStats'] as Map<String, dynamic>? ?? {};
+    final categoryStats =
+        _stats['categoryStats'] as Map<String, dynamic>? ?? {};
     final recentActivity = _stats['recentActivity'] as List<dynamic>? ?? [];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'detailed_statistics'.tr,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
-        
+
         // Category breakdown
         if (categoryStats.isNotEmpty)
           Text(
             'cache_by_category'.tr,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         if (categoryStats.isNotEmpty) const SizedBox(height: 8),
-          ...categoryStats.entries.map((entry) {
-            final category = entry.key;
-            final stats = entry.value as Map<String, dynamic>;
-            final count = stats['count'] ?? 0;
-            final size = stats['size'] ?? 0;
-            
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      category.tr,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+        ...categoryStats.entries.map((entry) {
+          final category = entry.key;
+          final stats = entry.value as Map<String, dynamic>;
+          final count = stats['count'] ?? 0;
+          final size = stats['size'] ?? 0;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    category.tr,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  Expanded(
-                    child: Text(
-                      '$count ${'entries'.tr}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.center,
-                    ),
+                ),
+                Expanded(
+                  child: Text(
+                    '$count ${'entries'.tr}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
                   ),
-                  Expanded(
-                    child: Text(
-                      _formatBytes(size),
-                      style: Theme.of(context).textTheme.bodySmall,
-                      textAlign: TextAlign.right,
-                    ),
+                ),
+                Expanded(
+                  child: Text(
+                    _formatBytes(size),
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.right,
                   ),
-                ],
-              ),
-            );
-          }),
+                ),
+              ],
+            ),
+          );
+        }),
         if (categoryStats.isNotEmpty) const SizedBox(height: 16),
-        
+
         // Recent activity
         if (recentActivity.isNotEmpty)
           Text(
             'recent_activity'.tr,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         if (recentActivity.isNotEmpty) const SizedBox(height: 8),
-          Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Theme.of(context).dividerColor,
-                width: 0.5,
-              ),
-            ),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: recentActivity.length,
-              itemBuilder: (context, index) {
-                final activity = recentActivity[index] as Map<String, dynamic>;
-                final action = activity['action'] ?? 'unknown';
-                final key = activity['key'] ?? 'unknown';
-                final timestamp = activity['timestamp'] ?? DateTime.now().toIso8601String();
-                
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _getActivityIcon(action),
-                        size: 12,
-                        color: _getActivityColor(action),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '$action: $key',
-                          style: Theme.of(context).textTheme.bodySmall,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        _formatTimestamp(timestamp),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).disabledColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+        Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: Theme.of(context).dividerColor,
+              width: 0.5,
             ),
           ),
+          child: ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: recentActivity.length,
+            itemBuilder: (context, index) {
+              final activity = recentActivity[index] as Map<String, dynamic>;
+              final action = activity['action'] ?? 'unknown';
+              final key = activity['key'] ?? 'unknown';
+              final timestamp =
+                  activity['timestamp'] ?? DateTime.now().toIso8601String();
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Icon(
+                      _getActivityIcon(action),
+                      size: 12,
+                      color: _getActivityColor(action),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$action: $key',
+                        style: Theme.of(context).textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      _formatTimestamp(timestamp),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).disabledColor,
+                          ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
       ],
     );
   }
-  
+
   Widget _buildActionButtons() {
     return Row(
       children: [
@@ -379,8 +390,9 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
       ],
     );
   }
-  
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
+
+  Widget _buildMetricCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -406,9 +418,9 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
+                        color: color,
+                        fontWeight: FontWeight.w500,
+                      ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -418,30 +430,32 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
           ),
         ],
       ),
     );
   }
-  
+
   // Helper methods
-  
+
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '${bytes}B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)}GB';
   }
-  
+
   String _formatTimestamp(String timestamp) {
     try {
       final date = DateTime.parse(timestamp);
       final now = DateTime.now();
       final diff = now.difference(date);
-      
+
       if (diff.inMinutes < 1) return 'just_now'.tr;
       if (diff.inMinutes < 60) return '${diff.inMinutes}m';
       if (diff.inHours < 24) return '${diff.inHours}h';
@@ -450,7 +464,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
       return 'unknown'.tr;
     }
   }
-  
+
   IconData _getActivityIcon(String action) {
     switch (action.toLowerCase()) {
       case 'get':
@@ -470,7 +484,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
         return Icons.circle;
     }
   }
-  
+
   Color _getActivityColor(String action) {
     switch (action.toLowerCase()) {
       case 'get':
@@ -490,19 +504,19 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
         return Colors.grey;
     }
   }
-  
+
   // Event handlers
-  
+
   Future<void> _loadStatistics() async {
     if (mounted) {
       setState(() {
         _isLoading = true;
       });
     }
-    
+
     try {
       final stats = _cacheManager.getCacheStatistics();
-      
+
       if (mounted) {
         setState(() {
           _stats = stats;
@@ -518,11 +532,11 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
       }
     }
   }
-  
+
   Future<void> _clearExpiredEntries() async {
     try {
       await _cacheService.optimizeCache();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -531,7 +545,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
           ),
         );
       }
-      
+
       // Reload statistics
       await _loadStatistics();
     } catch (e) {
@@ -545,17 +559,17 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
       }
     }
   }
-  
+
   Future<void> _optimizeCache() async {
     if (mounted) {
       setState(() {
         _isOptimizing = true;
       });
     }
-    
+
     try {
       await _cacheService.optimizeCache();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -563,15 +577,15 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
-        
+
         setState(() {
           _isOptimizing = false;
         });
       }
-      
+
       // Call the callback if provided
       widget.onOptimizeCache?.call();
-      
+
       // Reload statistics
       await _loadStatistics();
     } catch (e) {
@@ -582,7 +596,7 @@ class _CacheStatisticsWidgetState extends State<CacheStatisticsWidget> {
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-        
+
         setState(() {
           _isOptimizing = false;
         });

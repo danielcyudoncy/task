@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:task/models/task_model.dart';
+import 'package:task/models/task.dart';
 import 'package:task/controllers/settings_controller.dart';
 import 'status_chip.dart';
 
@@ -30,7 +30,6 @@ class TaskDetailModal extends StatelessWidget {
     final Color accent = colorScheme.primary;
 
     return Dialog(
-      
       child: Container(
         constraints: BoxConstraints(
           maxWidth: 500.w,
@@ -39,7 +38,6 @@ class TaskDetailModal extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(32),
-          
           boxShadow: [
             BoxShadow(
               color: Colors.black12,
@@ -86,7 +84,7 @@ class TaskDetailModal extends StatelessWidget {
                     },
                     icon: Icon(
                       Icons.close,
-                      color:Colors.white,
+                      color: Colors.white,
                       size: 24.sp,
                     ),
                   ),
@@ -167,7 +165,9 @@ class TaskDetailModal extends StatelessWidget {
                             'Created by',
                             task.createdByName?.isNotEmpty == true
                                 ? task.createdByName!
-                                : (task.createdBy.isNotEmpty ? task.createdBy : 'Not assigned'),
+                                : (task.createdBy.isNotEmpty
+                                    ? task.createdBy
+                                    : 'Not assigned'),
                             Icons.person_outline),
                         if (task.category != null && task.category!.isNotEmpty)
                           _buildDetailRow(context, 'Category', task.category!,
@@ -214,7 +214,6 @@ class TaskDetailModal extends StatelessWidget {
                             'Driver',
                             task.assignedDriver ?? 'Not assigned',
                             Icons.directions_car_outlined),
-                        
                       ],
                     ),
 
@@ -237,7 +236,8 @@ class TaskDetailModal extends StatelessWidget {
                                                 horizontal: 12.w,
                                                 vertical: 6.h),
                                             decoration: BoxDecoration(
-                                              color: colorScheme.primaryContainer,
+                                              color:
+                                                  colorScheme.primaryContainer,
                                               borderRadius:
                                                   BorderRadius.circular(24),
                                             ),
@@ -245,7 +245,8 @@ class TaskDetailModal extends StatelessWidget {
                                               tag,
                                               style:
                                                   textTheme.bodySmall?.copyWith(
-                                                color: colorScheme.onPrimaryContainer,
+                                                color: colorScheme
+                                                    .onPrimaryContainer,
                                                 fontSize: 12.sp,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -266,7 +267,8 @@ class TaskDetailModal extends StatelessWidget {
                     ),
 
                     // Comments (if available and task is not approved)
-                    if (task.comments.isNotEmpty && task.approvalStatus?.toLowerCase() != 'approved') ...[
+                    if (task.comments.isNotEmpty &&
+                        task.approvalStatus?.toLowerCase() != 'approved') ...[
                       const SizedBox(height: 16),
                       _buildDetailSection(
                         context,
@@ -280,7 +282,8 @@ class TaskDetailModal extends StatelessWidget {
                                     color: colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-color: colorScheme.errorContainer.withValues(alpha: 0.5),
+                                      color: colorScheme.errorContainer
+                                          .withValues(alpha: 0.5),
                                       width: 1,
                                     ),
                                   ),
@@ -340,15 +343,15 @@ color: colorScheme.errorContainer.withValues(alpha: 0.5),
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    
+
     // Check if there are any completion info entries
     if (task.reportCompletionInfo.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     // Get the first completion info entry
     final completionInfo = task.reportCompletionInfo.values.first;
-    
+
     return _buildDetailSection(
       context,
       'Completion Details',
@@ -367,7 +370,7 @@ color: colorScheme.errorContainer.withValues(alpha: 0.5),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (completionInfo.comments != null && 
+              if (completionInfo.comments != null &&
                   completionInfo.comments!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
@@ -384,7 +387,8 @@ color: colorScheme.errorContainer.withValues(alpha: 0.5),
                   child: Text(
                     'Video Editor: ${completionInfo.videoEditorName}',
                     style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -394,7 +398,8 @@ color: colorScheme.errorContainer.withValues(alpha: 0.5),
                   child: Text(
                     'Aired: ${completionInfo.airTime!.toLocal()}',
                     style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                     ),
                   ),
                 ),

@@ -49,7 +49,8 @@ class ManageUsersController extends GetxController {
     _usersStream = FirebaseFirestore.instance.collection('users').snapshots();
     _usersStream!.listen((snapshot) async {
       isLoading.value = true;
-      debugPrint('[ManageUsersController] Firestore user snapshot received: ${snapshot.docs.length} docs');
+      debugPrint(
+          '[ManageUsersController] Firestore user snapshot received: ${snapshot.docs.length} docs');
       final newUsers = await Future.wait(snapshot.docs.map((doc) async {
         final data = doc.data() as Map<String, dynamic>;
         final photoUrl = data['photoUrl'] ??
@@ -66,7 +67,8 @@ class ManageUsersController extends GetxController {
             assignedTasksSnapshot.docs.map((taskDoc) => taskDoc.id).toList();
         assignedTasks[doc.id] = taskIds;
 
-        debugPrint('[ManageUsersController] User loaded: id=${doc.id}, name=${data['fullName'] ?? data['fullname']}, role=${data['role']}');
+        debugPrint(
+            '[ManageUsersController] User loaded: id=${doc.id}, name=${data['fullName'] ?? data['fullname']}, role=${data['role']}');
 
         return {
           'uid': doc.id,
@@ -81,10 +83,12 @@ class ManageUsersController extends GetxController {
       }));
 
       final filteredNewUsers = newUsers
-          .where((user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
+          .where(
+              (user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
           .toList();
 
-      debugPrint('[ManageUsersController] Filtered users count: ${filteredNewUsers.length}');
+      debugPrint(
+          '[ManageUsersController] Filtered users count: ${filteredNewUsers.length}');
       usersList.value = filteredNewUsers;
       filteredUsersList.assignAll(usersList);
       isHovered.assignAll(List.filled(usersList.length, false));
@@ -220,14 +224,22 @@ class ManageUsersController extends GetxController {
   void searchUsers(String query) {
     currentSearchQuery.value = query;
     List<Map<String, dynamic>> baseList;
-    
+
     // First apply role filter
     if (selectedRole.value == 'All') {
-      baseList = usersList.where((user) => user['role'] != 'Librarian' && user['role'] != 'Admin').toList();
+      baseList = usersList
+          .where(
+              (user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
+          .toList();
     } else {
-      baseList = usersList.where((user) => user['role'] == selectedRole.value && user['role'] != 'Librarian' && user['role'] != 'Admin').toList();
+      baseList = usersList
+          .where((user) =>
+              user['role'] == selectedRole.value &&
+              user['role'] != 'Librarian' &&
+              user['role'] != 'Admin')
+          .toList();
     }
-    
+
     // Then apply search filter on the role-filtered list
     if (query.isEmpty) {
       filteredUsersList.assignAll(baseList);

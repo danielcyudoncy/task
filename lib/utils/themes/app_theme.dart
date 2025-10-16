@@ -40,13 +40,18 @@ class AppColors extends ThemeExtension<AppColors> {
 
 class AppTheme {
   // --- Channels TV Theme Colors ---
-  static const Color _primaryBlue = Color(0xFF0040A8); // Channels TV primary blue
-  static const Color _secondaryBlue = Color(0xFF0050D0); // Lighter variation of primary
-  static const Color _lightSurfaceVariant = Color(0xFFF0F0F0); // Light gray from logo
-  static const Color _darkSurfaceVariant = Color(0xFF003080); // Darker variation of primary
-  
+  static const Color _primaryBlue =
+      Color(0xFF0040A8); // Channels TV primary blue
+  static const Color _secondaryBlue =
+      Color(0xFF0050D0); // Lighter variation of primary
+  static const Color _lightSurfaceVariant =
+      Color(0xFFF0F0F0); // Light gray from logo
+  static const Color _darkSurfaceVariant =
+      Color(0xFF003080); // Darker variation of primary
+
   // --- Brand Accent Colors ---
-  static const Color _success = Color(0xFF00A8A8); // Teal variation matching brand
+  static const Color _success =
+      Color(0xFF00A8A8); // Teal variation matching brand
   static const Color _warning = Color(0xFFC0C0C0); // Silver from logo
   static const Color _accent1 = Color(0xFF002060); // Darker blue accent
 
@@ -71,25 +76,25 @@ class AppTheme {
   );
 
   static ThemeData darkTheme = _baseTheme(
-  brightness: Brightness.dark,
-  primaryColor: _primaryBlue,
-  secondaryColor: _secondaryBlue,
-  background: _darkSurfaceVariant,
-  onBackground: Colors.white,
-  surface: _primaryBlue,
-  onSurface: Colors.white,
-  surfaceVariant: _darkSurfaceVariant,
-  onSurfaceVariant: _warning, // Silver color for contrast
-  primaryContainer: _accent1,
-  onPrimaryContainer: Colors.white,
-  dividerColor: _warning.withAlpha(5), // Silver with opacity
-  hintColor: _warning.withAlpha(7),
-  appBarBackgroundColor: _primaryBlue,
-  inputFillColor: _darkSurfaceVariant,
-  textColor: Colors.white,
-  isDark: true,
-  // Custom dialog background for dark mode
-  // Removed invalid parameter 'dialogBackgroundColor'
+    brightness: Brightness.dark,
+    primaryColor: _primaryBlue,
+    secondaryColor: _secondaryBlue,
+    background: _darkSurfaceVariant,
+    onBackground: Colors.white,
+    surface: _primaryBlue,
+    onSurface: Colors.white,
+    surfaceVariant: _darkSurfaceVariant,
+    onSurfaceVariant: _warning, // Silver color for contrast
+    primaryContainer: _accent1,
+    onPrimaryContainer: Colors.white,
+    dividerColor: _warning.withAlpha(5), // Silver with opacity
+    hintColor: _warning.withAlpha(7),
+    appBarBackgroundColor: _primaryBlue,
+    inputFillColor: _darkSurfaceVariant,
+    textColor: Colors.white,
+    isDark: true,
+    // Custom dialog background for dark mode
+    // Removed invalid parameter 'dialogBackgroundColor'
   );
 
   static ThemeData _baseTheme({
@@ -179,7 +184,8 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
           foregroundColor: const WidgetStatePropertyAll(Color(0xFF2F46A3)),
-          side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFF2F46A3))),
+          side: const WidgetStatePropertyAll(
+              BorderSide(color: Color(0xFF2F46A3))),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),

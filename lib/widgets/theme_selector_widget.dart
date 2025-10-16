@@ -7,7 +7,7 @@ import '../controllers/theme_controller.dart';
 class ThemeSelectorWidget extends StatelessWidget {
   final String? title;
   final String? subtitle;
-  
+
   const ThemeSelectorWidget({
     super.key,
     this.title,
@@ -73,16 +73,17 @@ class ThemeSelectorWidget extends StatelessWidget {
               SizedBox(height: 16.h),
             ],
             Obx(() => Column(
-              children: AppThemeMode.values.map((mode) {
-                final isSelected = themeController.currentThemeMode.value == mode;
-                return _buildThemeOption(
-                  context,
-                  mode,
-                  isSelected,
-                  () => themeController.setThemeMode(mode),
-                );
-              }).toList(),
-            )),
+                  children: AppThemeMode.values.map((mode) {
+                    final isSelected =
+                        themeController.currentThemeMode.value == mode;
+                    return _buildThemeOption(
+                      context,
+                      mode,
+                      isSelected,
+                      () => themeController.setThemeMode(mode),
+                    );
+                  }).toList(),
+                )),
           ],
         ),
       ),
@@ -122,7 +123,9 @@ class ThemeSelectorWidget extends StatelessWidget {
 
     String getSystemStatus() {
       if (mode == AppThemeMode.system) {
-        return themeController.isSystemDark.value ? ' (Currently Dark)' : ' (Currently Light)';
+        return themeController.isSystemDark.value
+            ? ' (Currently Dark)'
+            : ' (Currently Light)';
       }
       return '';
     }
@@ -137,12 +140,12 @@ class ThemeSelectorWidget extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             decoration: BoxDecoration(
-              color: isSelected 
-                  ? colorScheme.primary.withValues(alpha: 0.1) 
+              color: isSelected
+                  ? colorScheme.primary.withValues(alpha: 0.1)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(
-                color: isSelected 
+                color: isSelected
                     ? colorScheme.primary.withValues(alpha: 0.3)
                     : colorScheme.outline.withValues(alpha: 0.2),
                 width: isSelected ? 2 : 1,
@@ -185,13 +188,14 @@ class ThemeSelectorWidget extends StatelessWidget {
                           ),
                           if (mode == AppThemeMode.system)
                             Obx(() => Text(
-                              getSystemStatus(),
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w400,
-                                color: colorScheme.onSurface.withValues(alpha: 0.6),
-                              ),
-                            )),
+                                  getSystemStatus(),
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w400,
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                )),
                         ],
                       ),
                       SizedBox(height: 2.h),
