@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -517,27 +520,7 @@ Future<AudioPlayer> _initializeAudioPlayer() async {
   return player;
 }
 
-Future<void> _verifyFirebaseServices() async {
-  try {
-    await FirebaseFirestore.instance.collection('test').limit(1).get();
-
-    final databaseUrl = const String.fromEnvironment(
-      AppConstants.firebaseRtdbUrlKey,
-      defaultValue: ExternalUrls.firebaseRtdbUrl,
-    );
-
-    final rtdb = FirebaseDatabase.instanceFor(
-      app: Firebase.app(),
-      databaseURL: databaseUrl,
-    );
-    // --- CORRECTED: Only one call is needed ---
-    await rtdb.ref('.info/connected').once();
-  } catch (e) {
-    throw Exception(
-      'Firebase service verification failed: $e\nPlease check your internet connection or Firebase configuration.',
-    );
-  }
-}
+// Removed duplicate _verifyFirebaseServices function - keeping the comprehensive one above
 
 // Background Message Handler for Firebase Messaging
 @pragma('vm:entry-point')
