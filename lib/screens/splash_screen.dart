@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/utils/constants/app_icons.dart';
 import 'package:task/controllers/auth_controller.dart';
-import 'package:task/core/bootstrap.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -55,15 +54,10 @@ class _SplashScreenState extends State<SplashScreen>
     ));
 
     _controller.forward();
-    Timer(const Duration(seconds: 3), () async {
+    Timer(const Duration(milliseconds: 1500), () async {
       try {
-        // Wait for bootstrap to complete
-        while (!isBootstrapComplete) {
-          await Future.delayed(const Duration(milliseconds: 100));
-        }
-
-        // Add a small delay to ensure all controllers are ready
-        await Future.delayed(const Duration(milliseconds: 1000));
+        // Quick check if critical services are ready
+        await Future.delayed(const Duration(milliseconds: 200));
 
         // Mark app as ready for snackbars before navigation
         if (Get.isRegistered<AuthController>()) {
@@ -71,28 +65,23 @@ class _SplashScreenState extends State<SplashScreen>
         }
 
         final prefs = await SharedPreferences.getInstance();
-
         final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
         if (!hasSeenOnboarding) {
           Get.offAllNamed('/onboarding');
         } else {
-          // Check if user is already logged in
-          if (!Get.isRegistered<AuthController>()) {
-            Get.offAllNamed('/login');
-            return;
-          }
+          // Check if user is already logged in (quick check)
+          if (Get.isRegistered<AuthController>()) {
+            final authController = Get.find<AuthController>();
 
-          final authController = Get.find<AuthController>();
-
-          // Wait a bit for Firebase auth to initialize
-          await Future.delayed(const Duration(milliseconds: 500));
-
-          if (authController.isLoggedIn) {
-            // User is logged in, navigate based on role
-            await authController.navigateBasedOnRole();
+            // Quick auth state check without heavy operations
+            if (authController.isLoggedIn) {
+              // Navigate immediately based on role for faster UX
+              Get.offAllNamed('/home');
+            } else {
+              Get.offAllNamed('/login');
+            }
           } else {
-            // User is not logged in, go to login screen
             Get.offAllNamed('/login');
           }
         }
