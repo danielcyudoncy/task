@@ -1,4 +1,4 @@
-// views/home_screen.dart
+// screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -61,10 +61,8 @@ class _HomeScreenState extends State<HomeScreen>
 
           notificationController.fetchNotifications();
         } catch (e) {
-          // debugPrint("HomeScreen: Error initializing data: $e");
+          // Error handling - could implement proper logging here
         }
-      } else {
-        // debugPrint("HomeScreen: Widget not mounted, skipping data fetch");
       }
     });
   }
@@ -80,8 +78,6 @@ class _HomeScreenState extends State<HomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final orientation = MediaQuery.of(context).orientation;
     final isPortrait = orientation == Orientation.portrait;
-
-    // Calculate the number of tasks assigned to the user (matches notification logic)
     final String userId = authController.currentUser?.uid ?? '';
 
     return Scaffold(
@@ -296,11 +292,19 @@ class _HomeScreenState extends State<HomeScreen>
                                             : const SizedBox();
                                       },
                                     ),
-                                  ),
-                                ],
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(26),
+                                topRight: Radius.circular(26),
                               ),
                             ),
+                            child: TasksSection(
+                              tabController: _tabController,
+                              authController: authController,
+                              taskController: taskController,
+                              isDark: isDark,
+                            ),
                           ),
+                          const SizedBox(height: 16),
                         ],
                       ),
                       // Second Row: Greeting + Email
@@ -404,20 +408,18 @@ class _HomeScreenState extends State<HomeScreen>
                                 );
                               },
                             ),
-                          ),
-                        ),
-                        // const SizedBox(height: 18),
-                        // StatsSection(
-                        //   taskController: taskController,
-                        //   isDark: isDark,
-                        // ),
-                        // const SizedBox(height: 18),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 24, bottom: 8),
-                          child: Text(
-                            'task'.tr,
-                            style: AppStyles.sectionTitleStyle.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                          );
+                        }
+                        final profilePic = authController.profilePic.value;
+                        final fullName = authController.fullName.value;
+                        return Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Colors.white,
+                              width: 2,
                             ),
                           ),
                         ),
@@ -446,21 +448,50 @@ class _HomeScreenState extends State<HomeScreen>
                                           .surfaceContainerHighest
                                     ],
                                   ),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(26),
-                              topRight: Radius.circular(26),
-                            ),
                           ),
-                          child: TasksSection(
-                            tabController: _tabController,
-                            authController: authController,
-                            taskController: taskController,
-                            isDark: isDark,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
+                        );
+                      }),
+                      // Notification Badge
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Obx(() {
+                          if (!Get.isRegistered<NotificationController>()) {
+                            return const SizedBox();
+                          }
+
+                          final unreadCount = notificationController.unreadCount.value;
+
+                          return unreadCount > 0
+                              ? Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    minWidth: 20.w,
+                                    minHeight: 20.h,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      unreadCount > 9 ? '9+' : '$unreadCount',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox();
+                        }),
+                      ),
+                    ],
                   ),
                 ),
                 // UserNavBar at the bottom, outside scrollable area
@@ -470,7 +501,7 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -148,7 +148,7 @@ class UserCacheService {
     return _userAvatarsCache[userId] ?? '';
   }
 
-  /// Pre-fetch all user names and avatars for better performance
+  /// Pre-fetch all user names and avatars for better performance (optimized)
   Future<void> preFetchAllUsers({bool forceRefresh = false}) async {
     if (!forceRefresh && _isUserNamesValid()) {
       debugPrint(
@@ -156,7 +156,7 @@ class UserCacheService {
       return;
     }
 
-    debugPrint('UserCacheService: Pre-fetching all user names and avatars');
+    debugPrint('UserCacheService: Pre-fetching user names and avatars (optimized)');
     try {
       final usersSnapshot = await _firestore.collection('users').get();
 
