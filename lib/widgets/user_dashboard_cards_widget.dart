@@ -32,6 +32,26 @@ class UserDashboardCardsWidget extends StatelessWidget {
     final orientation = MediaQuery.of(context).orientation;
     final screenWidth = AppDevices.getScreenWidth(context);
     AppDevices.isTablet(context);
+    
+    // Responsive card dimensions based on orientation and screen size
+    final cardWidth = orientation == Orientation.portrait
+        ? screenWidth < 400
+            ? (screenWidth - 32) / 2.0  // Small screens: 2 cards per row
+            : (screenWidth - 48) / 2.2  // Normal screens: balanced cards
+        : screenWidth < 600
+            ? (screenWidth - 32) / 3.0  // Small landscape: 3 cards per row
+            : (screenWidth - 48) / 4.0; // Large landscape: 4 cards per row
+    
+    // Responsive card heights based on orientation and screen size
+    final baseHeight = orientation == Orientation.portrait
+        ? screenWidth < 400 ? 140.0 : 160.0  // Smaller height for small screens
+        : screenWidth < 600 ? 100.0 : 120.0; // Smaller height for small landscape
+
+    final assignedTaskHeight = baseHeight;
+    final newsFeedHeight = baseHeight;
+    final onlineNowHeight = baseHeight * 0.75;  // 75% of base height
+    final taskCreatedHeight = baseHeight * 0.75; // 75% of base height
+    
 
     // Responsive card dimensions based on orientation
     final cardWidth = orientation == Orientation.portrait
