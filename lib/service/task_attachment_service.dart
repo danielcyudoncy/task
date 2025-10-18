@@ -53,25 +53,28 @@ class TaskAttachmentService extends GetxService {
     required String taskId,
     required ImageSource source,
   }) async {
-    // Suspend app lock while the native picker is active (may background the app)
     try {
+      // Suspend app lock while the native picker is active (may background the app)
+      XFile? pickedFile;
       try {
         final appLock = Get.find<AppLockController>();
-        appLock.suspendLockFor(const Duration(seconds: 30));
+        pickedFile = await appLock.suspendLockWhile(
+          _imagePicker.pickImage(
+            source: source,
+            maxWidth: 1920,
+            maxHeight: 1080,
+            imageQuality: 85,
+          ),
+        );
       } catch (_) {
-        // not registered - ignore
+        // If AppLockController is not available or suspend fails, fallback to direct pick
+        pickedFile = await _imagePicker.pickImage(
+          source: source,
+          maxWidth: 1920,
+          maxHeight: 1080,
+          imageQuality: 85,
+        );
       }
-    } catch (e) {
-      // ignore
-    }
-
-    try {
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: source,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 85,
-      );
 
       if (pickedFile == null) return null;
 
@@ -101,17 +104,6 @@ class TaskAttachmentService extends GetxService {
     } catch (e) {
       debugPrint('Error picking/uploading image: $e');
       rethrow;
-    } finally {
-      try {
-        try {
-          final appLock = Get.find<AppLockController>();
-          appLock.clearLockSuspension();
-        } catch (_) {
-          // not registered - ignore
-        }
-      } catch (e) {
-        // ignore
-      }
     }
   }
 

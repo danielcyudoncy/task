@@ -30,6 +30,7 @@ import 'package:task/screens/email_link_signin_screen.dart';
 import 'package:task/screens/app_lock_screen.dart';
 import 'package:task/widgets/save_success_screen.dart';
 import 'package:task/screens/performance/performance_screen.dart';
+import 'package:task/screens/route_handler_screen.dart';
 
 class AppRoutes {
   static final routes = [
@@ -69,6 +70,13 @@ class AppRoutes {
       page: () => const AppLockScreen(),
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: "/route-handler",
+      page: () => const RouteHandlerScreen(),
+      middlewares: [AuthMiddleware()],
+      transition: Transition.fade,
+      transitionDuration: const Duration(milliseconds: 100),
     ),
     // Protected routes
     GetPage(
