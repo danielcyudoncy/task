@@ -7,8 +7,8 @@ import 'package:task/service/biometric_service.dart';
 
 class AppLockController extends GetxController with WidgetsBindingObserver {
   static AppLockController get to => Get.find<AppLockController>();
-  final AuthController _authController = Get.find<AuthController>();
-  final BiometricService _biometricService = Get.find<BiometricService>();
+  late final AuthController _authController;
+  late final BiometricService _biometricService;
 
   // Observable variables
   final RxBool isAppLocked = false.obs;
@@ -39,6 +39,8 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   DateTime? _lastUserActivity;
   // Optional suspension window where locking is temporarily disabled
   DateTime? _suspendUntil;
+  // Suspension counter for suspend-until-cleared semantics
+  int _suspendCount = 0;
 
   // Getter for current lifecycle state (useful for debugging and monitoring)
   AppLifecycleState? get currentLifecycleState => _lastLifecycleState;
@@ -47,6 +49,12 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+
+    // Initialize dependencies
+    _authController = Get.find<AuthController>();
+    _biometricService = Get.find<BiometricService>();
+
+    // Load settings after dependencies are initialized
     _loadSettings();
 
     // Check if we should lock on startup
@@ -108,6 +116,10 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     }
 
     // If suspension is active, skip locking behavior while suspended
+    if (_suspendCount > 0) {
+      debugPrint('AppLockController: Locking suspended (suspendCount=$_suspendCount), skipping pause handling.');
+      return;
+    }
     if (_suspendUntil != null) {
       final now = DateTime.now();
       if (now.isBefore(_suspendUntil!)) {
@@ -171,6 +183,10 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
         'AppLockController: currentUser = ${_authController.currentUser != null}');
 
     // If suspension is active, clear it and avoid locking on resume
+    if (_suspendCount > 0) {
+      debugPrint('AppLockController: Locking suspended (suspendCount=$_suspendCount), skipping resume lock check.');
+      return;
+    }
     if (_suspendUntil != null) {
       final now = DateTime.now();
       if (now.isBefore(_suspendUntil!)) {
@@ -182,28 +198,56 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
         _suspendUntil = null;
       }
     }
-    // Check if we should lock on resume
-    if (isAppLockEnabled.value && _authController.currentUser != null) {
-      // Check if we're within the grace period after authentication
-      if (_lastAuthTime != null) {
-        final timeSinceAuth = DateTime.now().difference(_lastAuthTime!);
-        if (timeSinceAuth.inSeconds < gracePeriodSeconds) {
-          debugPrint(
-              'AppLockController: Within grace period (${gracePeriodSeconds - timeSinceAuth.inSeconds}s remaining), not locking');
-          return;
-        }
-      }
 
-      debugPrint('AppLockController: Conditions met for locking on resume');
-      _lockApp();
-    } else {
-      debugPrint('AppLockController: App lock conditions not met on resume');
-      debugPrint(
-          'AppLockController: isAppLockEnabled = ${isAppLockEnabled.value}');
-      debugPrint(
-          'AppLockController: hasCurrentUser = ${_authController.currentUser != null}');
+    // Don't lock if no user is logged in
+    if (_authController.currentUser == null) {
+      debugPrint('AppLockController: No user logged in, not locking on resume');
+      _backgroundTime = null;
+      return;
     }
 
+    // Don't lock if app lock is disabled
+    if (!isAppLockEnabled.value) {
+      debugPrint('AppLockController: App lock disabled, not locking on resume');
+      _backgroundTime = null;
+      return;
+    }
+
+    // Check if we're within the grace period after authentication
+    if (_lastAuthTime != null) {
+      final timeSinceAuth = DateTime.now().difference(_lastAuthTime!);
+      if (timeSinceAuth.inSeconds < gracePeriodSeconds) {
+        debugPrint(
+            'AppLockController: Within grace period (${gracePeriodSeconds - timeSinceAuth.inSeconds}s remaining), not locking');
+        _backgroundTime = null;
+        return;
+      }
+    }
+
+    // Check if user has been active recently (within last 60 seconds)
+    if (_lastUserActivity != null) {
+      final timeSinceActivity = DateTime.now().difference(_lastUserActivity!);
+      if (timeSinceActivity.inSeconds < 60) {
+        debugPrint(
+            'AppLockController: User was recently active (${60 - timeSinceActivity.inSeconds}s ago), not locking');
+        _backgroundTime = null;
+        return;
+      }
+    }
+
+    // Only lock if app was actually in background for a significant time
+    if (_backgroundTime != null) {
+      final backgroundDuration = DateTime.now().difference(_backgroundTime!);
+      if (backgroundDuration.inSeconds < 10) {
+        debugPrint(
+            'AppLockController: App was only in background for ${backgroundDuration.inSeconds}s, not locking');
+        _backgroundTime = null;
+        return;
+      }
+    }
+
+    debugPrint('AppLockController: Conditions met for locking on resume');
+    _lockApp();
     _backgroundTime = null;
   }
 
@@ -218,7 +262,33 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   /// Clear any active lock suspension immediately.
   void clearLockSuspension() {
     _suspendUntil = null;
+    _suspendCount = 0;
     debugPrint('AppLockController: Lock suspension cleared');
+  }
+
+  /// Suspend locking while the provided Future is active. This increments an
+  /// internal counter so multiple overlapping suspensions work correctly.
+  Future<T> suspendLockWhile<T>(Future<T> future) async {
+    _suspendCount += 1;
+    debugPrint('AppLockController: Lock suspension count increased -> $_suspendCount');
+    try {
+      return await future;
+    } finally {
+      _suspendCount = (_suspendCount - 1).clamp(0, 99999);
+      debugPrint('AppLockController: Lock suspension count decreased -> $_suspendCount');
+    }
+  }
+
+  /// Returns true if a lock suspension is active either via duration or
+  /// via suspendLockWhile counter.
+  bool get isLockSuspended {
+    if (_suspendCount > 0) return true;
+    if (_suspendUntil != null) {
+      final now = DateTime.now();
+      if (now.isBefore(_suspendUntil!)) return true;
+      _suspendUntil = null;
+    }
+    return false;
   }
 
   void _handleAppDetached() {
@@ -457,6 +527,9 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
 
   // Check if app should be locked on startup
   bool shouldLockOnStartup() {
-    return isAppLockEnabled.value && _authController.currentUser != null;
+    // Conservative approach: Never lock on startup
+    // Users expect the app to open directly to their content
+    debugPrint('AppLockController: Not locking on startup - normal app behavior');
+    return false;
   }
 }

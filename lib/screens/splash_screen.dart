@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen>
     Timer(const Duration(milliseconds: 1500), () async {
       try {
         // Quick check if critical services are ready
-        await Future.delayed(const Duration(milliseconds: 200));
+        await Future.delayed(const Duration(milliseconds: 400));
 
         // Mark app as ready for snackbars before navigation
         if (Get.isRegistered<AuthController>()) {
@@ -70,20 +70,9 @@ class _SplashScreenState extends State<SplashScreen>
         if (!hasSeenOnboarding) {
           Get.offAllNamed('/onboarding');
         } else {
-          // Check if user is already logged in (quick check)
-          if (Get.isRegistered<AuthController>()) {
-            final authController = Get.find<AuthController>();
-
-            // Quick auth state check without heavy operations
-            if (authController.isLoggedIn) {
-              // Navigate immediately based on role for faster UX
-              Get.offAllNamed('/home');
-            } else {
-              Get.offAllNamed('/login');
-            }
-          } else {
-            Get.offAllNamed('/login');
-          }
+          // Let middleware handle authentication routing to avoid flash
+          // Navigate to a neutral route that middleware will redirect appropriately
+          Get.offAllNamed('/route-handler');
         }
       } catch (e) {
         // Fallback to login screen

@@ -12,6 +12,7 @@ import '../utils/snackbar_utils.dart';
 import 'package:flutter/foundation.dart';
 
 class ImagePickerWidget extends StatelessWidget {
+
   final AuthController controller;
   final double radius;
   final double iconSize;
@@ -137,53 +138,49 @@ class ImagePickerWidget extends StatelessWidget {
   }
 
   Future<void> _handleImageSelection(BuildContext context) async {
-    // Temporarily suspend app locking while the platform image picker is active.
     try {
-      final AppLockController appLockController = Get.find<AppLockController>();
-      appLockController.suspendLockFor(const Duration(seconds: 30));
-    } catch (e) {
-      // Ignore if AppLockController is not available
-    }
+      final appLockController = Get.find<AppLockController>();
 
-    try {
-      final XFile? pickedImage = await _showImagePickerDialog(context);
-      if (pickedImage != null) {
-        if (kIsWeb) {
-          // For web, read as bytes
-          try {
-            final bytes = await pickedImage.readAsBytes();
-            await controller.uploadProfilePictureFromBytes(
-                bytes, pickedImage.name);
-          } catch (e) {
-            SnackbarUtils.showSnackbar(
-                "Error", "Failed to read image: ${e.toString()}");
-          }
-        } else {
-          // For mobile, use File
-          try {
-            final File imageFile = File(pickedImage.path);
-            if (await imageFile.exists()) {
-              await controller.uploadProfilePicture(imageFile);
-            } else {
-              SnackbarUtils.showSnackbar(
-                  "Error", "Selected image doesn't exist");
-            }
-          } catch (e) {
-            SnackbarUtils.showSnackbar(
-                "Error", "Failed to process image: ${e.toString()}");
-          }
-        }
-      }
+      // Use suspendLockWhile to suspend locking for the entire operation
+      await appLockController.suspendLockWhile(
+        _performImageSelectionAndUpload(context),
+      );
     } catch (e) {
       SnackbarUtils.showSnackbar(
           "Error", "Failed to select image: ${e.toString()}");
-    } finally {
-      // Clear any suspension to restore normal locking behavior
+    }
+  }
+
+  Future<void> _performImageSelectionAndUpload(BuildContext context) async {
+    final XFile? pickedImage = await _showImagePickerDialog(context);
+
+    if (pickedImage == null) return;
+
+    // proceed with upload below
+    final XFile pickedImage0 = pickedImage;
+    if (kIsWeb) {
+      // For web, read as bytes
       try {
-        final AppLockController appLockController = Get.find<AppLockController>();
-        appLockController.clearLockSuspension();
+        final bytes = await pickedImage0.readAsBytes();
+        await controller.uploadProfilePictureFromBytes(
+            bytes, pickedImage0.name);
       } catch (e) {
-        // Ignore if AppLockController is not available
+        SnackbarUtils.showSnackbar(
+            "Error", "Failed to read image: ${e.toString()}");
+      }
+    } else {
+      // For mobile, use File
+      try {
+        final File imageFile = File(pickedImage0.path);
+        if (await imageFile.exists()) {
+          await controller.uploadProfilePicture(imageFile);
+        } else {
+          SnackbarUtils.showSnackbar(
+              "Error", "Selected image doesn't exist");
+        }
+      } catch (e) {
+        SnackbarUtils.showSnackbar(
+            "Error", "Failed to process image: ${e.toString()}");
       }
     }
   }
