@@ -37,6 +37,8 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
 
   // Track last user activity time for preventing lock during active usage
   DateTime? _lastUserActivity;
+  // Optional suspension window where locking is temporarily disabled
+  DateTime? _suspendUntil;
 
   // Getter for current lifecycle state (useful for debugging and monitoring)
   AppLifecycleState? get currentLifecycleState => _lastLifecycleState;
@@ -104,6 +106,19 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
           'AppLockController: Authentication in progress, ignoring pause.');
       return;
     }
+
+    // If suspension is active, skip locking behavior while suspended
+    if (_suspendUntil != null) {
+      final now = DateTime.now();
+      if (now.isBefore(_suspendUntil!)) {
+        debugPrint(
+            'AppLockController: Locking suspended until $_suspendUntil, skipping pause handling.');
+        return;
+      } else {
+        // Suspension expired
+        _suspendUntil = null;
+      }
+    }
     if (isAppLockEnabled.value && _authController.currentUser != null) {
       // Check if we're within the grace period after authentication
       if (_lastAuthTime != null) {
@@ -155,6 +170,18 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     debugPrint(
         'AppLockController: currentUser = ${_authController.currentUser != null}');
 
+    // If suspension is active, clear it and avoid locking on resume
+    if (_suspendUntil != null) {
+      final now = DateTime.now();
+      if (now.isBefore(_suspendUntil!)) {
+        debugPrint(
+            'AppLockController: Locking suspended until $_suspendUntil, skipping resume lock check.');
+        _suspendUntil = null; // clear after resume
+        return;
+      } else {
+        _suspendUntil = null;
+      }
+    }
     // Check if we should lock on resume
     if (isAppLockEnabled.value && _authController.currentUser != null) {
       // Check if we're within the grace period after authentication
@@ -178,6 +205,20 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     }
 
     _backgroundTime = null;
+  }
+
+  /// Temporarily suspend app locking for the given duration.
+  /// Use this when launching external UI flows (image picker, file picker)
+  /// that cause the app to go to background and then return.
+  void suspendLockFor(Duration duration) {
+    _suspendUntil = DateTime.now().add(duration);
+    debugPrint('AppLockController: Locking suspended until $_suspendUntil');
+  }
+
+  /// Clear any active lock suspension immediately.
+  void clearLockSuspension() {
+    _suspendUntil = null;
+    debugPrint('AppLockController: Lock suspension cleared');
   }
 
   void _handleAppDetached() {

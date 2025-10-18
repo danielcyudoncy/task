@@ -137,11 +137,10 @@ class ImagePickerWidget extends StatelessWidget {
   }
 
   Future<void> _handleImageSelection(BuildContext context) async {
-    // Track user activity to prevent app lock during image selection
+    // Temporarily suspend app locking while the platform image picker is active.
     try {
-      // Import AppLockController if not already imported
       final AppLockController appLockController = Get.find<AppLockController>();
-      appLockController.trackUserActivity();
+      appLockController.suspendLockFor(const Duration(seconds: 30));
     } catch (e) {
       // Ignore if AppLockController is not available
     }
@@ -178,6 +177,14 @@ class ImagePickerWidget extends StatelessWidget {
     } catch (e) {
       SnackbarUtils.showSnackbar(
           "Error", "Failed to select image: ${e.toString()}");
+    } finally {
+      // Clear any suspension to restore normal locking behavior
+      try {
+        final AppLockController appLockController = Get.find<AppLockController>();
+        appLockController.clearLockSuspension();
+      } catch (e) {
+        // Ignore if AppLockController is not available
+      }
     }
   }
 

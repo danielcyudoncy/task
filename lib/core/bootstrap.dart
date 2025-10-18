@@ -161,18 +161,24 @@ Future<void> bootstrapApp() async {
     // Initialize CRITICAL services only (parallel for speed)
     debugPrint("🚀 BOOTSTRAP: Initializing CRITICAL services in parallel");
     await Future.wait([
-      _initializeService(() => AuthController(), 'AuthController'),
       _initializeService(() => ThemeController(), 'ThemeController'),
       _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService'),
     ]);
+
+    // Initialize AuthController last to avoid race conditions with Firebase services
+    debugPrint("🚀 BOOTSTRAP: Initializing AuthController");
+    await _initializeService(() => AuthController(), 'AuthController');
+
+    // Wait a bit for auth state to stabilize before proceeding
+    await Future.delayed(const Duration(milliseconds: 200));
 
     // Initialize User Cache Service early for better performance (but don't pre-fetch yet)
     final userCacheService = UserCacheService();
     await userCacheService.initialize();
     Get.put(userCacheService, permanent: true);
 
-    // Defer heavy operations to background (don't block startup)
-    Future(() async {
+    // Defer heavy operations to background with microtask for better performance
+    Future.microtask(() async {
       try {
         await _verifyFirebaseServices();
         debugPrint('🚀 BOOTSTRAP: Firebase verification completed in background');
@@ -220,37 +226,36 @@ Future<void> bootstrapApp() async {
     // Initialize audio player (can run in parallel)
     final audioPlayer = await _initializeAudioPlayer();
 
-    // Initialize CRITICAL services first (parallel)
+    // Initialize CRITICAL services first (parallel but limited)
     debugPrint("🚀 BOOTSTRAP: Initializing CRITICAL services in parallel");
     await Future.wait([
-      _initializeService(() => AuthController(), 'AuthController'),
       _initializeService(() => ThemeController(), 'ThemeController'),
       _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService'),
     ]);
 
-    // Initialize ESSENTIAL services (parallel)
+    // Initialize AuthController separately to avoid race conditions
+    await _initializeService(() => AuthController(), 'AuthController');
+
+    // Initialize ESSENTIAL services (parallel but limited to avoid blocking)
     debugPrint("🚀 BOOTSTRAP: Initializing ESSENTIAL services in parallel");
     await Future.wait([
       _initializeService<FirebaseStorageService>(() => FirebaseStorageService(), 'FirebaseStorageService'),
       _initializeService<ExportService>(() => ExportService(), 'ExportService'),
-      _initializeService<ArchiveService>(() => ArchiveService(), 'ArchiveService'),
     ]);
 
-    // Initialize OPTIONAL services (parallel, non-blocking)
-    debugPrint("🚀 BOOTSTRAP: Initializing OPTIONAL services in parallel");
-    await Future.wait([
-      _initializeService<TaskAttachmentService>(() => TaskAttachmentService(), 'TaskAttachmentService'),
-      _initializeService<PdfExportService>(() => PdfExportService(), 'PdfExportService', needsInitialization: true),
-      _initializeService<VersionControlService>(() => VersionControlService(), 'VersionControlService'),
-      _initializeService<DuplicateDetectionService>(() => DuplicateDetectionService(), 'DuplicateDetectionService'),
-      _initializeService<CloudFunctionUserDeletionService>(() => CloudFunctionUserDeletionService(), 'UserDeletionService'),
-      _initializeService<NewsService>(() => NewsService(), 'NewsService'),
-      _initializeService<DailyTaskNotificationService>(() => DailyTaskNotificationService(), 'DailyTaskNotificationService'),
-      _initializeService<AccessControlService>(() => AccessControlService(), 'AccessControlService'),
-    ]);
+    // Initialize ArchiveService separately to avoid blocking
+    await _initializeService<ArchiveService>(() => ArchiveService(), 'ArchiveService');
+
+    // Initialize CloudFunctionUserDeletionService first (needed by other services)
+    debugPrint("🚀 BOOTSTRAP: Initializing CloudFunctionUserDeletionService");
+    await _initializeService<CloudFunctionUserDeletionService>(() => CloudFunctionUserDeletionService(), 'CloudFunctionUserDeletionService');
 
     // Register the service by interface type as well
     Get.put<UserDeletionService>(Get.find<CloudFunctionUserDeletionService>(), permanent: true);
+
+    // Initialize OPTIONAL services in background (don't block main thread)
+    debugPrint("🚀 BOOTSTRAP: Initializing OPTIONAL services in background");
+    _initializeOptionalServicesInBackground();
 
     // Initialize new architecture services (parallel)
     await Future.wait([
@@ -317,12 +322,70 @@ Future<void> bootstrapApp() async {
 
     // Run the app
     runApp(const MyApp());
-  } catch (e) {
+  } catch (e, stackTrace) {
+    debugPrint('❌ BOOTSTRAP: Critical error during app initialization: $e');
+    debugPrint('Stack trace: $stackTrace');
+
+    // Log error to Crashlytics if available
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        FirebaseCrashlytics.instance.recordError(e, stackTrace, reason: 'Bootstrap failed');
+      }
+    } catch (crashlyticsError) {
+      debugPrint('Failed to log bootstrap error to Crashlytics: $crashlyticsError');
+    }
+
     // Show error UI if bootstrap fails
     runApp(MaterialApp(
       home: Scaffold(
-        body: Center(
-          child: Text('Failed to initialize app: $e'),
+        body: Container(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Failed to initialize app',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Error: ${e.toString()}',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    // Attempt to restart the app
+                    runApp(const MaterialApp(
+                      home: Scaffold(
+                        body: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Restarting app...'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ));
+
+                    // Restart bootstrap after a delay
+                    Future.delayed(const Duration(seconds: 2), () {
+                      bootstrapApp();
+                    });
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     ));
@@ -335,19 +398,39 @@ Future<void> _initializeService<T>(
   bool needsInitialization = false,
 }) async {
   try {
+    debugPrint("🚀 BOOTSTRAP: Initializing service: $serviceName");
+
     final service = create();
 
     // Call initialize method if the service needs it
     if (needsInitialization && service is GetxService) {
-      if (service.runtimeType.toString() == 'PdfExportService') {
-        await (service as dynamic).initialize();
+      try {
+        if (service.runtimeType.toString() == 'PdfExportService') {
+          await (service as dynamic).initialize().timeout(const Duration(seconds: 10));
+        }
+      } catch (initError) {
+        debugPrint('⚠️ BOOTSTRAP: Service $serviceName initialization failed: $initError');
+        // Continue with registration even if initialization fails
       }
     }
 
     // Put the service into GetX
     Get.put<T>(service, permanent: true);
+
+    debugPrint("✅ BOOTSTRAP: Service $serviceName initialized successfully");
   } catch (e) {
-    rethrow;
+    debugPrint('❌ BOOTSTRAP: Failed to initialize service $serviceName: $e');
+
+    // For critical services, we might want to throw, but for optional services, continue
+    if (serviceName.contains('AuthController') ||
+        serviceName.contains('ThemeController') ||
+        serviceName.contains('Firebase')) {
+      debugPrint('🚨 BOOTSTRAP: Critical service $serviceName failed, rethrowing');
+      rethrow;
+    } else {
+      debugPrint('⚠️ BOOTSTRAP: Non-critical service $serviceName failed, continuing');
+      // Don't rethrow for non-critical services
+    }
   }
 }
 
@@ -383,25 +466,35 @@ Future<void> _verifyFirebaseServices() async {
 
     // Verify Firebase Storage is accessible (if available)
     try {
-      final storage = FirebaseStorage.instance;
-      final ref = storage.ref().child('_health_check');
-      // Test if we can create a reference and perform basic operations
-      try {
-        await ref.getDownloadURL();
-        debugPrint('✅ BOOTSTRAP: Firebase Storage verification passed');
-      } catch (e) {
-        // Expected to fail for non-existent file, but connection should work
-        if (e.toString().contains('object-not-found') ||
-            e.toString().contains('Object does not exist')) {
-          debugPrint('✅ BOOTSTRAP: Firebase Storage verification passed (file not found but connection works)');
-        } else {
-          rethrow; // Re-throw if it's a different error, preserving stack trace
-        }
-      }
-    } catch (e) {
-      debugPrint('⚠️ BOOTSTRAP: Firebase Storage verification failed: $e');
-      // Don't throw - storage might not be configured
-    }
+       final storage = FirebaseStorage.instance;
+       final ref = storage.ref().child('_health_check');
+
+       // Check if user is authenticated before testing storage
+       final currentUser = FirebaseAuth.instance.currentUser;
+       if (currentUser != null) {
+         // Test if we can create a reference and perform basic operations
+         try {
+           await ref.getDownloadURL();
+           debugPrint('✅ BOOTSTRAP: Firebase Storage verification passed');
+         } catch (e) {
+           // Expected to fail for non-existent file, but connection should work
+           if (e.toString().contains('object-not-found') ||
+               e.toString().contains('Object does not exist')) {
+             debugPrint('✅ BOOTSTRAP: Firebase Storage verification passed (file not found but connection works)');
+           } else if (e.toString().contains('unauthorized') ||
+                      e.toString().contains('not authenticated')) {
+             debugPrint('⚠️ BOOTSTRAP: Firebase Storage verification skipped - user not authenticated');
+           } else {
+             rethrow; // Re-throw if it's a different error, preserving stack trace
+           }
+         }
+       } else {
+         debugPrint('⚠️ BOOTSTRAP: Firebase Storage verification skipped - no user authenticated');
+       }
+     } catch (e) {
+       debugPrint('⚠️ BOOTSTRAP: Firebase Storage verification failed: $e');
+       // Don't throw - storage might not be configured or user might not be authenticated
+     }
 
     // Verify Firebase Messaging is working (if available)
     try {
@@ -448,6 +541,45 @@ Future<AudioPlayer> _initializeAudioPlayer() async {
 }
 
 // Removed duplicate _verifyFirebaseServices function - keeping the comprehensive one above
+
+/// Initialize optional services in background to avoid blocking main thread
+void _initializeOptionalServicesInBackground() {
+  Future.microtask(() async {
+    try {
+      debugPrint("🚀 BOOTSTRAP: Starting background initialization of optional services");
+
+      // Initialize services in smaller batches to avoid overwhelming the system
+      await Future.wait([
+        _initializeService<TaskAttachmentService>(() => TaskAttachmentService(), 'TaskAttachmentService'),
+        _initializeService<PdfExportService>(() => PdfExportService(), 'PdfExportService', needsInitialization: true),
+      ]);
+
+      await Future.delayed(const Duration(milliseconds: 100)); // Small pause
+
+      await Future.wait([
+        _initializeService<VersionControlService>(() => VersionControlService(), 'VersionControlService'),
+        _initializeService<DuplicateDetectionService>(() => DuplicateDetectionService(), 'DuplicateDetectionService'),
+      ]);
+
+      await Future.delayed(const Duration(milliseconds: 100)); // Small pause
+
+      await Future.wait([
+        _initializeService<NewsService>(() => NewsService(), 'NewsService'),
+      ]);
+
+      await Future.delayed(const Duration(milliseconds: 100)); // Small pause
+
+      await Future.wait([
+        _initializeService<DailyTaskNotificationService>(() => DailyTaskNotificationService(), 'DailyTaskNotificationService'),
+        _initializeService<AccessControlService>(() => AccessControlService(), 'AccessControlService'),
+      ]);
+
+      debugPrint("🚀 BOOTSTRAP: Background initialization of optional services completed");
+    } catch (e) {
+      debugPrint("⚠️ BOOTSTRAP: Background initialization of optional services failed: $e");
+    }
+  });
+}
 
 // Background Message Handler for Firebase Messaging
 @pragma('vm:entry-point')

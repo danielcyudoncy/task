@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import '../controllers/app_lock_controller.dart';
 import 'package:task/models/task.dart';
 import 'package:task/service/firebase_storage_service.dart';
 import 'package:path/path.dart' as path;
@@ -52,6 +53,18 @@ class TaskAttachmentService extends GetxService {
     required String taskId,
     required ImageSource source,
   }) async {
+    // Suspend app lock while the native picker is active (may background the app)
+    try {
+      try {
+        final appLock = Get.find<AppLockController>();
+        appLock.suspendLockFor(const Duration(seconds: 30));
+      } catch (_) {
+        // not registered - ignore
+      }
+    } catch (e) {
+      // ignore
+    }
+
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: source,
@@ -88,6 +101,17 @@ class TaskAttachmentService extends GetxService {
     } catch (e) {
       debugPrint('Error picking/uploading image: $e');
       rethrow;
+    } finally {
+      try {
+        try {
+          final appLock = Get.find<AppLockController>();
+          appLock.clearLockSuspension();
+        } catch (_) {
+          // not registered - ignore
+        }
+      } catch (e) {
+        // ignore
+      }
     }
   }
 

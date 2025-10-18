@@ -1,6 +1,7 @@
 // service/firebase_storage_service.dart
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
@@ -34,6 +35,13 @@ class FirebaseStorageService extends GetxService {
     try {
       debugPrint('Firebase Storage: Uploading to bucket: $bucket, path: $path');
 
+      // Check if user is authenticated before proceeding
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        debugPrint('Firebase Storage: User not authenticated, cannot upload file');
+        return null;
+      }
+
       // Create a reference to the file location
       final storageRef = _storage.ref().child('$bucket/$path');
 
@@ -44,6 +52,7 @@ class FirebaseStorageService extends GetxService {
           contentType: 'image/jpeg',
           customMetadata: {
             'uploaded_at': DateTime.now().toIso8601String(),
+            'uploaded_by': user.uid,
           },
         ),
       );
@@ -59,6 +68,15 @@ class FirebaseStorageService extends GetxService {
     } catch (e, stack) {
       debugPrint('Firebase Storage upload error: $e');
       debugPrint('Stacktrace: $stack');
+
+      // Handle specific authentication errors
+      if (e.toString().contains('unauthorized') ||
+          e.toString().contains('not authenticated') ||
+          e.toString().contains('FirebaseNoSignedInUserException')) {
+        debugPrint('Firebase Storage: Authentication required for upload');
+        return null;
+      }
+
       return null;
     }
   }
@@ -79,10 +97,25 @@ class FirebaseStorageService extends GetxService {
     try {
       debugPrint(
           'Firebase Storage: Deleting file from bucket: $bucket, path: $path');
+
+      // Verify user is authenticated before deleting
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        debugPrint('Firebase Storage: Cannot delete file - user not authenticated');
+        return;
+      }
+
       await _storage.ref().child('$bucket/$path').delete();
       debugPrint('Firebase Storage: File deleted successfully');
     } catch (e) {
       debugPrint('Firebase Storage delete error: $e');
+
+      // Handle specific authentication errors
+      if (e.toString().contains('unauthorized') ||
+          e.toString().contains('not authenticated')) {
+        debugPrint('Firebase Storage: Authentication required for deletion');
+        return;
+      }
     }
   }
 
@@ -94,6 +127,19 @@ class FirebaseStorageService extends GetxService {
     try {
       debugPrint(
           'Firebase Storage: Uploading profile picture for user: $userId');
+
+      // Verify user is authenticated
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        debugPrint('Firebase Storage: Cannot upload profile picture - user not authenticated');
+        return null;
+      }
+
+      // Ensure the userId matches the authenticated user for security
+      if (currentUser.uid != userId) {
+        debugPrint('Firebase Storage: User ID mismatch - security violation');
+        return null;
+      }
 
       // Create a unique filename with timestamp
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -129,6 +175,19 @@ class FirebaseStorageService extends GetxService {
       debugPrint(
           'Firebase Storage: Uploading profile picture from bytes for user: $userId');
 
+      // Verify user is authenticated
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        debugPrint('Firebase Storage: Cannot upload profile picture - user not authenticated');
+        return null;
+      }
+
+      // Ensure the userId matches the authenticated user for security
+      if (currentUser.uid != userId) {
+        debugPrint('Firebase Storage: User ID mismatch - security violation');
+        return null;
+      }
+
       // Create a unique filename with timestamp
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final storageFileName = 'profile_pictures/${userId}_$timestamp.jpg';
@@ -144,6 +203,7 @@ class FirebaseStorageService extends GetxService {
           customMetadata: {
             'uploaded_at': DateTime.now().toIso8601String(),
             'original_filename': fileName,
+            'uploaded_by': currentUser.uid,
           },
         ),
       );
@@ -160,6 +220,14 @@ class FirebaseStorageService extends GetxService {
     } catch (e) {
       debugPrint(
           'Firebase Storage: Profile picture upload from bytes error: $e');
+
+      // Handle specific authentication errors
+      if (e.toString().contains('unauthorized') ||
+          e.toString().contains('not authenticated')) {
+        debugPrint('Firebase Storage: Authentication required for upload');
+        return null;
+      }
+
       return null;
     }
   }
@@ -169,6 +237,13 @@ class FirebaseStorageService extends GetxService {
     try {
       if (imageUrl.isEmpty || !imageUrl.contains('firebase')) {
         debugPrint('Firebase Storage: Skipping delete - not a Firebase URL');
+        return;
+      }
+
+      // Verify user is authenticated before deleting
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        debugPrint('Firebase Storage: Cannot delete profile picture - user not authenticated');
         return;
       }
 
@@ -191,6 +266,13 @@ class FirebaseStorageService extends GetxService {
       }
     } catch (e) {
       debugPrint('Firebase Storage: Error deleting old profile picture: $e');
+
+      // Handle specific authentication errors
+      if (e.toString().contains('unauthorized') ||
+          e.toString().contains('not authenticated')) {
+        debugPrint('Firebase Storage: Authentication required for deletion');
+        return;
+      }
     }
   }
 }

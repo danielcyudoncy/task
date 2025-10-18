@@ -387,13 +387,17 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     final authController = Get.find<AuthController>();
     final currentUserId = authController.auth.currentUser?.uid;
     final isAdmin = authController.isAdmin.value;
-    final isTaskOwner = widget.task.createdById == currentUserId;
-    final isAssignedUser = widget.task.assignedReporterId == currentUserId ||
+  final isTaskOwner = widget.task.createdById == currentUserId;
+  final isAssignedUser = widget.task.assignedReporterId == currentUserId ||
         widget.task.assignedCameramanId == currentUserId ||
         widget.task.assignedDriverId == currentUserId ||
         (widget.task.assignedTo != null &&
             currentUserId != null &&
             widget.task.assignedTo!.contains(currentUserId));
+
+  // Debug: log permission-related values to help diagnose creator permission issues
+  debugPrint(
+    'TaskCard: taskId=${widget.task.taskId}, createdById="${widget.task.createdById}", currentUserId="$currentUserId", isTaskOwner=$isTaskOwner, isAdmin=$isAdmin, isAssignedUser=$isAssignedUser');
 
     // Simplified permission logic:
     // Task creators can always manage their tasks

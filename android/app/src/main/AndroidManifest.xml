@@ -42,7 +42,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true"
-        android:usesCleartextTraffic="true">
+         android:usesCleartextTraffic="true"
+         android:networkSecurityConfig="@xml/network_security_config">
         <!-- Added this line -->
         <activity
             android:name=".MainActivity"
@@ -111,6 +112,36 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="high_importance_channel"/>
+
+        <!-- Suppress Unsafe API usage warnings for Firebase and Google Play Services -->
+        <meta-data
+            android:name="android.security.suppressUnsafeApiWarnings"
+            android:value="true"
+            tools:replace="android:value"/>
+
+        <!-- Google API Key for better Google Play Services integration -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version"
+            tools:replace="android:value"/>
+
+        <!-- Firebase App ID for better service integration -->
+        <meta-data
+            android:name="com.google.firebase.firebase_app_id"
+            android:value="1:838120475834:android:33a40c228fcab9a25c8683"
+            tools:replace="android:value"/>
+
+        <!-- Google Play Services configuration -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version"
+            tools:replace="android:value"/>
+
+        <!-- Suppress Google Play Services warnings -->
+        <meta-data
+            android:name="com.google.android.gms.suppressStrictGooglePlayServicesCheck"
+            android:value="true"
+            tools:replace="android:value"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

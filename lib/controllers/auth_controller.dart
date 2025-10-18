@@ -119,16 +119,60 @@ class AuthController extends GetxController {
     // Initialize user observable with current Firebase user
     user.value = _auth.currentUser;
 
+    // Add a small delay before setting up auth state listener to avoid race conditions
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _setupAuthStateListener();
+    });
+  }
+
+  void _setupAuthStateListener() {
+    debugPrint("AuthController: Setting up auth state listener");
+
     _auth.authStateChanges().listen((User? userValue) {
-      user.value = userValue;
-      if (userValue == null) {
-        debugPrint("User signed out");
-        _handlePresence(false); // Set offline when user logs out
-      } else {
-        debugPrint("User signed in: ${userValue.uid}");
-        _handlePresence(true); // Set online when user logs in
+      debugPrint("AuthController: Auth state changed - User: ${userValue?.uid ?? 'null'}");
+
+      // Only update if the user actually changed to avoid unnecessary updates
+      if (user.value?.uid != userValue?.uid) {
+        user.value = userValue;
+
+        if (userValue == null) {
+          debugPrint("AuthController: User signed out - resetting state");
+          _handleUserSignOut();
+        } else {
+          debugPrint("AuthController: User signed in: ${userValue.uid}");
+          _handleUserSignIn(userValue);
+        }
       }
     });
+  }
+
+  void _handleUserSignOut() {
+    // Reset user data
+    resetUserData();
+
+    // Set presence offline
+    _handlePresence(false);
+
+    // Clear any cached data for the signed out user
+    try {
+      if (Get.isRegistered<UserCacheService>()) {
+        final cache = Get.find<UserCacheService>();
+        cache.clearCache();
+      }
+    } catch (e) {
+      debugPrint("AuthController: Error clearing cache on sign out: $e");
+    }
+  }
+
+  void _handleUserSignIn(User userValue) {
+    // Set presence online
+    _handlePresence(true);
+
+    // Load user data if profile is complete
+    if (isProfileComplete.value) {
+      // Reload user data to ensure it's fresh
+      loadUserData(forceRefresh: true);
+    }
   }
 
   @override
@@ -596,6 +640,13 @@ class AuthController extends GetxController {
         throw Exception("Image file doesn't exist");
       }
 
+      // Verify user is still authenticated before proceeding with storage operations
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        _safeSnackbar("Error", "Authentication lost during upload.");
+        return;
+      }
+
       // Delete old profile picture if it exists
       String oldPhotoUrl = profilePic.value;
       if (oldPhotoUrl.isNotEmpty) {
@@ -607,12 +658,12 @@ class AuthController extends GetxController {
       debugPrint("AuthController: Uploading new profile picture");
       final downloadUrl = await storageService.uploadProfilePicture(
         imageFile: imageFile,
-        userId: user.uid,
+        userId: currentUser.uid,
       );
 
       if (downloadUrl != null) {
         // Save the Firebase Storage URL in Firestore user profile
-        await _firestore.collection('users').doc(user.uid).update({
+        await _firestore.collection('users').doc(currentUser.uid).update({
           'photoUrl': downloadUrl,
         });
 
@@ -621,7 +672,7 @@ class AuthController extends GetxController {
         // Update cache with new profile picture
         try {
           final userCacheService = Get.find<UserCacheService>();
-          await userCacheService.updateUserAvatar(user.uid, downloadUrl);
+          await userCacheService.updateUserAvatar(currentUser.uid, downloadUrl);
           debugPrint("AuthController: Profile picture cache updated");
         } catch (e) {
           debugPrint(
@@ -632,11 +683,18 @@ class AuthController extends GetxController {
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
         debugPrint("AuthController: Profile picture upload failed");
-        _safeSnackbar("Upload Failed", "Could not upload the image.");
+        _safeSnackbar("Upload Failed", "Could not upload the image. Please check your connection and try again.");
       }
     } catch (e) {
       debugPrint("AuthController: Profile picture upload error: $e");
-      _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
+
+      // Handle specific authentication errors
+      if (e.toString().contains('unauthorized') ||
+          e.toString().contains('not authenticated')) {
+        _safeSnackbar("Authentication Error", "Please log in again to upload profile pictures.");
+      } else {
+        _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
+      }
     } finally {
       isLoading.value = false;
     }
@@ -655,6 +713,13 @@ class AuthController extends GetxController {
       isLoading.value = true;
       debugPrint("AuthController: Starting profile picture upload from bytes");
 
+      // Verify user is still authenticated before proceeding with storage operations
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        _safeSnackbar("Error", "Authentication lost during upload.");
+        return;
+      }
+
       // Delete old profile picture if it exists
       String oldPhotoUrl = profilePic.value;
       if (oldPhotoUrl.isNotEmpty) {
@@ -667,12 +732,12 @@ class AuthController extends GetxController {
       final downloadUrl = await storageService.uploadProfilePictureFromBytes(
         bytes: bytes,
         fileName: fileName,
-        userId: user.uid,
+        userId: currentUser.uid,
       );
 
       if (downloadUrl != null) {
         // Save the Firebase Storage URL in Firestore user profile
-        await _firestore.collection('users').doc(user.uid).update({
+        await _firestore.collection('users').doc(currentUser.uid).update({
           'photoUrl': downloadUrl,
         });
 
@@ -681,7 +746,7 @@ class AuthController extends GetxController {
         // Update cache with new profile picture
         try {
           final userCacheService = Get.find<UserCacheService>();
-          await userCacheService.updateUserAvatar(user.uid, downloadUrl);
+          await userCacheService.updateUserAvatar(currentUser.uid, downloadUrl);
           debugPrint("AuthController: Profile picture cache updated");
         } catch (e) {
           debugPrint(
@@ -692,11 +757,18 @@ class AuthController extends GetxController {
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
         debugPrint("AuthController: Profile picture upload failed");
-        _safeSnackbar("Upload Failed", "Could not upload the image.");
+        _safeSnackbar("Upload Failed", "Could not upload the image. Please check your connection and try again.");
       }
     } catch (e) {
       debugPrint("AuthController: Profile picture upload error: $e");
-      _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
+
+      // Handle specific authentication errors
+      if (e.toString().contains('unauthorized') ||
+          e.toString().contains('not authenticated')) {
+        _safeSnackbar("Authentication Error", "Please log in again to upload profile pictures.");
+      } else {
+        _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
+      }
     } finally {
       isLoading.value = false;
     }
@@ -783,6 +855,7 @@ class AuthController extends GetxController {
     try {
       debugPrint("AuthController: Starting sign in process");
       isLoading(true);
+
       final UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
@@ -790,26 +863,32 @@ class AuthController extends GetxController {
 
       if (credential.user == null) throw Exception("No user returned");
 
-      debugPrint(
-          "AuthController: User signed in successfully, loading user data");
+      debugPrint("AuthController: User signed in successfully: ${credential.user!.uid}");
+
+      // Wait for auth state to propagate before proceeding
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Verify the user is still authenticated
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        throw Exception("Authentication lost after sign in");
+      }
+
+      debugPrint("AuthController: Loading user data for user: ${currentUser.uid}");
       await loadUserData();
-      debugPrint(
-          "AuthController: loadUserData completed, setting lastActivity");
+
+      debugPrint("AuthController: Setting lastActivity");
       lastActivity.value = DateTime.now();
+
       debugPrint("AuthController: Setting presence to online");
       try {
-        await _handlePresence(true); // Set presence after successful login
+        await _handlePresence(true);
         debugPrint("AuthController: Presence set successfully");
       } catch (e) {
         debugPrint("AuthController: Presence setting failed, continuing: $e");
       }
 
-      debugPrint(
-          "AuthController: User data loaded, profile complete: ${isProfileComplete.value}");
-      debugPrint("AuthController: User role: ${userRole.value}");
-      debugPrint("AuthController: User full name: ${fullName.value}");
-      debugPrint(
-          "AuthController: Current route before navigation: ${Get.currentRoute}");
+      debugPrint("AuthController: User data loaded - Profile complete: ${isProfileComplete.value}, Role: ${userRole.value}");
 
       // Use a post-frame callback to ensure navigation happens after the current build phase
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -820,14 +899,18 @@ class AuthController extends GetxController {
           // Ensure role is loaded before navigation
           int attempts = 0;
           while (userRole.value.isEmpty && attempts < 10) {
-            debugPrint(
-                "AuthController: Waiting for user role to load (attempt ${attempts + 1})");
+            debugPrint("AuthController: Waiting for user role to load (attempt ${attempts + 1})");
             await Future.delayed(const Duration(milliseconds: 200));
             attempts++;
           }
-          debugPrint(
-              "AuthController: Profile is complete, navigating based on role: ${userRole.value}");
-          await navigateBasedOnRole();
+
+          if (userRole.value.isNotEmpty) {
+            debugPrint("AuthController: Profile is complete, navigating based on role: ${userRole.value}");
+            await navigateBasedOnRole();
+          } else {
+            debugPrint("AuthController: Role still empty after waiting, navigating to login");
+            Get.offAllNamed('/login');
+          }
         }
       });
     } on FirebaseAuthException catch (e) {
@@ -836,12 +919,10 @@ class AuthController extends GetxController {
       _safeSnackbar("Error", _handleAuthError(e));
       rethrow;
     } catch (e) {
+      isLoading(false);
       debugPrint("AuthController: General error during sign in: $e");
       _safeSnackbar("Error", "Sign in failed: $e");
       rethrow;
-    } finally {
-      debugPrint("AuthController: Setting isLoading to false");
-      isLoading(false);
     }
   }
 

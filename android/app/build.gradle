@@ -43,6 +43,12 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -76,12 +82,17 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-storage'
 
     // Required for Google Play Services integration
     implementation 'com.google.android.gms:play-services-base:18.4.0'
 
     // Required for Google Sign-In
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
+
+    // Additional Google Play Services for better compatibility
+    implementation 'com.google.android.gms:play-services-tasks:18.1.0'
+    implementation 'com.google.android.gms:play-services-basement:18.3.0'
 
     // Optional core library
     implementation 'com.google.firebase:firebase-core:21.1.1'
