@@ -86,7 +86,6 @@ class TaskActions {
                     icon: const Icon(Icons.calendar_today),
                     onPressed: () async {
                       final theme = Theme.of(context);
-                      final isDarkMode = theme.brightness == Brightness.dark;
 
                       final picked = await showDatePicker(
                         context: ctx,
@@ -94,68 +93,11 @@ class TaskActions {
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2100),
                         builder: (context, child) {
+                          final dialogBg = Theme.of(context).colorScheme.surface;
                           return Theme(
                             data: theme.copyWith(
-                              colorScheme: isDarkMode
-                                  ? ColorScheme.dark(
-                                      primary: theme.colorScheme.primary,
-                                      onPrimary: theme.colorScheme.onPrimary,
-                                      surface: const Color(0xFF1E1E1E),
-                                      onSurface: Colors.white,
-                                      error: theme.colorScheme.error,
-                                      onError: theme.colorScheme.onError,
-                                      brightness: Brightness.dark,
-                                    )
-                                  : ColorScheme.light(
-                                      primary: theme.colorScheme.primary,
-                                      onPrimary: theme.colorScheme.onPrimary,
-                                      surface: Colors.white,
-                                      onSurface: Colors.black,
-                                      error: theme.colorScheme.error,
-                                      onError: theme.colorScheme.onError,
-                                      brightness: Brightness.light,
-                                    ),
-                              textTheme: theme.textTheme.copyWith(
-                                bodyMedium: TextStyle(
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black,
-                                ),
-                                bodyLarge: TextStyle(
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black,
-                                ),
-                                labelLarge: TextStyle(
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black,
-                                ),
-                              ),
                               dialogTheme: DialogThemeData(
-                                backgroundColor: isDarkMode
-                                    ? const Color(0xFF1E1E1E)
-                                    : Colors.white,
-                              ),
-                              appBarTheme: AppBarTheme(
-                                backgroundColor: isDarkMode
-                                    ? const Color(0xFF1E1E1E)
-                                    : Colors.white,
-                                foregroundColor:
-                                    isDarkMode ? Colors.white : Colors.black,
-                              ),
-                              buttonTheme: ButtonThemeData(
-                                textTheme: ButtonTextTheme.primary,
-                                colorScheme: isDarkMode
-                                    ? ColorScheme.dark(
-                                        primary: theme.colorScheme.primary,
-                                      )
-                                    : ColorScheme.light(
-                                        primary: theme.colorScheme.primary,
-                                      ),
-                              ),
-                              textButtonTheme: TextButtonThemeData(
-                                style: TextButton.styleFrom(
-                                  foregroundColor:
-                                      isDarkMode ? Colors.white : Colors.black,
-                                ),
+                                backgroundColor: dialogBg,
                               ),
                             ),
                             child: child!,
