@@ -27,7 +27,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   DateTime? _backgroundTime;
 
   // Lock timeout (in seconds) - app locks after being minimized for this duration
-  static const int lockTimeoutSeconds = 8;
+  static const int lockTimeoutSeconds = 120;
 
   // Grace period after successful authentication (in seconds)
   static const int gracePeriodSeconds = 30;
@@ -41,6 +41,8 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   DateTime? _suspendUntil;
   // Suspension counter for suspend-until-cleared semantics
   int _suspendCount = 0;
+  // Track when suspension started to exclude from background time calculation
+  DateTime? _suspensionStartTime;
 
   // Getter for current lifecycle state (useful for debugging and monitoring)
   AppLifecycleState? get currentLifecycleState => _lastLifecycleState;
@@ -237,10 +239,21 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
 
     // Only lock if app was actually in background for a significant time
     if (_backgroundTime != null) {
-      final backgroundDuration = DateTime.now().difference(_backgroundTime!);
-      if (backgroundDuration.inSeconds < 10) {
+      final now = DateTime.now();
+      final totalBackgroundDuration = now.difference(_backgroundTime!);
+
+      // Subtract suspension time from background duration if suspension was active
+      int actualBackgroundSeconds = totalBackgroundDuration.inSeconds;
+      if (_suspensionStartTime != null && _suspensionStartTime!.isAfter(_backgroundTime!)) {
+        final suspensionDuration = now.difference(_suspensionStartTime!);
+        actualBackgroundSeconds = (totalBackgroundDuration - suspensionDuration).inSeconds;
         debugPrint(
-            'AppLockController: App was only in background for ${backgroundDuration.inSeconds}s, not locking');
+            'AppLockController: Total background: ${totalBackgroundDuration.inSeconds}s, suspension: ${suspensionDuration.inSeconds}s, actual background: ${actualBackgroundSeconds}s');
+      }
+
+      if (actualBackgroundSeconds < lockTimeoutSeconds) {
+        debugPrint(
+            'AppLockController: App was only in background for ${actualBackgroundSeconds}s (excluding suspension), not locking');
         _backgroundTime = null;
         return;
       }
@@ -263,6 +276,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   void clearLockSuspension() {
     _suspendUntil = null;
     _suspendCount = 0;
+    _suspensionStartTime = null;
     debugPrint('AppLockController: Lock suspension cleared');
   }
 
@@ -270,12 +284,17 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
   /// internal counter so multiple overlapping suspensions work correctly.
   Future<T> suspendLockWhile<T>(Future<T> future) async {
     _suspendCount += 1;
-    debugPrint('AppLockController: Lock suspension count increased -> $_suspendCount');
+    _suspensionStartTime = DateTime.now();
+    debugPrint('AppLockController: Lock suspension count increased -> $_suspendCount (started at: $_suspensionStartTime)');
     try {
       return await future;
     } finally {
       _suspendCount = (_suspendCount - 1).clamp(0, 99999);
       debugPrint('AppLockController: Lock suspension count decreased -> $_suspendCount');
+      // Clear suspension start time when count reaches 0
+      if (_suspendCount == 0) {
+        _suspensionStartTime = null;
+      }
     }
   }
 
@@ -297,6 +316,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     // Clear sensitive data when app is being terminated
     _backgroundTime = null;
     _lastUserActivity = null;
+    _suspensionStartTime = null;
 
     // If app lock is enabled, ensure the app will be locked on next startup
     if (isAppLockEnabled.value && _authController.currentUser != null) {
@@ -310,6 +330,15 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
     debugPrint('App lock enabled: ${isAppLockEnabled.value}');
     debugPrint('Biometric enabled: ${isBiometricEnabled.value}');
     isAppLocked.value = true;
+
+    // Hide sensitive UI data when locking (but preserve session)
+    try {
+      final authController = Get.find<AuthController>();
+      authController.hideSensitiveUserData();
+      debugPrint('Sensitive UI data cleared on app lock');
+    } catch (e) {
+      debugPrint('Error clearing sensitive data on lock: $e');
+    }
 
     // Navigate to app lock screen
     debugPrint('Navigating to app lock screen...');
@@ -382,7 +411,7 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
 
       // Attempt biometric authentication
       final authenticated = await _biometricService.authenticate(
-        reason: 'Please authenticate to unlock the app',
+        reason: 'For your security, please verify your identity to restore your session.',
         biometricOnly: false, // Allow fallback to device PIN if needed
       );
 
@@ -391,7 +420,8 @@ class AppLockController extends GetxController with WidgetsBindingObserver {
         _unlockApp();
       } else {
         debugPrint('AppLockController: Biometric authentication failed');
-        // Error handling is done in BiometricService
+        // Navigate to login screen on biometric failure as per security policy
+        Get.offAllNamed('/login');
       }
     } catch (e) {
       debugPrint('AppLockController: Error during biometric unlock: $e');

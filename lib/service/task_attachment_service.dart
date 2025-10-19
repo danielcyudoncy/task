@@ -84,6 +84,10 @@ class TaskAttachmentService extends GetxService {
         throw Exception('File size exceeds 10MB limit');
       }
 
+      // Extend suspension for upload operation as well
+      final appLock = Get.find<AppLockController>();
+      appLock.suspendLockFor(const Duration(seconds: 30));
+
       if (kIsWeb) {
         final bytes = await pickedFile.readAsBytes();
         return await _uploadFileFromBytes(
@@ -140,6 +144,10 @@ class TaskAttachmentService extends GetxService {
       } else if (supportedAudioTypes.contains(fileExtension)) {
         fileType = 'audio';
       }
+
+      // Extend suspension for upload operation as well
+      final appLock = Get.find<AppLockController>();
+      appLock.suspendLockFor(const Duration(seconds: 30));
 
       if (kIsWeb) {
         if (platformFile.bytes == null) {
