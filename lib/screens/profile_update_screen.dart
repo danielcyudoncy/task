@@ -105,7 +105,7 @@ class _ProfileUpdateScreenState extends State<ProfileUpdateScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          'update_account'.tr,
+                          'Update your Account'.tr,
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall

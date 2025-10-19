@@ -142,9 +142,13 @@ class ImagePickerWidget extends StatelessWidget {
       final appLockController = Get.find<AppLockController>();
 
       // Use suspendLockWhile to suspend locking for the entire operation
+      // Extend suspension for at least 30 seconds to cover image picking and upload
       await appLockController.suspendLockWhile(
         _performImageSelectionAndUpload(context),
       );
+
+      // Additional safety suspension for image operations
+      appLockController.suspendLockFor(const Duration(seconds: 30));
     } catch (e) {
       SnackbarUtils.showSnackbar(
           "Error", "Failed to select image: ${e.toString()}");
