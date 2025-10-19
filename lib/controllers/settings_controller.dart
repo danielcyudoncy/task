@@ -7,6 +7,7 @@ import 'package:vibration/vibration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/localization/app_localizations.dart';
+import '../utils/constants/app_constants.dart';
 
 class SettingsController extends GetxController {
   final AudioPlayer audioPlayer;
@@ -72,7 +73,7 @@ class SettingsController extends GetxController {
         prefs.getBool('isAssignmentAlertEnabled') ?? false;
     isLocationEnabled.value = prefs.getBool('isLocationEnabled') ?? false;
     isTargetedAdsEnabled.value = prefs.getBool('isTargetedAdsEnabled') ?? false;
-    isBiometricEnabled.value = prefs.getBool('isBiometricEnabled') ?? false;
+    isBiometricEnabled.value = prefs.getBool(AppConstants.biometricEnabledKey) ?? false;
 
     // If sync is enabled and user is logged in, fetch from Firestore
     if (isSyncEnabled.value && _auth.currentUser != null) {
@@ -99,7 +100,7 @@ class SettingsController extends GetxController {
         isTargetedAdsEnabled.value =
             data['isTargetedAdsEnabled'] ?? isTargetedAdsEnabled.value;
         isBiometricEnabled.value =
-            data['isBiometricEnabled'] ?? isBiometricEnabled.value;
+            data[AppConstants.biometricEnabledKey] ?? isBiometricEnabled.value;
 
         // Save pulled settings to local preferences too
         await saveSettings(localOnly: true);
@@ -120,7 +121,7 @@ class SettingsController extends GetxController {
       prefs.setBool('isAssignmentAlertEnabled', isAssignmentAlertEnabled.value),
       prefs.setBool('isLocationEnabled', isLocationEnabled.value),
       prefs.setBool('isTargetedAdsEnabled', isTargetedAdsEnabled.value),
-      prefs.setBool('isBiometricEnabled', isBiometricEnabled.value),
+      prefs.setBool(AppConstants.biometricEnabledKey, isBiometricEnabled.value),
     ]);
 
     if (!localOnly && isSyncEnabled.value && _auth.currentUser != null) {
@@ -133,7 +134,7 @@ class SettingsController extends GetxController {
           'isAssignmentAlertEnabled': isAssignmentAlertEnabled.value,
           'isLocationEnabled': isLocationEnabled.value,
           'isTargetedAdsEnabled': isTargetedAdsEnabled.value,
-          'isBiometricEnabled': isBiometricEnabled.value,
+          AppConstants.biometricEnabledKey: isBiometricEnabled.value,
         }, SetOptions(merge: true));
       } catch (e) {
         debugPrint('⚠️ Firestore save error: $e');

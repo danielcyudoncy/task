@@ -1,4 +1,4 @@
-// views/profile_screen.dart
+// screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -167,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       // Contact Information
                       Text(
-                        'contact_information'.tr,
+                        'Contact Information'.tr,
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w400,
@@ -259,7 +259,7 @@ class ProfileScreen extends StatelessWidget {
                           Icons.notifications_none,
                           color: colorScheme.onSurface,
                         ),
-                        title: Text("push_notifications".tr,
+                        title: Text("Push Notifications".tr,
                             style: TextStyle(color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
@@ -276,7 +276,7 @@ class ProfileScreen extends StatelessWidget {
                           Icons.person_outline,
                           color: colorScheme.onSurface,
                         ),
-                        title: Text("update_profile".tr,
+                        title: Text("Update Profile".tr,
                             style: TextStyle(color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
@@ -293,7 +293,7 @@ class ProfileScreen extends StatelessWidget {
                           Icons.system_update,
                           color: colorScheme.onSurface,
                         ),
-                        title: Text("check_for_updates".tr,
+                        title: Text("check for Updates".tr,
                             style: TextStyle(color: colorScheme.onSurface)),
                         trailing: Icon(
                           Icons.chevron_right_rounded,
