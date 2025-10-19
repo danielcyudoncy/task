@@ -12,14 +12,6 @@ class AuthMiddleware extends GetMiddleware {
     final auth = Get.find<AuthController>();
     final args = Get.arguments as Map<String, dynamic>?;
 
-    debugPrint("AuthMiddleware: Checking route: $route");
-    debugPrint("AuthMiddleware: auth.currentUser: ${auth.currentUser?.uid}");
-    debugPrint(
-        "AuthMiddleware: auth.auth.currentUser: ${auth.auth.currentUser?.uid}");
-    debugPrint("AuthMiddleware: auth.userRole.value: ${auth.userRole.value}");
-    debugPrint(
-        "AuthMiddleware: auth.isProfileComplete.value: ${auth.isProfileComplete.value}");
-
     // skip redirect if logout
     if (args?['fromLogout'] == true) return null;
 
@@ -32,20 +24,16 @@ class AuthMiddleware extends GetMiddleware {
       '/onboarding'
     ];
     if (publicRoutes.contains(route)) {
-      debugPrint("AuthMiddleware: Allowing access to public route: $route");
       return null;
     }
 
     // Not logged in - check both auth controller and Firebase auth
     if (auth.currentUser == null && auth.auth.currentUser == null) {
-      debugPrint("AuthMiddleware: Redirecting to login - both users are null");
       return const RouteSettings(name: '/login');
     }
 
     // If user is logged in but role is not loaded yet, allow access temporarily
     if (auth.userRole.value.isEmpty && auth.auth.currentUser != null) {
-      debugPrint(
-          "AuthMiddleware: User logged in but role not loaded, allowing access temporarily");
       return null;
     }
 
