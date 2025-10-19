@@ -367,9 +367,20 @@ class AuthController extends GetxController {
     userData.clear();
   }
 
+  /// Hide sensitive UI data when app backgrounds (keeps Firebase session active)
+  void hideSensitiveUserData() {
+    debugPrint('AuthController: Hiding sensitive UI data');
+    fullName.value = '';
+    profilePic.value = '';
+    phoneNumber.value = '';
+    // Note: We don't clear userRole, isProfileComplete, or userData
+    // to preserve session state for when user returns with biometrics
+  }
+
   // Complete profile and navigate to appropriate screen
   Future<void> completeProfile() async {
     try {
+      isLoading(true);
       debugPrint("AuthController: Starting profile completion");
       if (_auth.currentUser == null) {
         _safeSnackbar("Error", "User not logged in");
@@ -403,6 +414,8 @@ class AuthController extends GetxController {
       debugPrint("AuthController: Profile completion error: $e");
       _safeSnackbar("Error", "Failed to complete profile: ${e.toString()}");
       rethrow;
+    } finally {
+      isLoading(false);
     }
   }
 
@@ -1132,17 +1145,11 @@ class AuthController extends GetxController {
       ]);
 
       // 3. Ensure complete cleanup before navigation
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 200));
 
-      // 4. Navigate with complete context reset - use post frame callback for safety
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Get.context != null) {
-          Get.offAllNamed("/login", arguments: {'fromLogout': true});
-        } else {
-          debugPrint(
-              "AuthController: No context available for navigation after logout");
-        }
-      });
+      // 4. Navigate immediately to login screen - no post-frame callback needed
+      // The auth state listener will handle any additional UI updates
+      Get.offAllNamed("/login", arguments: {'fromLogout': true});
     } catch (e) {
       _safeSnackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
@@ -1181,17 +1188,10 @@ class AuthController extends GetxController {
       ]);
 
       // Give a tiny buffer to let listeners settle
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 200));
 
-      // Navigate to login and mark that it was from logout to bypass middleware loops - use post frame callback for safety
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Get.context != null) {
-          Get.offAllNamed('/login', arguments: {'fromLogout': true});
-        } else {
-          debugPrint(
-              "AuthController: No context available for navigation after signOut");
-        }
-      });
+      // Navigate immediately to login screen - no post-frame callback needed
+      Get.offAllNamed('/login', arguments: {'fromLogout': true});
     } catch (e) {
       _safeSnackbar('Error', 'Sign out failed: ${e.toString()}');
     } finally {
