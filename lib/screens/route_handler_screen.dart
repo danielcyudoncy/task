@@ -18,8 +18,8 @@ class _RouteHandlerScreenState extends State<RouteHandlerScreen> {
   }
 
   Future<void> _handleRouting() async {
-    // Minimal delay to ensure services are ready
-    await Future.delayed(const Duration(milliseconds: 50));
+    // Minimal delay for faster routing
+    await Future.delayed(const Duration(milliseconds: 10));
 
     if (!Get.isRegistered<AuthController>()) {
       Get.offAllNamed('/login');
@@ -34,17 +34,16 @@ class _RouteHandlerScreenState extends State<RouteHandlerScreen> {
       return;
     }
 
-    // If user is logged in, let middleware handle the routing
-    // This will go through AuthMiddleware and ProfileCompleteMiddleware
+    // Navigate directly to home - faster routing
     Get.offAllNamed('/home');
   }
 
   @override
   Widget build(BuildContext context) {
-    // Invisible screen with primary color background to prevent flash
+    // Completely transparent screen to prevent any flash
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: const SizedBox.shrink(),
+      backgroundColor: Colors.transparent,
+      body: Container(),
     );
   }
 }

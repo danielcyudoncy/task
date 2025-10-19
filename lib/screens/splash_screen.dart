@@ -54,10 +54,10 @@ class _SplashScreenState extends State<SplashScreen>
     ));
 
     _controller.forward();
-    Timer(const Duration(milliseconds: 1500), () async {
+    Timer(const Duration(seconds: 2), () async {
       try {
-        // Quick check if critical services are ready
-        await Future.delayed(const Duration(milliseconds: 400));
+        // Brief delay before navigation
+        await Future.delayed(const Duration(milliseconds: 100));
 
         // Mark app as ready for snackbars before navigation
         if (Get.isRegistered<AuthController>()) {
@@ -70,8 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
         if (!hasSeenOnboarding) {
           Get.offAllNamed('/onboarding');
         } else {
-          // Let middleware handle authentication routing to avoid flash
-          // Navigate to a neutral route that middleware will redirect appropriately
+          // Navigate directly to route handler for faster loading
           Get.offAllNamed('/route-handler');
         }
       } catch (e) {
