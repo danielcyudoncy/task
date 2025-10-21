@@ -34,8 +34,38 @@ class _RouteHandlerScreenState extends State<RouteHandlerScreen> {
       return;
     }
 
-    // Navigate directly to home - faster routing
-    Get.offAllNamed('/home');
+    // Wait for role to be loaded if needed
+    int attempts = 0;
+    while (authController.userRole.value.isEmpty && attempts < 10) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      attempts++;
+    }
+
+    // Navigate based on user role
+    final role = authController.userRole.value;
+    if (role == "Admin" ||
+        role == "Assignment Editor" ||
+        role == "Head of Department" ||
+        role == "News Director" ||
+        role == "Assistant News Director" ||
+        role == "Head of Unit") {
+      Get.offAllNamed('/admin-dashboard');
+    } else if (role == "Librarian") {
+      Get.offAllNamed('/librarian-dashboard');
+    } else if (role == "Reporter" ||
+        role == "Cameraman" ||
+        role == "Driver" ||
+        role == "Producer" ||
+        role == "Anchor" ||
+        role == "Business Reporter" ||
+        role == "Political Reporter" ||
+        role == "Digital Reporter" ||
+        role == "Web Producer") {
+      Get.offAllNamed('/home');
+    } else {
+      // Fallback to login if role is not recognized
+      Get.offAllNamed('/login');
+    }
   }
 
   @override

@@ -1,8 +1,199 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             (request.auth.token.admin == true ||
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin');
+    }
+
+      // Admin read permissions
+      match /{collection}/{document=**} {
+        allow read: if isAdmin() && 
+          (collection == 'tasks' || 
+           collection == 'conversations' || 
+           collection == 'news' ||
+           collection == 'users');
+      }
+    function canReadTask(taskData) {
+      return isAuthenticated() && (
+        // Task creator can read
+        isOwner(taskData.createdById) ||
+        // Assigned users can read
+        (taskData.assignedReporterId == request.auth.uid) ||
+        (taskData.assignedCameramanId == request.auth.uid) ||
+        (taskData.assignedDriverId == request.auth.uid) ||
+        (taskData.assignedLibrarianId == request.auth.uid) ||
+        (taskData.assignedTo != null && taskData.assignedTo.hasAny([request.auth.uid])) ||
+        // Admins can read all tasks
+        isAdmin()
+      );
+    }
+
+    function canWriteTask(taskData) {
+      return isAuthenticated() && (
+        // Task creator can write
+        isOwner(taskData.createdById) ||
+        // Admins can write all tasks
+        isAdmin()
+      );
+    }
+
+    function isValidTaskData() {
+      // Validate required fields
+      return request.resource.data.title is string &&
+             request.resource.data.title.size() > 0 &&
+             request.resource.data.description is string &&
+             request.resource.data.createdById is string &&
+             request.resource.data.status is string;
+    }
+
+    // Tasks collection rules
+    match /tasks/{taskId} {
+      // Read rules
+      allow read: if isAuthenticated() &&
+        (canReadTask(resource.data) || resource.data == null);
+
+      // Create rules
+      allow create: if isAuthenticated() &&
+        isValidTaskData() &&
+        request.resource.data.createdById == request.auth.uid &&
+        // Prevent modification of immutable fields during creation
+        !request.resource.data.keys().hasAny(['createdAt', 'updatedAt']);
+
+      // Update rules
+      allow update: if isAuthenticated() &&
+        canWriteTask(resource.data) &&
+        isValidTaskData() &&
+        // Protect immutable fields
+        !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdById', 'createdAt', 'taskId'])) &&
+        // Update timestamp is allowed
+        (request.resource.data.updatedAt is timestamp || request.resource.data.updatedAt == resource.data.updatedAt);
+
+      // Delete rules - Only allow soft delete (archive) for owners, hard delete for admins only
+      allow delete: if isAuthenticated() && (
+        // Owners can soft delete (archive) their own tasks
+        (isOwner(resource.data.createdById) && request.writeFields.size() == 0) ||
+        // Admins can hard delete any task
+        isAdmin()
+      );
+    }
+
+    // User documents rules
+    match /users/{userId} {
+      // Users can read and write their own data
+      allow read, write: if isAuthenticated() && (
+        isOwner(userId) || isAdmin()
+      );
+      // Allow admins to list users
+      allow list: if isAuthenticated() && isAdmin();
+    }
+
+    // Admin documents rules
+    match /admins/{adminId} {
+      // Only admins can read admin data
+      allow read, write: if isAuthenticated() && isAdmin();
+    }
+
+    // Notifications collection rules
+    match /users/{userId}/notifications/{notificationId} {
+      // Users can read their own notifications, system can write
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow write: if isAuthenticated() && (
+        isOwner(userId) ||
+        isAdmin() ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // Task audits collection (for tracking changes)
+    match /task_audits/{auditId} {
+      // Only admins can read audit logs
+      allow read: if isAuthenticated() && isAdmin();
+      // System can write audit logs
+      allow write: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // User assigned tasks subcollection rules
+    match /users/{userId}/assignedTasks/{taskId} {
+      // Users can read their own assigned tasks, admins can read all
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || isAdmin()
+      );
+      // System and admins can write
+      allow write: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // User settings subcollection rules
+    match /user_settings/{userId} {
+      // Users can read/write their own settings, admins can read all
+      allow read, write: if isAuthenticated() && (
+        isOwner(userId) || isAdmin()
+      );
+    }
+
+    // User privacy settings subcollection rules
+    match /users/{userId}/privacy_settings/{settingId} {
+      // Users can read/write their own privacy settings, admins can read all
+      allow read, write: if isAuthenticated() && (
+        isOwner(userId) || isAdmin()
+      );
+    }
+
+    // User notifications subcollection rules
+    match /users/{userId}/notifications/{notificationId} {
+      // Users can read their own notifications, admins can read all
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || isAdmin()
+      );
+      // System and admins can write
+      allow write: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // Dashboard metrics collection rules
+    match /dashboard_metrics/{metricId} {
+      // Only admins can read dashboard metrics
+      allow read: if isAuthenticated() && isAdmin();
+      // System and admins can write
+      allow write: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // Health check collection rules
+    match /_health_check/{checkId} {
+      // Only admins can read health check data
+      allow read: if isAuthenticated() && isAdmin();
+      // System and admins can write
+      allow write: if isAuthenticated() && (
+        isAdmin() ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // Default deny rule for any other collections
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
-} 
+}
