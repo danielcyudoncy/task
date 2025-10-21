@@ -62,9 +62,9 @@ class AdminController extends GetxController {
 
   @override
   void onInit() {
+    super.onInit();
     fetchDashboardData();
     startRealtimeUpdates();
-    super.onInit();
     if (_auth.currentUser != null) {
       initializeAdminData();
     }
@@ -74,22 +74,31 @@ class AdminController extends GetxController {
     // Cancel any existing subscription to prevent memory leaks
     _dashboardMetricsSubscription?.cancel();
 
-    _dashboardMetricsSubscription = _firestore.collection('dashboard_metrics').snapshots().listen((snapshot) {
-      if (snapshot.docs.isNotEmpty) {
-        final data = snapshot.docs.first.data();
-        totalUsers.value = data['totalUsers'] ?? 0;
-        totalTasks.value = data['tasks']?['total'] ?? 0;
-        completedTasks.value = data['tasks']?['completed'] ?? 0;
-        pendingTasks.value = data['tasks']?['pending'] ?? 0;
-        overdueTasks.value = data['tasks']?['overdue'] ?? 0;
+    _dashboardMetricsSubscription = _firestore
+        .collection('dashboard_metrics')
+        .snapshots()
+        .listen((snapshot) {
+      try {
+        if (snapshot.docs.isNotEmpty) {
+          final data = snapshot.docs.first.data();
+          totalUsers.value = data['totalUsers'] ?? totalUsers.value;
+          totalTasks.value = data['tasks']?['total'] ?? totalTasks.value;
+          completedTasks.value = data['tasks']?['completed'] ?? completedTasks.value;
+          pendingTasks.value = data['tasks']?['pending'] ?? pendingTasks.value;
+          overdueTasks.value = data['tasks']?['overdue'] ?? overdueTasks.value;
 
-        // Update statistics map
-        statistics['users'] = totalUsers.value;
-        statistics['tasks'] = totalTasks.value;
-        statistics['completed'] = completedTasks.value;
-        statistics['pending'] = pendingTasks.value;
-        statistics['overdue'] = overdueTasks.value;
+          // Update statistics map
+          statistics['users'] = totalUsers.value;
+          statistics['tasks'] = totalTasks.value;
+          statistics['completed'] = completedTasks.value;
+          statistics['pending'] = pendingTasks.value;
+          statistics['overdue'] = overdueTasks.value;
+        }
+      } catch (e) {
+        debugPrint('Error processing dashboard metrics snapshot: $e');
       }
+    }, onError: (e) {
+      debugPrint('Dashboard metrics stream error: $e');
     });
   }
 
@@ -202,7 +211,13 @@ class AdminController extends GetxController {
         Get.offAllNamed('/admin-dashboard');
       }
     } catch (e) {
-      _safeSnackbar("Admin Error", "Failed to initialize admin data");
+      debugPrint("Admin initialization error: $e");
+      // Delay the snackbar until the next frame to ensure context is available
+      Future.delayed(Duration.zero, () {
+        if (Get.context != null) {
+          _safeSnackbar("Admin Error", "Failed to initialize admin data");
+        }
+      });
       await logout();
     } finally {
       isLoading(false);
@@ -250,49 +265,40 @@ class AdminController extends GetxController {
       isStatsLoading(true);
       final now = DateTime.now();
 
-      // --- MODIFIED: Use Future.wait to run all queries concurrently ---
-      final results = await Future.wait([
-        _firestore.collection('users').get(),
-        _firestore.collection('tasks').get(),
-        // NEW: Query for online users count
-        _firestore
-            .collection('users')
-            .where('isOnline', isEqualTo: true)
-            .count()
-            .get(),
-        // NEW: Query for total conversations count
-        _firestore.collection('conversations').count().get(),
-        // NEW: Query for news count (using a news collection)
-        _firestore.collection('news').count().get(),
-      ]).timeout(
-          const Duration(seconds: 15)); // Increased timeout for more queries
-
-      // Unpack the results
-      final userSnapshot = results[0] as QuerySnapshot<Map<String, dynamic>>;
-      final taskSnapshot = results[1] as QuerySnapshot<Map<String, dynamic>>;
-      final onlineUsersSnapshot = results[2] as AggregateQuerySnapshot;
-      final conversationsSnapshot = results[3] as AggregateQuerySnapshot;
-      final newsSnapshot = results[4] as AggregateQuerySnapshot;
-
-      // --- The rest of your existing logic remains, just using the new variables ---
+      // First, get the user data since it's most critical
+      final userSnapshot = await _firestore.collection('users').get()
+          .timeout(const Duration(seconds: 10));
+      
+      // Update user counts immediately
       final userDocs = userSnapshot.docs;
+      totalUsers.value = userDocs.where((doc) {
+        final userData = doc.data();
+        return userData['role'] != 'Librarian' && userData['role'] != 'Admin';
+      }).length;
+
+      // Then fetch tasks, online users, conversations and news sequentially
+      final taskSnapshot = await _firestore.collection('tasks').get();
       final taskDocs = taskSnapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return data;
-      }).toList(); // No need for whereType or cast, this is safer
+      }).toList();
       taskSnapshotDocs.assignAll(taskDocs);
 
-      // Assign all the stats (excluding librarians)
-      totalUsers.value = userDocs.where((doc) {
-        final userData = doc.data();
-        return userData['role'] != 'Librarian';
-      }).length;
-      onlineUsers.value = onlineUsersSnapshot.count ?? 0;
-      totalConversations.value = conversationsSnapshot.count ?? 0;
-      newsCount.value = newsSnapshot.count ?? 0;
-
+      // Assign statistics based on fetched data
       totalTasks.value = taskDocs.length;
+
+      final onlineUsersSnapshot = await _firestore
+          .collection('users')
+          .where('isOnline', isEqualTo: true)
+          .get();
+      onlineUsers.value = onlineUsersSnapshot.docs.length;
+
+      final conversationsSnapshot = await _firestore.collection('conversations').get();
+      totalConversations.value = conversationsSnapshot.docs.length;
+
+      final newsSnapshot = await _firestore.collection('news').get();
+      newsCount.value = newsSnapshot.docs.length;
 
       // Updated logic: Only count tasks as completed if ALL assigned users have completed them
       completedTasks.value = taskDocs.where((doc) {

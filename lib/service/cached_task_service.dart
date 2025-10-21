@@ -251,25 +251,40 @@ class CachedTaskService extends GetxService {
     }
   }
 
-  /// Delete task and update cache
+  /// Archive task (soft delete) and update cache
   Future<bool> deleteTask(String taskId) async {
     try {
-      // Delete from Firestore
-      await _firestore.collection('tasks').doc(taskId).delete();
+      // Get current user for audit trail
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        debugPrint('CachedTaskService: User not authenticated');
+        return false;
+      }
+
+      // Soft delete (archive) instead of hard delete
+      await _firestore.collection('tasks').doc(taskId).update({
+        'archived': true,
+        'archivedAt': FieldValue.serverTimestamp(),
+        'archivedBy': currentUser.uid,
+        'archiveReason': 'Deleted by user',
+        'status': 'archived',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       // Remove from cache
       await _cacheManager.invalidateTaskCache(taskId);
 
       // Emit update
       _taskUpdateController.add({
-        'action': 'deleted',
+        'action': 'archived',
         'taskId': taskId,
+        'archivedBy': currentUser.uid,
       });
 
-      debugPrint('CachedTaskService: Deleted task $taskId');
+      debugPrint('CachedTaskService: Archived task $taskId');
       return true;
     } catch (e) {
-      debugPrint('CachedTaskService: Error deleting task $taskId: $e');
+      debugPrint('CachedTaskService: Error archiving task $taskId: $e');
       return false;
     }
   }

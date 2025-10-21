@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/models/task.dart';
@@ -979,18 +980,86 @@ class TaskController extends GetxController {
   Future<void> deleteTask(String taskId) async {
     try {
       isLoading(true);
-      // Delete from Firebase
-      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
 
-      // Remove from local task list
-      tasks.removeWhere((task) => task.taskId == taskId);
-      tasks.refresh();
-      _safeSnackbar("Success", "Task deleted successfully");
-      calculateNewTaskCount(); // Calculate new task count after deleting task
+      // Get current user for audit trail
+      final currentUser = authController.auth.currentUser;
+      if (currentUser == null) {
+        _safeSnackbar("Error", "User not authenticated");
+        return;
+      }
+
+      // Check if user is admin for permanent delete, otherwise soft delete
+      if (authController.isAdmin.value) {
+        // Admin permanent delete - requires confirmation
+        await _adminPermanentlyDeleteTask(taskId);
+      } else {
+        // Regular user soft delete (archive)
+        await _softDeleteTask(taskId, currentUser.uid);
+      }
     } catch (e) {
       _safeSnackbar("Error", "Failed to delete task: $e");
     } finally {
       isLoading(false);
+    }
+  }
+
+  /// Admin-only permanent delete with audit logging
+  Future<void> _adminPermanentlyDeleteTask(String taskId) async {
+    try {
+      // Call the Cloud Function for permanent deletion
+      final callable = FirebaseFunctions.instance.httpsCallable('adminPermanentlyDeleteTask');
+      await callable.call({
+        'taskId': taskId,
+        'reason': 'Administrative deletion via TaskController',
+      });
+
+      // Remove from local task list
+      tasks.removeWhere((task) => task.taskId == taskId);
+      tasks.refresh();
+
+      _safeSnackbar("Success", "Task permanently deleted by admin");
+      calculateNewTaskCount();
+    } catch (e) {
+      _safeSnackbar("Error", "Failed to permanently delete task: $e");
+      debugPrint("Admin permanent delete error: $e");
+    }
+  }
+
+  /// Regular user soft delete (archive)
+  Future<void> _softDeleteTask(String taskId, String userId) async {
+    try {
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
+        'archived': true,
+        'archivedAt': FieldValue.serverTimestamp(),
+        'archivedBy': userId,
+        'archiveReason': 'Deleted by user',
+        'status': 'archived',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update local task list
+      final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
+      if (taskIndex != -1) {
+        final archivedTask = tasks[taskIndex].copyWith(
+          metadata: tasks[taskIndex].metadata?.copyWith(
+            archivedAt: DateTime.now(),
+            archivedBy: userId,
+            archiveReason: 'Deleted by user',
+          ) ?? TaskMetadata(
+            archivedAt: DateTime.now(),
+            archivedBy: userId,
+            archiveReason: 'Deleted by user',
+          ),
+          core: tasks[taskIndex].core.copyWith(status: 'archived'),
+        );
+        tasks[taskIndex] = archivedTask;
+        tasks.refresh();
+      }
+
+      _safeSnackbar("Success", "Task archived successfully");
+      calculateNewTaskCount();
+    } catch (e) {
+      _safeSnackbar("Error", "Failed to archive task: $e");
     }
   }
 

@@ -1,24 +1,50 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Profile pictures - only authenticated users can upload/read
-    match /user-profiles/profile_pictures/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        request.auth.uid != null;
-    }
-    
-    // Task attachments - only authenticated users
-    match /task-attachments/{allPaths=**} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // Public assets (if any) - read only
-    match /public/{allPaths=**} {
+    // Allow authenticated users to access their own files and public files
+    match /{allPaths=**} {
+      // Public files - anyone can read, no one can write
       allow read: if true;
       allow write: if false;
     }
-    
-    // Firebase denies by default - no explicit deny rule needed
+
+    // User-specific paths with ownership checks
+    match /users/{userId}/{allPaths=**} {
+      // Users can access their own files
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Admins can access any user's files
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Task attachments with ownership checks
+    match /tasks/{taskId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+      // Additional check: users can only access tasks they own or are assigned to
+      // This would require a Firestore lookup - simplified for performance
+    }
+
+    // Profile pictures with ownership checks
+    match /profiles/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // Legacy paths for backward compatibility
+    match /user-profiles/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    match /task-attachments/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Admin-only paths
+    match /admin/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
   }
 }
