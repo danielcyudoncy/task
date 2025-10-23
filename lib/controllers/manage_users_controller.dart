@@ -1,9 +1,12 @@
 // controllers/manage_users_controller.dart
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/service/user_deletion_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
+import 'package:task/controllers/auth_controller.dart';
 
 class ManageUsersController extends GetxController {
   final UserDeletionService userDeletionService;
@@ -23,7 +26,7 @@ class ManageUsersController extends GetxController {
   var tasksList = <Map<String, dynamic>>[].obs;
   var isHovered = <bool>[].obs;
   var assignedTasks = <String, List<String>>{}.obs;
-  Stream<QuerySnapshot>? _usersStream;
+  StreamSubscription<QuerySnapshot>? _usersStream;
 
   late ScrollController _scrollController;
   ScrollController get scrollController => _scrollController;
@@ -31,11 +34,29 @@ class ManageUsersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initUsersStream();
-    fetchTasks();
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
     isHovered.assignAll(List.filled(usersList.length, false));
+
+    // Listen to auth state changes
+    ever(AuthController.to.user, (User? user) {
+      if (user != null) {
+        _initUsersStream();
+        fetchTasks();
+      } else {
+        // Cancel stream if exists
+        _usersStream?.cancel();
+        _usersStream = null;
+        usersList.clear();
+        filteredUsersList.clear();
+      }
+    });
+
+    // Initialize if already authenticated
+    if (AuthController.to.currentUser != null) {
+      _initUsersStream();
+      fetchTasks();
+    }
   }
 
   @override
@@ -45,14 +66,16 @@ class ManageUsersController extends GetxController {
   }
 
   void _initUsersStream() {
+    // Cancel existing stream if any
+    _usersStream?.cancel();
+
     // Listen for real-time updates from Firestore
-    _usersStream = FirebaseFirestore.instance.collection('users').snapshots();
-    _usersStream!.listen((snapshot) async {
+    _usersStream = FirebaseFirestore.instance.collection('users').snapshots().listen((snapshot) async {
       isLoading.value = true;
       debugPrint(
           '[ManageUsersController] Firestore user snapshot received: ${snapshot.docs.length} docs');
       final newUsers = await Future.wait(snapshot.docs.map((doc) async {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         final photoUrl = data['photoUrl'] ??
             data['photoURL'] ??
             data['profilePic'] ??
@@ -97,6 +120,9 @@ class ManageUsersController extends GetxController {
   }
 
   Future<void> fetchTasks() async {
+    if (AuthController.to.currentUser == null) {
+      return; // Don't fetch if not authenticated
+    }
     try {
       QuerySnapshot snapshot =
           await FirebaseFirestore.instance.collection('tasks').get();

@@ -1,3 +1,4 @@
+// utils/constants/app_icons.dart
 class AppIcons {
   static const logo = "assets/png/logo.png";
   static const apple = "assets/icons/apple.png";
@@ -7,7 +8,7 @@ class AppIcons {
   static const deleteAccount = "assets/icons/delete_account.png";
   static const email = "assets/icons/email.png";
   static const google = "assets/icons/google.png";
-  static const home = "assets/icons/google.png";
+  static const home = "assets/icons/home.png";
   static const logout = "assets/icons/logout.png";
   static const notification = "assets/icons/notification.png";
   static const profile = "assets/icons/profile.png";

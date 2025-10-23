@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:task/routes/app_routes.dart';
 import 'package:task/utils/themes/app_theme.dart';
 import 'package:task/controllers/theme_controller.dart';
@@ -29,6 +30,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _setOrientation();
+    
+    // Remove splash screen after initialization
+    FlutterNativeSplash.remove();
   }
 
   void _setOrientation() {

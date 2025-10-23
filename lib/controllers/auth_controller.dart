@@ -1,6 +1,7 @@
 // controllers/auth_controller.dart
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -106,6 +107,7 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     debugPrint("AuthController: onInit called");
+    
     // Ensure loading state is false on initialization
     isLoading(false);
 
@@ -116,36 +118,65 @@ class AuthController extends GetxController {
     userRole.value = "";
     isProfileComplete.value = false;
 
-    // Initialize user observable with current Firebase user
+    // Initialize Firebase Auth state immediately
     user.value = _auth.currentUser;
-
-    // Add a small delay before setting up auth state listener to avoid race conditions
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _setupAuthStateListener();
-    });
+    _setupAuthStateListener();
+    
+    // If we have a current user, initialize their session
+    if (_auth.currentUser != null) {
+      debugPrint("AuthController: Current user exists, initializing session");
+      _initializeUserSession();
+    } else {
+      debugPrint("AuthController: No current user");
+    }
   }
 
   void _setupAuthStateListener() {
     debugPrint("AuthController: Setting up auth state listener");
+    
+    // Subscribe to Firebase Auth state changes
+    _auth.authStateChanges().listen((User? firebaseUser) async {
+      debugPrint("AuthController: Auth state changed - User: ${firebaseUser?.uid ?? 'null'}");
+      
+      // Update our observable
+      user.value = firebaseUser;
+      
+      if (firebaseUser != null) {
+        try {
+          // Ensure user profile exists before loading data
+          await _ensureUserProfileExists(firebaseUser);
 
-    _auth.authStateChanges().listen((User? userValue) {
-      debugPrint("AuthController: Auth state changed - User: ${userValue?.uid ?? 'null'}");
-
-      // Only update if the user actually changed to avoid unnecessary updates
-      if (user.value?.uid != userValue?.uid) {
-        user.value = userValue;
-
-        if (userValue == null) {
-          debugPrint("AuthController: User signed out - resetting state");
-          _handleUserSignOut();
-        } else {
-          debugPrint("AuthController: User signed in: ${userValue.uid}");
-          _handleUserSignIn(userValue);
+          // Load user data and set presence
+          await loadUserData(forceRefresh: true);
+          await _handlePresence(true);
+        } catch (e) {
+          debugPrint("AuthController: Error handling auth state change: $e");
+          // Avoid immediate logout on permission-denied; try to recover
+          if (e.toString().contains("permission-denied")) {
+            debugPrint("AuthController: Permission denied while handling auth change; will stay signed in and show limited UI");
+            // Show message to user
+            _safeSnackbar("Access Denied", "You don't have access to this data.");
+          }
         }
+      } else {
+        // User signed out or auth error
+        await _handlePresence(false);
+        resetUserData();
       }
+    }, onError: (error) {
+      debugPrint("AuthController: Auth state error: $error");
+      _handlePresence(false);
+      resetUserData();
     });
+
+    // NOTE: single authStateChanges listener is used above. Avoid adding
+    // duplicate listeners which can cause race conditions and unexpected
+    // sign-outs during login. Additional sign-in/sign-out handling should
+    // be performed inside the primary listener above (which does async
+    // initialization work).
   }
 
+  // ignore: unused_element
   void _handleUserSignOut() {
     // Reset user data
     resetUserData();
@@ -164,6 +195,7 @@ class AuthController extends GetxController {
     }
   }
 
+  // ignore: unused_element
   void _handleUserSignIn(User userValue) {
     // Set presence online
     _handlePresence(true);
@@ -308,6 +340,9 @@ class AuthController extends GetxController {
       return;
     }
     try {
+      // Ensure profile exists before trying to read
+      await _ensureUserProfileExists(_auth.currentUser!);
+
       // Always fetch fresh data from Firestore before navigation
       debugPrint("AuthController: Fetching fresh user data from Firestore");
       final userDoc = await _firestore
@@ -572,6 +607,16 @@ class AuthController extends GetxController {
           "privileges": ["full_access"],
         });
 
+        // Set custom claim for admin
+        try {
+          await FirebaseFunctions.instance.httpsCallable('setAdminClaim').call({
+            'uid': user.uid,
+          });
+        } catch (e) {
+          debugPrint("Error setting admin claim: $e");
+          // Continue even if claim setting fails
+        }
+
         fullName.value = userFullName;
         userRole.value = "Admin";
         await Get.find<AdminController>().fetchAdminProfile();
@@ -630,6 +675,16 @@ class AuthController extends GetxController {
         'photoUrl': "",
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      // Set custom claim for admin
+      try {
+        await FirebaseFunctions.instance.httpsCallable('setAdminClaim').call({
+          'uid': credential.user!.uid,
+        });
+      } catch (e) {
+        debugPrint("Error setting admin claim: $e");
+        // Continue even if claim setting fails
+      }
 
       _safeSnackbar('Success', 'Admin user created');
     } on FirebaseAuthException catch (e) {
@@ -878,17 +933,26 @@ class AuthController extends GetxController {
 
       debugPrint("AuthController: User signed in successfully: ${credential.user!.uid}");
 
-      // Wait for auth state to propagate before proceeding
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // Verify the user is still authenticated
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception("Authentication lost after sign in");
+      // Wait for auth state to propagate before proceeding. Instead of a
+      // fixed delay, wait for the next authStateChanges event (with a
+      // short timeout) so we react to the actual propagated state.
+      try {
+        final User? propagatedUser = await _auth.authStateChanges().firstWhere((u) => u != null).timeout(const Duration(seconds: 3));
+        if (propagatedUser == null) {
+          throw Exception("Authentication lost after sign in");
+        }
+      } catch (e) {
+        // If no propagated user arrived within the timeout, double-check
+        // the currentUser and fail if it's null to surface a clear error.
+        final currentUser = _auth.currentUser;
+        if (currentUser == null) {
+          throw Exception("Authentication lost after sign in");
+        }
       }
 
-      debugPrint("AuthController: Loading user data for user: ${currentUser.uid}");
-      await loadUserData();
+  final currentUser = _auth.currentUser!;
+  debugPrint("AuthController: Loading user data for user: ${currentUser.uid}");
+  await loadUserData();
 
       debugPrint("AuthController: Setting lastActivity");
       lastActivity.value = DateTime.now();
@@ -995,43 +1059,7 @@ class AuthController extends GetxController {
           userCredential.additionalUserInfo?.isNewUser ?? false;
 
       if (isNewUser) {
-        // Create user document for new Google users
-        String? fcmToken;
-        if (!kIsWeb) {
-          try {
-            final settings = await FirebaseMessaging.instance.requestPermission(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
-
-            if (settings.authorizationStatus ==
-                    AuthorizationStatus.authorized ||
-                settings.authorizationStatus ==
-                    AuthorizationStatus.provisional) {
-              fcmToken = await FCMHelper.getFCMToken();
-            }
-          } catch (e) {
-            debugPrint("Error getting FCM Token during Google signup: $e");
-          }
-        }
-
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'uid': userCredential.user!.uid,
-          'email': userCredential.user!.email ?? '',
-          'fullName': userCredential.user!.displayName ?? '',
-          'role': 'Reporter', // Default role for Google sign-up
-          'fcmToken': fcmToken ?? "",
-          'profileComplete': false,
-          'photoUrl': userCredential.user!.photoURL ?? "",
-          'createdAt': FieldValue.serverTimestamp(),
-          'authProvider': 'google',
-        });
-
-        userRole.value = 'Reporter';
-        fullName.value = userCredential.user!.displayName ?? '';
-        profilePic.value = userCredential.user!.photoURL ?? '';
-
+        await _createDefaultUserProfile(userCredential.user!);
         _safeSnackbar('Success', 'Account created successfully with Google!');
         Get.offAllNamed("/profile-update");
       } else {
@@ -1375,5 +1403,47 @@ class AuthController extends GetxController {
   - Role: $userRole
   - Profile Complete: $isProfileComplete
   ''');
+  }
+
+  // Ensure a minimal user profile exists for strict rules environments
+  Future<void> _ensureUserProfileExists(User firebaseUser) async {
+    final docRef = _firestore.collection('users').doc(firebaseUser.uid);
+    final snap = await docRef.get();
+    if (!snap.exists) {
+      await _createDefaultUserProfile(firebaseUser);
+    }
+  }
+
+  Future<void> _createDefaultUserProfile(User firebaseUser) async {
+    String? fcmToken;
+    if (!kIsWeb) {
+      try {
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+            settings.authorizationStatus == AuthorizationStatus.provisional) {
+          fcmToken = await FCMHelper.getFCMToken();
+        }
+      } catch (_) {}
+    }
+
+    await _firestore.collection('users').doc(firebaseUser.uid).set({
+      'uid': firebaseUser.uid,
+      'email': firebaseUser.email ?? '',
+      'fullName': firebaseUser.displayName ?? '',
+      'role': 'Reporter',
+      'fcmToken': fcmToken ?? "",
+      'profileComplete': false,
+      'photoUrl': firebaseUser.photoURL ?? "",
+      'createdAt': FieldValue.serverTimestamp(),
+      'authProvider': 'google',
+    }, SetOptions(merge: true));
+
+    userRole.value = 'Reporter';
+    fullName.value = firebaseUser.displayName ?? '';
+    profilePic.value = firebaseUser.photoURL ?? '';
   }
 }

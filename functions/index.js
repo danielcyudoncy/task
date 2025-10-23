@@ -1,33 +1,22 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-// const {onRequest} = require("firebase-functions/v2/https");
-// const {onDocumentWritten} = require("firebase-functions/v2/firestore");
-// const logger = require("firebase-functions/logger");
-
-const functions = require("firebase-functions");
+const {onCall} = require("firebase-functions/v2/https");
+const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
+
 admin.initializeApp();
 
-exports.adminDeleteUser = functions.https.onCall(async (data, context) => {
-  if (!context.auth || !context.auth.token.admin) {
-    throw new functions.https.HttpsError(
-        "permission-denied",
-        "Only admins can delete users.",
+exports.adminDeleteUser = onCall({maxInstances: 1}, async (request) => {
+  const {auth} = request;
+
+  if (!auth || !auth.token.admin) {
+    throw new Error(
+        "permission-denied/only-admins-can-delete-users",
     );
   }
 
-  const uid = data.uid;
+  const uid = request.data.uid;
   if (!uid) {
-    throw new functions.https.HttpsError(
-        "invalid-argument",
-        "User ID is required.",
+    throw new Error(
+        "invalid-argument/user-id-required",
     );
   }
 
@@ -38,74 +27,88 @@ exports.adminDeleteUser = functions.https.onCall(async (data, context) => {
 });
 
 // TODO: Add audit logging function once Firestore trigger syntax is resolved
-// For now, audit logging is handled by the Firestore rules and client-side logging
+// For now, audit logging is handled by the Firestore rules and client-side
+// logging
 
 // Admin-only permanent delete function with audit logging
-exports.adminPermanentlyDeleteTask = functions.https.onCall(async (data, context) => {
-  // Check admin permissions
-  if (!context.auth || !context.auth.token.admin) {
-    throw new functions.https.HttpsError(
-        "permission-denied",
-        "Only admins can permanently delete tasks.",
-    );
-  }
+exports.adminPermanentlyDeleteTask = onCall(
+    {maxInstances: 1},
+    async (request) => {
+      const {auth, data} = request;
 
-  const taskId = data.taskId;
-  if (!taskId) {
-    throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Task ID is required.",
-    );
-  }
+      // Check admin permissions
+      if (!auth || !auth.token.admin) {
+        throw new Error(
+            "permission-denied/only-admins-can-permanently-delete-tasks",
+        );
+      }
 
-  try {
-    // Get task data before deletion for audit
-    const taskDoc = await admin.firestore().collection("tasks").doc(taskId).get();
-    if (!taskDoc.exists) {
-      throw new functions.https.HttpsError(
-          "not-found",
-          "Task not found.",
-      );
-    }
+      const taskId = data.taskId;
+      if (!taskId) {
+        throw new Error(
+            "invalid-argument/task-id-required",
+        );
+      }
 
-    const taskData = taskDoc.data();
+      try {
+        // Get task data before deletion for audit
+        const taskDoc = await admin.firestore()
+            .collection("tasks")
+            .doc(taskId)
+            .get();
+        if (!taskDoc.exists) {
+          throw new Error(
+              "not-found/task-not-found",
+          );
+        }
 
-    // Create comprehensive audit record for permanent deletion
-    const auditRecord = {
-      taskId: taskId,
-      operation: "permanent_delete",
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      performedBy: context.auth.uid,
-      adminId: context.auth.uid,
-      reason: data.reason || "Administrative deletion",
-      taskSnapshot: sanitizeData(taskData),
-      deletedBy: context.auth.uid,
-      deletedAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
+        const taskData = taskDoc.data();
 
-    // Write audit record first
-    await admin.firestore().collection("task_audits").add(auditRecord);
+        // Create comprehensive audit record for permanent deletion
+        const auditRecord = {
+          taskId: taskId,
+          operation: "permanent_delete",
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          performedBy: auth.uid,
+          adminId: auth.uid,
+          reason: data.reason || "Administrative deletion",
+          taskSnapshot: sanitizeData(taskData),
+          deletedBy: auth.uid,
+          deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
 
-    // Delete the task
-    await admin.firestore().collection("tasks").doc(taskId).delete();
+        // Write audit record first
+        const auditRef = await admin.firestore()
+            .collection("task_audits")
+            .add(auditRecord);
 
-    console.log(`Task ${taskId} permanently deleted by admin ${context.auth.uid}`);
+        // Delete the task
+        await admin.firestore().collection("tasks").doc(taskId).delete();
 
-    return {
-      success: true,
-      message: "Task permanently deleted",
-      auditId: auditRecord.id,
-    };
-  } catch (error) {
-    console.error("Error in adminPermanentlyDeleteTask:", error);
-    throw new functions.https.HttpsError(
-        "internal",
-        "Failed to permanently delete task.",
-    );
-  }
-});
+        logger.info(
+            `Task ${taskId} permanently deleted by admin ${auth.uid}`,
+        );
+
+        return {
+          success: true,
+          message: "Task permanently deleted",
+          auditId: auditRef.id,
+        };
+      } catch (error) {
+        logger.error("Error in adminPermanentlyDeleteTask:", error);
+        throw new Error(
+            "internal/failed-to-permanently-delete-task",
+        );
+      }
+    },
+);
 
 // Helper function to sanitize sensitive data from audit logs
+/**
+ * Sanitizes sensitive data from audit logs.
+ * @param {Object} data The data to sanitize.
+ * @return {Object} The sanitized data.
+ */
 function sanitizeData(data) {
   if (!data) return null;
 
@@ -116,6 +119,35 @@ function sanitizeData(data) {
 
   return sanitized;
 }
+
+// Set admin custom claim
+exports.setAdminClaim = onCall({maxInstances: 1}, async (request) => {
+  const {auth, data} = request;
+  // Check if the caller is already an admin
+  if (!auth || !auth.token.admin) {
+    throw new Error(
+        "permission-denied/only-admins-can-set-admin-claims",
+    );
+  }
+
+  const uid = data.uid;
+  if (!uid) {
+    throw new Error(
+        "invalid-argument/user-id-required",
+    );
+  }
+
+  try {
+    await admin.auth().setCustomUserClaims(uid, {admin: true});
+    logger.info(`Admin claim set for user ${uid}`);
+    return {success: true};
+  } catch (error) {
+    logger.error("Error setting admin claim:", error);
+    throw new Error(
+        "internal/failed-to-set-admin-claim",
+    );
+  }
+});
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started

@@ -11,6 +11,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:task/service/export_service.dart';
 import 'package:task/service/network_service.dart';
 import 'package:task/service/connectivity_service.dart';
@@ -60,6 +61,7 @@ import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/user_cache_service.dart';
 import 'package:task/service/biometric_service.dart';
 import 'db_factory_stub.dart' if (dart.library.html) 'db_factory_web.dart';
+import 'initialization_functions.dart';
 
 // --- Emulator/Production Switch ---
 const bool useEmulator =
@@ -126,20 +128,28 @@ Future<void> bootstrapApp() async {
   _bootstrapStartTime = DateTime.now();
   debugPrint('🚀 BOOTSTRAP: Starting app bootstrap at ${_bootstrapStartTime!}');
 
+  // Preserve splash screen during initialization
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   try {
-    // Ensure Flutter bindings are initialized
-    WidgetsFlutterBinding.ensureInitialized();
-
-    // Initialize ThemeController first
-    Get.put(ThemeController(), permanent: true);
-
+    // Initialize Flutter bindings immediately
+    final binding = WidgetsFlutterBinding.ensureInitialized();
+    
     // Configure database factory (web uses FFI web)
     configureDbFactory();
 
-    // Set preferred orientations
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
+    // Load environment variables first
+    await dotenv.load(fileName: "assets/.env");
+
+    // Load critical services in parallel
+    await Future.wait([
+      initializeFirebase(),
+      initializeTheme(),
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]),
     ]);
 
     // Set initial status bar color based on current theme
@@ -217,8 +227,13 @@ Future<void> bootstrapApp() async {
     // Defer user data pre-fetching to background (don't block startup)
     Future(() async {
       try {
-        await userCacheService.preFetchAllUsers();
-        debugPrint('🚀 BOOTSTRAP: User data pre-fetched in background');
+        // Only prefetch if a user is authenticated to avoid permission errors
+        if (FirebaseAuth.instance.currentUser != null) {
+          await userCacheService.preFetchAllUsers();
+          debugPrint('🚀 BOOTSTRAP: User data pre-fetched in background');
+        } else {
+          debugPrint('⚠️ BOOTSTRAP: Skipping user pre-fetch - no authenticated user');
+        }
       } catch (e) {
         debugPrint('⚠️ BOOTSTRAP: Background user pre-fetch failed: $e');
       }
@@ -252,16 +267,6 @@ Future<void> bootstrapApp() async {
 
     // Initialize audio player (can run in parallel)
     final audioPlayer = await _initializeAudioPlayer();
-
-    // Initialize CRITICAL services first (parallel but limited)
-    debugPrint("🚀 BOOTSTRAP: Initializing CRITICAL services in parallel");
-    await Future.wait([
-      _initializeService(() => ThemeController(), 'ThemeController'),
-      _initializeService(() => QuarterlyTransitionService(), 'QuarterlyTransitionService'),
-    ]);
-
-    // Initialize AuthController separately to avoid race conditions
-    await _initializeService(() => AuthController(), 'AuthController');
 
     // Initialize ESSENTIAL services (parallel but limited to avoid blocking)
     debugPrint("🚀 BOOTSTRAP: Initializing ESSENTIAL services in parallel");
@@ -297,6 +302,21 @@ Future<void> bootstrapApp() async {
     // Initialize remaining controllers LAZILY in background
     _initializeRemainingControllersInBackground();
 
+    // Also observe auth changes to init NewsService when user logs in from the login screen
+    if (Get.isRegistered<AuthController>()) {
+      // Try-catch in case controller interface differs
+      try {
+        FirebaseAuth.instance.authStateChanges().listen((user) {
+          if (user != null && !Get.isRegistered<NewsService>()) {
+            // initialize NewsService after login and first frame
+            binding.addPostFrameCallback((_) {
+              _initializeService<NewsService>(() => NewsService(), 'NewsService');
+            });
+          }
+        });
+      } catch (_) {}
+    }
+
     // QuarterlyTransitionService already initialized at line 194
 
     // Mark bootstrap as complete (show app immediately)
@@ -304,6 +324,11 @@ Future<void> bootstrapApp() async {
     final bootstrapEndTime = DateTime.now();
     final totalBootTime = bootstrapEndTime.difference(_bootstrapStartTime!);
     debugPrint('🚀 BOOTSTRAP: App bootstrap completed in ${totalBootTime.inMilliseconds}ms');
+
+    // Ensure StartupOptimizationService is registered before background execution
+    if (!Get.isRegistered<StartupOptimizationService>()) {
+      Get.put(StartupOptimizationService(), permanent: true);
+    }
 
     // Execute startup optimization in background (don't block app launch)
     Future(() async {
@@ -316,10 +341,15 @@ Future<void> bootstrapApp() async {
     });
 
     // Show app immediately for better UX
-    runApp(const MyApp());
+     runApp(const MyApp());
 
-    // Continue loading heavy services after app is visible
-    _continueLoadingHeavyServicesInBackground();
+     // Ensure splash screen is properly removed after app starts
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+       FlutterNativeSplash.remove();
+     });
+
+     // Continue loading heavy services after app is visible
+     _continueLoadingHeavyServicesInBackground();
 
     // Print performance report after a short delay
     Future.delayed(const Duration(seconds: 2), () {
@@ -463,11 +493,16 @@ Future<void> _verifyFirebaseServices() async {
       // Don't throw - auth might not be configured or user might not be logged in
     }
 
-    // Verify Firestore is accessible (if available)
+    // Verify Firestore is accessible (if user is authenticated)
     try {
       final firestore = FirebaseFirestore.instance;
-      await firestore.collection('_health_check').limit(1).get();
-      debugPrint('✅ BOOTSTRAP: Firebase Firestore verification passed');
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await firestore.collection('_health_check').limit(1).get();
+        debugPrint('✅ BOOTSTRAP: Firebase Firestore verification passed');
+      } else {
+        debugPrint('⚠️ BOOTSTRAP: Firebase Firestore verification skipped - no user authenticated');
+      }
     } catch (e) {
       debugPrint('⚠️ BOOTSTRAP: Firebase Firestore verification failed: $e');
       // Don't throw - firestore might not be configured or accessible
@@ -572,9 +607,14 @@ void _initializeOptionalServicesInBackground() {
 
       await Future.delayed(const Duration(milliseconds: 100)); // Small pause
 
-      await Future.wait([
-        _initializeService<NewsService>(() => NewsService(), 'NewsService'),
-      ]);
+      // Defer NewsService until after first frame and authenticated user
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (FirebaseAuth.instance.currentUser != null) {
+          _initializeService<NewsService>(() => NewsService(), 'NewsService');
+        } else {
+          debugPrint('⚠️ BOOTSTRAP: Skipping NewsService init - no authenticated user');
+        }
+      });
 
       await Future.delayed(const Duration(milliseconds: 100)); // Small pause
 

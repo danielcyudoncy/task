@@ -1,6 +1,7 @@
 // controllers/user_controller.dart
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:task/models/chat_model.dart';
 import 'package:task/service/user_deletion_service.dart';
 import '../controllers/auth_controller.dart';
@@ -34,11 +35,33 @@ class UserController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchReporters();
-    fetchCameramen();
-    fetchDrivers();
-    fetchAllUsers();
-    _initChatUsers();
+
+    // Listen to auth state changes
+    ever(AuthController.to.user, (User? user) {
+      if (user != null) {
+        fetchReporters();
+        fetchCameramen();
+        fetchDrivers();
+        fetchAllUsers();
+        _initChatUsers();
+      } else {
+        // Clear data when not authenticated
+        reporters.clear();
+        cameramen.clear();
+        drivers.clear();
+        allUsers.clear();
+        _availableChatUsers.clear();
+      }
+    });
+
+    // Initialize if already authenticated
+    if (AuthController.to.currentUser != null) {
+      fetchReporters();
+      fetchCameramen();
+      fetchDrivers();
+      fetchAllUsers();
+      _initChatUsers();
+    }
   }
 
   @override
