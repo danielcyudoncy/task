@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task/models/task.dart';
@@ -133,6 +134,28 @@ class TaskController extends GetxController {
     super.onInit();
     debugPrint('TaskController: onInit called');
 
+    // Listen to auth state changes
+    ever(AuthController.to.user, (User? user) {
+      if (user != null) {
+        _initializeWhenAuthenticated();
+      } else {
+        // Cancel streams and clear data
+        _taskStreamSubscription?.cancel();
+        _taskStreamSubscription = null;
+        _legacyTaskStreamSubscription?.cancel();
+        _legacyTaskStreamSubscription = null;
+        tasks.clear();
+        errorMessage.value = '';
+      }
+    });
+
+    // Initialize if already authenticated
+    if (AuthController.to.currentUser != null) {
+      _initializeWhenAuthenticated();
+    }
+  }
+
+  Future<void> _initializeWhenAuthenticated() async {
     // Delay initialization to ensure proper setup
     Future.delayed(const Duration(milliseconds: 300), () async {
       debugPrint('TaskController: Starting delayed initialization');
@@ -1649,6 +1672,10 @@ class TaskController extends GetxController {
 
   // Load tasks directly from Firebase
   Future<void> loadInitialTasks() async {
+    if (AuthController.to.currentUser == null) {
+      debugPrint('loadInitialTasks: User not authenticated, skipping');
+      return;
+    }
     isLoading(true);
     try {
       debugPrint('=== LOADING INITIAL TASKS ===');

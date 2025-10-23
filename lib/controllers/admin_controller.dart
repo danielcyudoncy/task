@@ -63,9 +63,43 @@ class AdminController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchDashboardData();
-    startRealtimeUpdates();
+
+    // Listen to auth state changes.
+    // Only initialize admin-only data once we know the user's role is Admin.
+    ever(AuthController.to.user, (User? user) {
+      if (user != null) {
+        fetchDashboardData();
+
+        // If the auth controller already believes this user is an admin,
+        // start realtime updates and initialize admin data immediately.
+        if (AuthController.to.isAdmin.value) {
+          startRealtimeUpdates();
+          initializeAdminData();
+        } else {
+          // Otherwise, wait for the userRole to be populated and initialize
+          // admin data only if/when it becomes 'Admin'. Use `once` so we
+          // only initialize a single time when the role is set.
+          once(AuthController.to.userRole, (role) {
+            if (role == 'Admin') {
+              startRealtimeUpdates();
+              initializeAdminData();
+            }
+          });
+        }
+      } else {
+        // Cancel streams and clear data
+        _dashboardMetricsSubscription?.cancel();
+        _dashboardMetricsSubscription = null;
+        clearAdminData();
+      }
+    });
+
+    // Initialize if already authenticated
     if (_auth.currentUser != null) {
+      fetchDashboardData();
+      if (AuthController.to.isAdmin.value) {
+        startRealtimeUpdates();
+      }
       initializeAdminData();
     }
   }
@@ -98,7 +132,11 @@ class AdminController extends GetxController {
         debugPrint('Error processing dashboard metrics snapshot: $e');
       }
     }, onError: (e) {
-      debugPrint('Dashboard metrics stream error: $e');
+      if (e.toString().contains('permission-denied')) {
+        _safeSnackbar("Access Denied", "You don't have access to this data.");
+      } else {
+        debugPrint('Dashboard metrics stream error: $e');
+      }
     });
   }
 
@@ -194,7 +232,11 @@ class AdminController extends GetxController {
       statistics['completed'] = completedTasks.value;
       statistics['pending'] = pendingTasks.value;
     } catch (e) {
-      _safeSnackbar("Error", "Failed to load dashboard data: $e");
+      if (e.toString().contains('permission-denied')) {
+        _safeSnackbar("Access Denied", "You don't have access to this data.");
+      } else {
+        _safeSnackbar("Error", "Failed to load dashboard data: $e");
+      }
     }
     isLoading.value = false;
   }
@@ -212,13 +254,15 @@ class AdminController extends GetxController {
       }
     } catch (e) {
       debugPrint("Admin initialization error: $e");
-      // Delay the snackbar until the next frame to ensure context is available
+      // Don't forcibly log the user out on admin initialization errors.
+      // Just surface a non-blocking message and continue; many admin
+      // initialization failures are due to timing (role not yet set) or
+      // permission-denied and should not sign the user out.
       Future.delayed(Duration.zero, () {
         if (Get.context != null) {
           _safeSnackbar("Admin Error", "Failed to initialize admin data");
         }
       });
-      await logout();
     } finally {
       isLoading(false);
     }
@@ -373,7 +417,11 @@ class AdminController extends GetxController {
     } on TimeoutException {
       _safeSnackbar('Error', 'Fetching statistics timed out');
     } catch (e) {
-      _safeSnackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
+      if (e.toString().contains('permission-denied')) {
+        _safeSnackbar("Access Denied", "You don't have access to this data.");
+      } else {
+        _safeSnackbar('Error', 'Failed to fetch statistics: ${e.toString()}');
+      }
     } finally {
       isStatsLoading(false);
     }
