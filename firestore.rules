@@ -10,7 +10,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.admin == true;
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
     function hasValidRole() {
@@ -37,7 +39,7 @@ service cloud.firestore {
       allow create: if isAuthenticated() && hasValidRole();
       allow read: if isAuthenticated();
       allow update: if isAuthenticated() && (
-        resource.data.assignedTo == request.auth.uid || 
+        resource.data.assignedTo == request.auth.uid ||
         resource.data.createdBy == request.auth.uid ||
         isAdmin()
       );
@@ -74,6 +76,12 @@ service cloud.firestore {
     match /dashboard_metrics/{metricId} {
       allow read: if isAuthenticated() && (hasValidRole() || isAdmin());
       allow write: if isAdmin();
+    }
+
+    // Conversations collection
+    match /conversations/{conversationId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
     // News collection with public read

@@ -71,6 +71,11 @@ class ManageUsersController extends GetxController {
 
     // Listen for real-time updates from Firestore
     _usersStream = FirebaseFirestore.instance.collection('users').snapshots().listen((snapshot) async {
+      // Check if user is still authenticated
+      if (AuthController.to.currentUser == null) {
+        debugPrint('[ManageUsersController] User not authenticated, skipping update');
+        return;
+      }
       isLoading.value = true;
       debugPrint(
           '[ManageUsersController] Firestore user snapshot received: ${snapshot.docs.length} docs');

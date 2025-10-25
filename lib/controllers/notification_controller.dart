@@ -61,6 +61,11 @@ class NotificationController extends GetxController {
       notifications.bindStream(
         stream.asyncMap((snapshot) async {
           try {
+            // Check if user is still authenticated
+            if (FirebaseAuth.instance.currentUser == null) {
+              debugPrint('NotificationController: User not authenticated, returning empty list');
+              return <Map<String, dynamic>>[];
+            }
             final docs = snapshot.docs;
             totalNotifications.value = docs.length;
 

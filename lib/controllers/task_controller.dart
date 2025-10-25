@@ -162,6 +162,28 @@ class TaskController extends GetxController {
       if (Get.isRegistered<TaskController>()) {
         debugPrint(
             'TaskController: Controller is registered, proceeding with initialization');
+
+        // Ensure user document exists before proceeding
+        final user = AuthController.to.currentUser;
+        if (user != null) {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+          if (!userDoc.exists) {
+            debugPrint('TaskController: User document does not exist, creating it');
+            // Create user document if missing
+            await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+              'uid': user.uid,
+              'email': user.email ?? '',
+              'fullName': user.displayName ?? '',
+              'role': 'Reporter',
+              'profileComplete': false,
+              'createdAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+
         await initializeCache();
         await _preFetchUsersWithCacheService();
         await loadInitialTasks();
@@ -205,6 +227,11 @@ class TaskController extends GetxController {
         .snapshots()
         .listen(
       (snapshot) async {
+        // Check if user is still authenticated
+        if (AuthController.to.currentUser == null) {
+          debugPrint('TaskController: User not authenticated, skipping update');
+          return;
+        }
         debugPrint(
             'TaskController: Real-time update received, ${snapshot.docs.length} tasks');
         final updatedTasks = await Future.wait(snapshot.docs.map((doc) async {
