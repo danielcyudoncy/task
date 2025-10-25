@@ -1,6 +1,7 @@
 // service/daily_task_notification_service.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -23,6 +24,7 @@ class DailyTaskNotificationService extends GetxService {
   StreamSubscription<QuerySnapshot>? _assignedTasksSubscription;
   StreamSubscription<QuerySnapshot>? _completedTasksSubscription;
   StreamSubscription<QuerySnapshot>? _pendingTasksSubscription;
+  StreamSubscription<User?>? _authSubscription;
 
   // Cache for previous counts to detect changes
   int _previousAssignedCount = 0; // Actually tracks tasks created today
@@ -31,18 +33,53 @@ class DailyTaskNotificationService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    _initializeListeners();
+    debugPrint('DailyTaskNotificationService: Current user: ${FirebaseAuth.instance.currentUser}');
+    debugPrint('DailyTaskNotificationService: Auth state check - proceeding only if authenticated');
+
+    // Listen to auth state changes
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user != null) {
+        debugPrint('DailyTaskNotificationService: User authenticated, initializing listeners');
+        _initializeListeners();
+      } else {
+        debugPrint('DailyTaskNotificationService: No authenticated user, canceling listeners');
+        _cancelListeners();
+      }
+    });
+
+    // Initialize if already authenticated
+    if (FirebaseAuth.instance.currentUser != null) {
+      _initializeListeners();
+    }
   }
 
   @override
   void onClose() {
+    _authSubscription?.cancel();
     _assignedTasksSubscription?.cancel();
     _completedTasksSubscription?.cancel();
     _pendingTasksSubscription?.cancel();
     super.onClose();
   }
 
+  void _cancelListeners() {
+    _assignedTasksSubscription?.cancel();
+    _assignedTasksSubscription = null;
+    _completedTasksSubscription?.cancel();
+    _completedTasksSubscription = null;
+    _pendingTasksSubscription?.cancel();
+    _pendingTasksSubscription = null;
+    debugPrint('DailyTaskNotificationService: Listeners canceled');
+  }
+
   void _initializeListeners() {
+    // Check if user is authenticated before starting listeners
+    if (FirebaseAuth.instance.currentUser == null) {
+      debugPrint('DailyTaskNotificationService: No authenticated user, skipping listeners');
+      return;
+    }
+    debugPrint('DailyTaskNotificationService: Starting listeners for authenticated user');
+
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
@@ -88,6 +125,7 @@ class DailyTaskNotificationService extends GetxService {
       onError: (error) {
         if (kDebugMode) {
           print('Error listening to assigned tasks: $error');
+          print('DailyTaskNotificationService: Auth state at error: ${FirebaseAuth.instance.currentUser}');
         }
       },
     );
@@ -135,6 +173,7 @@ class DailyTaskNotificationService extends GetxService {
       onError: (error) {
         if (kDebugMode) {
           print('Error listening to completed tasks: $error');
+          print('DailyTaskNotificationService: Auth state at error: ${FirebaseAuth.instance.currentUser}');
         }
       },
     );
@@ -207,6 +246,7 @@ class DailyTaskNotificationService extends GetxService {
       onError: (error) {
         if (kDebugMode) {
           print('Error listening to pending tasks: $error');
+          print('DailyTaskNotificationService: Auth state at error: ${FirebaseAuth.instance.currentUser}');
         }
       },
     );
