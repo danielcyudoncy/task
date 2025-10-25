@@ -7,12 +7,22 @@
       }
     },
     "users": {
-      ".read": "auth != null",
-      ".write": "auth != null && (auth.token.admin == true || auth.uid == $userId)"
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
+        "assignedTasks": {
+          ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
+          ".write": "auth != null"
+        },
+        "notifications": {
+          ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
+          ".write": "auth != null && (auth.uid == $userId || auth.token.admin == true)"
+        }
+      }
     },
     "tasks": {
       ".read": "auth != null",
-      ".write": "auth != null && auth.token.admin == true"
+      ".write": "auth != null"
     },
     "admins": {
       ".read": "auth != null",
@@ -29,18 +39,6 @@
     "dashboard_metrics": {
       ".read": "auth != null",
       ".write": "auth != null && auth.token.admin == true"
-    },
-    "users/$userId": {
-      ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
-      ".write": "auth != null && (auth.uid == $userId || auth.token.admin == true)"
-    },
-    "users/$userId/assignedTasks": {
-      ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
-      ".write": "auth != null && auth.token.admin == true"
-    },
-    "users/$userId/notifications": {
-      ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
-      ".write": "auth != null && (auth.uid == $userId || auth.token.admin == true)"
     }
   }
 }

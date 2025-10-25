@@ -1,104 +1,116 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
-
+    
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
-
+    
+    // Check if user has admin role - using exists to avoid errors
     function isAdmin() {
-      return isAuthenticated() &&
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
-    }
-
-    function hasValidRole() {
       return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role != null;
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'admin', 'superadmin', 'administrator'];
     }
 
-    // Users collection
+    // Allow users to read their own user document
+    function canReadUser(userId) {
+      return isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Allow users to write their own user document (with restrictions)
+    function canWriteUser(userId) {
+      return isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow read: if isAuthenticated();
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
-      
-      // Allow users to read their own profile data
-      match /profile/{profileId} {
-        allow read, write: if isOwner(userId);
-      }
+      allow read: if canReadUser(userId);
+      allow write: if canWriteUser(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if canWriteUser(userId) && 
+        (isAdmin() || !('role' in request.resource.data));
     }
-
-    // Tasks collection with enhanced security
+    
+    // Rules for subcollections of a user
+    match /users/{userId}/{collection}/{document=**} {
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // Rules for the 'tasks' collection
     match /tasks/{taskId} {
-      allow create: if isAuthenticated() && hasValidRole();
-      allow read: if isAuthenticated();
+      // Allow read access based on user role and ownership
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.createdById == request.auth.uid ||
+        resource.data.assignedTo == request.auth.uid
+      );
+      
+      // Allow write access
+      allow write: if isAuthenticated() && (
+        isAdmin() ||
+        request.resource.data.createdBy == request.auth.uid ||
+        request.resource.data.createdById == request.auth.uid
+      );
+      
+      // Specific create rules
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        request.resource.data.createdBy == request.auth.uid ||
+        request.resource.data.createdById == request.auth.uid
+      );
+      
+      // Specific update rules
       allow update: if isAuthenticated() && (
-        resource.data.assignedTo == request.auth.uid ||
+        isAdmin() ||
         resource.data.createdBy == request.auth.uid ||
-        isAdmin()
+        resource.data.createdById == request.auth.uid
       );
+      
+      // Specific delete rules
       allow delete: if isAuthenticated() && (
+        isAdmin() ||
         resource.data.createdBy == request.auth.uid ||
-        isAdmin()
+        resource.data.createdById == request.auth.uid
       );
     }
-
-    // User settings with improved security
+    
+    // Rules for 'user_settings'
     match /user_settings/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
-
-    // Notifications subcollection
-    match /users/{userId}/notifications/{notificationId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-    }
-
-    // Allow access to common user subcollections (assignedTasks, etc.) by the
-    // owning user or an admin. Many client queries access subcollections
-    // under /users/{uid} and without explicit rules they hit the default
-    // deny rule and produce PERMISSION_DENIED on the client.
-    match /users/{userId}/{subcollection}/{docId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId) || isAdmin();
-    }
-
-    // Admin collections with strict access control
+    
+    // Rules for 'admins' collection
     match /admins/{adminId} {
       allow read, write: if isAdmin();
     }
-
+    
+    // Rules for 'dashboard_metrics'
     match /dashboard_metrics/{metricId} {
-      allow read: if isAuthenticated() && (hasValidRole() || isAdmin());
-      allow write: if isAdmin();
+      allow read, write: if isAdmin();
     }
-
-    // Conversations collection
+    
+    // Rules for 'conversations'
     match /conversations/{conversationId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid in resource.data.participants;
     }
-
-    // News collection with public read
+    
+    // Rules for 'news'
     match /news/{newsId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
-
-    // Health check for monitoring
-    match /_health_check/{checkId} {
+    
+    // Health check collection
+    match /_health_check/{docId} {
       allow read: if true;
       allow write: if isAdmin();
-    }
-
-    // Default deny all other collections
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
