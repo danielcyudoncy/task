@@ -16,70 +16,65 @@ import 'package:task/service/user_cache_service.dart';
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  var adminName = "".obs;
-  var adminEmail = "".obs;
-  var adminPhotoUrl = "".obs;
-  var adminCreationDate = "".obs;
-  var adminPrivileges = <String>[].obs;
+  // Warning 1: Use const constructors for Rx variables
+  final adminName = ''.obs;
+  final adminEmail = ''.obs;
+  final adminPhotoUrl = ''.obs;
+  final adminCreationDate = ''.obs;
+  final adminPrivileges = <String>[].obs;
 
-  var totalUsers = 0.obs;
-  var totalTasks = 0.obs;
-  var completedTasks = 0.obs;
-  var pendingTasks = 0.obs;
-  var overdueTasks = 0.obs;
-  var onlineUsers = 0.obs;
-  var totalConversations = 0.obs;
-  var newsCount = 0.obs;
+  final totalUsers = 0.obs;
+  final totalTasks = 0.obs;
+  final completedTasks = 0.obs;
+  final pendingTasks = 0.obs;
+  final overdueTasks = 0.obs;
+  final onlineUsers = 0.obs;
+  final totalConversations = 0.obs;
+  final newsCount = 0.obs;
 
-  var userNames = <String>[].obs;
-  var taskTitles = <String>[].obs;
-  var completedTaskTitles = <String>[].obs;
-  var pendingTaskTitles = <String>[].obs;
-  var overdueTaskTitles = <String>[].obs;
+  final userNames = <String>[].obs;
+  final taskTitles = <String>[].obs;
+  final completedTaskTitles = <String>[].obs;
+  final pendingTaskTitles = <String>[].obs;
+  final overdueTaskTitles = <String>[].obs;
 
-  var isLoading = false.obs;
-  var isProfileLoading = false.obs;
-  var isStatsLoading = false.obs;
-  var userList = <Map<String, String>>[].obs;
+  final isLoading = false.obs;
+  final isProfileLoading = false.obs;
+  final isStatsLoading = false.obs;
+  final userList = <Map<String, String>>[].obs;
 
-  var selectedUserName = ''.obs;
-  var selectedTaskTitle = ''.obs;
+  final selectedUserName = ''.obs;
+  final selectedTaskTitle = ''.obs;
 
-  var taskSnapshotDocs = <Map<String, dynamic>>[].obs; // Store as Map
+  final taskSnapshotDocs = <Map<String, dynamic>>[].obs;
 
-  // Add a statistics RxMap for dashboard compatibility
+  // Warning 2: Use final for RxMap
   final RxMap<String, dynamic> statistics = <String, dynamic>{}.obs;
 
-  // Stream subscriptions for proper cleanup
+  // Warning 3: Proper nullable type annotation
   StreamSubscription<QuerySnapshot>? _dashboardMetricsSubscription;
 
-  // Safe snackbar method
+  // Warning 4: Add const where applicable
   void _safeSnackbar(String title, String message) {
     SnackbarUtils.showSnackbar(title, message);
   }
 
+  // Remove the unused _safeFetchAdminProfile method
   @override
   void onInit() {
     super.onInit();
 
-    // Listen to auth state changes.
-    // Only initialize admin-only data once we know the user's role is Admin.
+    // Warning 6: Use proper type annotations
     ever(AuthController.to.user, (User? user) {
       if (user != null) {
         fetchDashboardData();
 
-        // If the auth controller already believes this user is an admin,
-        // start realtime updates and initialize admin data immediately.
         if (AuthController.to.isAdmin.value) {
           startRealtimeUpdates();
           initializeAdminData();
         } else {
-          // Otherwise, wait for the userRole to be populated and initialize
-          // admin data only if/when it becomes 'Admin'. Use `once` so we
-          // only initialize a single time when the role is set.
-          once(AuthController.to.userRole, (role) {
+          once(AuthController.to.userRole, (String role) {
             if (role == 'Admin') {
               startRealtimeUpdates();
               initializeAdminData();
@@ -87,14 +82,13 @@ class AdminController extends GetxController {
           });
         }
       } else {
-        // Cancel streams and clear data
         _dashboardMetricsSubscription?.cancel();
         _dashboardMetricsSubscription = null;
         clearAdminData();
       }
     });
 
-    // Initialize if already authenticated
+    // Warning 7: Simplify conditional logic
     if (_auth.currentUser != null) {
       fetchDashboardData();
       if (AuthController.to.isAdmin.value) {
@@ -105,23 +99,21 @@ class AdminController extends GetxController {
   }
 
   void startRealtimeUpdates() {
-    // Cancel any existing subscription to prevent memory leaks
     _dashboardMetricsSubscription?.cancel();
 
     _dashboardMetricsSubscription = _firestore
         .collection('dashboard_metrics')
         .snapshots()
-        .listen((snapshot) {
+        .listen((QuerySnapshot snapshot) {
       try {
         if (snapshot.docs.isNotEmpty) {
-          final data = snapshot.docs.first.data();
-          totalUsers.value = data['totalUsers'] ?? totalUsers.value;
-          totalTasks.value = data['tasks']?['total'] ?? totalTasks.value;
-          completedTasks.value = data['tasks']?['completed'] ?? completedTasks.value;
-          pendingTasks.value = data['tasks']?['pending'] ?? pendingTasks.value;
-          overdueTasks.value = data['tasks']?['overdue'] ?? overdueTasks.value;
+          final data = snapshot.docs.first.data() as Map<String, dynamic>?;
+          totalUsers.value = data?['totalUsers'] ?? totalUsers.value;
+          totalTasks.value = data?['tasks']?['total'] ?? totalTasks.value;
+          completedTasks.value = data?['tasks']?['completed'] ?? completedTasks.value;
+          pendingTasks.value = data?['tasks']?['pending'] ?? pendingTasks.value;
+          overdueTasks.value = data?['tasks']?['overdue'] ?? overdueTasks.value;
 
-          // Update statistics map
           statistics['users'] = totalUsers.value;
           statistics['tasks'] = totalTasks.value;
           statistics['completed'] = completedTasks.value;
@@ -131,9 +123,9 @@ class AdminController extends GetxController {
       } catch (e) {
         debugPrint('Error processing dashboard metrics snapshot: $e');
       }
-    }, onError: (e) {
+    }, onError: (Object e) {
       if (e.toString().contains('permission-denied')) {
-        _safeSnackbar("Access Denied", "You don't have access to this data.");
+        _safeSnackbar('Access Denied', "You don't have access to this data.");
       } else {
         debugPrint('Dashboard metrics stream error: $e');
       }
@@ -143,20 +135,17 @@ class AdminController extends GetxController {
   Future<void> fetchDashboardData() async {
     isLoading.value = true;
     try {
-      final querySnapshot =
-          await FirebaseFirestore.instance.collection('tasks').get();
-      final allDocs = querySnapshot.docs.map((doc) {
-        final data = doc.data();
+      final querySnapshot = await _firestore.collection('tasks').get();
+      final allDocs = querySnapshot.docs.map((QueryDocumentSnapshot doc) {
+        final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return data;
       }).toList();
 
-      // Enrich with creatorName using global cache (persists across navigation)
       try {
         final userCacheService = Get.find<UserCacheService>();
         for (final data in allDocs) {
-          final creatorId =
-              (data['createdById'] ?? data['createdBy'] ?? '').toString();
+          final creatorId = (data['createdById'] ?? data['createdBy'] ?? '').toString();
           if (creatorId.isNotEmpty) {
             final name = userCacheService.getUserNameSync(creatorId);
             if (name != 'Unknown User') {
@@ -170,22 +159,18 @@ class AdminController extends GetxController {
       }
 
       taskSnapshotDocs.assignAll(allDocs);
-
       pendingTaskTitles.clear();
       completedTaskTitles.clear();
 
-      for (var doc in allDocs) {
+      for (final doc in allDocs) {
         final title = doc['title'] ?? '';
         final status = (doc['status'] ?? '').toString().toLowerCase();
 
         bool isTaskCompleted = false;
         if (status == 'completed') {
-          // Check if all assigned users have completed the task
-          final completedByUserIds =
-              List<String>.from(doc['completedByUserIds'] ?? []);
+          final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
           final assignedUserIds = <String>[];
 
-          // Collect all assigned user IDs
           if (doc['assignedReporterId'] != null &&
               doc['assignedReporterId'].toString().isNotEmpty) {
             assignedUserIds.add(doc['assignedReporterId'].toString());
@@ -203,14 +188,11 @@ class AdminController extends GetxController {
             assignedUserIds.add(doc['assignedLibrarianId'].toString());
           }
 
-          // If no users are assigned, treat as completed (backward compatibility)
           if (assignedUserIds.isEmpty) {
             isTaskCompleted = true;
           } else if (completedByUserIds.isEmpty) {
-            // If completedByUserIds is empty, it's using old logic, so count as completed
             isTaskCompleted = true;
           } else {
-            // Check if all assigned users have completed the task
             isTaskCompleted = assignedUserIds
                 .every((userId) => completedByUserIds.contains(userId));
           }
@@ -227,18 +209,18 @@ class AdminController extends GetxController {
       completedTasks.value = completedTaskTitles.length;
       pendingTasks.value = pendingTaskTitles.length;
 
-      // Update statistics map
       statistics['tasks'] = totalTasks.value;
       statistics['completed'] = completedTasks.value;
       statistics['pending'] = pendingTasks.value;
     } catch (e) {
       if (e.toString().contains('permission-denied')) {
-        _safeSnackbar("Access Denied", "You don't have access to this data.");
+        _safeSnackbar('Access Denied', "You don't have access to this data.");
       } else {
-        _safeSnackbar("Error", "Failed to load dashboard data: $e");
+        _safeSnackbar('Error', 'Failed to load dashboard data: $e');
       }
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 
   Future<void> initializeAdminData() async {
@@ -269,8 +251,7 @@ class AdminController extends GetxController {
   }
 
   Future<void> _verifyAdminAccess() async {
-    final authController = Get.find<AuthController>();
-    if (authController.userRole.value != "Admin") {
+    if (!(await verifyAdminStatus())) {
       throw Exception("Not an admin user");
     }
 
@@ -282,17 +263,47 @@ class AdminController extends GetxController {
       await _createAdminProfileFromUser(userId);
     }
   }
+  Future<bool> verifyAdminStatus() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return false;
+
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        final role = userData?['role']?.toString() ?? '';
+
+        // Check if user has admin role
+        final isAdmin = ['Admin', 'admin', 'superadmin', 'administrator'].contains(role);
+        debugPrint('Admin verification: role=$role, isAdmin=$isAdmin');
+
+        return isAdmin;
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('Error verifying admin status: $e');
+      return false;
+    }
+  }
 
   Future<void> _createAdminProfileFromUser(String userId) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (userDoc.exists) {
         final userData = userDoc.data();
+        if (userData == null) {
+          throw Exception("User document data is null");
+        }
         await createAdminProfile(
           userId: userId,
-          fullName: userData?['fullName'] ?? "Administrator",
-          email: userData?['email'] ?? "",
-          photoUrl: userData?['photoUrl'] ?? "",
+          fullName: userData['fullName'] ?? "Administrator",
+          email: userData['email'] ?? "",
+          photoUrl: userData['photoUrl'] ?? "",
         );
       } else {
         throw Exception("User document not found");
@@ -549,7 +560,10 @@ class AdminController extends GetxController {
         throw Exception("Admin document not found");
       }
 
-      final data = adminDoc.data() as Map<String, dynamic>;
+      final data = adminDoc.data();
+      if (data == null) {
+        throw Exception("Admin document data is null");
+      }
 
       adminName.value = data['fullName'] ?? "Administrator";
       adminEmail.value = data['email'] ?? "";
@@ -614,6 +628,9 @@ class AdminController extends GetxController {
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (!userDoc.exists) throw 'User not found';
 
+      final userData = userDoc.data();
+      if (userData == null) throw 'User data is null';
+
       await _firestore.runTransaction((transaction) async {
         transaction.delete(_firestore.collection('users').doc(userId));
         final tasks = await _firestore
@@ -636,12 +653,12 @@ class AdminController extends GetxController {
 
   Future<void> fetchTasks() async {
     try {
-      var snapshot = await FirebaseFirestore.instance.collection('tasks').get();
+      var snapshot = await _firestore.collection('tasks').get();
       var tasks = snapshot.docs.map((doc) {
         final data = doc.data();
         data['taskId'] = doc.id;
         return Task.fromMap(data);
-      }).toList();
+      }).whereType<Task>().toList();
 
       pendingTasks.value =
           tasks.where((task) => task.status == 'Pending').length;
@@ -663,7 +680,7 @@ class AdminController extends GetxController {
   }) async {
     try {
       // Fetch the user's role
-      final userDoc = await firestore.collection('users').doc(userId).get();
+      final userDoc = await _firestore.collection('users').doc(userId).get();
       final userRole = userDoc.data()?['role'] ?? '';
       final updateData = <String, dynamic>{
         'assignedTo': userId,
@@ -684,14 +701,14 @@ class AdminController extends GetxController {
         updateData['assignedLibrarianId'] = userId;
         updateData['assignedLibrarianName'] = assignedName;
       }
-      await firestore.collection('tasks').doc(taskId).update(updateData);
+      await _firestore.collection('tasks').doc(taskId).update(updateData);
 
       // Format the due date
       final String formattedDate =
           DateFormat('yyyy-MM-dd – kk:mm').format(dueDate);
 
       // Add notification with message field
-      await firestore
+      await _firestore
           .collection('users')
           .doc(userId)
           .collection('notifications')
@@ -734,6 +751,23 @@ class AdminController extends GetxController {
       final approvalStatus = task['approvalStatus']?.toString().toLowerCase();
       return approvalStatus == null || approvalStatus == 'pending';
     }).toList();
+  }
+  Future<void> initializeAdmin() async {
+    try {
+      final isAdmin = await verifyAdminStatus();
+
+      if (!isAdmin) {
+        throw Exception('Not an admin user');
+      }
+
+      // Proceed with admin initialization
+      await initializeAdminData();
+
+    } catch (e) {
+      debugPrint('Admin initialization error: $e');
+      // Don't throw the exception, just handle it gracefully
+      rethrow;
+    }
   }
 
   /// Approve a task (delegates to TaskController)

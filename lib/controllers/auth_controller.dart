@@ -318,16 +318,15 @@ class AuthController extends GetxController {
 
   Future<void> _verifyAdminPrivileges() async {
     try {
-      final adminController = Get.find<AdminController>();
-      await adminController.fetchAdminProfile();
-
-      if (adminController.adminName.value.isEmpty) {
-        throw Exception("Admin profile incomplete");
+      if (Get.isRegistered<AdminController>()) {
+        final adminController = Get.find<AdminController>();
+        await adminController
+            .fetchAdminProfile()
+            .timeout(Duration(seconds: 10));
       }
     } catch (e) {
-      debugPrint("Admin verification error: $e");
-      await logout();
-      rethrow;
+      debugPrint("Admin verification optional: $e");
+      // Don't logout - make admin features optional
     }
   }
 

@@ -10,29 +10,19 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    // Check if user has admin role - using exists to avoid errors
+    // Check if user has admin role
     function isAdmin() {
       return isAuthenticated() && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'admin', 'superadmin', 'administrator'];
     }
 
-    // Allow users to read their own user document
-    function canReadUser(userId) {
-      return isAuthenticated() && (isOwner(userId) || isAdmin());
-    }
-
-    // Allow users to write their own user document (with restrictions)
-    function canWriteUser(userId) {
-      return isAuthenticated() && (isOwner(userId) || isAdmin());
-    }
-
     // Rules for the 'users' collection
     match /users/{userId} {
-      allow read: if canReadUser(userId);
-      allow write: if canWriteUser(userId);
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow create: if isAuthenticated() && isOwner(userId);
-      allow update: if canWriteUser(userId) && 
+      allow update: if isAuthenticated() && isOwner(userId) && 
         (isAdmin() || !('role' in request.resource.data));
     }
     
@@ -41,67 +31,56 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
-    // Rules for the 'tasks' collection
+    // Rules for the 'tasks' collection - FIXED
     match /tasks/{taskId} {
-      // Allow read access based on user role and ownership
+      // Allow admins to read all tasks, users to read their own tasks
       allow read: if isAuthenticated() && (
         isAdmin() || 
-        resource.data.createdBy == request.auth.uid ||
-        resource.data.createdById == request.auth.uid ||
-        resource.data.assignedTo == request.auth.uid
+        resource.data.createdBy == request.auth.uid
       );
       
-      // Allow write access
+      // Allow admins to write all tasks, users to create their own tasks
       allow write: if isAuthenticated() && (
         isAdmin() ||
-        request.resource.data.createdBy == request.auth.uid ||
-        request.resource.data.createdById == request.auth.uid
+        request.resource.data.createdBy == request.auth.uid
       );
       
       // Specific create rules
       allow create: if isAuthenticated() && (
         isAdmin() ||
-        request.resource.data.createdBy == request.auth.uid ||
-        request.resource.data.createdById == request.auth.uid
+        request.resource.data.createdBy == request.auth.uid
       );
       
-      // Specific update rules
+      // Specific update rules  
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        resource.data.createdBy == request.auth.uid ||
-        resource.data.createdById == request.auth.uid
+        resource.data.createdBy == request.auth.uid
       );
       
       // Specific delete rules
       allow delete: if isAuthenticated() && (
         isAdmin() ||
-        resource.data.createdBy == request.auth.uid ||
-        resource.data.createdById == request.auth.uid
+        resource.data.createdBy == request.auth.uid
       );
     }
     
-    // Rules for 'user_settings'
+    // Rules for other collections
     match /user_settings/{userId} {
       allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
     
-    // Rules for 'admins' collection
     match /admins/{adminId} {
       allow read, write: if isAdmin();
     }
     
-    // Rules for 'dashboard_metrics'
     match /dashboard_metrics/{metricId} {
       allow read, write: if isAdmin();
     }
     
-    // Rules for 'conversations'
     match /conversations/{conversationId} {
-      allow read, write: if isAuthenticated() && 
-        request.auth.uid in resource.data.participants;
+      allow read, write: if isAuthenticated();
     }
     
-    // Rules for 'news'
     match /news/{newsId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();

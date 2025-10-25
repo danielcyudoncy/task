@@ -18,7 +18,6 @@ class TaskCore {
   final String title;
   final String description;
   final String createdBy;
-  final String createdById;
   final String? createdByName;
   final String status;
   final DateTime timestamp;
@@ -39,7 +38,6 @@ class TaskCore {
     required this.title,
     required this.description,
     required this.createdBy,
-    required this.createdById,
     this.createdByName,
     required this.status,
     required this.timestamp,
@@ -55,7 +53,6 @@ class TaskCore {
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       createdBy: map['createdBy'] ?? 'Unknown',
-      createdById: map['createdById'] ?? map['createdBy'] ?? '',
       createdByName: map['createdByName'],
       status: map['status'] ?? 'Pending',
       timestamp: parseDate(map['timestamp']) ?? DateTime.now(),
@@ -71,7 +68,6 @@ class TaskCore {
     String? title,
     String? description,
     String? createdBy,
-    String? createdById,
     String? createdByName,
     String? status,
     DateTime? timestamp,
@@ -85,7 +81,6 @@ class TaskCore {
       title: title ?? this.title,
       description: description ?? this.description,
       createdBy: createdBy ?? this.createdBy,
-      createdById: createdById ?? this.createdById,
       createdByName: createdByName ?? this.createdByName,
       status: status ?? this.status,
       timestamp: timestamp ?? this.timestamp,
@@ -102,7 +97,6 @@ class TaskCore {
       'title': title,
       'description': description,
       'createdBy': createdBy,
-      'createdById': createdById,
       'createdByName': createdByName,
       'status': status,
       'timestamp': timestamp.millisecondsSinceEpoch,

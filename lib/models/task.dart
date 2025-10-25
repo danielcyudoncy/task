@@ -30,7 +30,7 @@ class Task {
   String get title => core.title;
   String get description => core.description;
   String get createdBy => core.createdBy;
-  String get createdById => core.createdById;
+  String get createdById => core.createdBy;
   String? get createdByName => core.createdByName;
   String get status => core.status;
   DateTime get timestamp => core.timestamp;
@@ -128,9 +128,9 @@ class Task {
     final coreMap = Map<String, dynamic>.from(map)
       ..remove('taskId'); // Keep taskId for core
     coreMap['taskId'] = map['taskId'];
-
+  
     final core = TaskCore.fromMap(coreMap);
-
+  
     // Extract metadata fields
     final metadataMap = <String, dynamic>{};
     final metadataFields = [
@@ -172,16 +172,16 @@ class Task {
       'reviewTimestamps',
       'reviewerRoles',
     ];
-
+  
     for (final field in metadataFields) {
       if (map.containsKey(field)) {
         metadataMap[field] = map[field];
       }
     }
-
+  
     final metadata =
         metadataMap.isNotEmpty ? TaskMetadata.fromMap(metadataMap) : null;
-
+  
     return Task(core: core, metadata: metadata);
   }
 
@@ -206,7 +206,7 @@ class Task {
 
   // Permission methods for task creators
   bool isCreator(String userId) {
-    return userId == createdById;
+    return userId == createdBy;
   }
 
   bool canEdit(String userId) {
