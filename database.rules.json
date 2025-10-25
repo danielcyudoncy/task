@@ -5,6 +5,42 @@
         ".read": "auth != null && auth.uid == $userId",
         ".write": "auth != null && auth.uid == $userId"
       }
+    },
+    "users": {
+      ".read": "auth != null",
+      ".write": "auth != null && (auth.token.admin == true || auth.uid == $userId)"
+    },
+    "tasks": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin == true"
+    },
+    "admins": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin == true"
+    },
+    "conversations": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "news": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin == true"
+    },
+    "dashboard_metrics": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin == true"
+    },
+    "users/$userId": {
+      ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
+      ".write": "auth != null && (auth.uid == $userId || auth.token.admin == true)"
+    },
+    "users/$userId/assignedTasks": {
+      ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
+      ".write": "auth != null && auth.token.admin == true"
+    },
+    "users/$userId/notifications": {
+      ".read": "auth != null && (auth.uid == $userId || auth.token.admin == true)",
+      ".write": "auth != null && (auth.uid == $userId || auth.token.admin == true)"
     }
   }
-} 
+}

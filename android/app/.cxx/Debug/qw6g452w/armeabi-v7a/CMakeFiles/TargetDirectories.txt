@@ -1,2 +1,0 @@
-/Users/danieludoncy/Documents/GitHub/task/android/app/.cxx/Debug/qw6g452w/armeabi-v7a/CMakeFiles/edit_cache.dir
-/Users/danieludoncy/Documents/GitHub/task/android/app/.cxx/Debug/qw6g452w/armeabi-v7a/CMakeFiles/rebuild_cache.dir

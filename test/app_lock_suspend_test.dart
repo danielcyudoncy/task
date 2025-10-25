@@ -3,21 +3,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/app_lock_controller.dart';
-
-// test/app_lock_suspend_test.dart
+import 'package:task/controllers/auth_controller.dart';
+import 'package:task/service/biometric_service.dart';
 import 'package:flutter/material.dart';
 
-// Minimal fake AuthController used for tests
-// Create minimal fake classes that do not initialize Firebase
-class _FakeAuthController extends GetxController {
+// Create simple stub classes that implement the required interfaces
+class StubAuthController extends GetxController implements AuthController {
+  @override
   User? get currentUser => null;
+  
+  @override
   Future<void> navigateBasedOnRole() async {}
+  
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
-class _FakeBiometricService extends GetxService {
+class StubBiometricService extends GetxService implements BiometricService {
+  @override
   final RxBool isBiometricAvailable = false.obs;
+  
+  @override
   IconData getBiometricIcon() => Icons.security;
+  
+  @override
   String getBiometricTypeString() => 'None';
+  
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
 void main() {
@@ -25,10 +38,9 @@ void main() {
 
   setUp(() {
     Get.reset();
-    // Register fakes required by AppLockController
-  // Register simple fakes to satisfy AppLockController dependencies
-  Get.put<_FakeAuthController>(_FakeAuthController());
-  Get.put<_FakeBiometricService>(_FakeBiometricService());
+    // Register stubs required by AppLockController with correct types
+    Get.put<AuthController>(StubAuthController());
+    Get.put<BiometricService>(StubBiometricService());
     // Now register the AppLockController
     Get.put<AppLockController>(AppLockController());
   });
