@@ -221,6 +221,7 @@ class TaskController extends GetxController {
   // Start real-time listener for task updates
   void _startRealtimeTaskListener() {
     debugPrint('TaskController: Starting real-time task listener');
+    debugPrint('TaskController: User role: ${AuthController.to.userRole.value}');
     _taskStreamSubscription = FirebaseFirestore.instance
         .collection('tasks')
         .orderBy('timestamp', descending: true)
@@ -1706,6 +1707,8 @@ class TaskController extends GetxController {
     isLoading(true);
     try {
       debugPrint('=== LOADING INITIAL TASKS ===');
+      debugPrint('TaskController: User role: ${AuthController.to.userRole.value}');
+      debugPrint('TaskController: User ID: ${AuthController.to.currentUser?.uid}');
       final snapshot = await FirebaseFirestore.instance
           .collection('tasks')
           .orderBy('timestamp', descending: true)

@@ -69,6 +69,9 @@ class ManageUsersController extends GetxController {
     // Cancel existing stream if any
     _usersStream?.cancel();
 
+    debugPrint('ManageUsersController: User role: ${AuthController.to.userRole.value}');
+    debugPrint('ManageUsersController: Is admin: ${AuthController.to.isAdmin.value}');
+
     // Listen for real-time updates from Firestore
     _usersStream = FirebaseFirestore.instance.collection('users').snapshots().listen((snapshot) async {
       // Check if user is still authenticated
@@ -128,6 +131,7 @@ class ManageUsersController extends GetxController {
     if (AuthController.to.currentUser == null) {
       return; // Don't fetch if not authenticated
     }
+    debugPrint('ManageUsersController: Fetching tasks, user role: ${AuthController.to.userRole.value}');
     try {
       QuerySnapshot snapshot =
           await FirebaseFirestore.instance.collection('tasks').get();
