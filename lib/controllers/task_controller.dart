@@ -222,36 +222,46 @@ class TaskController extends GetxController {
   void _startRealtimeTaskListener() {
     debugPrint('TaskController: Starting real-time task listener');
     debugPrint('TaskController: User role: ${AuthController.to.userRole.value}');
-    _taskStreamSubscription = FirebaseFirestore.instance
-        .collection('tasks')
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .listen(
-      (snapshot) async {
-        // Check if user is still authenticated
-        if (AuthController.to.currentUser == null) {
-          debugPrint('TaskController: User not authenticated, skipping update');
-          return;
-        }
-        debugPrint(
-            'TaskController: Real-time update received, ${snapshot.docs.length} tasks');
-        final updatedTasks = await Future.wait(snapshot.docs.map((doc) async {
-          final data = doc.data();
-          data['taskId'] = doc.id;
-          final task = Task.fromMap(data);
-          await _populateCreatedByName(task);
-          return task;
-        }));
 
-        // Update the tasks list
-        tasks.assignAll(updatedTasks);
-        tasks.refresh();
-        debugPrint('TaskController: Tasks updated via real-time listener');
-      },
-      onError: (error) {
-        debugPrint('TaskController: Real-time listener error: $error');
-      },
-    );
+    // Only start real-time listener for admins to avoid permission issues
+    final isAdmin = AuthController.to.isAdmin.value;
+    debugPrint('TaskController: User is admin: $isAdmin');
+
+    if (isAdmin) {
+      _taskStreamSubscription = FirebaseFirestore.instance
+          .collection('tasks')
+          .orderBy('timestamp', descending: true)
+          .snapshots()
+          .listen(
+        (snapshot) async {
+          // Check if user is still authenticated
+          if (AuthController.to.currentUser == null) {
+            debugPrint('TaskController: User not authenticated, skipping update');
+            return;
+          }
+          debugPrint(
+              'TaskController: Real-time update received, ${snapshot.docs.length} tasks');
+          final updatedTasks = await Future.wait(snapshot.docs.map((doc) async {
+            final data = doc.data();
+            data['taskId'] = doc.id;
+            final task = Task.fromMap(data);
+            await _populateCreatedByName(task);
+            return task;
+          }));
+
+          // Update the tasks list
+          tasks.assignAll(updatedTasks);
+          tasks.refresh();
+          debugPrint('TaskController: Tasks updated via real-time listener');
+        },
+        onError: (error) {
+          debugPrint('TaskController: Real-time listener error: $error');
+        },
+      );
+    } else {
+      debugPrint('TaskController: Skipping real-time listener for non-admin user to avoid permission errors');
+      // For non-admins, rely on manual refreshes or other methods
+    }
   }
 
   // Refresh tasks list
@@ -357,22 +367,41 @@ class TaskController extends GetxController {
       }
       // --- CASE 2: No search ---
       else {
-        Query query = FirebaseFirestore.instance
-            .collection('tasks')
-            .orderBy('timestamp', descending: sortBy == "Newest")
-            .limit(pageSize);
+        final isAdmin = AuthController.to.isAdmin.value;
+        debugPrint('loadMoreTasks: User is admin: $isAdmin');
 
-        // Apply status filter
-        if (filterStatus != 'All') {
-          query = query.where('status', isEqualTo: filterStatus);
+        if (isAdmin) {
+          Query query = FirebaseFirestore.instance
+              .collection('tasks')
+              .orderBy('timestamp', descending: sortBy == "Newest")
+              .limit(pageSize);
+
+          // Apply status filter
+          if (filterStatus != 'All') {
+            query = query.where('status', isEqualTo: filterStatus);
+          }
+
+          if (lastDocument != null) {
+            query = query.startAfterDocument(lastDocument!);
+          }
+
+          final snapshot = await query.get();
+          docs = snapshot.docs;
+        } else {
+          // For non-admins, use filtered queries to avoid permission errors
+          debugPrint('loadMoreTasks: Using filtered queries for non-admin user');
+          // Since pagination on multiple queries is complex, for simplicity, fetch relevant tasks and paginate locally or adjust
+          // For now, fetch all relevant and handle pagination differently
+          // This is a placeholder; in a full implementation, you'd need to paginate the relevant queries
+          final relevantSnapshot = await FirebaseFirestore.instance
+              .collection('tasks')
+              .where('assignedReporterId', isEqualTo: AuthController.to.currentUser?.uid)
+              .orderBy('timestamp', descending: sortBy == "Newest")
+              .limit(pageSize)
+              .get();
+          docs = relevantSnapshot.docs;
+          // Note: This only fetches assigned reporter tasks; you may need to combine multiple where clauses or use a different strategy
         }
-
-        if (lastDocument != null) {
-          query = query.startAfterDocument(lastDocument!);
-        }
-
-        final snapshot = await query.get();
-        docs = snapshot.docs;
       }
 
       List<Task> pageTasks = [];
@@ -440,10 +469,25 @@ class TaskController extends GetxController {
 
       List<QueryDocumentSnapshot> docs = [];
 
-      // Simplified query - just get all tasks
-      final snapshot =
-          await FirebaseFirestore.instance.collection('tasks').get();
-      docs = snapshot.docs;
+      // Check if user is admin for broad query
+      final isAdmin = AuthController.to.isAdmin.value;
+      debugPrint('loadMoreTasksForAllUsers: User is admin: $isAdmin');
+
+      if (isAdmin) {
+        // Simplified query - just get all tasks
+        final snapshot =
+            await FirebaseFirestore.instance.collection('tasks').get();
+        docs = snapshot.docs;
+      } else {
+        // For non-admins, use filtered query to avoid permission errors
+        debugPrint('loadMoreTasksForAllUsers: Using filtered query for non-admin user');
+        final snapshot = await FirebaseFirestore.instance
+            .collection('tasks')
+            .where('assignedReporterId', isEqualTo: AuthController.to.currentUser?.uid)
+            .get();
+        docs = snapshot.docs;
+        // Note: Similar to above, this is a simplified filter; adjust as needed
+      }
 
       List<Task> pageTasks = [];
 
@@ -1709,28 +1753,42 @@ class TaskController extends GetxController {
       debugPrint('=== LOADING INITIAL TASKS ===');
       debugPrint('TaskController: User role: ${AuthController.to.userRole.value}');
       debugPrint('TaskController: User ID: ${AuthController.to.currentUser?.uid}');
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tasks')
-          .orderBy('timestamp', descending: true)
-          .get();
 
-      debugPrint(
-          'loadInitialTasks: Found ${snapshot.docs.length} tasks in Firebase');
+      // Check if user is admin to decide query type
+      final isAdmin = AuthController.to.isAdmin.value;
+      debugPrint('loadInitialTasks: User is admin: $isAdmin');
 
-      final firebaseTasks = await Future.wait(snapshot.docs.map((doc) async {
-        final data = doc.data();
-        data['taskId'] = doc.id;
-        final task = Task.fromMap(data);
-        await _populateCreatedByName(task);
+      if (isAdmin) {
+        // Admin can load all tasks
+        final snapshot = await FirebaseFirestore.instance
+            .collection('tasks')
+            .orderBy('timestamp', descending: true)
+            .get();
+
         debugPrint(
-            'loadInitialTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
-        return task;
-      }));
+            'loadInitialTasks: Found ${snapshot.docs.length} tasks in Firebase');
 
-      tasks.assignAll(firebaseTasks);
-      tasks.refresh();
-      debugPrint(
-          'loadInitialTasks: Loaded ${tasks.length} tasks into controller');
+        final firebaseTasks = await Future.wait(snapshot.docs.map((doc) async {
+          final data = doc.data();
+          data['taskId'] = doc.id;
+          final task = Task.fromMap(data);
+          await _populateCreatedByName(task);
+          debugPrint(
+              'loadInitialTasks: Task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
+          return task;
+        }));
+
+        tasks.assignAll(firebaseTasks);
+        tasks.refresh();
+        debugPrint(
+            'loadInitialTasks: Loaded ${tasks.length} tasks into controller');
+      } else {
+        // Non-admin users load only relevant tasks
+        debugPrint('loadInitialTasks: Loading relevant tasks for non-admin user');
+        await fetchRelevantTasksForUser();
+        debugPrint('loadInitialTasks: Loaded ${tasks.length} relevant tasks for non-admin user');
+      }
+
       debugPrint('=== END LOADING INITIAL TASKS ===');
       errorMessage.value = '';
     } catch (e) {

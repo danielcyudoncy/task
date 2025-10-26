@@ -92,11 +92,11 @@ class ManageUsersController extends GetxController {
             data['avatar_url'] ??
             '';
 
-        final assignedTasksSnapshot =
-            await doc.reference.collection('assignedTasks').get();
-        final taskIds =
-            assignedTasksSnapshot.docs.map((taskDoc) => taskDoc.id).toList();
-        assignedTasks[doc.id] = taskIds;
+        // final assignedTasksSnapshot =
+        //     await doc.reference.collection('assignedTasks').get();
+        // final taskIds =
+        //     assignedTasksSnapshot.docs.map((taskDoc) => taskDoc.id).toList();
+        // assignedTasks[doc.id] = taskIds;
 
         debugPrint(
             '[ManageUsersController] User loaded: id=${doc.id}, name=${data['fullName'] ?? data['fullname']}, role=${data['role']}');
@@ -109,7 +109,7 @@ class ManageUsersController extends GetxController {
           'role': data['role'] ?? 'No Role',
           'email': data['email'] ?? 'No Email',
           'photoUrl': photoUrl,
-          'hasTask': taskIds.isNotEmpty,
+          // 'hasTask': taskIds.isNotEmpty,
         };
       }));
 
