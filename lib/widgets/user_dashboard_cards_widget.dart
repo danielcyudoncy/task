@@ -32,51 +32,43 @@ class UserDashboardCardsWidget extends StatelessWidget {
     final orientation = MediaQuery.of(context).orientation;
     final screenWidth = AppDevices.getScreenWidth(context);
     AppDevices.isTablet(context);
-    
-    // Responsive card dimensions based on orientation and screen size
-    final cardWidth = orientation == Orientation.portrait
-        ? screenWidth < 400
-            ? (screenWidth - 32) / 2.0  // Small screens: 2 cards per row
-            : (screenWidth - 48) / 2.2  // Normal screens: balanced cards
-        : screenWidth < 600
-            ? (screenWidth - 32) / 3.0  // Small landscape: 3 cards per row
-            : (screenWidth - 48) / 4.0; // Large landscape: 4 cards per row
-    
+
     // Responsive card heights based on orientation and screen size
     final baseHeight = orientation == Orientation.portrait
-        ? screenWidth < 400 ? 140.0 : 160.0  // Smaller height for small screens
-        : screenWidth < 600 ? 100.0 : 120.0; // Smaller height for small landscape
+        ? 120.0 // Simplified height for portrait
+        : screenWidth < 600
+            ? 140.0
+            : 140.0; // Smaller height for small landscape
 
     final assignedTaskHeight = baseHeight;
     final newsFeedHeight = baseHeight;
-    final onlineNowHeight = baseHeight * 0.75;  // 75% of base height
+    final onlineNowHeight = baseHeight * 0.75; // 75% of base height
     final taskCreatedHeight = baseHeight * 0.75; // 75% of base height
 
     return Padding(
-      padding: const EdgeInsets.all(12.0),
+      padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 12.h),
       child: orientation == Orientation.portrait
-          ? _buildPortraitLayout(cardWidth, assignedTaskHeight,
-              taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor)
-          : _buildLandscapeLayout(cardWidth, assignedTaskHeight,
-              taskCreatedHeight, onlineNowHeight, newsFeedHeight, cardColor),
+          ? _buildPortraitLayout(context, assignedTaskHeight, taskCreatedHeight,
+              onlineNowHeight, newsFeedHeight, cardColor)
+          : _buildLandscapeLayout(assignedTaskHeight, taskCreatedHeight,
+              onlineNowHeight, newsFeedHeight, cardColor),
     );
   }
 
   Widget _buildPortraitLayout(
-      double cardWidth,
+      BuildContext context,
       double assignedTaskHeight,
       double taskCreatedHeight,
       double onlineNowHeight,
       double newsFeedHeight,
       Color cardColor) {
-    return IntrinsicHeight(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LayoutBuilder(builder: (context, constraints) {
+      final cardWidth = (constraints.maxWidth - 10.w) / 2;
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Left column
           Column(
-            mainAxisSize: MainAxisSize.max,
             children: [
               SizedBox(
                 width: cardWidth,
@@ -92,7 +84,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
                   );
                 }),
               ),
-              SizedBox(height: 14.h),
+              SizedBox(height: 10.h),
               SizedBox(
                 width: cardWidth,
                 height: taskCreatedHeight,
@@ -112,10 +104,9 @@ class UserDashboardCardsWidget extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: 10.w),
           // Right column
           Column(
-            mainAxisSize: MainAxisSize.max,
             children: [
               SizedBox(
                 width: cardWidth,
@@ -134,7 +125,7 @@ class UserDashboardCardsWidget extends StatelessWidget {
                   },
                 ),
               ),
-              SizedBox(height: 14.h),
+              SizedBox(height: 10.h),
               SizedBox(
                 width: cardWidth,
                 height: newsFeedHeight,
@@ -155,24 +146,21 @@ class UserDashboardCardsWidget extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildLandscapeLayout(
-      double cardWidth,
       double assignedTaskHeight,
       double taskCreatedHeight,
       double onlineNowHeight,
       double newsFeedHeight,
       Color cardColor) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          SizedBox(
-            width: cardWidth,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Expanded(
+          child: SizedBox(
             height: assignedTaskHeight,
             child: Obx(() {
               final count = assignedTasksCount.value;
@@ -185,9 +173,10 @@ class UserDashboardCardsWidget extends StatelessWidget {
               );
             }),
           ),
-          SizedBox(width: 14.w),
-          SizedBox(
-            width: cardWidth,
+        ),
+        SizedBox(width: 14.w),
+        Expanded(
+          child: SizedBox(
             height: onlineNowHeight,
             child: StreamBuilder<int>(
               stream: onlineUsersStream,
@@ -203,9 +192,10 @@ class UserDashboardCardsWidget extends StatelessWidget {
               },
             ),
           ),
-          SizedBox(width: 14.w),
-          SizedBox(
-            width: cardWidth,
+        ),
+        SizedBox(width: 14.w),
+        Expanded(
+          child: SizedBox(
             height: taskCreatedHeight,
             child: StreamBuilder<int>(
               stream: tasksCreatedStream,
@@ -221,9 +211,10 @@ class UserDashboardCardsWidget extends StatelessWidget {
               },
             ),
           ),
-          SizedBox(width: 14.w),
-          SizedBox(
-            width: cardWidth,
+        ),
+        SizedBox(width: 14.w),
+        Expanded(
+          child: SizedBox(
             height: newsFeedHeight,
             child: StreamBuilder<int>(
               stream: newsFeedStream,
@@ -239,8 +230,8 @@ class UserDashboardCardsWidget extends StatelessWidget {
               },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -265,6 +256,7 @@ class _DashboardGridCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [color, Color.lerp(color, Colors.white, 0.2)!],
@@ -274,7 +266,7 @@ class _DashboardGridCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
+              color: Colors.black.withOpacity(0.15),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -283,25 +275,41 @@ class _DashboardGridCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 36),
-            const SizedBox(height: 10),
-            Text(
-              value.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              flex: 3,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: Icon(icon, color: Colors.white),
               ),
             ),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            const SizedBox(height: 4),
+            Expanded(
+              flex: 2,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: Text(
+                  value.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Expanded(
+              flex: 2,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

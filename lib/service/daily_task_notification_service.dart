@@ -345,6 +345,7 @@ class DailyTaskNotificationService extends GetxService {
         },
       );
     }
+  }
 
   void _showNewAssignmentNotification(int newAssignments) {
     Get.snackbar(
@@ -364,7 +365,6 @@ class DailyTaskNotificationService extends GetxService {
       dismissDirection: DismissDirection.horizontal,
     );
   }
-
 
   /// Get daily task statistics
   Map<String, int> get dailyStats => {
