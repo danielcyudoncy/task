@@ -1,95 +1,97 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+
+    // --- HELPER FUNCTIONS (DEFINED AT TOP LEVEL) ---
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
-    // Check if user has admin role
+
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'admin', 'superadmin', 'administrator'];
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in 
+          ['Admin', 'admin', 'superadmin', 'administrator'];
     }
 
-    // Rules for the 'users' collection
+    // --- USERS ---
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow write: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow create: if isAuthenticated() && isOwner(userId);
-      allow update: if isAuthenticated() && isOwner(userId) && 
-        (isAdmin() || !('role' in request.resource.data));
+      allow get, list: if isAuthenticated();
+      allow create, update: if isOwner(userId) || isAdmin();
     }
-    
-    // Rules for subcollections of a user
+
+    // --- USER SUBCOLLECTIONS (e.g., notifications, assignedTasks) ---
     match /users/{userId}/{collection}/{document=**} {
       allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
-    
-    // Rules for the 'tasks' collection - FIXED
+
+    // --- TASKS ---
     match /tasks/{taskId} {
-      // Allow admins to read all tasks, users to read their own tasks
       allow read: if isAuthenticated() && (
-        isAdmin() || 
-        resource.data.createdBy == request.auth.uid
-      );
-      
-      // Allow admins to write all tasks, users to create their own tasks
-      allow write: if isAuthenticated() && (
         isAdmin() ||
-        request.resource.data.createdBy == request.auth.uid
+        resource.data.createdBy == request.auth.uid ||
+        (resource.data.assignedTo == request.auth.uid) ||
+        (resource.data.assignedReporterId == request.auth.uid) ||
+        (resource.data.assignedCameramanId == request.auth.uid) ||
+        (resource.data.assignedDriverId == request.auth.uid) ||
+        (resource.data.assignedLibrarianId == request.auth.uid) ||
+        (request.auth.uid in resource.data.assignedUserIds)
       );
-      
-      // Specific create rules
-      allow create: if isAuthenticated() && (
-        isAdmin() ||
-        request.resource.data.createdBy == request.auth.uid
-      );
-      
-      // Specific update rules  
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.createdBy == request.auth.uid
-      );
-      
-      // Specific delete rules
-      allow delete: if isAuthenticated() && (
-        isAdmin() ||
-        resource.data.createdBy == request.auth.uid
+
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        isAdmin() || resource.data.createdBy == request.auth.uid
       );
     }
-    
-    // Rules for other collections
-    match /user_settings/{userId} {
-      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
-    }
-    
-    match /admins/{adminId} {
-      allow read, write: if isAdmin();
-    }
-    
-    match /dashboard_metrics/{metricId} {
-      allow read, write: if isAdmin();
-    }
-    
+
+    // --- CONVERSATIONS ---
     match /conversations/{conversationId} {
-      allow read, write: if isAuthenticated();
+      function isParticipant() {
+        return request.auth.uid in resource.data.participants;
+      }
+      
+      allow read, update: if isParticipant();
+      allow create: if request.auth.uid in request.resource.data.participants;
+
+      // Rule for subcollections like 'messages'
+      match /{document=**} {
+        function isParentConversationParticipant() {
+          // This check relies on the parent document having a 'participants' array
+          return request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        }
+
+        allow read, create: if isParentConversationParticipant();
+        allow update, delete: if request.auth.uid == resource.data.senderId;
+      }
     }
-    
-    match /news/{newsId} {
-      allow read: if isAuthenticated();
+
+    // --- ADMIN & DASHBOARD ---
+    match /dashboard_metrics/{metricId} {
+      allow read: if isAdmin();
       allow write: if isAdmin();
     }
     
-    // Health check collection
-    match /_health_check/{docId} {
+    match /admin/{document} {
+      allow read, write: if isAdmin();
+    }
+    
+    match /public_content/{document} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // --- OTHER ---
+    match /user_data/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /test/{document} {
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
   }
 }
