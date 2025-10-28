@@ -27,8 +27,14 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isAdmin();
       // Any authenticated user can create a user profile (e.g., during sign-up).
       allow create: if isAuthenticated();
-      // Only admins can list all users.
-      allow list: if isAdmin();
+      // Authenticated users can list users (needed for chat, user selection, etc.)
+      allow list: if isAuthenticated();
+
+      // User notifications subcollection
+      match /notifications/{notificationId} {
+        // Users can read/write their own notifications
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Tasks Collection
