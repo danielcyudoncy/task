@@ -53,6 +53,7 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
                       painter: ConcentricCirclePainter(
                         centerOffset: Offset(70.w, 90.h),
                         ringColor: isDark ? Colors.white54 : Colors.white,
+                        isDark: isDark,
                       ),
                     ),
                   ),
@@ -142,7 +143,7 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
                         _showCalendar ? Theme.of(context).primaryColor : null,
                   ),
                   title: Text(
-                      _showCalendar ? 'hide_calendar'.tr : 'show_calendar'.tr),
+                      _showCalendar ? 'Hide Calender'.tr : 'Show Calendar'.tr),
                   onTap: () {
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _showCalendar = !_showCalendar);
@@ -268,7 +269,7 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: Obx(() => SwitchListTile(
-            title: Text('dark_mode'.tr,
+            title: Text('Dark Mode',
                 style: TextStyle(
                     fontSize: 16.sp,
                     color: Theme.of(context).textTheme.bodyLarge?.color)),
@@ -281,17 +282,63 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
   }
 
   Future<void> _confirmLogout() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await Get.dialog<bool>(
       AlertDialog(
-        title: Text('confirm_logout'.tr),
-        content: Text('are_you_sure'.tr),
+        backgroundColor: Theme.of(Get.context!).colorScheme.surface,
+        title: Center(
+          child: Text(
+            'Confirm Logout'.tr,
+            style: TextStyle(
+              color: Theme.of(Get.context!).colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        content: Text(
+          'Are you sure?'.tr,
+          style: TextStyle(
+            color: Theme.of(Get.context!)
+                .colorScheme
+                .onSurface
+                .withValues(alpha: 0.8),
+            fontSize: 14.sp,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
-              onPressed: () => Get.back(result: false),
-              child: Text('cancel'.tr)),
+            onPressed: () => Get.back(result: false),
+            child: Text(
+              'cancel'.tr,
+              style: TextStyle(
+                color:
+                    isDark ? Colors.white : Theme.of(Get.context!).primaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
           ElevatedButton(
-              onPressed: () => Get.back(result: true),
-              child: Text('logout'.tr)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark
+                  ? Colors.white
+                  : Theme.of(Get.context!).colorScheme.error,
+              foregroundColor: isDark ? Colors.black : Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () => Get.back(result: true),
+            child: Text(
+              'logout'.tr,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -307,9 +354,13 @@ class _LibrarianAppDrawerState extends State<LibrarianAppDrawer> {
 class ConcentricCirclePainter extends CustomPainter {
   final Offset centerOffset;
   final Color ringColor;
+  final bool isDark;
 
-  ConcentricCirclePainter(
-      {required this.centerOffset, required this.ringColor});
+  ConcentricCirclePainter({
+    required this.centerOffset,
+    required this.ringColor,
+    required this.isDark,
+  });
 
   @override
   void paint(Canvas c, Size s) {

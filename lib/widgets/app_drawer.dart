@@ -196,7 +196,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         _showCalendar ? Theme.of(context).primaryColor : null,
                   ),
                   title: Text(
-                      _showCalendar ? 'hide_calendar'.tr : 'show_calendar'.tr),
+                      _showCalendar ? 'Hide Calendar'.tr : 'Show Calendar'.tr),
                   onTap: () {
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _showCalendar = !_showCalendar);
@@ -466,7 +466,7 @@ class _AppDrawerState extends State<AppDrawer> {
         backgroundColor: Theme.of(Get.context!).colorScheme.surface,
         title: Center(
           child: Text(
-            'confirm_logout'.tr,
+            'Confirm Logout'.tr,
             style: TextStyle(
               color: Theme.of(Get.context!).colorScheme.onSurface,
               fontWeight: FontWeight.bold,
@@ -475,7 +475,7 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
         ),
         content: Text(
-          'are_you_sure'.tr,
+          'Are you sure?'.tr,
           style: TextStyle(
             color: Theme.of(Get.context!)
                 .colorScheme
