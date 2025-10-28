@@ -69,6 +69,7 @@ class UserController extends GetxController {
     super.onClose();
     reporters.close();
     cameramen.close();
+    drivers.close();
     allUsers.close();
   }
 
@@ -109,18 +110,16 @@ class UserController extends GetxController {
   }
 
   void fetchAllUsers() {
-    if (_isAdminOrEditor(authController.userRole.value)) {
-      allUsers.bindStream(
-        _firestore
-            .collection("users")
-            .snapshots()
-            .handleError((error) => Get.log("All users fetch error: $error"))
-            .map((snapshot) => snapshot.docs
-                .where((doc) => doc.id != authController.currentUser!.uid)
-                .map(_mapUserWithRole)
-                .toList()),
-      );
-    }
+    allUsers.bindStream(
+      _firestore
+          .collection("users")
+          .snapshots()
+          .handleError((error) => Get.log("All users fetch error: $error"))
+          .map((snapshot) => snapshot.docs
+              .where((doc) => doc.id != authController.currentUser!.uid)
+              .map(_mapUserWithRole)
+              .toList()),
+    );
   }
 
   Map<String, dynamic> _mapUser(DocumentSnapshot doc) {
@@ -138,11 +137,6 @@ class UserController extends GetxController {
       "name": data["fullName"] ?? "Unknown",
       "role": data["role"] ?? "Unknown",
     };
-  }
-
-  bool _isAdminOrEditor(String role) {
-    const validRoles = ["Admin", "Assignment Editor", "Head of Department"];
-    return validRoles.contains(role);
   }
 
   Future<void> deleteUser(String uid) async {
