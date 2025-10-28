@@ -6,6 +6,14 @@
         ".write": "auth != null && auth.uid == $userId"
       }
     },
+    "typing_status": {
+      "$conversationId": {
+        "$userId": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid == $userId"
+        }
+      }
+    },
     "users": {
       "$userId": {
         ".read": "auth != null",
