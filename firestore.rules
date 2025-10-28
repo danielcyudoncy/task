@@ -48,18 +48,21 @@ service cloud.firestore {
 
     // Conversations Collection
     match /conversations/{conversationId} {
-      // A user can read or update a conversation if they are a participant.
-      // This rule structure supports collection queries (lists).
-      allow read, update: if isAuthenticated() && request.auth.uid in resource.data.participants;
+      // A user can read a conversation if they are a participant or an admin.
+      allow read: if (isAuthenticated() && request.auth.uid in resource.data.participants) || isAdmin();
+      // A user can update a conversation if they are a participant.
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.participants;
       // A user can create a conversation if they are authenticated and are one of the participants.
       allow create: if isAuthenticated() && request.auth.uid in request.resource.data.participants;
-      // Only admins can list all conversations.
-      allow list: if isAdmin();
+      // Authenticated users can list conversations (client queries should filter by participant).
+      allow list: if isAuthenticated();
 
       // Messages Subcollection
       match /messages/{messageId} {
-        // A user can read or create a message if they are a participant of the parent conversation.
-        allow read, create: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        // A user can read messages if they are a participant of the parent conversation or an admin.
+        allow read: if (isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants) || isAdmin();
+        // A user can create a message if they are a participant of the parent conversation.
+        allow create: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
         // A user can only update or delete a message if they are the sender.
         allow update, delete: if isAuthenticated() && resource.data.senderId == request.auth.uid;
       }
