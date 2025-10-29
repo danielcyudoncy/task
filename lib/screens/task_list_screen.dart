@@ -20,82 +20,173 @@ class _TaskListScreenState extends State<TaskListScreen> {
   final AuthController authController = Get.find<AuthController>();
   final UserCacheService userCacheService = Get.find<UserCacheService>();
 
+  // Search and filter controllers
+  final TextEditingController searchController = TextEditingController();
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController tagsController = TextEditingController();
+  final TextEditingController assignedToController = TextEditingController();
+  
   DateTime? selectedDueDate;
+  String selectedStatusFilter = 'All';
+  
+  // Filter options
+  final List<String> statusOptions = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled'];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('all_tasks'.tr)),
-      body: Obx(() {
-        if (taskController.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (taskController.tasks.isEmpty) {
-          return Center(
-            child: Text(
-              'no_tasks_available'.tr,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      appBar: AppBar(
+        title: Text('all_tasks'.tr),
+      ),
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: 'search_tasks'.tr,
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              onChanged: (value) {
+                setState(() {}); // Trigger rebuild for real-time search
+              },
             ),
-          );
-        }
-
-        String userRole = authController.userRole.value;
-        String userId = authController.auth.currentUser?.uid ?? "";
-
-        var filteredTasks = taskController.tasks.where((task) {
-          if (userRole == "Reporter" ||
-              userRole == "Producer" ||
-              userRole == "Anchor" ||
-              userRole == "Business Reporter" ||
-              userRole == "Political Reporter" ||
-              userRole == "Digital Reporter" ||
-              userRole == "Web Producer") {
-            return task.assignedReporterId == userId ||
-                task.createdById == userId;
-          } else if (userRole == "Cameraman") {
-            return task.assignedCameramanId == userId ||
-                task.createdById == userId;
-          } else if (userRole == "Driver") {
-            return task.assignedDriverId == userId ||
-                task.createdById == userId;
-          } else if (userRole == "Librarian") {
-            return task.assignedLibrarianId == userId ||
-                task.createdById == userId;
-          }
-          return true;
-        }).toList();
-
-        if (filteredTasks.isEmpty) {
-          return Center(
-            child: Text(
-              'no_tasks_for_role'.tr,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          
+          // Quick Filters Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilterChip(
+                    label: Text(selectedStatusFilter),
+                    selected: selectedStatusFilter != 'All',
+                    onSelected: (selected) {
+                      setState(() {
+                        selectedStatusFilter = selected ? selectedStatusFilter : 'All';
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.clear_all),
+                  onPressed: _clearAllFilters,
+                ),
+              ],
             ),
-          );
-        }
+          ),
+          
+          // Tasks List
+          Expanded(
+            child: Obx(() {
+              if (taskController.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        return ListView.builder(
-          itemCount: filteredTasks.length,
-          itemBuilder: (context, index) {
-            var task = filteredTasks[index];
+              // Show all tasks for all users - no role filtering
+              var filteredTasks = _applySearchAndFilters();
 
-            return TaskCardWidget(
-              task: task,
-              isCompleted: task.status == 'Completed',
-              isDark: false,
-            );
-          },
-        );
-      }),
+              if (filteredTasks.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.task_alt,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        searchController.text.isNotEmpty || 
+                        selectedStatusFilter != 'All'
+                            ? 'no_tasks_match_filters'.tr
+                            : 'no_tasks_available'.tr,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        searchController.text.isNotEmpty || 
+                        selectedStatusFilter != 'All'
+                            ? 'try_adjusting_your_filters'.tr
+                            : '',
+                        style: TextStyle(color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async {
+                  // Refresh tasks
+                  await taskController.fetchRelevantTasksForUser();
+                },
+                child: ListView.builder(
+                  itemCount: filteredTasks.length,
+                  itemBuilder: (context, index) {
+                    var task = filteredTasks[index];
+
+                    return TaskCardWidget(
+                      task: task,
+                      isCompleted: task.status == 'Completed',
+                      isDark: false,
+                    );
+                  },
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTaskDialog(context),
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: UserNavBar(currentIndex: 1),
     );
+  }
+
+  // Apply search and filter logic
+  List _applySearchAndFilters() {
+    var tasks = taskController.tasks.toList(); // Convert RxList to List
+
+    // Apply search filter
+    if (searchController.text.isNotEmpty) {
+      final searchQuery = searchController.text.toLowerCase();
+      tasks = tasks.where((task) {
+        return task.title.toLowerCase().contains(searchQuery) ||
+            task.description.toLowerCase().contains(searchQuery) ||
+            (task.category ?? '').toLowerCase().contains(searchQuery) ||
+            (task.tags).any((tag) => tag.toLowerCase().contains(searchQuery));
+      }).toList();
+    }
+
+    // Apply status filter
+    if (selectedStatusFilter != 'All') {
+      tasks = tasks.where((task) => 
+          task.status.toLowerCase() == selectedStatusFilter.toLowerCase()
+      ).toList();
+    }
+
+    return tasks;
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      searchController.clear();
+      selectedStatusFilter = 'All';
+    });
   }
 
   void _showAddTaskDialog(BuildContext context) {

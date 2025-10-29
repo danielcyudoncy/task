@@ -20,7 +20,7 @@ class AppDrawer extends StatefulWidget {
 }
 
 class _AppDrawerState extends State<AppDrawer> {
-  final authController = Get.find<AuthController>();
+  final AuthController authController = Get.find<AuthController>();
   bool _logoutHovered = false, _showCalendar = false;
   DateTime _focusedDay = DateTime.now();
   bool _isNavigating = false;
@@ -279,14 +279,19 @@ class _AppDrawerState extends State<AppDrawer> {
                     Get.back();
                     Get.toNamed('/profile');
                   }),
-                  _drawerTile(Icons.chat_outlined, 'Chat Users', () async {
+                  _drawerTile(Icons.chat_outlined, 'Chat', () async {
                     if (_isNavigating) return;
                     Get.find<SettingsController>().triggerFeedback();
                     setState(() => _isNavigating = true);
                     Navigator.of(context).pop();
                     await Future.delayed(const Duration(milliseconds: 200));
                     try {
-                      await Get.toNamed('/all-users-chat');
+                      final authController = Get.find<AuthController>();
+                      if (authController.userRole.value == 'Admin') {
+                        await Get.toNamed('/admin-chat');
+                      } else {
+                        await Get.toNamed('/user-chat-list');
+                      }
                     } catch (e) {
                       Get.snackbar("Error", "Could not open chat");
                     } finally {

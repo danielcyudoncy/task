@@ -4,10 +4,13 @@ import 'package:get/get.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:task/utils/constants/app_colors.dart';
 
-class ChatNavBar extends StatelessWidget {
+class ChatNavBar extends StatelessWidget implements PreferredSizeWidget {
   final int currentIndex;
 
   const ChatNavBar({super.key, this.currentIndex = 0});
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   void _onTap(int index) {
     if (index == 0) {
@@ -16,6 +19,7 @@ class ChatNavBar extends StatelessWidget {
       Get.offAllNamed('/profile');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -25,6 +25,7 @@ import 'package:task/screens/onboarding_screen.dart';
 import 'package:task/screens/user_list_screen.dart';
 import 'package:task/screens/news_screen.dart';
 import 'package:task/screens/all_users_chat_screen.dart';
+import 'package:task/screens/user_chat_list_screen.dart';
 import 'package:task/screens/notification_fix_screen.dart';
 import 'package:task/screens/email_link_signin_screen.dart';
 import 'package:task/screens/app_lock_screen.dart';
@@ -201,7 +202,14 @@ class AppRoutes {
       transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
-      name: "/all-users-chat",
+      name: "/user-chat-list",
+      page: () => const UserChatListScreen(),
+      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 200),
+    ),
+    GetPage(
+      name: "/admin-chat",
       page: () => const AllUsersChatScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       transition: Transition.fade,

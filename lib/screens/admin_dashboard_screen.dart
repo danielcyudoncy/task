@@ -260,29 +260,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                         ),
                                       ),
                                     ),
+                                    GestureDetector(
+                                      onTap: () => Get.toNamed('/manage-users'),
+                                      child: Container(
+                                        width: 34.w,
+                                        height: 34.h,
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary
+                                              : const Color(0xFF3739B7),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.people,
+                                          size: 22.sp,
+                                          color: isDark
+                                              ? const Color(0xFF3739B7)
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => Get.toNamed('/admin-chat'),
+                                      child: Container(
+                                        width: 34.w,
+                                        height: 34.h,
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary
+                                              : const Color(0xFF3739B7),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.chat,
+                                          size: 22.sp,
+                                          color: isDark
+                                              ? const Color(0xFF3739B7)
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ),
-                              TabBar(
-                                controller: _tabController,
-                                indicatorColor: isDark
-                                    ? Theme.of(context).colorScheme.onPrimary
-                                    : Theme.of(context).colorScheme.primary,
-                                labelColor: isDark
-                                    ? Theme.of(context).colorScheme.onPrimary
-                                    : Theme.of(context).colorScheme.primary,
-                                unselectedLabelColor: isDark
-                                    ? const Color(0xFFB0B0B0)
-                                    : Colors.black54,
-                                labelStyle: const TextStyle(
-                                    fontWeight: FontWeight.w500, fontSize: 15),
-                                isScrollable: true,
-                                tabs: const [
-                                  Tab(text: "Not Completed"),
-                                  Tab(text: "Completed"),
-                                  Tab(text: "Pending Approval"),
-                                  Tab(text: "User Performance"),
-                                ],
                               ),
                               const SizedBox(height: 8),
                               SizedBox(

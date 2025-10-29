@@ -26,10 +26,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final AuthController authController = Get.find<AuthController>();
-  final TaskController taskController = Get.find<TaskController>();
-  final NotificationController notificationController = Get.find<NotificationController>();
-  final SettingsController settingsController = Get.find<SettingsController>();
+  late final AuthController authController;
+  late final TaskController taskController;
+  late final NotificationController notificationController;
+  late final SettingsController settingsController;
 
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -38,6 +38,9 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    
+    // Initialize controllers safely
+    _initializeControllers();
 
     // Add a small delay to ensure the screen is fully initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -45,11 +48,28 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
+  void _initializeControllers() {
+    // Safely get controllers, may return null if not registered yet
+    authController = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : AuthController();
+    taskController = Get.isRegistered<TaskController>() ? Get.find<TaskController>() : TaskController();
+    notificationController = Get.isRegistered<NotificationController>() ? Get.find<NotificationController>() : NotificationController();
+    // SettingsController requires AudioPlayer parameter, so only use it if registered
+    if (Get.isRegistered<SettingsController>()) {
+      settingsController = Get.find<SettingsController>();
+    }
+  }
+
   void _initializeData() {
     // Use a small delay to ensure the screen is fully built before fetching data
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
         try {
+          // Only proceed if all controllers are properly initialized
+          if (!Get.isRegistered<TaskController>() || !Get.isRegistered<NotificationController>()) {
+            debugPrint('HomeScreen: Controllers not ready yet, will retry later');
+            return;
+          }
+
           final isAdmin = authController.isAdmin.value;
           if (isAdmin) {
             taskController.fetchTasks();
@@ -61,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen>
           notificationController.fetchNotifications();
         } catch (e) {
           // Error handling - could implement proper logging here
+          debugPrint('HomeScreen: Error during initialization: $e');
         }
       }
     });
@@ -180,19 +201,18 @@ class _HomeScreenState extends State<HomeScreen>
                                       tasksCreatedStream: taskController.createdTasksCountStream(userId),
                                       newsFeedStream: Stream.value(3),
                                       onAssignedTasksTap: () {
-                                        _tabController.animateTo(0);
-                                        setState(() {
-                                          _tabController.index = 0;
-                                        });
+                                        // Display-only card - no navigation needed
                                       },
                                       onOnlineUsersTap: () {
-                                        Get.toNamed('/all-users-chat');
+                                        final authController = Get.find<AuthController>();
+                                        if (authController.userRole.value == 'Admin') {
+                                          Get.toNamed('/admin-chat');
+                                        } else {
+                                          Get.toNamed('/user-chat-list');
+                                        }
                                       },
                                       onTasksCreatedTap: () {
-                                        _tabController.animateTo(1);
-                                        setState(() {
-                                          _tabController.index = 1;
-                                        });
+                                        // Display-only card - no navigation needed
                                       },
                                       onNewsFeedTap: () {
                                         Get.toNamed('/news');

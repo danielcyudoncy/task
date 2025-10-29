@@ -594,84 +594,84 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                             ),
                             const SizedBox(height: 16),
                             // Category Dropdown
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: _selectedCategory,
-                                    dropdownColor:
-                                        Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? const Color(0xFF232323)
-                                            : null,
-                                    items: _categories
-                                        .map((category) =>
-                                            DropdownMenuItem<String>(
-                                              value: category,
-                                              child: Container(
-                                                width: double.infinity,
-                                                constraints: BoxConstraints(
-                                                  maxWidth:
-                                                      MediaQuery.of(context)
-                                                              .size
-                                                              .width *
-                                                          0.7,
-                                                ),
-                                                child: Text(
-                                                  category,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: isTablet ? 2 : 1,
-                                                  style: TextStyle(
-                                                    fontSize: isTablet
-                                                        ? 14.sp
-                                                        : 13.sp,
-                                                    fontFamily: 'Raleway',
-                                                  ),
-                                                ),
-                                              ),
-                                            ))
-                                        .toList(),
-                                    decoration: InputDecoration(
-                                      labelText: "Category",
-                                      labelStyle: TextStyle(
-                                        fontSize: 14.sp,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                      filled: true,
-                                      fillColor: Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Color(0xFF232323)
-                                          : Color(0xFFF5F5F5),
-                                    ),
-                                    menuMaxHeight:
-                                        MediaQuery.of(context).size.height *
-                                            0.4,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _selectedCategory = value;
-                                        _isOthersSelected = (value == 'Others');
-                                        // Clear custom category when switching away from "Others"
-                                        if (!_isOthersSelected) {
-                                          _customCategoryController.clear();
-                                        }
-                                      });
-                                    },
-                                    validator: (value) {
-                                      if (value == null) {
-                                        return 'Please select a category';
-                                      }
-                                      if (value == 'Others' &&
-                                          _customCategoryController.text
-                                              .trim()
-                                              .isEmpty) {
-                                        return 'Please specify the custom category';
-                                      }
-                                      return null;
-                                    },
+                            SizedBox(
+                              width: double.infinity,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _selectedCategory,
+                                dropdownColor:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color(0xFF232323)
+                                        : null,
+                                decoration: InputDecoration(
+                                  labelText: "Category",
+                                  labelStyle: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
+                                  filled: true,
+                                  fillColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Color(0xFF232323)
+                                      : Color(0xFFF5F5F5),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 12),
                                 ),
-                              ],
+                                menuMaxHeight:
+                                    MediaQuery.of(context).size.height * 0.4,
+                                items: _categories
+                                    .map((category) => DropdownMenuItem<String>(
+                                          value: category,
+                                          child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              maxWidth:
+                                                  MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.6, // Reduced width for better fit
+                                            ),
+                                            child: Text(
+                                              category,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                              style: TextStyle(
+                                                fontSize: isTablet
+                                                    ? 13.sp
+                                                    : 12.sp,
+                                                fontFamily: 'Raleway',
+                                              ),
+                                            ),
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedCategory = value;
+                                    _isOthersSelected = (value == 'Others');
+                                    // Clear custom category when switching away from "Others"
+                                    if (!_isOthersSelected) {
+                                      _customCategoryController.clear();
+                                    }
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null) {
+                                    return 'Please select a category';
+                                  }
+                                  if (value == 'Others' &&
+                                      _customCategoryController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    return 'Please specify the custom category';
+                                  }
+                                  return null;
+                                },
+                              ),
                             ),
                             // Custom Category Field (shown when "Others" is selected)
                             if (_isOthersSelected)
