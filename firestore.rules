@@ -100,6 +100,16 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Health Check Collection - For system monitoring
+    match /_health_check/{docId} {
+        allow read, write: if isAuthenticated();
+    }
+
+    // User Settings Subcollection
+    match /users/{userId}/{collection=**}/{documentId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
     // Test collection for development purposes
     match /test/{docId} {
         allow read, write: if isAuthenticated();

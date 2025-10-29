@@ -469,24 +469,25 @@ class TaskController extends GetxController {
 
       List<QueryDocumentSnapshot> docs = [];
 
-      // Check if user is admin for broad query
-      final isAdmin = AuthController.to.isAdmin.value;
-      debugPrint('loadMoreTasksForAllUsers: User is admin: $isAdmin');
+      // FIXED: Show ALL tasks for ALL users, regardless of role
+      // This method is specifically for the AllTasksScreen where everyone should see all tasks
+      debugPrint('loadMoreTasksForAllUsers: Loading ALL tasks for ALL users');
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tasks')
+          .orderBy('timestamp', descending: sortBy == "Newest")
+          .limit(pageSize)
+          .get();
+      docs = snapshot.docs;
 
-      if (isAdmin) {
-        // Simplified query - just get all tasks
-        final snapshot =
-            await FirebaseFirestore.instance.collection('tasks').get();
-        docs = snapshot.docs;
-      } else {
-        // For non-admins, use filtered query to avoid permission errors
-        debugPrint('loadMoreTasksForAllUsers: Using filtered query for non-admin user');
-        final snapshot = await FirebaseFirestore.instance
+      // Apply pagination if not reset
+      if (lastDocument != null) {
+        final paginatedSnapshot = await FirebaseFirestore.instance
             .collection('tasks')
-            .where('assignedReporterId', isEqualTo: AuthController.to.currentUser?.uid)
+            .orderBy('timestamp', descending: sortBy == "Newest")
+            .startAfterDocument(lastDocument!)
+            .limit(pageSize)
             .get();
-        docs = snapshot.docs;
-        // Note: Similar to above, this is a simplified filter; adjust as needed
+        docs = paginatedSnapshot.docs;
       }
 
       List<Task> pageTasks = [];
