@@ -1,4 +1,5 @@
 // controllers/auth_controller.dart
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -47,6 +48,7 @@ class AuthController extends GetxController {
   FirebaseService get firebaseService => _firebaseService;
 
   var isLoading = false.obs;
+  var isRoleLoaded = false.obs;
   var fullName = "".obs;
   var profilePic = "".obs;
   var phoneNumber = "".obs;
@@ -81,6 +83,9 @@ class AuthController extends GetxController {
     "Web Producer"
   ];
   bool get isLoggedIn => currentUser != null;
+
+  // Inactivity timer for automatic session management
+  Timer? _inactivityTimer;
 
   // Safe snackbar method that checks if app is ready
   void _safeSnackbar(String title, String message) {
@@ -138,7 +143,7 @@ class AuthController extends GetxController {
     _auth.authStateChanges().listen((User? firebaseUser) async {
       debugPrint("AuthController: Auth state changed - User: ${firebaseUser?.uid ?? 'null'}");
       
-      // Update our observable
+// Update our observable
       user.value = firebaseUser;
       
       if (firebaseUser != null) {
@@ -336,6 +341,7 @@ class AuthController extends GetxController {
         "AuthController: Starting loadUserData (forceRefresh: $forceRefresh)");
     if (_auth.currentUser == null) {
       debugPrint("AuthController: No current user, returning");
+      isRoleLoaded.value = true;
       return;
     }
     try {
@@ -359,7 +365,6 @@ class AuthController extends GetxController {
             "AuthController: Fresh user data loaded and cached successfully");
         debugPrint(
             "AFTER LOAD: isProfileComplete=${isProfileComplete.value}, userRole=${userRole.value}, currentRoute=${Get.currentRoute}");
-        return;
       } else {
         debugPrint(
             "AuthController: User document does not exist for ${_auth.currentUser!.uid}");
@@ -374,10 +379,12 @@ class AuthController extends GetxController {
       if (cachedData != null) {
         debugPrint("AuthController: Using cached data as fallback");
         _updateUserDataFromMap(cachedData);
-        return;
+      } else {
+        resetUserData();
+        rethrow;
       }
-      resetUserData();
-      rethrow;
+    } finally {
+      isRoleLoaded.value = true;
     }
   }
 
@@ -393,12 +400,14 @@ class AuthController extends GetxController {
   }
 
   void resetUserData() {
+    user.value = null;
+    userRole.value = '';
     fullName.value = '';
     profilePic.value = '';
-    phoneNumber.value = '';
-    userRole.value = '';
     isProfileComplete.value = false;
-    userData.clear();
+    isRoleLoaded.value = false;
+    _inactivityTimer?.cancel();
+    debugPrint("AuthController: User data reset");
   }
 
   /// Hide sensitive UI data when app backgrounds (keeps Firebase session active)
@@ -455,39 +464,43 @@ class AuthController extends GetxController {
 
   // Simplified navigateBasedOnRole method
   Future<void> navigateBasedOnRole() async {
-    // Ensure role is loaded before navigation
-    int attempts = 0;
-    while (userRole.value.isEmpty && attempts < 10) {
-      await Future.delayed(const Duration(milliseconds: 200));
-      attempts++;
+    // No longer wait here, rely on reactive state
+    debugPrint("AuthController: Navigating based on role: ${userRole.value}");
+    if (userRole.value.isEmpty) {
+      debugPrint(
+          "AuthController: Role is empty, cannot navigate. This might happen on logout or initial load.");
+      // Consider navigating to a safe default like login if this state is unexpected.
+      Get.offAllNamed('/login');
+      return;
     }
 
-    final role = userRole.value;
-    debugPrint("Navigating based on role: $role");
+    final route = _getRouteForRole(userRole.value);
+    debugPrint("AuthController: Navigating to $route");
+    Get.offAllNamed(route);
+  }
 
-    if (role == "Admin" ||
-        role == "Assignment Editor" ||
-        role == "Head of Department" ||
-        role == "News Director" ||
-        role == "Assistant News Director" ||
-        role == "Head of Unit") {
-      Get.offAllNamed('/admin-dashboard');
-    } else if (role == "Librarian") {
-      Get.offAllNamed('/librarian-dashboard');
-    } else if (role == "Reporter" ||
-        role == "Cameraman" ||
-        role == "Driver" ||
-        role == "Producer" ||
-        role == "Anchor" ||
-        role == "Business Reporter" ||
-        role == "Political Reporter" ||
-        role == "Digital Reporter" ||
-        role == "Web Producer") {
-      Get.offAllNamed('/home');
-    } else {
-      debugPrint(
-          "AuthController: No valid role found ($role), navigating to login");
-      Get.offAllNamed('/login');
+  /// Get the appropriate route based on user role
+  String _getRouteForRole(String role) {
+    switch (role) {
+      case "Admin":
+      case "Assignment Editor":
+      case "Head of Department":
+      case "Head of Unit":
+        return '/admin-dashboard';
+      case "Librarian":
+        return '/librarian-dashboard';
+      case "Reporter":
+      case "Cameraman":
+      case "Driver":
+      case "Producer":
+      case "Anchor":
+      case "Business Reporter":
+      case "Political Reporter":
+      case "Digital Reporter":
+      case "Web Producer":
+        return '/home';
+      default:
+        return '/login';
     }
   }
 
