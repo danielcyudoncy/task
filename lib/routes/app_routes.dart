@@ -97,6 +97,7 @@ class AppRoutes {
     GetPage(
       name: "/admin-dashboard",
       page: () => const AdminDashboardScreen(),
+      binding: AdminDashboardBinding(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 300),
