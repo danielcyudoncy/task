@@ -84,6 +84,13 @@ class AuthController extends GetxController {
   ];
   bool get isLoggedIn => currentUser != null;
 
+  // Helper method to reliably check admin role
+  bool get isCurrentUserAdmin {
+    return isAdmin.value ||
+           userRole.value == 'Admin' ||
+           userData['role'] == 'Admin';
+  }
+
   // Inactivity timer for automatic session management
   Timer? _inactivityTimer;
 
