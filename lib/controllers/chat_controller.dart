@@ -28,23 +28,27 @@ class ChatController extends GetxController {
     if (currentUserId.isEmpty) return '';
 
     final participants = [currentUserId, otherUserId]..sort();
-    final conversationId = participants.join('_');
 
     try {
-      final doc = await _firestore
+      // Query for an existing conversation
+      final querySnapshot = await _firestore
           .collection('conversations')
-          .doc(conversationId)
+          .where('participants', isEqualTo: participants)
+          .limit(1)
           .get();
 
-      if (!doc.exists) {
-        await _firestore.collection('conversations').doc(conversationId).set({
+      if (querySnapshot.docs.isNotEmpty) {
+        // Conversation already exists
+        return querySnapshot.docs.first.id;
+      } else {
+        // Conversation does not exist, create a new one
+        final newConversation = await _firestore.collection('conversations').add({
           'participants': participants,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
+        return newConversation.id;
       }
-
-      return conversationId;
     } catch (e) {
       Get.log('ChatController: getOrCreateConversation error - $e');
       return '';

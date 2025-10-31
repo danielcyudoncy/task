@@ -58,7 +58,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
 
     // Initialize performance controller
-    performanceController = Get.find<PerformanceController>();
+    performanceController = Get.put(PerformanceController());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       adminController.fetchDashboardData();
