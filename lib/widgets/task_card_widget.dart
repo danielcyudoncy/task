@@ -533,20 +533,23 @@ return AlertDialog(
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                const SizedBox(height: 16),
-                Obx(() {
-                  final currentUserId = authController.user.value?.uid;
-                  final isAdmin = authController.isAdmin.value;
-                  final isTaskOwner = widget.task.createdById == currentUserId;
-                  final isAssignedUser =
-                      widget.task.assignedReporterId == currentUserId ||
-                          widget.task.assignedCameramanId == currentUserId ||
-                          widget.task.assignedDriverId == currentUserId ||
-                          (widget.task.assignedTo != null &&
-                              currentUserId != null &&
-                              widget.task.assignedTo!.contains(currentUserId));
+const SizedBox(height: 16),
+Obx(() {
+  final currentUserId = authController.user.value?.uid;
+  
+  // Use the new reliable admin check method
+  final isAdmin = authController.isCurrentUserAdmin;
+  
+  final isTaskOwner = widget.task.createdById == currentUserId;
+  final isAssignedUser =
+      widget.task.assignedReporterId == currentUserId ||
+          widget.task.assignedCameramanId == currentUserId ||
+          widget.task.assignedDriverId == currentUserId ||
+          (widget.task.assignedTo != null &&
+              currentUserId != null &&
+              widget.task.assignedTo!.contains(currentUserId));
 
-                  final canManageTask = isTaskOwner || isAdmin || isAssignedUser;
+  final canManageTask = isTaskOwner || isAdmin || isAssignedUser;
 
                   if (canManageTask) {
                     return Row(
