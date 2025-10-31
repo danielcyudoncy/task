@@ -98,7 +98,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         return 'Unknown';
       }
     } catch (e) {
-      debugPrint('Error in _getAssignedDriverName: $e');
+debugPrint('Error in _getAssignedDriverName: $e');
       return 'Error';
     }
   }
@@ -267,11 +267,11 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     );
   }
 
-  Future<bool?> _showDeleteConfirmation(BuildContext context) async {
+Future<bool?> _showDeleteConfirmation(BuildContext context) async {
     return await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+return AlertDialog(
           title: const Text('Delete Task'),
           content: const Text(
               'Are you sure you want to delete this task? This action cannot be undone.'),
@@ -385,25 +385,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final authController = Get.find<AuthController>();
-    final currentUserId = authController.auth.currentUser?.uid;
-    final isAdmin = authController.isAdmin.value;
-  final isTaskOwner = widget.task.createdById == currentUserId;
-  final isAssignedUser = widget.task.assignedReporterId == currentUserId ||
-        widget.task.assignedCameramanId == currentUserId ||
-        widget.task.assignedDriverId == currentUserId ||
-        (widget.task.assignedTo != null &&
-            currentUserId != null &&
-            widget.task.assignedTo!.contains(currentUserId));
-
-  // Debug: log permission-related values to help diagnose creator permission issues
-  debugPrint(
-    'TaskCard: taskId=${widget.task.taskId}, createdById="${widget.task.createdById}", currentUserId="$currentUserId", isTaskOwner=$isTaskOwner, isAdmin=$isAdmin, isAssignedUser=$isAssignedUser');
-
-    // Simplified permission logic:
-    // Task creators can always manage their tasks
-    // Admins can manage all tasks
-    // Assigned users can manage their assigned tasks
-    final canManageTask = isTaskOwner || isAdmin || isAssignedUser;
 
     final Color cardColor =
         widget.isDark ? const Color(0xFF1E1E1E) : colorScheme.primary;
@@ -553,58 +534,77 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                if (canManageTask)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (!widget.isCompleted)
-                        ElevatedButton(
+                Obx(() {
+                  final currentUserId = authController.user.value?.uid;
+                  final isAdmin = authController.isAdmin.value;
+                  final isTaskOwner = widget.task.createdById == currentUserId;
+                  final isAssignedUser =
+                      widget.task.assignedReporterId == currentUserId ||
+                          widget.task.assignedCameramanId == currentUserId ||
+                          widget.task.assignedDriverId == currentUserId ||
+                          (widget.task.assignedTo != null &&
+                              currentUserId != null &&
+                              widget.task.assignedTo!.contains(currentUserId));
+
+                  final canManageTask = isTaskOwner || isAdmin || isAssignedUser;
+
+                  if (canManageTask) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (!widget.isCompleted)
+                          ElevatedButton(
+                            onPressed: () {
+                              Get.find<SettingsController>().triggerFeedback();
+                              _markAsCompleted();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[600],
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: const Text(
+                              'Complete',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline_rounded,
+                              color: Colors.red[400], size: 22),
                           onPressed: () {
                             Get.find<SettingsController>().triggerFeedback();
-                            _markAsCompleted();
+                            _showDeleteConfirmation(context).then((confirmed) {
+                              if (confirmed == true) {
+                                TaskActions.deleteTask(widget.task);
+                              }
+                            });
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[600],
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 2,
-                          ),
-                          child: Text(
-                            'Complete',
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600),
-                          ),
                         ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: Icon(Icons.delete_outline_rounded,
-                            color: Colors.red[400], size: 22),
-                        onPressed: () {
-                          Get.find<SettingsController>().triggerFeedback();
-                          _showDeleteConfirmation(context).then((confirmed) {
-                            if (confirmed == true) {
-                              TaskActions.deleteTask(widget.task);
-                            }
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: Icon(Icons.edit_note_rounded,
-                            color: widget.isDark ? Colors.white : Colors.white,
-                            size: 22),
-                        onPressed: () {
-                          Get.find<SettingsController>().triggerFeedback();
-                          TaskActions.editTask(context, widget.task);
-                        },
-                        tooltip: "Edit Task",
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(Icons.edit_note_rounded,
+                              color:
+                                  widget.isDark ? Colors.white : Colors.white,
+                              size: 22),
+                          onPressed: () {
+                            Get.find<SettingsController>().triggerFeedback();
+                            TaskActions.editTask(context, widget.task);
+                          },
+                          tooltip: "Edit Task",
+                        ),
+                      ],
+                    );
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                }),
               ],
             ),
           ),

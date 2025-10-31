@@ -143,6 +143,35 @@ class AccessControlService extends GetxService {
     }
   }
 
+  /// Checks if user can update a task
+  Future<bool> canUpdateTask({
+    required String userId,
+    required Task task,
+  }) async {
+    if (!_isInitialized) {
+      throw Exception('AccessControlService not initialized');
+    }
+
+    try {
+      final user = await _userController.getUserById(userId);
+      if (user == null) return false;
+
+      // Admin can update any task
+      if (user['role'] == 'Admin') return true;
+
+      // Librarian can update tasks they created or are assigned to
+      if (user['role'] == 'Librarian') {
+        return task.createdById == userId || task.assignedLibrarianId == userId;
+      }
+
+      // Other roles can only update tasks they created
+      return task.createdById == userId;
+    } catch (e) {
+      Get.log('Failed to check update permission for task ${task.taskId}: $e');
+      return false;
+    }
+  }
+
   /// Checks if user can archive a task
   Future<bool> canArchiveTask({
     required String userId,
