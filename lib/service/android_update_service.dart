@@ -30,7 +30,20 @@ class AndroidUpdateService {
         }
       }
     } catch (e) {
-      'Error checking for updates';
+      // Log the error but don't crash the app
+      debugPrint('In-app update error: $e');
+      
+      // Show a user-friendly error message
+      if (showDialog) {
+        Get.snackbar(
+          'Update Check Failed',
+          'Unable to check for updates. Please try again later.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      }
     }
   }
 
@@ -94,6 +107,7 @@ class AndroidUpdateService {
         await _startFlexibleUpdate();
       }
     } catch (e) {
+      debugPrint('Update start error: $e');
       _showUpdateError();
     } finally {
       _isUpdateInProgress = false;
