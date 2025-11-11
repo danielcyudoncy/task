@@ -28,6 +28,9 @@ class AdminDashboardBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<AdminController>(() => AdminController());
     Get.lazyPut<PerformanceController>(() => PerformanceController());
+    Get.lazyPut<NotificationController>(() => NotificationController());
+    // Remove manual dependency injection for ManageUsersController
+    // as it's already handled in bootstrap.dart
   }
 }
 
@@ -43,8 +46,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   final AdminController adminController = Get.find<AdminController>();
   final AuthController authController = Get.find<AuthController>();
   final NotificationController notificationController = Get.find();
-  final ManageUsersController manageUsersController =
-      Get.find<ManageUsersController>();
+  // Remove direct access to ManageUsersController to avoid timing issues
   late final PerformanceController performanceController;
 
   late TabController _tabController;
@@ -64,6 +66,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       adminController.fetchDashboardData();
       adminController.fetchStatistics();
       // No need to manually fetch users; ManageUsersController now uses a real-time stream.
+      
+      // Pre-warm the ManageUsersController if it exists
+      if (Get.isRegistered<ManageUsersController>()) {
+        Get.find<ManageUsersController>();
+      }
     });
   }
 

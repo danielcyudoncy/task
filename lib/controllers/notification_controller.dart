@@ -125,6 +125,9 @@ class NotificationController extends GetxController {
       return;
     }
 
+    final previousUnreadCount = validUnreadCount.value;
+    final previousTaskAssignmentUnreadCount = taskAssignmentUnreadCount.value;
+
     debugPrint(
         '_updateValidNotifications: Processing ${notificationsList.length} notifications for user $uid');
 
@@ -202,6 +205,41 @@ class NotificationController extends GetxController {
         .length;
     debugPrint(
         '_updateValidNotifications: Task assignment unread count: ${taskAssignmentUnreadCount.value}');
+
+    // If the increase in unread notifications is not solely due to task assignments,
+    // show a generic notification for the other new items.
+    if (validUnreadCount.value > previousUnreadCount &&
+        (validUnreadCount.value - previousUnreadCount >
+            (taskAssignmentUnreadCount.value -
+                previousTaskAssignmentUnreadCount))) {
+      _safeSnackbar(
+        'New Notification',
+        'You have new notifications.',
+      );
+    }
+
+    // Check for new task assignments and show immediate visual feedback
+    final newTaskAssignments = taskAssignmentNotifications.where((n) {
+      final isRead = n['isRead'] as bool? ?? true;
+      return !isRead; // This is a new unread task assignment
+    }).toList();
+
+    // If there are new task assignments, show immediate feedback
+    if (newTaskAssignments.isNotEmpty &&
+        taskAssignmentUnreadCount.value > previousTaskAssignmentUnreadCount) {
+      for (final notification in newTaskAssignments) {
+        final title = notification['title']?.toString() ?? 'New Task Assignment';
+        final taskId = notification['taskId']?.toString();
+        
+        // Show immediate snackbar notification
+        _safeSnackbar(
+          '📝 New Task Assignment!',
+          'You have been assigned: "$title"\n\nTap to view and complete the task.',
+        );
+        
+        debugPrint('🎉 NEW TASK ASSIGNMENT ALERT: $title (ID: $taskId)');
+      }
+    }
   }
 
   void updateUnreadCount(List<Map<String, dynamic>>? currentNotifications) {

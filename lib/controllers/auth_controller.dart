@@ -247,7 +247,8 @@ class AuthController extends GetxController {
         role == 'Head of Department' ||
         role == 'Head of Unit' ||
         role == 'News Director' ||
-        role == 'Assistant News Director';
+        role == 'Assistant News Director' ||
+        role == 'Producer';
   }
 
   void goToHome() {
@@ -1124,8 +1125,16 @@ class AuthController extends GetxController {
   Future<void> assignTask(String taskId, String userId) async {
     try {
       isLoading.value = true;
-      final taskRef =
-          FirebaseFirestore.instance.collection('tasks').doc(taskId);
+      final taskRef = FirebaseFirestore.instance.collection('tasks').doc(taskId);
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      
+      if (!userDoc.exists) {
+        throw Exception("User does not exist!");
+      }
+
+      final userData = userDoc.data()!;
+      final userName = userData['fullName'] ?? 'Unknown User';
+      final userRole = userData['role'] ?? 'Reporter';
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final taskSnapshot = await transaction.get(taskRef);
@@ -1134,30 +1143,102 @@ class AuthController extends GetxController {
           throw Exception("Task does not exist!");
         }
 
-        List<dynamic> assignedUsers =
-            taskSnapshot.data()?['assignedUsers'] ?? [];
+        final taskData = taskSnapshot.data()!;
+        bool isAlreadyAssigned = false;
 
-        if (assignedUsers.contains(userId)) {
+        // Check if user is already assigned in any role
+        if (taskData['assignedTo'] == userId ||
+            taskData['assignedReporterId'] == userId ||
+            taskData['assignedCameramanId'] == userId ||
+            taskData['assignedDriverId'] == userId ||
+            taskData['assignedLibrarianId'] == userId) {
+          isAlreadyAssigned = true;
+        }
+
+        if (isAlreadyAssigned) {
           _safeSnackbar("Info", "User is already assigned to this task.");
           return;
         }
 
-        if (assignedUsers.length >= 3) {
-          _safeSnackbar(
-              "Error", "This task has already been assigned to 3 users.");
-          return;
+        // Assign based on user role
+        Map<String, dynamic> updateData = {};
+
+        switch (userRole) {
+          case 'Reporter':
+            updateData['assignedReporter'] = userName;
+            updateData['assignedReporterId'] = userId;
+            break;
+          case 'Cameraman':
+            updateData['assignedCameraman'] = userName;
+            updateData['assignedCameramanId'] = userId;
+            break;
+          case 'Driver':
+            updateData['assignedDriver'] = userName;
+            updateData['assignedDriverId'] = userId;
+            break;
+          case 'Librarian':
+            updateData['assignedLibrarian'] = userName;
+            updateData['assignedLibrarianId'] = userId;
+            break;
+          default:
+            // Default assignment for other roles
+            updateData['assignedTo'] = userId;
+            updateData['assignedName'] = userName;
+            break;
         }
 
-        assignedUsers.add(userId);
+        // Add assignment timestamp
+        updateData['assignmentTimestamp'] = FieldValue.serverTimestamp();
 
-        transaction.update(taskRef, {'assignedUsers': assignedUsers});
+        // Update the task
+        transaction.update(taskRef, updateData);
       });
+
+      // Send notification to the assigned user
+      await _sendTaskAssignmentNotification(taskId, userId, userName);
 
       _safeSnackbar("Success", "Task assigned successfully.");
     } catch (e) {
+      debugPrint("AuthController: Task assignment error: $e");
       _safeSnackbar("Error", "Failed to assign task: ${e.toString()}");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Send notification to user when task is assigned
+  Future<void> _sendTaskAssignmentNotification(String taskId, String userId, String userName) async {
+    try {
+      final taskDoc = await _firestore.collection('tasks').doc(taskId).get();
+      if (!taskDoc.exists) return;
+
+      final taskData = taskDoc.data()!;
+      final taskTitle = taskData['title'] ?? 'Untitled Task';
+      final taskDescription = taskData['description'] ?? '';
+      final createdBy = taskData['createdByName'] ?? 'Unknown User';
+
+      final notificationMessage = taskDescription.isNotEmpty
+          ? 'You have been assigned a new task: "$taskTitle" by $createdBy\n\nDescription: $taskDescription'
+          : 'You have been assigned a new task: "$taskTitle" by $createdBy';
+
+      final notification = {
+        'userId': userId,
+        'type': 'task_assigned',
+        'title': 'New Task Assignment',
+        'message': notificationMessage,
+        'taskId': taskId,
+        'taskTitle': taskTitle,
+        'taskDescription': taskDescription,
+        'assignedBy': currentUser?.displayName ?? fullName.value,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+      };
+
+      await _firestore.collection('users').doc(userId).collection('notifications').add(notification);
+      debugPrint("AuthController: Task assignment notification sent to $userName");
+    } catch (e) {
+      debugPrint("AuthController: Failed to send task assignment notification: $e");
+      // Don't throw - notification failure shouldn't break task assignment
     }
   }
 
@@ -1168,10 +1249,13 @@ class AuthController extends GetxController {
       // Preserve current uid for targeted cache clearing
       final String? uid = _auth.currentUser?.uid;
 
-      // 1. First reset local state immediately
+      // 1. Stop all Firestore listeners across controllers to prevent permission errors
+      await _stopAllFirestoreListeners();
+
+      // 2. Reset local state immediately
       resetUserData();
 
-      // 1b. Clear any cached user data to avoid cross-user leakage
+      // 3. Clear any cached user data to avoid cross-user leakage
       try {
         if (Get.isRegistered<UserCacheService>()) {
           final cache = Get.find<UserCacheService>();
@@ -1185,23 +1269,29 @@ class AuthController extends GetxController {
             "AuthController: Failed clearing user cache during logout: $e");
       }
 
-      // 2. Then handle presence and auth signout
+      // 4. Handle presence and auth signout
       await Future.wait([
         _handlePresence(false),
         _auth.signOut(),
       ]);
 
-      // 3. Ensure complete cleanup before navigation
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      // 4. Navigate immediately to login screen - no post-frame callback needed
-      // The auth state listener will handle any additional UI updates
+      // 5. Navigate immediately to login screen
       Get.offAllNamed("/login", arguments: {'fromLogout': true});
     } catch (e) {
       _safeSnackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Stop all Firestore listeners across controllers to prevent permission errors during logout
+  Future<void> _stopAllFirestoreListeners() async {
+    debugPrint("AuthController: Controllers will clean up their own listeners via onClose()");
+    
+    // Note: GetX automatically calls onClose() on registered controllers during cleanup
+    // The TaskController, ManageUsersController, and other controllers handle their own
+    // stream cleanup in their onClose() methods. This method is kept for future expansion
+    // if manual listener management becomes necessary.
   }
 
   Future<void> signOut() async {

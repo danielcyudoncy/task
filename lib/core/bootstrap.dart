@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -155,6 +156,20 @@ Future<void> bootstrapApp() async {
 
 Future<void> _initializeCoreServices() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Initialize Firebase App Check with proper configuration
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.playIntegrity, // Use .playIntegrity for production
+      appleProvider: AppleProvider.deviceCheck, // Use .deviceCheck for production
+    );
+    debugPrint('✅ BOOTSTRAP: Firebase App Check activated successfully');
+  } catch (e) {
+    debugPrint('⚠️ BOOTSTRAP: Firebase App Check activation failed: $e');
+    debugPrint('⚠️ BOOTSTRAP: Continuing without App Check - this may reduce security but allows app to function');
+    // Continue without App Check to prevent app crashes
+  }
+  
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   if (useEmulator) {
@@ -224,7 +239,6 @@ void _initializeServicesInBackground() {
       _initializeService(() => OfflineDataService(), 'OfflineDataService'),
       _initializeService(() => CachedTaskService(), 'CachedTaskService'),
       _initializeService(() => EnhancedNotificationService(), 'EnhancedNotificationService'),
-      _initializeService(() => BulkOperationsService(), 'BulkOperationsService'),
     ];
     
     await Future.wait(coreServices);
@@ -245,6 +259,12 @@ void _initializeServicesInBackground() {
       _initializeService(() => WallpaperController(), 'WallpaperController'),
     ];
     await Future.wait(controllers);
+
+    // Initialize BulkOperationsService after controllers are ready
+    final finalServices = [
+      _initializeService(() => BulkOperationsService(), 'BulkOperationsService'),
+    ];
+    await Future.wait(finalServices);
 
     if (FirebaseAuth.instance.currentUser != null) {
       await _initializeService(() => NewsService(), 'NewsService');
