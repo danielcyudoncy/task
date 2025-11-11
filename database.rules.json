@@ -38,7 +38,15 @@
     },
     "conversations": {
       ".read": "auth != null",
-      ".write": "auth != null"
+      ".write": "auth != null",
+      "$conversationId": {
+        ".read": "auth != null",
+        ".write": "auth != null && resource.data.participants.hasAny([auth.uid])",
+        "messages": {
+          ".read": "auth != null && resource.data.participants.hasAny([auth.uid])",
+          ".write": "auth != null && request.auth != null"
+        }
+      }
     },
     "news": {
       ".read": "auth != null",
