@@ -5,6 +5,8 @@ import 'package:task/core/bootstrap.dart';
 
 class SnackbarUtils {
   static bool _isAppReady = false;
+  // When true, snackbars will be suppressed (useful during logout/navigation)
+  static bool _suppressSnackbars = false;
 
   /// Mark the app as ready for snackbars
   static void markAppAsReady() {
@@ -19,6 +21,11 @@ class SnackbarUtils {
     SnackPosition? snackPosition,
     Duration? duration,
   }) {
+    // Global suppression (e.g. during logout) takes precedence
+    if (_suppressSnackbars) {
+      debugPrint("Snackbar suppressed (global): $title: $message");
+      return;
+    }
     // Additional safety checks
     if (!_isAppReady) {
       debugPrint("Snackbar skipped - app not ready: $title: $message");
@@ -59,6 +66,14 @@ class SnackbarUtils {
     } catch (e) {
       debugPrint("Snackbar error: $e - $title: $message");
     }
+  }
+
+  /// Temporarily suppress or allow snackbars. Useful to avoid showing
+  /// permission-related or listener error messages while the app is
+  /// actively signing out or navigating away.
+  static void setSuppress(bool value) {
+    _suppressSnackbars = value;
+    debugPrint('SnackbarUtils: setSuppress=$value');
   }
 
   /// Show success snackbar

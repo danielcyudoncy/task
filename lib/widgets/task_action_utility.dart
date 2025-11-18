@@ -93,7 +93,8 @@ class TaskActions {
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2100),
                         builder: (context, child) {
-                          final dialogBg = Theme.of(context).colorScheme.surface;
+                          final dialogBg =
+                              Theme.of(context).colorScheme.surface;
                           return Theme(
                             data: theme.copyWith(
                               dialogTheme: DialogThemeData(
@@ -113,19 +114,42 @@ class TaskActions {
                 ],
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: status,
-                decoration: const InputDecoration(labelText: "Status"),
-                items: ['Pending', 'In Progress', 'Completed']
-                    .map((String value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(value),
-                        ))
-                    .toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) status = newValue;
-                },
-              ),
+              // Build status options defensively. Some tasks may have statuses
+              // (e.g. 'archived') that are not part of the standard list. To
+              // avoid DropdownButton assertions we ensure the current status is
+              // included in the items and remove duplicates.
+              Builder(builder: (context) {
+                final List<String> statusOptions = [
+                  'Pending',
+                  'In Progress',
+                  'Completed',
+                ];
+
+                // If the task has a status not in the canonical list (for
+                // example 'archived'), include it so the dropdown can show
+                // the existing value without asserting.
+                if (status.isNotEmpty && !statusOptions.contains(status)) {
+                  statusOptions.insert(0, status);
+                }
+
+                // Deduplicate while preserving order
+                final uniqueStatusOptions = statusOptions.toSet().toList();
+
+                return DropdownButtonFormField<String>(
+                  initialValue:
+                      uniqueStatusOptions.contains(status) ? status : null,
+                  decoration: const InputDecoration(labelText: "Status"),
+                  items: uniqueStatusOptions
+                      .map((String value) => DropdownMenuItem(
+                            value: value,
+                            child: Text(value),
+                          ))
+                      .toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) status = newValue;
+                  },
+                );
+              }),
               const SizedBox(height: 12),
               if (isAdmin) ...[
                 TextField(

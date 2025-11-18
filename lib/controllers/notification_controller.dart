@@ -347,4 +347,31 @@ class NotificationController extends GetxController {
       _safeSnackbar('Error', 'Failed to delete notification');
     }
   }
+
+  Future<void> sendTaskApprovalNotification(
+    String creatorId,
+    String taskTitle,
+    String status, {
+    String? reason,
+  }) async {
+    try {
+      final message = status == 'approved'
+          ? 'Your task "$taskTitle" has been approved.'
+          : 'Your task "$taskTitle" has been rejected. Reason: ${reason ?? "No reason provided."}';
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(creatorId)
+          .collection('notifications')
+          .add({
+        'title': 'Task ${status == 'approved' ? 'Approved' : 'Rejected'}',
+        'message': message,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'type': 'task_$status',
+      });
+    } catch (e) {
+      debugPrint('Error sending task approval notification: $e');
+    }
+  }
 }

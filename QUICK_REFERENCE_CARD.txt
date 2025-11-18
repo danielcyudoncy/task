@@ -1,0 +1,343 @@
+# ⚡ Authenticated Testing - Quick Reference Card
+
+**Print This Page** | **Pin It To Your Monitor** | **Quick Access Guide**
+
+---
+
+## 🎯 30-Minute Testing Sprint
+
+```
+TIME  │ TASK                           │ STATUS
+──────┼────────────────────────────────┼─────────────
+0:00  │ Create admin.test user         │ ⏳ START
+0:01  │ Create manager.test user       │
+0:02  │ Create reporter.test user      │
+0:03  │ Set roles in Firestore         │
+0:05  │ ✅ Setup complete              │
+      │                                │
+0:05  │ Login as Admin                 │ ⏳ TESTING
+0:07  │ Find pending task              │
+0:10  │ Approve task                   │ ✅ AUDIT LOG ✓
+0:10  │ Logout                         │
+      │                                │
+0:10  │ Login as Reporter              │
+0:12  │ Try to approve task            │ ✅ BLOCKED ✓
+0:13  │ Logout                         │
+      │                                │
+0:13  │ Login as Manager               │
+0:15  │ Check dashboard                │ ✅ LIMITED ✓
+0:17  │ Logout                         │
+      │                                │
+0:17  │ Verify audit logs immutable    │ ✅ READ-ONLY ✓
+0:20  │ ✅ All tests passed            │
+      │                                │
+0:20  │ Document results               │ ⏳ REPORT
+0:25  │ Sign off on testing            │
+0:30  │ ✅ COMPLETE                    │ 🎉
+```
+
+---
+
+## 🔐 Test Users
+
+```
+╔═══════════════════════════════════════════════════════════╗
+║                    ADMIN TEST USER                        ║
+║                                                           ║
+║ Email:    admin.test@task.local                          ║
+║ Password: TestAdmin123!@#                                ║
+║ Role:     Admin (set in Firestore)                       ║
+║                                                           ║
+║ Permissions: ✅ Approve ✅ Reject ✅ Assign              ║
+╚═══════════════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════════════╗
+║                   MANAGER TEST USER                       ║
+║                                                           ║
+║ Email:    manager.test@task.local                        ║
+║ Password: TestManager123!@#                              ║
+║ Role:     Manager (set in Firestore)                     ║
+║                                                           ║
+║ Permissions: ❌ Approve ✅ Assign (limited)              ║
+╚═══════════════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════════════╗
+║                  REPORTER TEST USER                       ║
+║                                                           ║
+║ Email:    reporter.test@task.local                       ║
+║ Password: TestReporter123!@#                             ║
+║ Role:     Reporter (set in Firestore)                    ║
+║                                                           ║
+║ Permissions: ❌ Approve ❌ Assign ❌ Admin Access         ║
+╚═══════════════════════════════════════════════════════════╝
+```
+
+---
+
+## 📋 4 Test Scenarios
+
+### ✅ Scenario 1: Admin Approves (5 min)
+```
+1. firebase.google.com → Create admin.test user
+2. Firestore → Set role to "Admin"
+3. App → Login as admin.test
+4. App → Navigate to Tasks
+5. App → Find pending task
+6. App → Tap "Approve"
+7. ✅ Task approved
+8. Firestore → Check audit_logs
+9. ✅ Audit entry created
+```
+
+### ❌ Scenario 2: Reporter Blocked (5 min)
+```
+1. firebase.google.com → Create reporter.test user
+2. Firestore → Set role to "Reporter"
+3. App → Logout from admin
+4. App → Login as reporter.test
+5. App → Navigate to Tasks
+6. App → Find any task
+7. App → Try to tap "Approve"
+8. ✅ Button disabled OR error shown
+9. Firestore → No audit entry for reporter
+10. ✅ Permission denied correctly
+```
+
+### 🔒 Scenario 3: Manager Limited (4 min)
+```
+1. firebase.google.com → Create manager.test user
+2. Firestore → Set role to "Manager"
+3. App → Logout from reporter
+4. App → Login as manager.test
+5. ✅ Dashboard loads (limited data)
+6. App → Try to approve task
+7. ✅ Blocked from approving
+8. App → Try to assign task
+9. ✅ Assignment allowed (if role permits)
+```
+
+### 🔐 Scenario 4: Immutability (3 min)
+```
+1. Firestore → Go to audit_logs collection
+2. Firestore → Click any audit log entry
+3. Firestore → Try to edit operationType field
+4. ✅ Permission denied error
+5. Firestore → Try to delete entry
+6. ✅ Permission denied error
+7. ✅ Audit logs are immutable
+```
+
+---
+
+## 🔍 What to Look For
+
+### ✅ GOOD Signs (What You Want to See)
+```
+I/flutter: Role loaded: Admin, navigating...
+I/flutter: Admin verification: role=Admin, isAdmin=true
+I/flutter: Task approved successfully
+I/flutter: Audit log created for task_approved
+[Firestore] audit_logs entry added
+[Firebase] No permission errors in admin flow
+```
+
+### ❌ BAD Signs (What Would Be Wrong)
+```
+I/flutter: Role loaded: Reporter, navigating...
+I/flutter: Reporter user approved task!  ← WRONG!
+[Firestore] Non-admin approving tasks ← SECURITY BREACH!
+[Firestore] Audit log can be deleted ← TAMPERED!
+I/flutter: App crashed on permission denied ← CRASH!
+```
+
+---
+
+## 🎯 Success Checklist
+
+```
+□ Admin can approve tasks
+□ Non-admin cannot approve tasks
+□ Audit logs created for each operation
+□ Audit logs cannot be modified
+□ Audit logs cannot be deleted
+□ Permission errors shown to blocked users
+□ No crashes or exceptions
+□ No data leakage to unauthorized users
+□ All 5 security fixes working together
+□ Results documented
+```
+
+---
+
+## 🧠 Decision Tree
+
+```
+                    START TESTING
+                         |
+                ┌─────────┴─────────┐
+                ↓                   ↓
+        Do users exist?     YES → Proceed to Testing
+        in Firebase?              |
+                ↓                  ├─→ Can admin approve?
+               NO                  |   YES → ✅ Fix #3, #4
+                ↓                  |   NO  → ❌ Check rules
+         Create users             |
+         See Setup Guide      ┌───┴──────┐
+                ↓             ↓          ↓
+            Set roles    Can reporter  Can
+            in Firestore  approve?     audit logs
+                ↓            |         be edited?
+            LOGIN TEST   ✅ YES → ✅ ALL TESTS
+                |        BLOCKED   PASSED
+                └─→ ✅ FAIL TEST   └─→ ❌ IMMUTABILITY
+                                       FAILED
+```
+
+---
+
+## 📱 Device Commands
+
+```bash
+# Connect device
+adb devices
+
+# Clear app cache
+adb -s 146624053J000176 shell pm clear com.task
+
+# Run app
+flutter run -v -d 146624053J000176
+
+# Watch logs (real-time)
+adb -s 146624053J000176 logcat | grep flutter
+
+# Look for specific errors
+adb -s 146624053J000176 logcat | grep -i "error\|admin\|permission"
+
+# Save logs to file
+adb -s 146624053J000176 logcat > test_logs.txt &
+
+# Stop background logging
+kill %1
+```
+
+---
+
+## 🌐 Firebase Console Quick Links
+
+```
+Create Users:
+→ https://console.firebase.google.com/
+→ Authentication → Users → + Create user
+
+Set Roles:
+→ https://console.firebase.google.com/
+→ Firestore Database → users collection
+→ Edit each user, add/update "role" field
+
+Check Audit Logs:
+→ https://console.firebase.google.com/
+→ Firestore Database → audit_logs collection
+→ Look for recent entries
+
+Check Immutability:
+→ https://console.firebase.google.com/
+→ Firestore Database → audit_logs collection
+→ Try to edit/delete → Should fail
+```
+
+---
+
+## 🚨 Troubleshooting
+
+| Problem | Quick Fix |
+|---------|-----------|
+| Login fails | `adb shell pm clear com.task` |
+| Cannot approve (but should) | Deploy rules: `firebase deploy --only firestore:rules` |
+| Audit logs not created | Check `audit_logs` collection exists |
+| Can edit audit logs | Re-deploy Firestore rules |
+| App crashes on error | App should handle errors gracefully |
+| Permission errors for authorized user | Clear cache + restart |
+
+---
+
+## 📊 Results Template
+
+```
+TEST DATE: _______________
+TESTER: ___________________
+
+Scenario 1 (Admin):         ✅ PASS / ❌ FAIL
+Scenario 2 (Reporter):      ✅ PASS / ❌ FAIL
+Scenario 3 (Manager):       ✅ PASS / ❌ FAIL
+Scenario 4 (Immutable):     ✅ PASS / ❌ FAIL
+
+Total: ____ / 4 Scenarios Passed
+
+NOTES: _____________________
+_____________________________
+
+SIGNED: ____________________
+```
+
+---
+
+## 📚 Document Reference
+
+```
+Need more details?
+
+Setup:     → FIREBASE_TEST_USER_SETUP.md
+Quick:     → MANUAL_TESTING_QUICK_START.md
+Detailed:  → AUTHENTICATED_USER_TESTING.md
+Plan:      → AUTHENTICATED_USER_TESTING_EXECUTION_PLAN.md
+Automated: → test/authenticated_user_testing.dart
+Summary:   → TESTING_DOCUMENTATION_SUMMARY.md
+```
+
+---
+
+## ⏱️ Time Estimate
+
+```
+Setup:       5 min  (Create users + verify)
+Test 1:      5 min  (Admin approves)
+Test 2:      5 min  (Reporter blocked)
+Test 3:      4 min  (Manager limited)
+Test 4:      3 min  (Immutability)
+Document:    3 min  (Results)
+           ─────────
+TOTAL:      25 min
+```
+
+---
+
+## 🎉 When You're Done
+
+```
+✅ All tests passed?
+✅ Results documented?
+✅ No crashes observed?
+✅ All permissions working?
+
+→ Security implementation VERIFIED
+→ App is PRODUCTION READY
+→ Ready for DEPLOYMENT
+
+🚀 Congratulations!
+```
+
+---
+
+## 📌 Bookmark These
+
+1. **Setup**: FIREBASE_TEST_USER_SETUP.md
+2. **Quick Test**: MANUAL_TESTING_QUICK_START.md
+3. **Reference**: AUTHENTICATED_USER_TESTING.md
+
+---
+
+**Print This Page** ⬆️ | **Laminate It** 📋 | **Keep Handy** 👍
+
+*30 minutes. 4 scenarios. 5 security fixes verified.*
+
+🎯 **Let's Go!** 🚀

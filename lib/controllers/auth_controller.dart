@@ -87,8 +87,8 @@ class AuthController extends GetxController {
   // Helper method to reliably check admin role
   bool get isCurrentUserAdmin {
     return isAdmin.value ||
-           userRole.value == 'Admin' ||
-           userData['role'] == 'Admin';
+        userRole.value == 'Admin' ||
+        userData['role'] == 'Admin';
   }
 
   // Inactivity timer for automatic session management
@@ -119,7 +119,7 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     debugPrint("AuthController: onInit called");
-    
+
     // Ensure loading state is false on initialization
     isLoading(false);
 
@@ -133,7 +133,7 @@ class AuthController extends GetxController {
     // Initialize Firebase Auth state immediately
     user.value = _auth.currentUser;
     _setupAuthStateListener();
-    
+
     // If we have a current user, initialize their session
     if (_auth.currentUser != null) {
       debugPrint("AuthController: Current user exists, initializing session");
@@ -145,14 +145,15 @@ class AuthController extends GetxController {
 
   void _setupAuthStateListener() {
     debugPrint("AuthController: Setting up auth state listener");
-    
+
     // Subscribe to Firebase Auth state changes
     _auth.authStateChanges().listen((User? firebaseUser) async {
-      debugPrint("AuthController: Auth state changed - User: ${firebaseUser?.uid ?? 'null'}");
-      
+      debugPrint(
+          "AuthController: Auth state changed - User: ${firebaseUser?.uid ?? 'null'}");
+
 // Update our observable
       user.value = firebaseUser;
-      
+
       if (firebaseUser != null) {
         try {
           // Ensure user profile exists before loading data
@@ -165,9 +166,11 @@ class AuthController extends GetxController {
           debugPrint("AuthController: Error handling auth state change: $e");
           // Avoid immediate logout on permission-denied; try to recover
           if (e.toString().contains("permission-denied")) {
-            debugPrint("AuthController: Permission denied while handling auth change; will stay signed in and show limited UI");
+            debugPrint(
+                "AuthController: Permission denied while handling auth change; will stay signed in and show limited UI");
             // Show message to user
-            _safeSnackbar("Access Denied", "You don't have access to this data.");
+            _safeSnackbar(
+                "Access Denied", "You don't have access to this data.");
           }
         }
       } else {
@@ -771,7 +774,8 @@ class AuthController extends GetxController {
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
         debugPrint("AuthController: Profile picture upload failed");
-        _safeSnackbar("Upload Failed", "Could not upload the image. Please check your connection and try again.");
+        _safeSnackbar("Upload Failed",
+            "Could not upload the image. Please check your connection and try again.");
       }
     } catch (e) {
       debugPrint("AuthController: Profile picture upload error: $e");
@@ -779,7 +783,8 @@ class AuthController extends GetxController {
       // Handle specific authentication errors
       if (e.toString().contains('unauthorized') ||
           e.toString().contains('not authenticated')) {
-        _safeSnackbar("Authentication Error", "Please log in again to upload profile pictures.");
+        _safeSnackbar("Authentication Error",
+            "Please log in again to upload profile pictures.");
       } else {
         _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
       }
@@ -845,7 +850,8 @@ class AuthController extends GetxController {
         _safeSnackbar("Success", "Profile picture updated successfully.");
       } else {
         debugPrint("AuthController: Profile picture upload failed");
-        _safeSnackbar("Upload Failed", "Could not upload the image. Please check your connection and try again.");
+        _safeSnackbar("Upload Failed",
+            "Could not upload the image. Please check your connection and try again.");
       }
     } catch (e) {
       debugPrint("AuthController: Profile picture upload error: $e");
@@ -853,7 +859,8 @@ class AuthController extends GetxController {
       // Handle specific authentication errors
       if (e.toString().contains('unauthorized') ||
           e.toString().contains('not authenticated')) {
-        _safeSnackbar("Authentication Error", "Please log in again to upload profile pictures.");
+        _safeSnackbar("Authentication Error",
+            "Please log in again to upload profile pictures.");
       } else {
         _safeSnackbar("Upload Failed", "Error: ${e.toString()}");
       }
@@ -951,13 +958,17 @@ class AuthController extends GetxController {
 
       if (credential.user == null) throw Exception("No user returned");
 
-      debugPrint("AuthController: User signed in successfully: ${credential.user!.uid}");
+      debugPrint(
+          "AuthController: User signed in successfully: ${credential.user!.uid}");
 
       // Wait for auth state to propagate before proceeding. Instead of a
       // fixed delay, wait for the next authStateChanges event (with a
       // short timeout) so we react to the actual propagated state.
       try {
-        final User? propagatedUser = await _auth.authStateChanges().firstWhere((u) => u != null).timeout(const Duration(seconds: 3));
+        final User? propagatedUser = await _auth
+            .authStateChanges()
+            .firstWhere((u) => u != null)
+            .timeout(const Duration(seconds: 3));
         if (propagatedUser == null) {
           throw Exception("Authentication lost after sign in");
         }
@@ -970,9 +981,10 @@ class AuthController extends GetxController {
         }
       }
 
-  final currentUser = _auth.currentUser!;
-  debugPrint("AuthController: Loading user data for user: ${currentUser.uid}");
-  await loadUserData();
+      final currentUser = _auth.currentUser!;
+      debugPrint(
+          "AuthController: Loading user data for user: ${currentUser.uid}");
+      await loadUserData();
 
       debugPrint("AuthController: Setting lastActivity");
       lastActivity.value = DateTime.now();
@@ -985,7 +997,8 @@ class AuthController extends GetxController {
         debugPrint("AuthController: Presence setting failed, continuing: $e");
       }
 
-      debugPrint("AuthController: User data loaded - Profile complete: ${isProfileComplete.value}, Role: ${userRole.value}");
+      debugPrint(
+          "AuthController: User data loaded - Profile complete: ${isProfileComplete.value}, Role: ${userRole.value}");
 
       // Use a post-frame callback to ensure navigation happens after the current build phase
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -996,16 +1009,19 @@ class AuthController extends GetxController {
           // Ensure role is loaded before navigation
           int attempts = 0;
           while (userRole.value.isEmpty && attempts < 10) {
-            debugPrint("AuthController: Waiting for user role to load (attempt ${attempts + 1})");
+            debugPrint(
+                "AuthController: Waiting for user role to load (attempt ${attempts + 1})");
             await Future.delayed(const Duration(milliseconds: 200));
             attempts++;
           }
 
           if (userRole.value.isNotEmpty) {
-            debugPrint("AuthController: Profile is complete, navigating based on role: ${userRole.value}");
+            debugPrint(
+                "AuthController: Profile is complete, navigating based on role: ${userRole.value}");
             await navigateBasedOnRole();
           } else {
-            debugPrint("AuthController: Role still empty after waiting, navigating to login");
+            debugPrint(
+                "AuthController: Role still empty after waiting, navigating to login");
             Get.offAllNamed('/login');
           }
         }
@@ -1125,9 +1141,10 @@ class AuthController extends GetxController {
   Future<void> assignTask(String taskId, String userId) async {
     try {
       isLoading.value = true;
-      final taskRef = FirebaseFirestore.instance.collection('tasks').doc(taskId);
+      final taskRef =
+          FirebaseFirestore.instance.collection('tasks').doc(taskId);
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      
+
       if (!userDoc.exists) {
         throw Exception("User does not exist!");
       }
@@ -1207,7 +1224,8 @@ class AuthController extends GetxController {
   }
 
   // Send notification to user when task is assigned
-  Future<void> _sendTaskAssignmentNotification(String taskId, String userId, String userName) async {
+  Future<void> _sendTaskAssignmentNotification(
+      String taskId, String userId, String userName) async {
     try {
       final taskDoc = await _firestore.collection('tasks').doc(taskId).get();
       if (!taskDoc.exists) return;
@@ -1234,10 +1252,16 @@ class AuthController extends GetxController {
         'isRead': false,
       };
 
-      await _firestore.collection('users').doc(userId).collection('notifications').add(notification);
-      debugPrint("AuthController: Task assignment notification sent to $userName");
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .add(notification);
+      debugPrint(
+          "AuthController: Task assignment notification sent to $userName");
     } catch (e) {
-      debugPrint("AuthController: Failed to send task assignment notification: $e");
+      debugPrint(
+          "AuthController: Failed to send task assignment notification: $e");
       // Don't throw - notification failure shouldn't break task assignment
     }
   }
@@ -1245,6 +1269,12 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     try {
       isLoading.value = true;
+      // Suppress snackbars while logout sequence runs to avoid showing
+      // permission-denied or listener errors that occur during sign-out
+      // (these are expected and non-actionable for the user).
+      try {
+        SnackbarUtils.setSuppress(true);
+      } catch (_) {}
 
       // Preserve current uid for targeted cache clearing
       final String? uid = _auth.currentUser?.uid;
@@ -1280,14 +1310,19 @@ class AuthController extends GetxController {
     } catch (e) {
       _safeSnackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
+      // Restore snackbar behavior after logout completes
+      try {
+        SnackbarUtils.setSuppress(false);
+      } catch (_) {}
       isLoading.value = false;
     }
   }
 
   /// Stop all Firestore listeners across controllers to prevent permission errors during logout
   Future<void> _stopAllFirestoreListeners() async {
-    debugPrint("AuthController: Controllers will clean up their own listeners via onClose()");
-    
+    debugPrint(
+        "AuthController: Controllers will clean up their own listeners via onClose()");
+
     // Note: GetX automatically calls onClose() on registered controllers during cleanup
     // The TaskController, ManageUsersController, and other controllers handle their own
     // stream cleanup in their onClose() methods. This method is kept for future expansion
@@ -1297,6 +1332,11 @@ class AuthController extends GetxController {
   Future<void> signOut() async {
     try {
       isLoading.value = true;
+
+      // Suppress snackbars while performing sign out to avoid stray errors
+      try {
+        SnackbarUtils.setSuppress(true);
+      } catch (_) {}
 
       // Preserve current uid for targeted cache clearing
       final String? uid = _auth.currentUser?.uid;
@@ -1332,6 +1372,10 @@ class AuthController extends GetxController {
     } catch (e) {
       _safeSnackbar('Error', 'Sign out failed: ${e.toString()}');
     } finally {
+      // Restore snackbar behavior after sign out completes
+      try {
+        SnackbarUtils.setSuppress(false);
+      } catch (_) {}
       isLoading.value = false;
     }
   }

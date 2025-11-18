@@ -8,6 +8,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:task/controllers/notification_controller.dart';
 import 'package:task/models/task.dart';
 import 'package:task/models/task_metadata.dart';
 import 'package:task/models/report_completion_info.dart';
@@ -19,6 +20,7 @@ import 'package:rxdart/rxdart.dart' as rx;
 import 'package:task/service/fcm_service.dart';
 import 'package:task/service/user_cache_service.dart';
 import 'package:task/service/enhanced_notification_service.dart';
+import 'package:task/service/audit_service.dart';
 
 class TaskController extends GetxController {
   final FirebaseService _firebaseService = FirebaseService();
@@ -171,9 +173,13 @@ class TaskController extends GetxController {
               .doc(user.uid)
               .get();
           if (!userDoc.exists) {
-            debugPrint('TaskController: User document does not exist, creating it');
+            debugPrint(
+                'TaskController: User document does not exist, creating it');
             // Create user document if missing
-            await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .set({
               'uid': user.uid,
               'email': user.email ?? '',
               'fullName': user.displayName ?? '',
@@ -221,13 +227,37 @@ class TaskController extends GetxController {
   // Start real-time listener for task updates
   void _startRealtimeTaskListener() {
     debugPrint('TaskController: Starting real-time task listener');
-    debugPrint('TaskController: User role: ${AuthController.to.userRole.value}');
+    debugPrint(
+        'TaskController: User role: ${AuthController.to.userRole.value}');
+    // Only start real-time listener for admins to avoid permission issues.
+    // Also ensure the user's role has been loaded to avoid race conditions
+    // where `isAdmin` is false/unknown and we attempt restricted listeners.
+    if (!AuthController.to.isRoleLoaded.value) {
+      debugPrint(
+          'TaskController: Role not loaded yet, deferring real-time listener until role is available');
+      // Start listener once when role is loaded
+      once(AuthController.to.isRoleLoaded, (loaded) {
+        if (loaded == true) {
+          debugPrint(
+              'TaskController: Role loaded - attempting to start real-time listener');
+          // Ensure we don't create duplicate subscriptions
+          Future.microtask(() => _startRealtimeTaskListener());
+        }
+      });
+      return;
+    }
 
     // Only start real-time listener for admins to avoid permission issues
     final isAdmin = AuthController.to.isAdmin.value;
     debugPrint('TaskController: User is admin: $isAdmin');
 
     if (isAdmin) {
+      // Avoid starting a second subscription if one already exists
+      if (_taskStreamSubscription != null) {
+        debugPrint(
+            'TaskController: Real-time task listener already active, skipping start');
+        return;
+      }
       _taskStreamSubscription = FirebaseFirestore.instance
           .collection('tasks')
           .orderBy('timestamp', descending: true)
@@ -236,7 +266,8 @@ class TaskController extends GetxController {
         (snapshot) async {
           // Check if user is still authenticated
           if (AuthController.to.currentUser == null) {
-            debugPrint('TaskController: User not authenticated, skipping update');
+            debugPrint(
+                'TaskController: User not authenticated, skipping update');
             return;
           }
           debugPrint(
@@ -259,7 +290,8 @@ class TaskController extends GetxController {
         },
       );
     } else {
-      debugPrint('TaskController: Skipping real-time listener for non-admin user to avoid permission errors');
+      debugPrint(
+          'TaskController: Skipping real-time listener for non-admin user to avoid permission errors');
       // For non-admins, rely on manual refreshes or other methods
     }
   }
@@ -389,13 +421,15 @@ class TaskController extends GetxController {
           docs = snapshot.docs;
         } else {
           // For non-admins, use filtered queries to avoid permission errors
-          debugPrint('loadMoreTasks: Using filtered queries for non-admin user');
+          debugPrint(
+              'loadMoreTasks: Using filtered queries for non-admin user');
           // Since pagination on multiple queries is complex, for simplicity, fetch relevant tasks and paginate locally or adjust
           // For now, fetch all relevant and handle pagination differently
           // This is a placeholder; in a full implementation, you'd need to paginate the relevant queries
           final relevantSnapshot = await FirebaseFirestore.instance
               .collection('tasks')
-              .where('assignedReporterId', isEqualTo: AuthController.to.currentUser?.uid)
+              .where('assignedReporterId',
+                  isEqualTo: AuthController.to.currentUser?.uid)
               .orderBy('timestamp', descending: sortBy == "Newest")
               .limit(pageSize)
               .get();
@@ -633,7 +667,6 @@ class TaskController extends GetxController {
 
     return null; // Valid
   }
-
 
   /// Prepares the assignment updates with proper null safety
   Future<Map<String, dynamic>> _prepareAssignmentUpdates({
@@ -1040,6 +1073,17 @@ class TaskController extends GetxController {
       String taskId, String title, String description, String status) async {
     try {
       isLoading(true);
+      final currentUser = authController.auth.currentUser;
+      if (currentUser == null) {
+        _safeSnackbar("Error", "User not authenticated");
+        return;
+      }
+
+      final task = tasks.firstWhere((t) => t.taskId == taskId);
+      if (!task.canEdit(currentUser.uid)) {
+        _safeSnackbar("Error", "You do not have permission to edit this task");
+        return;
+      }
       // Update task in Firebase
       await _firebaseService.updateTask(taskId, {
         "title": title,
@@ -1053,13 +1097,14 @@ class TaskController extends GetxController {
       if (taskIndex != -1) {
         Task updatedTask = tasks[taskIndex].copyWith(
           core: tasks[taskIndex].core.copyWith(
-            title: title,
-            description: description,
-            status: status,
-          ),
+                title: title,
+                description: description,
+                status: status,
+              ),
           metadata: tasks[taskIndex].metadata?.copyWith(
-            lastModified: DateTime.now(),
-          ) ?? TaskMetadata(lastModified: DateTime.now()),
+                    lastModified: DateTime.now(),
+                  ) ??
+              TaskMetadata(lastModified: DateTime.now()),
         );
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
@@ -1084,11 +1129,18 @@ class TaskController extends GetxController {
         return;
       }
 
+      final task = tasks.firstWhere((t) => t.taskId == taskId);
+
       // Check if user is admin for permanent delete, otherwise soft delete
       if (authController.isAdmin.value) {
         // Admin permanent delete - requires confirmation
         await _adminPermanentlyDeleteTask(taskId);
       } else {
+        if (!task.canDelete(currentUser.uid)) {
+          _safeSnackbar(
+              "Error", "You do not have permission to delete this task");
+          return;
+        }
         // Regular user soft delete (archive)
         await _softDeleteTask(taskId, currentUser.uid);
       }
@@ -1103,7 +1155,8 @@ class TaskController extends GetxController {
   Future<void> _adminPermanentlyDeleteTask(String taskId) async {
     try {
       // Call the Cloud Function for permanent deletion
-      final callable = FirebaseFunctions.instance.httpsCallable('adminPermanentlyDeleteTask');
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('adminPermanentlyDeleteTask');
       await callable.call({
         'taskId': taskId,
         'reason': 'Administrative deletion via TaskController',
@@ -1138,14 +1191,15 @@ class TaskController extends GetxController {
       if (taskIndex != -1) {
         final archivedTask = tasks[taskIndex].copyWith(
           metadata: tasks[taskIndex].metadata?.copyWith(
-            archivedAt: DateTime.now(),
-            archivedBy: userId,
-            archiveReason: 'Deleted by user',
-          ) ?? TaskMetadata(
-            archivedAt: DateTime.now(),
-            archivedBy: userId,
-            archiveReason: 'Deleted by user',
-          ),
+                    archivedAt: DateTime.now(),
+                    archivedBy: userId,
+                    archiveReason: 'Deleted by user',
+                  ) ??
+              TaskMetadata(
+                archivedAt: DateTime.now(),
+                archivedBy: userId,
+                archiveReason: 'Deleted by user',
+              ),
           core: tasks[taskIndex].core.copyWith(status: 'archived'),
         );
         tasks[taskIndex] = archivedTask;
@@ -1170,8 +1224,8 @@ class TaskController extends GetxController {
       if (taskIndex != -1) {
         Task updatedTask = tasks[taskIndex].copyWith(
           core: tasks[taskIndex].core.copyWith(
-            status: newStatus,
-          ),
+                status: newStatus,
+              ),
         );
         tasks[taskIndex] = updatedTask;
         tasks.refresh();
@@ -1199,36 +1253,40 @@ class TaskController extends GetxController {
       if (task == null) return;
 
       // Prepare completion data
-      final completionData = _prepareTaskCompletionData(task, userId, reportCompletionInfo);
+      final completionData =
+          _prepareTaskCompletionData(task, userId, reportCompletionInfo);
 
       // Update Firestore
       await _updateTaskCompletionInFirestore(taskId, completionData);
 
       // Send notifications if needed
       if (reportCompletionInfo != null) {
-        await _sendCompletionNotifications(taskId, userId, task.title, reportCompletionInfo);
+        await _sendCompletionNotifications(
+            taskId, userId, task.title, reportCompletionInfo);
       }
 
       // Update local state
-      _updateLocalTaskCompletion(taskId, userId, completionData, reportCompletionInfo);
+      _updateLocalTaskCompletion(
+          taskId, userId, completionData, reportCompletionInfo);
 
       // Show success message
-      _showCompletionSuccessMessage(completionData['allCompleted'] as bool, completionData['remainingUsers'] as int);
+      _showCompletionSuccessMessage(completionData['allCompleted'] as bool,
+          completionData['remainingUsers'] as int);
 
       calculateNewTaskCount();
     } catch (e) {
-      _safeSnackbar("Error", "Failed to mark task as completed: ${e.toString()}");
+      _safeSnackbar(
+          "Error", "Failed to mark task as completed: ${e.toString()}");
     } finally {
       isLoading(false);
     }
   }
 
   /// Get and validate task for completion
-  Future<Task?> _getAndValidateTaskForCompletion(String taskId, String userId) async {
-    final taskDoc = await FirebaseFirestore.instance
-        .collection('tasks')
-        .doc(taskId)
-        .get();
+  Future<Task?> _getAndValidateTaskForCompletion(
+      String taskId, String userId) async {
+    final taskDoc =
+        await FirebaseFirestore.instance.collection('tasks').doc(taskId).get();
 
     if (!taskDoc.exists) {
       _safeSnackbar("Error", "Task not found");
@@ -1272,8 +1330,8 @@ class TaskController extends GetxController {
 
     // Check if all assigned users have now completed the task
     final allAssignedUsers = task.assignedUserIds;
-    final allCompleted = allAssignedUsers.every((assignedUserId) =>
-        updatedCompletedByUserIds.contains(assignedUserId));
+    final allCompleted = allAssignedUsers.every(
+        (assignedUserId) => updatedCompletedByUserIds.contains(assignedUserId));
 
     // Prepare update data
     Map<String, dynamic> updateData = {
@@ -1299,12 +1357,15 @@ class TaskController extends GetxController {
     return {
       'updateData': updateData,
       'allCompleted': allCompleted,
-      'remainingUsers': allAssignedUsers.where((id) => !updatedCompletedByUserIds.contains(id)).length,
+      'remainingUsers': allAssignedUsers
+          .where((id) => !updatedCompletedByUserIds.contains(id))
+          .length,
     };
   }
 
   /// Update task completion in Firestore
-  Future<void> _updateTaskCompletionInFirestore(String taskId, Map<String, dynamic> completionData) async {
+  Future<void> _updateTaskCompletionInFirestore(
+      String taskId, Map<String, dynamic> completionData) async {
     await FirebaseFirestore.instance
         .collection('tasks')
         .doc(taskId)
@@ -1341,8 +1402,10 @@ class TaskController extends GetxController {
     int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
     if (taskIndex != -1) {
       final task = tasks[taskIndex];
-      List<String> updatedCompletedByUserIds = completionData['updateData']['completedByUserIds'] as List<String>;
-      Map<String, dynamic> updatedTimestamps = completionData['updateData']['userCompletionTimestamps'] as Map<String, dynamic>;
+      List<String> updatedCompletedByUserIds =
+          completionData['updateData']['completedByUserIds'] as List<String>;
+      Map<String, dynamic> updatedTimestamps = completionData['updateData']
+          ['userCompletionTimestamps'] as Map<String, dynamic>;
 
       // Create updated report completion info map
       final Map<String, ReportCompletionInfo> updatedReportCompletionInfo =
@@ -1353,18 +1416,19 @@ class TaskController extends GetxController {
 
       Task updatedTask = task.copyWith(
         metadata: task.metadata?.copyWith(
-          completedByUserIds: updatedCompletedByUserIds,
-          userCompletionTimestamps: Map<String, DateTime>.from(
-              updatedTimestamps.map((key, value) =>
-                  MapEntry(key, value is DateTime ? value : DateTime.now()))),
-          reportCompletionInfo: updatedReportCompletionInfo,
-        ) ?? TaskMetadata(
-          completedByUserIds: updatedCompletedByUserIds,
-          userCompletionTimestamps: Map<String, DateTime>.from(
-              updatedTimestamps.map((key, value) =>
-                  MapEntry(key, value is DateTime ? value : DateTime.now()))),
-          reportCompletionInfo: updatedReportCompletionInfo,
-        ),
+              completedByUserIds: updatedCompletedByUserIds,
+              userCompletionTimestamps: Map<String, DateTime>.from(
+                  updatedTimestamps.map((key, value) => MapEntry(
+                      key, value is DateTime ? value : DateTime.now()))),
+              reportCompletionInfo: updatedReportCompletionInfo,
+            ) ??
+            TaskMetadata(
+              completedByUserIds: updatedCompletedByUserIds,
+              userCompletionTimestamps: Map<String, DateTime>.from(
+                  updatedTimestamps.map((key, value) => MapEntry(
+                      key, value is DateTime ? value : DateTime.now()))),
+              reportCompletionInfo: updatedReportCompletionInfo,
+            ),
         core: completionData['allCompleted'] as bool
             ? task.core.copyWith(status: 'Completed')
             : task.core,
@@ -1520,10 +1584,11 @@ class TaskController extends GetxController {
       if (index != -1) {
         final updatedTask = tasks[index].copyWith(
           metadata: tasks[index].metadata?.copyWith(
-            comments: [...tasks[index].comments, comment],
-          ) ?? TaskMetadata(
-            comments: [...tasks[index].comments, comment],
-          ),
+                comments: [...tasks[index].comments, comment],
+              ) ??
+              TaskMetadata(
+                comments: [...tasks[index].comments, comment],
+              ),
         );
         tasks[index] = updatedTask;
         tasks.refresh();
@@ -1635,11 +1700,15 @@ class TaskController extends GetxController {
       (a, b, c, d, e) {
         final taskIds = <String>{};
 
-        final assignedToDocs = a.docs.where((doc) => doc['status'] != 'Completed');
-        final reporterDocs = b.docs.where((doc) => doc['status'] != 'Completed');
-        final cameramanDocs = c.docs.where((doc) => doc['status'] != 'Completed');
+        final assignedToDocs =
+            a.docs.where((doc) => doc['status'] != 'Completed');
+        final reporterDocs =
+            b.docs.where((doc) => doc['status'] != 'Completed');
+        final cameramanDocs =
+            c.docs.where((doc) => doc['status'] != 'Completed');
         final driverDocs = d.docs.where((doc) => doc['status'] != 'Completed');
-        final librarianDocs = e.docs.where((doc) => doc['status'] != 'Completed');
+        final librarianDocs =
+            e.docs.where((doc) => doc['status'] != 'Completed');
 
         taskIds.addAll(assignedToDocs.map((doc) => doc.id));
         taskIds.addAll(reporterDocs.map((doc) => doc.id));
@@ -1752,8 +1821,10 @@ class TaskController extends GetxController {
     isLoading(true);
     try {
       debugPrint('=== LOADING INITIAL TASKS ===');
-      debugPrint('TaskController: User role: ${AuthController.to.userRole.value}');
-      debugPrint('TaskController: User ID: ${AuthController.to.currentUser?.uid}');
+      debugPrint(
+          'TaskController: User role: ${AuthController.to.userRole.value}');
+      debugPrint(
+          'TaskController: User ID: ${AuthController.to.currentUser?.uid}');
 
       // Check if user is admin to decide query type
       final isAdmin = AuthController.to.isAdmin.value;
@@ -1785,9 +1856,11 @@ class TaskController extends GetxController {
             'loadInitialTasks: Loaded ${tasks.length} tasks into controller');
       } else {
         // Non-admin users load only relevant tasks
-        debugPrint('loadInitialTasks: Loading relevant tasks for non-admin user');
+        debugPrint(
+            'loadInitialTasks: Loading relevant tasks for non-admin user');
         await fetchRelevantTasksForUser();
-        debugPrint('loadInitialTasks: Loaded ${tasks.length} relevant tasks for non-admin user');
+        debugPrint(
+            'loadInitialTasks: Loaded ${tasks.length} relevant tasks for non-admin user');
       }
 
       debugPrint('=== END LOADING INITIAL TASKS ===');
@@ -1811,9 +1884,16 @@ class TaskController extends GetxController {
         return;
       }
 
-      // Check if user is admin
-      if (!authController.isAdmin.value) {
-        _safeSnackbar("Error", "Only admins can approve tasks");
+      // ✅ HARDENED CHECK: Only Admins can approve tasks
+      if (!authController.isAdmin.value &&
+          authController.userRole.value != 'Admin') {
+        _safeSnackbar(
+          "Permission Denied",
+          "Only administrators can approve tasks.",
+        );
+        debugPrint(
+          'approveTask: User ${authController.userRole.value} attempted unauthorized approval',
+        );
         return;
       }
 
@@ -1832,6 +1912,25 @@ class TaskController extends GetxController {
           .doc(taskId)
           .update(approvalData);
 
+      // Get task title before audit logging
+      String taskTitle = 'Unknown Task';
+      try {
+        final taskDoc = await FirebaseFirestore.instance
+            .collection('tasks')
+            .doc(taskId)
+            .get();
+        taskTitle = taskDoc.data()?['title'] ?? 'Unknown Task';
+      } catch (e) {
+        debugPrint('Error fetching task title for audit log: $e');
+      }
+
+      // ✅ AUDIT LOG: Log the task approval
+      await AuditService().logTaskApproval(
+        taskId: taskId,
+        taskTitle: taskTitle,
+        reason: reason,
+      );
+
       // Update local task
       final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       debugPrint(
@@ -1842,18 +1941,19 @@ class TaskController extends GetxController {
             'approveTask: Old task approvalStatus: ${oldTask.approvalStatus}');
         final updatedTask = tasks[taskIndex].copyWith(
           metadata: tasks[taskIndex].metadata?.copyWith(
-            approvalStatus: 'approved',
-            approvedBy: userId,
-            approvalTimestamp: now,
-            approvalReason: reason,
-            lastModified: now,
-          ) ?? TaskMetadata(
-            approvalStatus: 'approved',
-            approvedBy: userId,
-            approvalTimestamp: now,
-            approvalReason: reason,
-            lastModified: now,
-          ),
+                    approvalStatus: 'approved',
+                    approvedBy: userId,
+                    approvalTimestamp: now,
+                    approvalReason: reason,
+                    lastModified: now,
+                  ) ??
+              TaskMetadata(
+                approvalStatus: 'approved',
+                approvedBy: userId,
+                approvalTimestamp: now,
+                approvalReason: reason,
+                lastModified: now,
+              ),
         );
         tasks[taskIndex] = updatedTask;
         debugPrint(
@@ -1868,7 +1968,7 @@ class TaskController extends GetxController {
 
         // Send notification to task creator
         if (updatedTask.createdById.isNotEmpty) {
-          await sendTaskApprovalNotification(
+          await Get.find<NotificationController>().sendTaskApprovalNotification(
             updatedTask.createdById,
             updatedTask.title,
             'approved',
@@ -1914,23 +2014,43 @@ class TaskController extends GetxController {
           .doc(taskId)
           .update(rejectionData);
 
+      // Get task title before audit logging
+      String taskTitle = 'Unknown Task';
+      try {
+        final taskDoc = await FirebaseFirestore.instance
+            .collection('tasks')
+            .doc(taskId)
+            .get();
+        taskTitle = taskDoc.data()?['title'] ?? 'Unknown Task';
+      } catch (e) {
+        debugPrint('Error fetching task title for audit log: $e');
+      }
+
+      // ✅ AUDIT LOG: Log the task rejection
+      await AuditService().logTaskRejection(
+        taskId: taskId,
+        taskTitle: taskTitle,
+        reason: reason,
+      );
+
       // Update local task
       final taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
         final updatedTask = tasks[taskIndex].copyWith(
           metadata: tasks[taskIndex].metadata?.copyWith(
-            approvalStatus: 'rejected',
-            approvedBy: userId,
-            approvalTimestamp: now,
-            approvalReason: reason,
-            lastModified: now,
-          ) ?? TaskMetadata(
-            approvalStatus: 'rejected',
-            approvedBy: userId,
-            approvalTimestamp: now,
-            approvalReason: reason,
-            lastModified: now,
-          ),
+                    approvalStatus: 'rejected',
+                    approvedBy: userId,
+                    approvalTimestamp: now,
+                    approvalReason: reason,
+                    lastModified: now,
+                  ) ??
+              TaskMetadata(
+                approvalStatus: 'rejected',
+                approvedBy: userId,
+                approvalTimestamp: now,
+                approvalReason: reason,
+                lastModified: now,
+              ),
         );
         tasks[taskIndex] = updatedTask;
         tasks.refresh();

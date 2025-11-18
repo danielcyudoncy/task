@@ -1,12 +1,14 @@
 // controllers/manage_users_controller.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/service/user_deletion_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/controllers/auth_controller.dart';
+import 'package:task/service/audit_service.dart';
 
 class ManageUsersController extends GetxController {
   final UserDeletionService userDeletionService;
@@ -69,14 +71,20 @@ class ManageUsersController extends GetxController {
     // Cancel existing stream if any
     _usersStream?.cancel();
 
-    debugPrint('ManageUsersController: User role: ${AuthController.to.userRole.value}');
-    debugPrint('ManageUsersController: Is admin: ${AuthController.to.isAdmin.value}');
+    debugPrint(
+        'ManageUsersController: User role: ${AuthController.to.userRole.value}');
+    debugPrint(
+        'ManageUsersController: Is admin: ${AuthController.to.isAdmin.value}');
 
     // Listen for real-time updates from Firestore
-    _usersStream = FirebaseFirestore.instance.collection('users').snapshots().listen((snapshot) async {
+    _usersStream = FirebaseFirestore.instance
+        .collection('users')
+        .snapshots()
+        .listen((snapshot) async {
       // Check if user is still authenticated
       if (AuthController.to.currentUser == null) {
-        debugPrint('[ManageUsersController] User not authenticated, skipping update');
+        debugPrint(
+            '[ManageUsersController] User not authenticated, skipping update');
         return;
       }
       isLoading.value = true;
@@ -113,15 +121,13 @@ class ManageUsersController extends GetxController {
         };
       }));
 
-      final filteredNewUsers = newUsers
-          .where(
-              (user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
-          .toList();
-
-      debugPrint(
-          '[ManageUsersController] Filtered users count: ${filteredNewUsers.length}');
-      usersList.value = filteredNewUsers;
+      // Keep the full list of users in usersList. We'll apply role-based
+      // filtering in `searchUsers` so the UI can show Admins when requested.
+      usersList.value = newUsers;
+      // Default filtered list: apply current role filter
       filteredUsersList.assignAll(usersList);
+      debugPrint(
+          '[ManageUsersController] Total users count: ${usersList.length}');
       isHovered.assignAll(List.filled(usersList.length, false));
       isLoading.value = false;
     });
@@ -131,7 +137,8 @@ class ManageUsersController extends GetxController {
     if (AuthController.to.currentUser == null) {
       return; // Don't fetch if not authenticated
     }
-    debugPrint('ManageUsersController: Fetching tasks, user role: ${AuthController.to.userRole.value}');
+    debugPrint(
+        'ManageUsersController: Fetching tasks, user role: ${AuthController.to.userRole.value}');
     try {
       QuerySnapshot snapshot =
           await FirebaseFirestore.instance.collection('tasks').get();
@@ -239,20 +246,82 @@ class ManageUsersController extends GetxController {
   }
 
   Future<void> promoteToAdmin(String userId) async {
+    // Admin-only check
+    if (!AuthController.to.isAdmin.value) {
+      _safeSnackbar(
+          'Permission Denied', 'Only admins can perform this action.');
+      return;
+    }
+
     try {
+      // Get user details for audit logging
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      final userName = userDoc.data()?['name'] ?? 'Unknown';
+      final userEmail = userDoc.data()?['email'] ?? 'unknown@email.com';
+
+      // Update the user's role to 'admin' in the 'users' collection
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .update({'role': 'admin'});
-      _safeSnackbar('Success', 'User promoted to admin');
-      int idx =
-          usersList.indexWhere((u) => u['id'] == userId || u['uid'] == userId);
-      if (idx != -1) {
-        usersList[idx]['role'] = 'admin';
-        filteredUsersList.assignAll(usersList);
+
+      // Create a corresponding document in the 'admins' collection
+      await _createAdminRecord(userId);
+
+      // Call the Cloud Function to set the custom admin claim
+      final HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('setAdminClaim');
+      final results = await callable.call(<String, dynamic>{'uid': userId});
+
+      // Check the result of the Cloud Function
+      if (results.data['status'] == 'success') {
+        // ✅ AUDIT LOG: Log the user promotion
+        await AuditService().logUserPromotion(
+          userId: userId,
+          userEmail: userEmail,
+          userName: userName,
+        );
+
+        _safeSnackbar('Success', 'User promoted to admin');
+        // Update the local list to reflect the change
+        int idx = usersList
+            .indexWhere((u) => u['id'] == userId || u['uid'] == userId);
+        if (idx != -1) {
+          usersList[idx]['role'] = 'admin';
+          filteredUsersList.assignAll(usersList);
+        }
+      } else {
+        // If the cloud function failed, revert the role change in Firestore.
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .update({'role': 'user'}); // Or whatever the default role is
+        _safeSnackbar(
+            'Error', results.data['message'] ?? 'An unknown error occurred.');
       }
     } catch (e) {
+      // Revert the role change in case of an error
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({'role': 'user'});
       _safeSnackbar('Error', 'Promotion failed: ${e.toString()}');
+    }
+  }
+
+  Future<void> _createAdminRecord(String userId) async {
+    try {
+      await FirebaseFirestore.instance.collection('admins').doc(userId).set({
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      // Handle or log the error appropriately
+      debugPrint('Error creating admin record: $e');
+      // Optionally re-throw or handle to inform the calling function
+      rethrow;
     }
   }
 
@@ -262,16 +331,24 @@ class ManageUsersController extends GetxController {
 
     // First apply role filter
     if (selectedRole.value == 'All') {
-      baseList = usersList
-          .where(
-              (user) => user['role'] != 'Librarian' && user['role'] != 'Admin')
-          .toList();
-    } else {
+      // Default: show non-admin, non-librarian users
       baseList = usersList
           .where((user) =>
-              user['role'] == selectedRole.value &&
-              user['role'] != 'Librarian' &&
-              user['role'] != 'Admin')
+              (user['role'] ?? '').toString().toLowerCase() != 'librarian' &&
+              (user['role'] ?? '').toString().toLowerCase() != 'admin')
+          .toList();
+    } else if (selectedRole.value == 'Admin') {
+      // Show only admins when Admin filter is selected
+      baseList = usersList
+          .where((user) =>
+              (user['role'] ?? '').toString().toLowerCase() == 'admin')
+          .toList();
+    } else {
+      // Show users with the selected role (exclude librarians unless explicitly selected)
+      baseList = usersList
+          .where((user) =>
+              (user['role'] ?? '').toString() == selectedRole.value &&
+              (user['role'] ?? '').toString().toLowerCase() != 'librarian')
           .toList();
     }
 

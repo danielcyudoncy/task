@@ -1,6 +1,7 @@
 // controllers/admin_controller.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -12,6 +13,7 @@ import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/fcm_service.dart';
 import 'package:task/service/enhanced_notification_service.dart';
 import 'package:task/service/user_cache_service.dart';
+import 'package:task/service/audit_service.dart';
 
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -89,12 +91,14 @@ class AdminController extends GetxController {
     });
 
     // Warning 7: Simplify conditional logic
+    // Only initialize admin data when the currently signed-in user is an admin.
     if (_auth.currentUser != null) {
       fetchDashboardData();
       if (AuthController.to.isAdmin.value) {
         startRealtimeUpdates();
+        // Initialize admin-specific data only for admins
+        initializeAdminData();
       }
-      initializeAdminData();
     }
   }
 
@@ -110,7 +114,8 @@ class AdminController extends GetxController {
           final data = snapshot.docs.first.data() as Map<String, dynamic>?;
           totalUsers.value = data?['totalUsers'] ?? totalUsers.value;
           totalTasks.value = data?['tasks']?['total'] ?? totalTasks.value;
-          completedTasks.value = data?['tasks']?['completed'] ?? completedTasks.value;
+          completedTasks.value =
+              data?['tasks']?['completed'] ?? completedTasks.value;
           pendingTasks.value = data?['tasks']?['pending'] ?? pendingTasks.value;
           overdueTasks.value = data?['tasks']?['overdue'] ?? overdueTasks.value;
 
@@ -145,7 +150,8 @@ class AdminController extends GetxController {
       try {
         final userCacheService = Get.find<UserCacheService>();
         for (final data in allDocs) {
-          final creatorId = (data['createdById'] ?? data['createdBy'] ?? '').toString();
+          final creatorId =
+              (data['createdById'] ?? data['createdBy'] ?? '').toString();
           if (creatorId.isNotEmpty) {
             final name = userCacheService.getUserNameSync(creatorId);
             if (name != 'Unknown User') {
@@ -168,7 +174,8 @@ class AdminController extends GetxController {
 
         bool isTaskCompleted = false;
         if (status == 'completed') {
-          final completedByUserIds = List<String>.from(doc['completedByUserIds'] ?? []);
+          final completedByUserIds =
+              List<String>.from(doc['completedByUserIds'] ?? []);
           final assignedUserIds = <String>[];
 
           if (doc['assignedReporterId'] != null &&
@@ -226,11 +233,22 @@ class AdminController extends GetxController {
   Future<void> initializeAdminData() async {
     try {
       isLoading(true);
+
+      // Check admin status first and silently return for non-admin users.
+      final isAdmin = await verifyAdminStatus();
+      if (!isAdmin) {
+        debugPrint(
+            'initializeAdminData: current user is not an admin, skipping admin init');
+        return;
+      }
+
+      // Ensure admin access and create admin doc if needed, then fetch admin data
       await _verifyAdminAccess();
       await Future.wait([
         fetchAdminProfile(),
         fetchStatistics(),
       ]);
+
       if (adminName.value.isNotEmpty) {
         Get.offAllNamed('/admin-dashboard');
       }
@@ -240,11 +258,18 @@ class AdminController extends GetxController {
       // Just surface a non-blocking message and continue; many admin
       // initialization failures are due to timing (role not yet set) or
       // permission-denied and should not sign the user out.
-      Future.delayed(Duration.zero, () {
-        if (Get.context != null) {
-          _safeSnackbar("Admin Error", "Failed to initialize admin data");
-        }
-      });
+      // Suppress the snackbar for expected 'Not an admin user' errors
+      final msg = e.toString();
+      if (!msg.contains('Not an admin user')) {
+        Future.delayed(Duration.zero, () {
+          if (Get.context != null) {
+            _safeSnackbar("Admin Error", "Failed to initialize admin data");
+          }
+        });
+      } else {
+        debugPrint(
+            'initializeAdminData: non-admin - suppressing user-facing error');
+      }
     } finally {
       isLoading(false);
     }
@@ -263,22 +288,21 @@ class AdminController extends GetxController {
       await _createAdminProfileFromUser(userId);
     }
   }
+
   Future<bool> verifyAdminStatus() async {
     try {
       final user = _auth.currentUser;
       if (user == null) return false;
 
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
 
       if (userDoc.exists) {
         final userData = userDoc.data();
         final role = userData?['role']?.toString() ?? '';
 
         // Check if user has admin role
-        final isAdmin = ['Admin', 'admin', 'superadmin', 'administrator'].contains(role);
+        final isAdmin =
+            ['Admin', 'admin', 'superadmin', 'administrator'].contains(role);
         debugPrint('Admin verification: role=$role, isAdmin=$isAdmin');
 
         return isAdmin;
@@ -299,6 +323,21 @@ class AdminController extends GetxController {
         if (userData == null) {
           throw Exception("User document data is null");
         }
+
+        // First, call the Cloud Function to set admin custom claim (server-side)
+        // This ensures the custom claim is set before we create the admin doc
+        try {
+          debugPrint('AdminController: Calling setAdminClaim Cloud Function');
+          await FirebaseFunctions.instance.httpsCallable('setAdminClaim').call({
+            'uid': userId,
+          });
+          debugPrint('AdminController: Admin custom claim set successfully');
+        } catch (e) {
+          debugPrint('AdminController: Error setting admin claim: $e');
+          // Continue anyway - if rule check is sufficient, admin doc creation may still work
+        }
+
+        // Now create the admin profile
         await createAdminProfile(
           userId: userId,
           fullName: userData['fullName'] ?? "Administrator",
@@ -321,9 +360,11 @@ class AdminController extends GetxController {
       final now = DateTime.now();
 
       // First, get the user data since it's most critical
-      final userSnapshot = await _firestore.collection('users').get()
+      final userSnapshot = await _firestore
+          .collection('users')
+          .get()
           .timeout(const Duration(seconds: 10));
-      
+
       // Update user counts immediately
       final userDocs = userSnapshot.docs;
       totalUsers.value = userDocs.where((doc) {
@@ -349,7 +390,8 @@ class AdminController extends GetxController {
           .get();
       onlineUsers.value = onlineUsersSnapshot.docs.length;
 
-      final conversationsSnapshot = await _firestore.collection('conversations').get();
+      final conversationsSnapshot =
+          await _firestore.collection('conversations').get();
       totalConversations.value = conversationsSnapshot.docs.length;
 
       final newsSnapshot = await _firestore.collection('news').get();
@@ -582,15 +624,150 @@ class AdminController extends GetxController {
     }
   }
 
+  /// Promote a user (by uid) to Admin.
+  /// This will call a server-side Cloud Function to set the admin custom claim,
+  /// update the users collection role field, and create an admins profile doc.
+  Future<bool> promoteUserToAdmin(String targetUid) async {
+    // Ensure caller is an admin
+    if (!AuthController.to.isAdmin.value) {
+      _safeSnackbar('Permission Denied', 'Only admins can promote users');
+      return false;
+    }
+
+    try {
+      final userDoc = await _firestore.collection('users').doc(targetUid).get();
+      final userData = userDoc.data() ?? {};
+      final fullName =
+          (userData['fullName'] ?? userData['fullname'] ?? 'Administrator')
+              .toString();
+      final email = (userData['email'] ?? '').toString();
+      final photoUrl =
+          (userData['photoUrl'] ?? userData['photoURL'] ?? '').toString();
+
+      // 1) Call Cloud Function to set admin custom claim (server-side check required there)
+      try {
+        await FirebaseFunctions.instance
+            .httpsCallable('setAdminClaim')
+            .call({'uid': targetUid});
+      } catch (e) {
+        // Log but continue — claim may be set later by an admin process
+        debugPrint('promoteUserToAdmin: setAdminClaim call failed: $e');
+      }
+
+      // 2) Update Firestore user role
+      await _firestore.collection('users').doc(targetUid).update({
+        'role': 'Admin',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 3) Create admins profile document
+      await createAdminProfile(
+        userId: targetUid,
+        fullName: fullName,
+        email: email,
+        photoUrl: photoUrl,
+      );
+
+      // Audit log (best-effort)
+      try {
+        await AuditService().logUserPromotion(
+          userId: targetUid,
+          userEmail: email,
+          userName: fullName,
+        );
+      } catch (e) {
+        debugPrint('promoteUserToAdmin: audit log failed: $e');
+      }
+
+      _safeSnackbar('Success', 'User promoted to admin');
+      return true;
+    } catch (e) {
+      debugPrint('promoteUserToAdmin error: $e');
+      _safeSnackbar('Error', 'Failed to promote user: ${e.toString()}');
+      return false;
+    }
+  }
+
+  /// Demote an admin user back to a regular role (Reporter by default).
+  /// Calls a server-side Cloud Function to remove admin custom claims,
+  /// deletes the admins/{uid} document, and updates users/{uid}.role.
+  Future<bool> demoteUserFromAdmin(String targetUid,
+      {String newRole = 'Reporter'}) async {
+    if (!AuthController.to.isAdmin.value) {
+      _safeSnackbar('Permission Denied', 'Only admins can demote users');
+      return false;
+    }
+
+    try {
+      // 1) Call Cloud Function to unset admin claim
+      try {
+        final res = await FirebaseFunctions.instance
+            .httpsCallable('unsetAdminClaim')
+            .call({'uid': targetUid});
+        debugPrint('demoteUserFromAdmin: unsetAdminClaim result: ${res.data}');
+      } catch (e) {
+        debugPrint('demoteUserFromAdmin: unsetAdminClaim failed: $e');
+        // Continue best-effort: we'll still attempt to update Firestore
+      }
+
+      // 2) Update users collection role
+      await _firestore.collection('users').doc(targetUid).update({
+        'role': newRole,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 3) Remove admins document if exists
+      try {
+        final adminDoc =
+            await _firestore.collection('admins').doc(targetUid).get();
+        if (adminDoc.exists) {
+          await _firestore.collection('admins').doc(targetUid).delete();
+        }
+      } catch (e) {
+        debugPrint('demoteUserFromAdmin: failed to delete admin doc: $e');
+      }
+
+      // Audit log
+      try {
+        await AuditService().logUserPromotion(
+          userId: targetUid,
+          userEmail: '',
+          userName: '',
+          // You may want to add a dedicated demotion log method; reusing promotion log with note.
+        );
+      } catch (e) {
+        debugPrint('demoteUserFromAdmin: audit log failed: $e');
+      }
+
+      _safeSnackbar('Success', 'User demoted from admin');
+      return true;
+    } catch (e) {
+      debugPrint('demoteUserFromAdmin error: $e');
+      _safeSnackbar('Error', 'Failed to demote user: ${e.toString()}');
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     try {
       isLoading(true);
+      // Suppress snackbars during admin-triggered logout to avoid
+      // showing permission/listener errors that happen while listeners
+      // are torn down.
+      try {
+        SnackbarUtils.setSuppress(true);
+      } catch (_) {}
+
       await _auth.signOut();
       clearAdminData();
       Get.offAllNamed('/login');
     } catch (e) {
       _safeSnackbar("Error", "Logout failed: ${e.toString()}");
     } finally {
+      // Restore snackbar behavior after logout
+      try {
+        SnackbarUtils.setSuppress(false);
+      } catch (_) {}
       isLoading(false);
     }
   }
@@ -654,11 +831,14 @@ class AdminController extends GetxController {
   Future<void> fetchTasks() async {
     try {
       var snapshot = await _firestore.collection('tasks').get();
-      var tasks = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['taskId'] = doc.id;
-        return Task.fromMap(data);
-      }).whereType<Task>().toList();
+      var tasks = snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            data['taskId'] = doc.id;
+            return Task.fromMap(data);
+          })
+          .whereType<Task>()
+          .toList();
 
       pendingTasks.value =
           tasks.where((task) => task.status == 'Pending').length;
@@ -679,6 +859,15 @@ class AdminController extends GetxController {
     required String taskId,
   }) async {
     try {
+      // ✅ PERMISSION CHECK: Only users with assignment privileges can assign tasks
+      if (!_canAssignTask()) {
+        _safeSnackbar(
+          'Permission Denied',
+          'You do not have permission to assign tasks. Only Admins, Assignment Editors, News Directors, and Producers can assign tasks.',
+        );
+        return;
+      }
+
       // Fetch the user's role
       final userDoc = await _firestore.collection('users').doc(userId).get();
       final userRole = userDoc.data()?['role'] ?? '';
@@ -702,6 +891,14 @@ class AdminController extends GetxController {
         updateData['assignedLibrarianName'] = assignedName;
       }
       await _firestore.collection('tasks').doc(taskId).update(updateData);
+
+      // ✅ AUDIT LOG: Log the task assignment
+      await AuditService().logTaskAssignment(
+        taskId: taskId,
+        assignedToUserId: userId,
+        assignedName: assignedName,
+        taskTitle: taskTitle,
+      );
 
       // Format the due date
       final String formattedDate =
@@ -752,6 +949,20 @@ class AdminController extends GetxController {
       return approvalStatus == null || approvalStatus == 'pending';
     }).toList();
   }
+
+  /// Helper method to check if current user can assign tasks
+  /// ✅ Only Admins, Assignment Editors, News Directors, Producers, and Heads can assign
+  bool _canAssignTask() {
+    final role = AuthController.to.userRole.value;
+    return role == 'Admin' ||
+        role == 'Assignment Editor' ||
+        role == 'Head of Department' ||
+        role == 'Head of Unit' ||
+        role == 'News Director' ||
+        role == 'Assistant News Director' ||
+        role == 'Producer';
+  }
+
   Future<void> initializeAdmin() async {
     try {
       final isAdmin = await verifyAdminStatus();
@@ -762,11 +973,11 @@ class AdminController extends GetxController {
 
       // Proceed with admin initialization
       await initializeAdminData();
-
     } catch (e) {
       debugPrint('Admin initialization error: $e');
-      // Don't throw the exception, just handle it gracefully
-      rethrow;
+      // Don't throw the exception — initialization may be attempted from
+      // multiple places and non-admin users are an expected case. Log and
+      // continue without bubbling the error up to callers.
     }
   }
 

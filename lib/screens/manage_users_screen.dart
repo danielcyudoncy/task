@@ -341,6 +341,130 @@ class ManageUsersScreen extends StatelessWidget {
                                                       AdminController>()),
                                         ),
                                       ),
+                                      // Promote to Admin button (visible to admins when role loaded and target is not already admin)
+                                      Obx(() {
+                                        final isRoleLoaded = AuthController
+                                            .to.isRoleLoaded.value;
+                                        final isAdmin =
+                                            AuthController.to.isAdmin.value;
+                                        final targetRole = (user['role'] ?? '')
+                                            .toString()
+                                            .toLowerCase();
+                                        if (!isRoleLoaded || !isAdmin) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        if (targetRole == 'admin' ||
+                                            isCurrentUser) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final promoteIconColor =
+                                            theme.brightness == Brightness.dark
+                                                ? theme.colorScheme.onSurface
+                                                : theme.colorScheme.onPrimary;
+                                        return IconButton(
+                                          icon: Icon(Icons.person_add,
+                                              color: promoteIconColor),
+                                          tooltip: 'Promote to Admin',
+                                          onPressed: () async {
+                                            final confirmed =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text(
+                                                    'Confirm Promotion'),
+                                                content: Text(
+                                                    'Promote $userName to Admin?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(true),
+                                                    child:
+                                                        const Text('Promote'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                            if (confirmed == true) {
+                                              try {
+                                                await Get.find<
+                                                        AdminController>()
+                                                    .promoteUserToAdmin(userId);
+                                              } catch (e) {
+                                                // promoteUserToAdmin surfaces errors via snackbars
+                                              }
+                                            }
+                                          },
+                                        );
+                                      }),
+                                      // If target is admin, show a Demote button for admins
+                                      Obx(() {
+                                        final isRoleLoaded = AuthController
+                                            .to.isRoleLoaded.value;
+                                        final isAdmin =
+                                            AuthController.to.isAdmin.value;
+                                        final targetRole = (user['role'] ?? '')
+                                            .toString()
+                                            .toLowerCase();
+                                        if (!isRoleLoaded || !isAdmin) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        if (targetRole != 'admin' ||
+                                            isCurrentUser) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final demoteIconColor =
+                                            theme.brightness == Brightness.dark
+                                                ? theme.colorScheme.error
+                                                : theme.colorScheme.onPrimary;
+                                        return IconButton(
+                                          icon: Icon(Icons.person_remove,
+                                              color: demoteIconColor),
+                                          tooltip: 'Demote from Admin',
+                                          onPressed: () async {
+                                            final confirmed =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text(
+                                                    'Confirm Demotion'),
+                                                content: Text(
+                                                    'Demote $userName from Admin?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(true),
+                                                    child: const Text('Demote'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                            if (confirmed == true) {
+                                              try {
+                                                await Get.find<
+                                                        AdminController>()
+                                                    .demoteUserFromAdmin(
+                                                        userId);
+                                              } catch (e) {
+                                                // errors surfaced via snackbars
+                                              }
+                                            }
+                                          },
+                                        );
+                                      }),
                                       IconButton(
                                         icon: Icon(Icons.delete,
                                             color: theme.colorScheme.error),
