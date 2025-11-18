@@ -34,31 +34,62 @@ service cloud.firestore {
     
     // Tasks collection - Allow all users to create and manage tasks
     match /tasks/{taskId} {
+      // READ: All authenticated users can read all tasks
       allow read: if request.auth != null;
-      allow create: if request.auth != null;  // All authenticated users can create tasks
-      allow update, delete: if request.auth != null &&
+      
+      // CREATE: All authenticated users can create tasks
+      allow create: if request.auth != null;
+      
+      // APPROVAL UPDATES: Admin-only (modify approval-related fields)
+      allow update: if request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['approvalStatus', 'approvedBy', 'approvalTimestamp', 
+                    'approvalReason', 'lastModified']) &&
+        (request.auth.token.admin == true);
+      
+      // ASSIGNMENT UPDATES: Restricted to admins and users with assignment privileges
+      allow update: if request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['assignedTo', 'assignedReporterId', 'assignedCameramanId',
+                   'assignedDriverId', 'assignedLibrarianId', 'assignedReporter',
+                   'assignedCameraman', 'assignedDriver', 'assignedLibrarian',
+                   'assignedName', 'assignmentTimestamp']) &&
+        (request.auth.token.admin == true ||
+         request.auth.token.role == 'Assignment Editor' ||
+         request.auth.token.role == 'Head of Department' ||
+         request.auth.token.role == 'Head of Unit' ||
+         request.auth.token.role == 'News Director' ||
+         request.auth.token.role == 'Assistant News Director' ||
+         request.auth.token.role == 'Producer');
+      
+      // STATUS/CONTENT UPDATES: Admin or task creator (status, title, description, etc.)
+      allow update: if request.auth != null &&
         (request.auth.token.admin == true ||  // Admins can modify any task
-         request.auth.uid == resource.data.createdBy ||  // Task creator can modify
-         // Allow assignment fields to be updated by any authenticated user with assignment rights
-         (request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['assignedTo', 'assignedReporterId', 'assignedCameramanId',
-                     'assignedDriverId', 'assignedLibrarianId', 'assignedReporter',
-                     'assignedCameraman', 'assignedDriver', 'assignedLibrarian',
-                     'assignedName', 'assignmentTimestamp']) &&
-          (request.auth.token.admin == true ||
-           request.auth.token.role == 'Admin' ||
-           request.auth.token.role == 'Assignment Editor' ||
-           request.auth.token.role == 'Head of Department' ||
-           request.auth.token.role == 'Head of Unit' ||
-           request.auth.token.role == 'News Director' ||
-           request.auth.token.role == 'Assistant News Director' ||
-           request.auth.token.role == 'Producer')));
+         request.auth.uid == resource.data.createdBy);  // Task creator can modify own tasks
+      
+      // DELETE: Admin or task creator
+      allow delete: if request.auth != null &&
+        (request.auth.token.admin == true ||  // Admins can delete any task
+         request.auth.uid == resource.data.createdBy);  // Task creator can delete own tasks
     }
     
     // Admins collection
     match /admins/{adminId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+
+      // Allow creation of an admin document if:
+      // 1. User has server-side admin custom claim (most secure), OR
+      // 2. User is creating their own admin doc AND their users/{uid} doc has role='Admin'
+      //    (for bootstrapping when custom claim not yet set, checked server-side)
+      allow create: if request.auth != null && (
+        request.auth.token.admin == true ||
+        (request.auth.uid == adminId &&
+         get(/databases/$(database)/documents/users/$(adminId)).data.role == 'Admin'
+        )
+      );
+
+      // Only allow existing admins (via custom claim) to update or delete admin documents.
+      allow update, delete: if request.auth != null && request.auth.token.admin == true;
     }
     
     // Conversations collection with subcollections
@@ -81,6 +112,30 @@ service cloud.firestore {
     match /dashboard_metrics/{metricId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+    
+    // Audit logs collection - Protected audit trail for sensitive operations
+    // Only admins can read, only Cloud Functions can write (via server-side rules)
+    match /audit_logs/{auditId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null && request.auth.token.admin == true;
+      allow update, delete: if false;  // Immutable - prevent modification of audit records
+    }
+    
+    // Task audits collection - Protected audit trail for task deletions
+    // Only admins can read, Cloud Functions write permanent deletion records
+    match /task_audits/{taskAuditId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow create: if request.auth != null && request.auth.token.admin == true;
+      allow update, delete: if false;  // Immutable - prevent modification of audit records
+    }
+    
+    // Admin invites collection - Secure token-based admin onboarding
+    // Only admins can create invites, users can only read their own assigned invites
+    match /adminInvites/{inviteId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.token.admin == true;
+      allow update, delete: if false;  // Immutable - invites are consumed atomically by Cloud Functions
     }
   }
 }

@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/settings_controller.dart';
+import 'package:task/controllers/admin_controller.dart';
 import '../../controllers/manage_users_controller.dart';
+import '../../controllers/auth_controller.dart';
 import '../../utils/constants/app_strings.dart';
 
 class ManageUsersDialog extends StatelessWidget {
@@ -126,6 +128,54 @@ class ManageUsersDialog extends StatelessWidget {
                               },
                             ),
                           ),
+                          // Show promote button only if this user is not already an Admin
+                          if ((user['role'] ?? '').toString().toLowerCase() !=
+                                  'admin' &&
+                              AuthController.to.isRoleLoaded.value &&
+                              AuthController.to.isAdmin.value)
+                            Tooltip(
+                              message: 'Promote to Admin',
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.person_add_alt_1,
+                                  color: isDark
+                                      ? theme.colorScheme.onSurface
+                                      : theme.colorScheme.primary,
+                                ),
+                                onPressed: () async {
+                                  final confirmed = await Get.dialog<bool>(
+                                    AlertDialog(
+                                      title: const Text('Confirm Promotion'),
+                                      content: Text(
+                                          'Promote ${userName ?? 'this user'} to Admin?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Get.back(result: false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Get.back(result: true),
+                                          child: const Text('Promote'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmed == true) {
+                                    try {
+                                      final adminCtrl =
+                                          Get.find<AdminController>();
+                                      await adminCtrl
+                                          .promoteUserToAdmin(user['uid']);
+                                    } catch (e) {
+                                      // Errors are surfaced via snackbars in promoteUserToAdmin
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
                         ],
                       ),
                     ),
