@@ -128,9 +128,9 @@ class Task {
     final coreMap = Map<String, dynamic>.from(map)
       ..remove('taskId'); // Keep taskId for core
     coreMap['taskId'] = map['taskId'];
-  
+
     final core = TaskCore.fromMap(coreMap);
-  
+
     // Extract metadata fields
     final metadataMap = <String, dynamic>{};
     final metadataFields = [
@@ -172,16 +172,16 @@ class Task {
       'reviewTimestamps',
       'reviewerRoles',
     ];
-  
+
     for (final field in metadataFields) {
       if (map.containsKey(field)) {
         metadataMap[field] = map[field];
       }
     }
-  
+
     final metadata =
         metadataMap.isNotEmpty ? TaskMetadata.fromMap(metadataMap) : null;
-  
+
     return Task(core: core, metadata: metadata);
   }
 
@@ -203,18 +203,17 @@ class Task {
     return map;
   }
 
-
   // Permission methods for task creators
   bool isCreator(String userId) {
     return userId == createdBy;
   }
 
-  bool canEdit(String userId) {
-    return isCreator(userId);
+  bool canEdit(String userId, {bool isAdmin = false}) {
+    return isCreator(userId) || isAdmin;
   }
 
-  bool canDelete(String userId) {
-    return isCreator(userId);
+  bool canDelete(String userId, {bool isAdmin = false}) {
+    return isCreator(userId) || isAdmin;
   }
 
   bool canMarkComplete(String userId) {
