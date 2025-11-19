@@ -1080,7 +1080,8 @@ class TaskController extends GetxController {
       }
 
       final task = tasks.firstWhere((t) => t.taskId == taskId);
-      if (!task.canEdit(currentUser.uid)) {
+      if (!task.canEdit(currentUser.uid,
+          isAdmin: authController.isCurrentUserAdmin)) {
         _safeSnackbar("Error", "You do not have permission to edit this task");
         return;
       }
@@ -1132,11 +1133,12 @@ class TaskController extends GetxController {
       final task = tasks.firstWhere((t) => t.taskId == taskId);
 
       // Check if user is admin for permanent delete, otherwise soft delete
-      if (authController.isAdmin.value) {
+      if (authController.isCurrentUserAdmin) {
         // Admin permanent delete - requires confirmation
         await _adminPermanentlyDeleteTask(taskId);
       } else {
-        if (!task.canDelete(currentUser.uid)) {
+        if (!task.canDelete(currentUser.uid,
+            isAdmin: authController.isCurrentUserAdmin)) {
           _safeSnackbar(
               "Error", "You do not have permission to delete this task");
           return;

@@ -83,7 +83,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
   Future<String> _getAssignedDriverName() async {
     try {
       if (widget.task.assignedDriverId == null) return 'Not Assigned';
-
       try {
         final userCacheService = Get.find<UserCacheService>();
         final name =
@@ -98,7 +97,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         return 'Unknown';
       }
     } catch (e) {
-debugPrint('Error in _getAssignedDriverName: $e');
+      debugPrint('Error in _getAssignedDriverName: $e');
       return 'Error';
     }
   }
@@ -267,11 +266,11 @@ debugPrint('Error in _getAssignedDriverName: $e');
     );
   }
 
-Future<bool?> _showDeleteConfirmation(BuildContext context) async {
+  Future<bool?> _showDeleteConfirmation(BuildContext context) async {
     return await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
-return AlertDialog(
+        return AlertDialog(
           title: const Text('Delete Task'),
           content: const Text(
               'Are you sure you want to delete this task? This action cannot be undone.'),
@@ -533,23 +532,24 @@ return AlertDialog(
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-const SizedBox(height: 16),
-Obx(() {
-  final currentUserId = authController.user.value?.uid;
-  
-  // Use the new reliable admin check method
-  final isAdmin = authController.isCurrentUserAdmin;
-  
-  final isTaskOwner = widget.task.createdById == currentUserId;
-  final isAssignedUser =
-      widget.task.assignedReporterId == currentUserId ||
-          widget.task.assignedCameramanId == currentUserId ||
-          widget.task.assignedDriverId == currentUserId ||
-          (widget.task.assignedTo != null &&
-              currentUserId != null &&
-              widget.task.assignedTo!.contains(currentUserId));
+                const SizedBox(height: 16),
+                Obx(() {
+                  final currentUserId = authController.currentUser?.uid;
 
-  final canManageTask = isTaskOwner || isAdmin || isAssignedUser;
+                  // Use the new reliable admin check method
+                  final isAdmin = authController.isCurrentUserAdmin;
+
+                  final isTaskOwner = widget.task.createdBy == currentUserId;
+                  final isAssignedUser =
+                      widget.task.assignedReporterId == currentUserId ||
+                          widget.task.assignedCameramanId == currentUserId ||
+                          widget.task.assignedDriverId == currentUserId ||
+                          (widget.task.assignedTo != null &&
+                              currentUserId != null &&
+                              widget.task.assignedTo!.contains(currentUserId));
+
+                  final canManageTask =
+                      isTaskOwner || isAdmin || isAssignedUser;
 
                   if (canManageTask) {
                     return Row(
