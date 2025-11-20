@@ -214,6 +214,49 @@ class TaskActions {
     );
   }
 
+  static void assignTask(BuildContext context, dynamic task) {
+    final authController = Get.find<AuthController>();
+    final userRole = authController.userRole.value.toLowerCase();
+    final isAdmin = userRole == 'admin' ||
+        userRole == 'administrator' ||
+        userRole == 'superadmin';
+
+    if (!isAdmin) {
+      SnackbarUtils.showError(
+          "You do not have permission to assign this task.");
+      return;
+    }
+
+    final TextEditingController userIdController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Assign Task"),
+        content: TextField(
+          controller: userIdController,
+          decoration: const InputDecoration(labelText: "User ID"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Here you would typically call a method in your TaskController
+              // to update the task with the new assignee.
+              // For example:
+              // Get.find<TaskController>().assignTask(task.taskId, userIdController.text);
+              Navigator.of(ctx).pop();
+            },
+            child: const Text("Assign"),
+          ),
+        ],
+      ),
+    );
+  }
+
   static Future<void> deleteTask(dynamic task) async {
     final taskController = Get.find<TaskController>();
     await taskController.deleteTask(task.taskId);
@@ -273,5 +316,37 @@ class TaskActions {
       debugPrint('Stack trace: $stackTrace');
       SnackbarUtils.showError("Failed to complete task: ${e.toString()}");
     }
+  }
+
+  static void addComment(BuildContext context, dynamic task) {
+    final TextEditingController commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Add Comment"),
+        content: TextField(
+          controller: commentController,
+          decoration: const InputDecoration(labelText: "Comment"),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Here you would typically call a method in your TaskController
+              // to add the comment to the task.
+              // For example:
+              // Get.find<TaskController>().addComment(task.taskId, commentController.text);
+              Navigator.of(ctx).pop();
+            },
+            child: const Text("Add"),
+          ),
+        ],
+      ),
+    );
   }
 }

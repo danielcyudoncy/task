@@ -3,12 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:task/controllers/settings_controller.dart';
 import './task_action_utility.dart';
 import 'package:task/models/task.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import '../service/user_cache_service.dart';
+import 'package:task/widgets/status_chip.dart';
 
 class TaskCardWidget extends StatefulWidget {
   final Task task;
@@ -30,7 +30,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
   @override
   void initState() {
     super.initState();
-    _refreshCreatorNameInBackground();
     _refreshAssignedReporterNameInBackground();
   }
 
@@ -129,23 +128,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     }
   }
 
-  void _refreshCreatorNameInBackground() {
-    if (widget.task.createdById.isNotEmpty) {
-      try {
-        final userCacheService = Get.find<UserCacheService>();
-        userCacheService.getUserName(widget.task.createdById).then((name) {
-          if (mounted && name != 'Unknown User') {
-            setState(() {});
-          }
-        }).catchError((e) {
-          debugPrint('Error refreshing creator name: $e');
-        });
-      } catch (e) {
-        debugPrint('Error getting UserCacheService: $e');
-      }
-    }
-  }
-
   void _refreshAssignedReporterNameInBackground() {
     if (widget.task.assignedReporterId != null) {
       try {
@@ -161,52 +143,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         });
       } catch (e) {
         debugPrint('Error getting UserCacheService: $e');
-      }
-    }
-  }
-
-  Widget _buildCompleteBackground() {
-    return Container(
-      color: Colors.green[600],
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.only(left: 20),
-      child: const Icon(
-        Icons.check_circle_outline,
-        color: Colors.white,
-        size: 32,
-      ),
-    );
-  }
-
-  Widget _buildDeleteBackground() {
-    return Container(
-      color: Colors.red[600],
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 20),
-      child: const Icon(
-        Icons.delete_outline,
-        color: Colors.white,
-        size: 32,
-      ),
-    );
-  }
-
-  Future<bool?> _handleDismiss(
-      BuildContext context, DismissDirection direction) async {
-    if (direction == DismissDirection.startToEnd) {
-      return await _showCompleteConfirmation(context);
-    } else {
-      return await _showDeleteConfirmation(context);
-    }
-  }
-
-  Future<void> _handleDismissed(DismissDirection direction) async {
-    if (direction == DismissDirection.startToEnd) {
-      await _markAsCompleted();
-    } else {
-      final confirmed = await _showDeleteConfirmation(context);
-      if (confirmed == true) {
-        await TaskActions.deleteTask(widget.task);
       }
     }
   }
@@ -235,35 +171,6 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         colorText: Get.theme.colorScheme.onError,
       );
     }
-  }
-
-  Future<bool?> _showCompleteConfirmation(BuildContext context) async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Complete Task'),
-          content: const Text(
-              'Are you sure you want to mark this task as completed?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.onSurface,
-              ),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.onSurface,
-              ),
-              child: const Text('Complete'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Future<bool?> _showDeleteConfirmation(BuildContext context) async {
@@ -384,233 +291,141 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final authController = Get.find<AuthController>();
+    final mediaQuery = MediaQuery.of(context);
 
     final Color cardColor =
         widget.isDark ? const Color(0xFF1E1E1E) : colorScheme.primary;
     final Color textColor = widget.isDark ? Colors.white : Colors.white;
     final Color subTextColor =
-        widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
+        widget.isDark ? Colors.white70 : Colors.white.withOpacity(0.9);
+    final double textScaleFactor = mediaQuery.textScaler.scale(1);
 
-    return Dismissible(
-      key: ValueKey(widget.task.taskId),
-      background:
-          !widget.isCompleted ? _buildCompleteBackground() : Container(),
-      secondaryBackground: _buildDeleteBackground(),
-      confirmDismiss: (direction) => _handleDismiss(context, direction),
-      onDismissed: _handleDismissed,
-      child: GestureDetector(
+    final String creatorName = _getCreatorNameSync();
+    final String assignedReporterName = _getAssignedReporterNameSync();
+
+    final bool isOwner =
+        authController.user.value?.uid == widget.task.createdBy;
+    final bool isAdmin = authController.isCurrentUserAdmin;
+    final bool canManageTask = isOwner || isAdmin;
+
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      color: cardColor,
+      child: InkWell(
         onTap: () => _showTaskDetails(context),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 7.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: widget.isDark
-                      ? Colors.black.withAlpha(64)
-                      : Colors.black12,
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.task.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  widget.task.description,
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 14,
-                      color: subTextColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Created by: ${_getCreatorNameSync()}',
-                      style: TextStyle(
-                        color: subTextColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Assigned Reporter: ${_getAssignedReporterNameSync()}',
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FutureBuilder<String>(
-                  future: _getAssignedCameramanName(),
-                  builder: (context, snapshot) {
-                    return Text(
-                      'Assigned Cameraman: ${snapshot.data ?? 'Loading...'}',
-                      style: TextStyle(
-                        color: subTextColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 4),
-                FutureBuilder<String>(
-                  future: _getAssignedDriverName(),
-                  builder: (context, snapshot) {
-                    return Text(
-                      'Assigned Driver: ${snapshot.data ?? 'Loading...'}',
-                      style: TextStyle(
-                        color: subTextColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Status: ${widget.task.status}',
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                if (widget.task.tags.isNotEmpty)
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'Tags: ${widget.task.tags.join(', ')}',
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
+                    widget.task.title,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18 * textScaleFactor,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                const SizedBox(height: 4),
-                if (widget.task.priority != null)
+                  const SizedBox(height: 8),
                   Text(
-                    'Priority: ${widget.task.priority}',
-                    style: TextStyle(
+                    widget.task.description,
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: subTextColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 14 * textScaleFactor,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                const SizedBox(height: 4),
-                if (widget.task.dueDate != null)
-                  Text(
-                    'Due: ${DateFormat('MMM dd, yyyy – HH:mm').format(widget.task.dueDate!)}',
-                    style: TextStyle(
-                      color: subTextColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                Obx(() {
-                  final currentUserId = authController.currentUser?.uid;
-
-                  // Use the new reliable admin check method
-                  final isAdmin = authController.isCurrentUserAdmin;
-
-                  final isTaskOwner = widget.task.createdBy == currentUserId;
-                  final isAssignedUser =
-                      widget.task.assignedReporterId == currentUserId ||
-                          widget.task.assignedCameramanId == currentUserId ||
-                          widget.task.assignedDriverId == currentUserId ||
-                          (widget.task.assignedTo != null &&
-                              currentUserId != null &&
-                              widget.task.assignedTo!.contains(currentUserId));
-
-                  final canManageTask =
-                      isTaskOwner || isAdmin || isAssignedUser;
-
-                  if (canManageTask) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        if (!widget.isCompleted)
-                          ElevatedButton(
-                            onPressed: () {
-                              Get.find<SettingsController>().triggerFeedback();
-                              _markAsCompleted();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[600],
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 10),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 2,
-                            ),
-                            child: const Text(
-                              'Complete',
-                              style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w600),
+                  const SizedBox(height: 12),
+                  const Divider(color: Colors.white24),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Creator: $creatorName',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: subTextColor,
+                              fontSize: 12 * textScaleFactor,
                             ),
                           ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: Icon(Icons.delete_outline_rounded,
-                              color: Colors.red[400], size: 22),
-                          onPressed: () {
-                            Get.find<SettingsController>().triggerFeedback();
-                            _showDeleteConfirmation(context).then((confirmed) {
-                              if (confirmed == true) {
-                                TaskActions.deleteTask(widget.task);
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: Icon(Icons.edit_note_rounded,
-                              color:
-                                  widget.isDark ? Colors.white : Colors.white,
-                              size: 22),
-                          onPressed: () {
-                            Get.find<SettingsController>().triggerFeedback();
-                            TaskActions.editTask(context, widget.task);
-                          },
-                          tooltip: "Edit Task",
-                        ),
-                      ],
-                    );
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                }),
-              ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Assigned: $assignedReporterName',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: subTextColor,
+                              fontSize: 12 * textScaleFactor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      StatusChip(
+                        status: widget.task.status,
+                        textScale: textScaleFactor,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+            if (canManageTask)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      TaskActions.editTask(context, widget.task);
+                    } else if (value == 'delete') {
+                      _showDeleteConfirmation(context);
+                    } else if (value == 'assign') {
+                      TaskActions.assignTask(context, widget.task);
+                    } else if (value == 'comment') {
+                      TaskActions.addComment(context, widget.task);
+                    } else if (value == 'complete') {
+                      _markAsCompleted();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Text('Edit'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'assign',
+                      child: Text('Assign Task'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'comment',
+                      child: Text('Add Comment'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Text('Delete'),
+                    ),
+                    if (widget.task.status != 'Completed')
+                      const PopupMenuItem<String>(
+                        value: 'complete',
+                        child: Text('Complete'),
+                      ),
+                  ],
+                  icon: Icon(Icons.more_vert, color: textColor),
+                ),
+              ),
+          ],
         ),
       ),
     );
