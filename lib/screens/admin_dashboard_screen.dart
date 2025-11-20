@@ -66,7 +66,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       adminController.fetchDashboardData();
       adminController.fetchStatistics();
       // No need to manually fetch users; ManageUsersController now uses a real-time stream.
-      
+
       // Pre-warm the ManageUsersController if it exists
       if (Get.isRegistered<ManageUsersController>()) {
         Get.find<ManageUsersController>();
@@ -214,8 +214,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                 fontWeight: FontWeight.w700,
                                 fontFamily: 'raleway',
                                 fontSize: isTablet ? 18.sp : 16.sp,
-                                color:
-                                    Theme.of(context).colorScheme.onPrimary,
+                                color: Theme.of(context).colorScheme.onPrimary,
                               ),
                             ),
                           ),
@@ -305,8 +304,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                       ),
                                       const SizedBox(width: 8),
                                       GestureDetector(
-                                        onTap: () =>
-                                            Get.toNamed('/admin-chat'),
+                                        onTap: () => Get.toNamed('/admin-chat'),
                                         child: Container(
                                           width: 34.w,
                                           height: 34.h,
@@ -332,33 +330,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                                     ],
                                   ),
                                 ),
+                                TabBar(
+                                  controller: _tabController,
+                                  isScrollable: true,
+                                  labelColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  unselectedLabelColor: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color,
+                                  indicatorColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  tabs: const [
+                                    Tab(text: 'Pending'),
+                                    Tab(text: 'Completed'),
+                                    Tab(text: 'Approval'),
+                                    Tab(text: 'Performance'),
+                                  ],
+                                ),
                                 const SizedBox(height: 8),
                                 SizedBox(
-                                  height: MediaQuery.of(context).size.height *
-                                      0.48,
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.48,
                                   child: TabBarView(
                                     controller: _tabController,
                                     children: [
                                       TasksTab(
                                         userCache: userCache,
-                                        getUserNameAndRole:
-                                            getUserNameAndRole,
+                                        getUserNameAndRole: getUserNameAndRole,
                                         showTaskDetailDialog:
                                             _showTaskDetailDialog,
                                         taskType: 'pending',
                                       ),
                                       TasksTab(
                                         userCache: userCache,
-                                        getUserNameAndRole:
-                                            getUserNameAndRole,
+                                        getUserNameAndRole: getUserNameAndRole,
                                         showTaskDetailDialog:
                                             _showTaskDetailDialog,
                                         taskType: 'completed',
                                       ),
                                       approval_tab.TaskApprovalTab(
                                         userCache: userCache,
-                                        getUserNameAndRole:
-                                            getUserNameAndRole,
+                                        getUserNameAndRole: getUserNameAndRole,
                                       ),
                                       const UserPerformanceTab(),
                                     ],
