@@ -692,7 +692,7 @@ class AuthController extends GetxController {
         'uid': credential.user!.uid,
         'email': email,
         'fullName': fullName,
-        'role': 'admin',
+        'role': 'Admin',
         'fcmToken': fcmToken ?? "",
         'profileComplete': false,
         'photoUrl': "",
@@ -961,30 +961,8 @@ class AuthController extends GetxController {
       debugPrint(
           "AuthController: User signed in successfully: ${credential.user!.uid}");
 
-      // Wait for auth state to propagate before proceeding. Instead of a
-      // fixed delay, wait for the next authStateChanges event (with a
-      // short timeout) so we react to the actual propagated state.
-      try {
-        final User? propagatedUser = await _auth
-            .authStateChanges()
-            .firstWhere((u) => u != null)
-            .timeout(const Duration(seconds: 3));
-        if (propagatedUser == null) {
-          throw Exception("Authentication lost after sign in");
-        }
-      } catch (e) {
-        // If no propagated user arrived within the timeout, double-check
-        // the currentUser and fail if it's null to surface a clear error.
-        final currentUser = _auth.currentUser;
-        if (currentUser == null) {
-          throw Exception("Authentication lost after sign in");
-        }
-      }
-
-      final currentUser = _auth.currentUser!;
-      debugPrint(
-          "AuthController: Loading user data for user: ${currentUser.uid}");
-      await loadUserData();
+      // Load user data and wait for it to complete
+      await loadUserData(forceRefresh: true);
 
       debugPrint("AuthController: Setting lastActivity");
       lastActivity.value = DateTime.now();
@@ -1005,25 +983,14 @@ class AuthController extends GetxController {
         if (!isProfileComplete.value) {
           debugPrint("AuthController: Navigating to profile update");
           Get.offAllNamed("/profile-update");
+        } else if (userRole.value.isNotEmpty) {
+          debugPrint(
+              "AuthController: Profile is complete, navigating based on role: ${userRole.value}");
+          await navigateBasedOnRole();
         } else {
-          // Ensure role is loaded before navigation
-          int attempts = 0;
-          while (userRole.value.isEmpty && attempts < 10) {
-            debugPrint(
-                "AuthController: Waiting for user role to load (attempt ${attempts + 1})");
-            await Future.delayed(const Duration(milliseconds: 200));
-            attempts++;
-          }
-
-          if (userRole.value.isNotEmpty) {
-            debugPrint(
-                "AuthController: Profile is complete, navigating based on role: ${userRole.value}");
-            await navigateBasedOnRole();
-          } else {
-            debugPrint(
-                "AuthController: Role still empty after waiting, navigating to login");
-            Get.offAllNamed('/login');
-          }
+          debugPrint(
+              "AuthController: Role is empty after loading, navigating to login");
+          Get.offAllNamed('/login');
         }
       });
     } on FirebaseAuthException catch (e) {
@@ -1036,6 +1003,11 @@ class AuthController extends GetxController {
       debugPrint("AuthController: General error during sign in: $e");
       _safeSnackbar("Error", "Sign in failed: $e");
       rethrow;
+    } finally {
+      // It's important to set isLoading to false in the finally block
+      // only if the logic inside the try block doesn't handle it before navigating.
+      // Since navigation happens in a post-frame callback, we can set it here.
+      isLoading(false);
     }
   }
 
