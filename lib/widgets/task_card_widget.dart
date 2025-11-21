@@ -297,7 +297,7 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
         widget.isDark ? const Color(0xFF1E1E1E) : colorScheme.primary;
     final Color textColor = widget.isDark ? Colors.white : Colors.white;
     final Color subTextColor =
-        widget.isDark ? Colors.white70 : Colors.white.withOpacity(0.9);
+        widget.isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.9);
     final double textScaleFactor = mediaQuery.textScaler.scale(1);
 
     final String creatorName = _getCreatorNameSync();

@@ -448,6 +448,10 @@ class TaskController extends GetxController {
         // Use Task.fromMap to ensure all fields are included
         taskData['taskId'] = doc.id;
         final task = Task.fromMap(taskData);
+
+        // Populate missing creator names to fix "created by" showing user ID instead of name
+        await _populateCreatedByName(task);
+
         debugPrint(
             'TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         pageTasks.add(task);
@@ -534,6 +538,10 @@ class TaskController extends GetxController {
         // Use Task.fromMap to ensure all fields are included
         taskData['taskId'] = doc.id;
         final task = Task.fromMap(taskData);
+
+        // Populate missing creator names to fix "created by" showing user ID instead of name
+        await _populateCreatedByName(task);
+
         debugPrint(
             'TaskController: loaded task ${task.taskId} - title: ${task.title}, approvalStatus: ${task.approvalStatus}, isApproved: ${task.isApproved}, canBeAssigned: ${task.canBeAssigned}');
         pageTasks.add(task);
@@ -959,6 +967,10 @@ class TaskController extends GetxController {
             // Use Task.fromMap for robust mapping
             taskData['taskId'] = doc.id;
             final task = Task.fromMap(taskData);
+
+            // Populate missing creator names to fix "created by" showing user ID instead of name
+            await _populateCreatedByName(task);
+
             debugPrint(
                 'fetchTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}, priority=${task.priority}, assignedReporter=${task.assignedReporter}, assignedCameraman=${task.assignedCameraman}');
             updatedTasks.add(task);
@@ -1031,13 +1043,22 @@ class TaskController extends GetxController {
       isLoading(true);
       debugPrint('createTask: isLoading set to true');
 
+      // Get creator's name with a multi-layered fallback for reliability
+      String creatorName = authController.userData['fullName'] ?? '';
+      if (creatorName.isEmpty) {
+        creatorName = authController.fullName.value;
+      }
+      if (creatorName.isEmpty) {
+        creatorName = await Get.find<UserCacheService>().getUserName(userId);
+      }
+
       // Prepare data for Firebase
       final taskData = {
         "title": title,
         "description": description,
         "createdBy": userId,
         "createdById": userId,
-        "createdByName": authController.fullName.value,
+        "createdByName": creatorName, // Use the reliably fetched name
         "creatorAvatar": await _getUserAvatar(userId),
         "assignedReporterId": null,
         "assignedReporterName": null,
@@ -1491,6 +1512,10 @@ class TaskController extends GetxController {
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
+
+        // Populate missing creator names to fix "created by" showing user ID instead of name
+        await _populateCreatedByName(task);
+
         debugPrint(
             'getAllTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
@@ -1515,6 +1540,10 @@ class TaskController extends GetxController {
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
+
+        // Populate missing creator names to fix "created by" showing user ID instead of name
+        await _populateCreatedByName(task);
+
         debugPrint(
             'getAssignedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
@@ -1539,6 +1568,10 @@ class TaskController extends GetxController {
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
+
+        // Populate missing creator names to fix "created by" showing user ID instead of name
+        await _populateCreatedByName(task);
+
         debugPrint(
             'getMyCreatedTasks: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
@@ -1562,6 +1595,10 @@ class TaskController extends GetxController {
         // Use Task.fromMap for consistent mapping
         data['taskId'] = doc.id;
         final task = Task.fromMap(data);
+
+        // Populate missing creator names to fix "created by" showing user ID instead of name
+        await _populateCreatedByName(task);
+
         debugPrint(
             'getTaskById: loaded task ${task.taskId} with category=${task.category}, tags=${task.tags}, dueDate=${task.dueDate}');
         return task;
