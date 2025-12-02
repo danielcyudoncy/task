@@ -1,21 +1,135 @@
-// test/authenticated_user_testing.dart
+// integration_test/authenticated_user_testing.dart
 // Integration test for verifying permission guards work for authenticated users
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 // Removed unnecessary import - firebase_auth elements are provided by cloud_firestore
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:get/get.dart';
 import 'package:task/controllers/admin_controller.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/controllers/task_controller.dart';
 import 'package:task/service/audit_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:task/firebase_options.dart';
+import 'package:task/service/firebase_service.dart' show useFirebaseEmulator;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io' show Platform;
 
+late String adminUid;
+late String managerUid;
+late String reporterUid;
 void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  // Dart-define controlled emulator usage for tests
+  const bool testUseEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+  const String testEmulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST', defaultValue: 'localhost');
+
   group('Authenticated User Permission Testing', () {
     late AuthController authController;
     late AdminController adminController;
     late TaskController taskController;
     late AuditService auditService;
+
+    setUpAll(() async {
+      // Load environment for firebase_options
+      await dotenv.load(fileName: 'assets/.env');
+      // Initialize Firebase before any controllers that depend on it
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      if (testUseEmulator) {
+        useFirebaseEmulator(testEmulatorHost);
+
+        // Seed emulator with users and tasks used by tests via REST to avoid plugin network issues
+        Future<String> ensureUser(String email, String password, String role) async {
+          // Map localhost to Android emulator host if needed for REST calls
+          String restHost = testEmulatorHost;
+          if (Platform.isAndroid && (restHost == 'localhost' || restHost == '127.0.0.1')) {
+            restHost = '10.0.2.2';
+          }
+          final signUpUrl = Uri.parse('http://$restHost:8002/identitytoolkit.googleapis.com/v1/accounts:signUp?key=dummy');
+          final signInUrl = Uri.parse('http://$restHost:8002/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=dummy');
+
+          // Try to sign up
+          final signUpResp = await http.post(
+            signUpUrl,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password, 'returnSecureToken': true}),
+          );
+
+          Map<String, dynamic>? signUpJson;
+          try { signUpJson = jsonDecode(signUpResp.body) as Map<String, dynamic>; } catch (_) {}
+
+          String uid;
+          if (signUpResp.statusCode == 200 && signUpJson != null && signUpJson['localId'] != null) {
+            uid = signUpJson['localId'] as String;
+          } else {
+            // If already exists, sign in to get localId
+            final signInResp = await http.post(
+              signInUrl,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'email': email, 'password': password, 'returnSecureToken': true}),
+            );
+            if (signInResp.statusCode != 200) {
+              throw Exception('Auth emulator signIn failed: ${signInResp.statusCode} ${signInResp.body}');
+            }
+            final signInJson = jsonDecode(signInResp.body) as Map<String, dynamic>;
+            uid = signInJson['localId'] as String;
+          }
+
+          // Ensure Firestore profile exists with correct role
+          await FirebaseFirestore.instance.collection('users').doc(uid).set({
+            'uid': uid,
+            'email': email,
+            'fullName': email.split('@').first.replaceAll('.', ' ').toUpperCase(),
+            'role': role,
+            'profileComplete': true,
+            'photoUrl': '',
+            'createdAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          return uid;
+        }
+
+        const String adminEmail = 'admin.test@task.local';
+        const String adminPassword = 'TestAdmin123!@#';
+        const String managerEmail = 'manager.test@task.local';
+        const String managerPassword = 'TestManager123!@#';
+        const String reporterEmail = 'reporter.test@task.local';
+        const String reporterPassword = 'TestReporter123!@#';
+
+        adminUid = await ensureUser(adminEmail, adminPassword, 'Admin');
+        managerUid = await ensureUser(managerEmail, managerPassword, 'Manager');
+        reporterUid = await ensureUser(reporterEmail, reporterPassword, 'Reporter');
+
+        final tasksRef = FirebaseFirestore.instance.collection('tasks');
+        await tasksRef.doc('test-task-1').set({
+          'title': 'Test Task 1',
+          'description': 'Pending task to be approved',
+          'createdBy': adminUid,
+          'approvalStatus': 'pending',
+          'timestamp': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        await tasksRef.doc('test-task-2').set({
+          'title': 'Test Task 2',
+          'description': 'Pending task to be rejected',
+          'createdBy': adminUid,
+          'approvalStatus': 'pending',
+          'timestamp': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        await tasksRef.doc('test-task-3').set({
+          'title': 'Test Task 3',
+          'description': 'Task to be assigned',
+          'createdBy': adminUid,
+          'approvalStatus': 'pending',
+          'timestamp': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+    });
 
     setUp(() {
       // Initialize controllers
@@ -128,7 +242,7 @@ void main() {
         // Arrange
         await authController.signIn('admin.test@task.local', 'TestAdmin123!@#');
         final taskId = 'test-task-3';
-        final userId = 'test-user-reporter';
+        final userId = reporterUid;
 
         // Act
         try {
@@ -426,6 +540,125 @@ void main() {
           // Expected to fail if task doesn't exist, but not due to permissions
           expect(e.toString(), isNot(contains('permission')));
         }
+      });
+    });
+
+    group('Legacy Task Creator Permissions', () {
+      test('Non-admin creator of legacy task can update status/content', () async {
+        // Arrange: sign in as Reporter (non-admin)
+        await authController.signIn('reporter.test@task.local', 'TestReporter123!@#');
+        final uid = authController.currentUser!.uid;
+
+        // Create a legacy-style task document (createdById only, no createdBy)
+        final ref = await FirebaseFirestore.instance.collection('tasks').add({
+          'title': 'Legacy Task',
+          'description': 'Initial',
+          'status': 'pending',
+          'createdById': uid,
+        });
+
+        // Act: attempt to update status and content (should be allowed for creator)
+        await FirebaseFirestore.instance.collection('tasks').doc(ref.id).update({
+          'status': 'in_progress',
+          'title': 'Updated Legacy Task',
+          'description': 'Updated content',
+        });
+
+        // Assert
+        final doc = await ref.get();
+        expect(doc.get('status'), equals('in_progress'));
+        expect(doc.get('title'), equals('Updated Legacy Task'));
+        expect(doc.get('description'), equals('Updated content'));
+      });
+
+      test('Non-admin legacy creator can delete their task', () async {
+        // Arrange: sign in as Reporter (non-admin)
+        await authController.signIn('reporter.test@task.local', 'TestReporter123!@#');
+        final uid = authController.currentUser!.uid;
+
+        // Create a legacy-style task document
+        final ref = await FirebaseFirestore.instance.collection('tasks').add({
+          'title': 'Legacy Task To Delete',
+          'status': 'pending',
+          'createdById': uid,
+        });
+
+        // Act: delete the task (should be allowed)
+        await FirebaseFirestore.instance.collection('tasks').doc(ref.id).delete();
+
+        // Assert: verify deletion
+        final deletedDoc = await FirebaseFirestore.instance.collection('tasks').doc(ref.id).get();
+        expect(deletedDoc.exists, isFalse);
+      });
+
+      test('Non-admin cannot update approval fields', () async {
+        // Arrange: sign in as Reporter (non-admin)
+        await authController.signIn('reporter.test@task.local', 'TestReporter123!@#');
+        final uid = authController.currentUser!.uid;
+        final ref = await FirebaseFirestore.instance.collection('tasks').add({
+          'title': 'Approval Restricted Task',
+          'status': 'pending',
+          'createdById': uid,
+        });
+
+        // Act & Assert: approval update should be blocked by rules
+        expect(
+          () async {
+            await FirebaseFirestore.instance.collection('tasks').doc(ref.id).update({
+              'approvalStatus': 'approved',
+              'approvedBy': uid,
+              'approvalTimestamp': DateTime.now().millisecondsSinceEpoch,
+            });
+          },
+          throwsA(isA<FirebaseException>()),
+        );
+      });
+
+      test('Non-admin cannot perform assignment updates', () async {
+        // Arrange: sign in as Reporter (non-admin)
+        await authController.signIn('reporter.test@task.local', 'TestReporter123!@#');
+        final uid = authController.currentUser!.uid;
+        final ref = await FirebaseFirestore.instance.collection('tasks').add({
+          'title': 'Assignment Restricted Task',
+          'status': 'pending',
+          'createdById': uid,
+        });
+
+        // Act & Assert: assignment update should be blocked by rules
+        expect(
+          () async {
+            await FirebaseFirestore.instance.collection('tasks').doc(ref.id).update({
+              'assignedReporterId': 'user-123',
+              'assignedReporter': 'John Doe',
+              'assignmentTimestamp': DateTime.now().millisecondsSinceEpoch,
+            });
+          },
+          throwsA(isA<FirebaseException>()),
+        );
+      });
+    });
+
+    group('Admin Delete Behavior', () {
+      test('Admin can permanently delete any task', () async {
+        // Arrange: create a task as Reporter
+        await authController.signIn('reporter.test@task.local', 'TestReporter123!@#');
+        final reporterUid = authController.currentUser!.uid;
+        final ref = await FirebaseFirestore.instance.collection('tasks').add({
+          'title': 'Task To Be Deleted By Admin',
+          'status': 'pending',
+          'createdById': reporterUid,
+        });
+
+        // Switch to admin
+        await authController.signIn('admin.test@task.local', 'TestAdmin123!@#');
+        expect(authController.isAdmin.value, isTrue);
+
+        // Act: delete the task as admin
+        await FirebaseFirestore.instance.collection('tasks').doc(ref.id).delete();
+
+        // Assert: verify deletion
+        final deletedDoc = await FirebaseFirestore.instance.collection('tasks').doc(ref.id).get();
+        expect(deletedDoc.exists, isFalse);
       });
     });
   });

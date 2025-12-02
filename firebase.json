@@ -53,12 +53,12 @@
     "rules": "storage.rules"
   },
   "emulators": {
-    "functions": { "port": 8001, "host": "192.168.1.7" },
-    "auth": { "port": 8002, "host": "192.168.1.7" },
-    "firestore": { "port": 8003, "host": "192.168.1.7" },
-    "database": { "port": 8004, "host": "192.168.1.7" },
-    "storage": { "port": 8005, "host": "192.168.1.7" },
-    "ui": { "enabled": true, "host": "192.168.1.7" },
+    "functions": { "port": 8001, "host": "localhost" },
+    "auth": { "port": 8002, "host": "localhost" },
+    "firestore": { "port": 8003, "host": "localhost", "websocketPort": 9150 },
+    "database": { "port": 8004, "host": "localhost" },
+    "storage": { "port": 8005, "host": "localhost" },
+    "ui": { "enabled": true, "host": "localhost" },
     "singleProjectMode": true
   }
 }

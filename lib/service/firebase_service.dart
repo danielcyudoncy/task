@@ -126,7 +126,15 @@ class FirebaseService {
 
 void useFirebaseEmulator([String? customHost]) {
   if (kDebugMode) {
-    final String host = customHost ?? (kIsWeb ? 'localhost' : '192.168.1.7');
+    // Determine host based on platform; Android emulator needs 10.0.2.2 to reach host machine
+    String host = customHost ?? 'localhost';
+    if (!kIsWeb) {
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        if (host == 'localhost' || host == '127.0.0.1') {
+          host = '10.0.2.2';
+        }
+      }
+    }
     FirebaseAuth.instance.useAuthEmulator(host, 8002);
     FirebaseFirestore.instance.useFirestoreEmulator(host, 8003);
     FirebaseFunctions.instance.useFunctionsEmulator(host, 8001);

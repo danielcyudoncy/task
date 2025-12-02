@@ -332,6 +332,8 @@ class AdminController extends GetxController {
             'uid': userId,
           });
           debugPrint('AdminController: Admin custom claim set successfully');
+          // Force refresh ID token so Firestore rules see the new admin claim when acting as this user
+          await FirebaseAuth.instance.currentUser?.getIdToken(true);
         } catch (e) {
           debugPrint('AdminController: Error setting admin claim: $e');
           // Continue anyway - if rule check is sufficient, admin doc creation may still work

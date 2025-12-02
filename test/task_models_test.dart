@@ -185,6 +185,57 @@ void main() {
         expect(metadata.assignedUserIds, contains('cameraman1'));
         expect(metadata.assignedUserIds, contains('driver1'));
       });
+
+      test('legacy createdById permits creator to edit/delete', () {
+        final map = {
+          'taskId': 'legacy-id',
+          'title': 'Legacy Task',
+          'description': 'Legacy Description',
+          // Simulate legacy task where only createdById exists
+          'createdById': 'user-legacy',
+          'status': 'Pending',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        };
+
+        final task = Task.fromMap(map);
+
+        expect(task.createdBy, equals('user-legacy'));
+        expect(task.canEdit('user-legacy'), isTrue);
+        expect(task.canDelete('user-legacy'), isTrue);
+      });
+
+      test('legacy createdById denies non-creator when not admin', () {
+        final map = {
+          'taskId': 'legacy-id-2',
+          'title': 'Legacy Task 2',
+          'description': 'Legacy Description 2',
+          // Only createdById present
+          'createdById': 'creator-1',
+          'status': 'Pending',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        };
+
+        final task = Task.fromMap(map);
+
+        expect(task.canEdit('other-user'), isFalse);
+        expect(task.canDelete('other-user'), isFalse);
+      });
+
+      test('admin can edit/delete any legacy task', () {
+        final map = {
+          'taskId': 'legacy-id-3',
+          'title': 'Legacy Task 3',
+          'description': 'Legacy Description 3',
+          'createdById': 'creator-2',
+          'status': 'Pending',
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        };
+
+        final task = Task.fromMap(map);
+
+        expect(task.canEdit('another-user', isAdmin: true), isTrue);
+        expect(task.canDelete('another-user', isAdmin: true), isTrue);
+      });
     });
   });
 }

@@ -278,6 +278,8 @@ class ManageUsersController extends GetxController {
 
       // Check the result of the Cloud Function
       if (results.data['status'] == 'success') {
+        // Force refresh ID token so Firestore rules see the new admin claim if this is the current user
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
         // ✅ AUDIT LOG: Log the user promotion
         await AuditService().logUserPromotion(
           userId: userId,
