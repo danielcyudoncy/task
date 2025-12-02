@@ -33,12 +33,13 @@ class _HomeScreenState extends State<HomeScreen>
 
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  int _onlineUsersRetryCount = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
+
     // Initialize controllers safely
     _initializeControllers();
 
@@ -50,9 +51,15 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _initializeControllers() {
     // Safely get controllers, may return null if not registered yet
-    authController = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : AuthController();
-    taskController = Get.isRegistered<TaskController>() ? Get.find<TaskController>() : TaskController();
-    notificationController = Get.isRegistered<NotificationController>() ? Get.find<NotificationController>() : NotificationController();
+    authController = Get.isRegistered<AuthController>()
+        ? Get.find<AuthController>()
+        : AuthController();
+    taskController = Get.isRegistered<TaskController>()
+        ? Get.find<TaskController>()
+        : TaskController();
+    notificationController = Get.isRegistered<NotificationController>()
+        ? Get.find<NotificationController>()
+        : NotificationController();
     // SettingsController requires AudioPlayer parameter, so only use it if registered
     if (Get.isRegistered<SettingsController>()) {
       settingsController = Get.find<SettingsController>();
@@ -65,8 +72,10 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         try {
           // Only proceed if all controllers are properly initialized
-          if (!Get.isRegistered<TaskController>() || !Get.isRegistered<NotificationController>()) {
-            debugPrint('HomeScreen: Controllers not ready yet, will retry later');
+          if (!Get.isRegistered<TaskController>() ||
+              !Get.isRegistered<NotificationController>()) {
+            debugPrint(
+                'HomeScreen: Controllers not ready yet, will retry later');
             return;
           }
 
@@ -109,7 +118,8 @@ class _HomeScreenState extends State<HomeScreen>
         width: double.infinity,
         decoration: BoxDecoration(
           color: isDark
-              ? [Colors.grey[900]!, Colors.grey[800]!].reduce((value, element) => value)
+              ? [Colors.grey[900]!, Colors.grey[800]!]
+                  .reduce((value, element) => value)
               : Theme.of(context).colorScheme.primary,
         ),
         child: SafeArea(
@@ -143,9 +153,11 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         Center(
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w, vertical: 8.h),
                             constraints: const BoxConstraints(maxWidth: 500),
                             child: StreamBuilder<QuerySnapshot>(
+                              key: ValueKey(_onlineUsersRetryCount),
                               stream: FirebaseFirestore.instance
                                   .collection('users')
                                   .where('isOnline', isEqualTo: true)
@@ -156,17 +168,23 @@ class _HomeScreenState extends State<HomeScreen>
                                   return SizedBox(
                                     height: 200,
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                                        const Icon(Icons.wifi_off,
+                                            size: 48, color: Colors.grey),
                                         const SizedBox(height: 8),
                                         Text(
                                           'Unable to load online users',
-                                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                                          style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 14),
                                         ),
                                         TextButton(
                                           onPressed: () {
-                                            setState(() {});
+                                            setState(() {
+                                              _onlineUsersRetryCount++;
+                                            });
                                           },
                                           child: const Text('Retry'),
                                         ),
@@ -174,10 +192,12 @@ class _HomeScreenState extends State<HomeScreen>
                                     ),
                                   );
                                 }
-                                final onlineUsersCount = onlineSnapshot.data?.docs.length ?? 0;
+                                final onlineUsersCount =
+                                    onlineSnapshot.data?.docs.length ?? 0;
 
                                 return StreamBuilder<int>(
-                                  stream: taskController.assignedTasksCountStream(userId),
+                                  stream: taskController
+                                      .assignedTasksCountStream(userId),
                                   builder: (context, createdSnapshot) {
                                     // Handle task count stream errors
                                     if (createdSnapshot.hasError) {
@@ -185,8 +205,10 @@ class _HomeScreenState extends State<HomeScreen>
                                     }
 
                                     // Show loading indicator while data is loading
-                                    if (onlineSnapshot.connectionState == ConnectionState.waiting ||
-                                        createdSnapshot.connectionState == ConnectionState.waiting) {
+                                    if (onlineSnapshot.connectionState ==
+                                            ConnectionState.waiting ||
+                                        createdSnapshot.connectionState ==
+                                            ConnectionState.waiting) {
                                       return const SizedBox(
                                         height: 200,
                                         child: Center(
@@ -196,16 +218,21 @@ class _HomeScreenState extends State<HomeScreen>
                                     }
 
                                     return UserDashboardCardsWidget(
-                                      assignedTasksCount: notificationController.taskAssignmentUnreadCount,
-                                      onlineUsersStream: Stream.value(onlineUsersCount),
-                                      tasksCreatedStream: taskController.createdTasksCountStream(userId),
+                                      assignedTasksCount: notificationController
+                                          .taskAssignmentUnreadCount,
+                                      onlineUsersStream:
+                                          Stream.value(onlineUsersCount),
+                                      tasksCreatedStream: taskController
+                                          .createdTasksCountStream(userId),
                                       newsFeedStream: Stream.value(3),
                                       onAssignedTasksTap: () {
                                         // Display-only card - no navigation needed
                                       },
                                       onOnlineUsersTap: () {
-                                        final authController = Get.find<AuthController>();
-                                        if (authController.userRole.value == 'Admin') {
+                                        final authController =
+                                            Get.find<AuthController>();
+                                        if (authController.userRole.value ==
+                                            'Admin') {
                                           Get.toNamed('/admin-chat');
                                         } else {
                                           Get.toNamed('/user-chat-list');
@@ -243,7 +270,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Theme.of(context).colorScheme.surface,
-                                      Theme.of(context).colorScheme.surfaceContainerHighest
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest
                                     ],
                                   )
                                 : LinearGradient(
@@ -251,7 +280,9 @@ class _HomeScreenState extends State<HomeScreen>
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Theme.of(context).colorScheme.surface,
-                                      Theme.of(context).colorScheme.surfaceContainerHighest
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest
                                     ],
                                   ),
                             borderRadius: const BorderRadius.only(
@@ -344,7 +375,8 @@ class _HomeHeader extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Theme.of(context).colorScheme.onPrimary
                                     : Colors.white,
                                 width: 2,
@@ -370,7 +402,8 @@ class _HomeHeader extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Theme.of(context).brightness == Brightness.dark
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
                                   ? Theme.of(context).colorScheme.onPrimary
                                   : Colors.white,
                               width: 2,
@@ -386,16 +419,22 @@ class _HomeHeader extends StatelessWidget {
                                       width: isPortrait ? 40.sp : 32.sp,
                                       height: isPortrait ? 40.sp : 32.sp,
                                       fit: BoxFit.cover,
-                                      placeholder: (context, url) => CircularProgressIndicator(
+                                      placeholder: (context, url) =>
+                                          CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
                                       ),
-                                      errorWidget: (context, url, error) => Text(
+                                      errorWidget: (context, url, error) =>
+                                          Text(
                                         fullName.isNotEmpty
                                             ? fullName[0].toUpperCase()
                                             : '?',
                                         style: TextStyle(
-                                          color: Theme.of(context).colorScheme.primary,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
                                           fontSize: isPortrait ? 20.sp : 16.sp,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -407,7 +446,8 @@ class _HomeHeader extends StatelessWidget {
                                         ? fullName[0].toUpperCase()
                                         : '?',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       fontSize: isPortrait ? 20.sp : 16.sp,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -424,7 +464,8 @@ class _HomeHeader extends StatelessWidget {
                             return const SizedBox();
                           }
 
-                          final unreadCount = notificationController.unreadCount.value;
+                          final unreadCount =
+                              notificationController.unreadCount.value;
 
                           return unreadCount > 0
                               ? Container(
@@ -471,27 +512,27 @@ class _HomeHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() => Center(
-                  child: Text(
-                    "${'hello'.tr}, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'user'.tr}",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: isPortrait ? 20.sp : 16.sp,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Raleway',
-                    ),
-                  ),
-                )),
+                      child: Text(
+                        "${'hello'.tr}, ${authController.fullName.value.isNotEmpty ? authController.fullName.value : 'user'.tr}",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isPortrait ? 20.sp : 16.sp,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Raleway',
+                        ),
+                      ),
+                    )),
                 SizedBox(height: isPortrait ? 4.h : 2.h),
                 Obx(() => Center(
-                  child: Text(
-                    authController.currentUser?.email ?? '',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: isPortrait ? 14.sp : 12.sp,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                )),
+                      child: Text(
+                        authController.currentUser?.email ?? '',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isPortrait ? 14.sp : 12.sp,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )),
               ],
             ),
           ),

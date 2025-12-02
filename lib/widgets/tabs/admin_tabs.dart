@@ -103,9 +103,7 @@ class _TasksTabState extends State<TasksTab> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           widget.getUserNameAndRole(creatorId, () {
-            if (mounted) {
-              setState(() {});
-            }
+            // userCache is modified directly, no setState needed
           });
         }
       });
@@ -616,7 +614,9 @@ class _TaskApprovalTabState extends State<TaskApprovalTab> {
     final userInfo = widget.userCache[creatorId];
     if (userInfo == null && creatorId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        widget.getUserNameAndRole(creatorId, () => setState(() {}));
+        widget.getUserNameAndRole(creatorId, () {
+          // userCache is modified directly, no setState needed
+        });
       });
     }
 

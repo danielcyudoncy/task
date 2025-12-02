@@ -22,9 +22,12 @@ class ErrorBoundary extends StatefulWidget {
 }
 
 class _ErrorBoundaryState extends State<ErrorBoundary> {
+  int _retryCount = 0;
+
   @override
   Widget build(BuildContext context) {
     return Builder(
+      key: ValueKey(_retryCount),
       builder: (context) {
         ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
           // Report error to Crashlytics if enabled
@@ -40,8 +43,10 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
             error: errorDetails.exception,
             stackTrace: errorDetails.stack,
             onRetry: () {
-              // Reset error state and rebuild
-              setState(() {});
+              // Force widget rebuild by incrementing counter
+              setState(() {
+                _retryCount++;
+              });
             },
           );
         };
