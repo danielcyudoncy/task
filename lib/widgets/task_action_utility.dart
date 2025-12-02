@@ -11,13 +11,16 @@ import 'package:intl/intl.dart';
 class TaskActions {
   static void editTask(BuildContext context, dynamic task) {
     final authController = Get.find<AuthController>();
-    final userRole = authController.userRole.value.toLowerCase();
-    final isAdmin = userRole == 'admin' ||
-        userRole == 'administrator' ||
-        userRole == 'superadmin';
+    final isAdmin = authController.isCurrentUserAdmin;
     final currentUserId = authController.auth.currentUser?.uid;
-    // Only allow edit if user is admin or creator
-    if (!isAdmin && task.createdById != currentUserId) {
+
+    // ✅ HARDENED: Admins can always edit any task
+    // Check admin status first as primary authorization
+    final canEditAsAdmin = isAdmin;
+    final canEditAsCreator =
+        currentUserId != null && task.createdById == currentUserId;
+
+    if (!canEditAsAdmin && !canEditAsCreator) {
       SnackbarUtils.showError("You do not have permission to edit this task.");
       return;
     }
@@ -196,10 +199,11 @@ class TaskActions {
             onPressed: () async {
               await taskController.updateTask(
                 task.taskId,
-                titleController.text,
-                descriptionController.text,
-                status,
-                // Add more fields to updateTask if needed
+                {
+                  'title': titleController.text,
+                  'description': descriptionController.text,
+                  'status': status,
+                },
               );
               // You may need to call a more complete update method to save all fields
               if (ctx.mounted) {
@@ -216,10 +220,7 @@ class TaskActions {
 
   static void assignTask(BuildContext context, dynamic task) {
     final authController = Get.find<AuthController>();
-    final userRole = authController.userRole.value.toLowerCase();
-    final isAdmin = userRole == 'admin' ||
-        userRole == 'administrator' ||
-        userRole == 'superadmin';
+    final isAdmin = authController.isCurrentUserAdmin;
 
     if (!isAdmin) {
       SnackbarUtils.showError(
@@ -258,6 +259,17 @@ class TaskActions {
   }
 
   static Future<void> deleteTask(dynamic task) async {
+    final authController = Get.find<AuthController>();
+    final isAdmin = authController.isCurrentUserAdmin;
+    final currentUserId = authController.auth.currentUser?.uid;
+
+    // Only allow delete if user is admin or creator
+    if (!isAdmin && task.createdById != currentUserId) {
+      SnackbarUtils.showError(
+          "You do not have permission to delete this task.");
+      return;
+    }
+
     final taskController = Get.find<TaskController>();
     await taskController.deleteTask(task.taskId);
     SnackbarUtils.showSuccess("Task deleted");
@@ -336,12 +348,37 @@ class TaskActions {
             child: const Text("Cancel"),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Here you would typically call a method in your TaskController
-              // to add the comment to the task.
-              // For example:
-              // Get.find<TaskController>().addComment(task.taskId, commentController.text);
-              Navigator.of(ctx).pop();
+            onPressed: () async {
+              final comment = commentController.text.trim();
+              if (comment.isEmpty) {
+                SnackbarUtils.showError("Please enter a comment.");
+                return;
+              }
+
+              final authController = Get.find<AuthController>();
+              final isAdmin = authController.isCurrentUserAdmin;
+              final currentUserId = authController.auth.currentUser?.uid;
+
+              if (currentUserId == null) {
+                SnackbarUtils.showError("User not authenticated");
+                return;
+              }
+
+              // Only allow comment if user is admin or creator
+              if (!isAdmin && task.createdById != currentUserId) {
+                SnackbarUtils.showError(
+                    "You do not have permission to comment on this task.");
+                return;
+              }
+
+              try {
+                await Get.find<TaskController>()
+                    .addComment(task.taskId, comment);
+                if (ctx.mounted) Navigator.of(ctx).pop();
+                SnackbarUtils.showSuccess("Comment added");
+              } catch (e) {
+                SnackbarUtils.showError("Failed to add comment: $e");
+              }
             },
             child: const Text("Add"),
           ),

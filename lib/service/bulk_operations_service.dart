@@ -263,29 +263,33 @@ class BulkOperationsService extends GetxService {
             case 'reporter':
               updatedTask = task.copyWith(
                 metadata: task.metadata?.copyWith(
-                  assignedReporterId: userId,
-                ) ?? TaskMetadata(assignedReporterId: userId),
+                      assignedReporterId: userId,
+                    ) ??
+                    TaskMetadata(assignedReporterId: userId),
               );
               break;
             case 'cameraman':
               updatedTask = task.copyWith(
                 metadata: task.metadata?.copyWith(
-                  assignedCameramanId: userId,
-                ) ?? TaskMetadata(assignedCameramanId: userId),
+                      assignedCameramanId: userId,
+                    ) ??
+                    TaskMetadata(assignedCameramanId: userId),
               );
               break;
             case 'driver':
               updatedTask = task.copyWith(
                 metadata: task.metadata?.copyWith(
-                  assignedDriverId: userId,
-                ) ?? TaskMetadata(assignedDriverId: userId),
+                      assignedDriverId: userId,
+                    ) ??
+                    TaskMetadata(assignedDriverId: userId),
               );
               break;
             case 'librarian':
               updatedTask = task.copyWith(
                 metadata: task.metadata?.copyWith(
-                  assignedLibrarianId: userId,
-                ) ?? TaskMetadata(assignedLibrarianId: userId),
+                      assignedLibrarianId: userId,
+                    ) ??
+                    TaskMetadata(assignedLibrarianId: userId),
               );
               break;
             default:
@@ -294,9 +298,15 @@ class BulkOperationsService extends GetxService {
 
           await _taskController.updateTask(
             updatedTask.taskId,
-            updatedTask.title,
-            updatedTask.description,
-            updatedTask.status,
+            {
+              'assignedReporterId': updatedTask.assignedReporterId,
+              'assignedCameramanId': updatedTask.assignedCameramanId,
+              'assignedDriverId': updatedTask.assignedDriverId,
+              'assignedLibrarianId': updatedTask.assignedLibrarianId,
+              'title': updatedTask.title,
+              'description': updatedTask.description,
+              'status': updatedTask.status,
+            }..removeWhere((key, value) => value == null),
           );
           result.successfulOperations.add(taskId);
           Get.log('Successfully assigned task $taskId to $userId as $role');
