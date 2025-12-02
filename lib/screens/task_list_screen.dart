@@ -25,12 +25,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
   final TextEditingController categoryController = TextEditingController();
   final TextEditingController tagsController = TextEditingController();
   final TextEditingController assignedToController = TextEditingController();
-  
+
   DateTime? selectedDueDate;
   String selectedStatusFilter = 'All';
-  
+
   // Filter options
-  final List<String> statusOptions = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled'];
+  final List<String> statusOptions = [
+    'All',
+    'Pending',
+    'In Progress',
+    'Completed',
+    'Cancelled'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -51,14 +57,15 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               onChanged: (value) {
-                setState(() {}); // Trigger rebuild for real-time search
+                // No setState needed - the controller change will trigger rebuild naturally
               },
             ),
           ),
-          
+
           // Quick Filters Row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -70,7 +77,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     selected: selectedStatusFilter != 'All',
                     onSelected: (selected) {
                       setState(() {
-                        selectedStatusFilter = selected ? selectedStatusFilter : 'All';
+                        selectedStatusFilter =
+                            selected ? selectedStatusFilter : 'All';
                       });
                     },
                   ),
@@ -83,7 +91,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
               ],
             ),
           ),
-          
+
           // Tasks List
           Expanded(
             child: Obx(() {
@@ -106,17 +114,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        searchController.text.isNotEmpty || 
-                        selectedStatusFilter != 'All'
+                        searchController.text.isNotEmpty ||
+                                selectedStatusFilter != 'All'
                             ? 'no_tasks_match_filters'.tr
                             : 'no_tasks_available'.tr,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        searchController.text.isNotEmpty || 
-                        selectedStatusFilter != 'All'
+                        searchController.text.isNotEmpty ||
+                                selectedStatusFilter != 'All'
                             ? 'try_adjusting_your_filters'.tr
                             : '',
                         style: TextStyle(color: Colors.grey[600]),
@@ -174,9 +183,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
     // Apply status filter
     if (selectedStatusFilter != 'All') {
-      tasks = tasks.where((task) => 
-          task.status.toLowerCase() == selectedStatusFilter.toLowerCase()
-      ).toList();
+      tasks = tasks
+          .where((task) =>
+              task.status.toLowerCase() == selectedStatusFilter.toLowerCase())
+          .toList();
     }
 
     return tasks;

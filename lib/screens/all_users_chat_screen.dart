@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/settings_controller.dart';
@@ -30,10 +31,19 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
   final WallpaperController _wallpaperController =
       Get.find<WallpaperController>();
 
+  // Map to store conversation data for each user
+  Map<String, Map<String, dynamic>> _userConversations = {};
+
   @override
   void initState() {
     super.initState();
     _refreshUsers();
+
+    // Fetch conversations when screen initializes
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId != null) {
+      _fetchConversations(currentUserId);
+    }
   }
 
   @override
@@ -43,9 +53,134 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
   }
 
   Future<void> _refreshUsers() async {
-    setState(() => isRefreshing = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    setState(() => isRefreshing = false);
+    // Use single setState with delayed callback to avoid multiple rebuilds
+    setState(() {
+      isRefreshing = true;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            isRefreshing = false;
+          });
+
+          // Refresh conversations data as well
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+          if (currentUserId != null) {
+            _fetchConversations(currentUserId);
+          }
+        }
+      });
+    });
+  }
+
+  // Helper method to format timestamp for display
+  String _formatMessageTime(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+
+    final date = timestamp.toDate();
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'now'.tr;
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    } else if (difference.inDays < 7) {
+      return DateFormat('EEE').format(date); // Shows day name like "Mon", "Tue"
+    } else if (difference.inDays < 365) {
+      return DateFormat('d/MM').format(date); // Shows date like "15/12"
+    } else {
+      return DateFormat('d/MM/yy').format(date); // Shows date like "15/12/23"
+    }
+  }
+
+  // Build subtitle with WhatsApp-like behavior
+  Widget _buildSubtitle(String userId, String email, ThemeData theme) {
+    final conversation = _userConversations[userId];
+
+    if (conversation != null) {
+      // User has an existing conversation
+      final lastMessage = conversation['lastMessage'] as String? ?? '';
+      final lastMessageTime = conversation['lastMessageTime'] as Timestamp?;
+
+      if (lastMessage.isNotEmpty) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: Text(
+                lastMessage,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (lastMessageTime != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                _formatMessageTime(lastMessageTime),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        );
+      }
+    }
+
+    // User has no conversation - show "Chat" text like WhatsApp
+    return Text(
+      'Chat',
+      style: TextStyle(
+        color: theme.colorScheme.primary,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  // Fetch conversation data for the current user
+  Future<void> _fetchConversations(String currentUserId) async {
+    try {
+      final conversationsSnapshot = await FirebaseFirestore.instance
+          .collection('conversations')
+          .where('participants', arrayContains: currentUserId)
+          .get();
+
+      Map<String, Map<String, dynamic>> conversationMap = {};
+
+      for (final doc in conversationsSnapshot.docs) {
+        final data = doc.data();
+        final participants = List<String>.from(data['participants'] ?? []);
+
+        // Find the other participant (not current user)
+        final otherUserId = participants.firstWhere(
+          (id) => id != currentUserId,
+          orElse: () => '',
+        );
+
+        if (otherUserId.isNotEmpty) {
+          conversationMap[otherUserId] = {
+            'lastMessage': data['lastMessage'] ?? '',
+            'lastMessageTime': data['lastMessageTime'],
+            'conversationId': doc.id,
+          };
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _userConversations = conversationMap;
+        });
+      }
+    } catch (e) {
+      // Handle error silently or log using proper logging service
+      // print('Error fetching conversations: $e');
+    }
   }
 
   void _handleUserTap(DocumentSnapshot user) async {
@@ -375,11 +510,8 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          subtitle: Text(
-                            email,
-                            style: TextStyle(
-                                color: theme.colorScheme.onSurfaceVariant),
-                          ),
+                          subtitle:
+                              _buildSubtitle(userData['uid'], email, theme),
                           onTap: () => _handleUserTap(user),
                         ),
                       ),

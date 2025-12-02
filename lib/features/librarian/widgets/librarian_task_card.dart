@@ -30,6 +30,7 @@ class LibrarianTaskCard extends StatefulWidget {
 class _LibrarianTaskCardState extends State<LibrarianTaskCard>
     with SingleTickerProviderStateMixin {
   bool _isLoading = false;
+  String? _cachedUserName;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
@@ -302,9 +303,10 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard>
                           if (widget.task.assignedReporter != null)
                             _buildUserAvatar(
                               context,
-                              name: widget.task.assignedReporter!,
+                              name: _cachedUserName ??
+                                  widget.task.assignedReporter!,
                               tooltip:
-                                  'Reporter: ${widget.task.assignedReporter}',
+                                  'Reporter: ${_cachedUserName ?? widget.task.assignedReporter!}',
                             ),
                           if (widget.task.assignedCameraman != null) ...[
                             const SizedBox(width: 4),
@@ -619,7 +621,9 @@ class _LibrarianTaskCardState extends State<LibrarianTaskCard>
 
       // Trigger a rebuild to show the updated name
       if (mounted && userName.isNotEmpty) {
-        setState(() {});
+        setState(() {
+          _cachedUserName = userName;
+        });
       }
     } catch (e) {
       debugPrint('Error fetching user name for $userId: $e');

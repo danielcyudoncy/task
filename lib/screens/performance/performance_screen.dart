@@ -20,6 +20,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   final AuthController _authController = Get.find<AuthController>();
   final ThemeController _themeController = Get.find<ThemeController>();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  int _refreshCount = 0;
 
   // Get current quarter
   int get currentQuarter => (DateTime.now().month - 1) ~/ 3 + 1;
@@ -35,7 +36,9 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
 
     // Force rebuild to reload images
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _refreshCount++;
+      });
     }
   }
 
@@ -63,6 +66,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: ValueKey(_refreshCount),
       appBar: AppBar(
         title: const Text('Team Performance'),
         centerTitle: true,

@@ -1,4 +1,4 @@
-// views/performance/user_performance_details_screen.dart
+// screens/performance/user_performance_details_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -31,6 +31,8 @@ class _UserPerformanceDetailsScreenState
   final PerformanceController _performanceController =
       Get.find<PerformanceController>();
   final ThemeController _themeController = Get.find<ThemeController>();
+  int _refreshRetryCount = 0;
+  int _errorRetryCount = 0;
 
   // Quarter date ranges
   final Map<int, Map<String, DateTime>> _quarterDates = {
@@ -67,8 +69,10 @@ class _UserPerformanceDetailsScreenState
     return DefaultTextStyle(
       style: DefaultTextStyle.of(context).style,
       child: Scaffold(
+        key: ValueKey(_refreshRetryCount),
         appBar: AppBar(
           title: FutureBuilder<DocumentSnapshot>(
+            key: ValueKey(_errorRetryCount),
             future: _firestore.collection('users').doc(widget.userId).get(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -99,7 +103,9 @@ class _UserPerformanceDetailsScreenState
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () {
-                setState(() {});
+                setState(() {
+                  _refreshRetryCount++;
+                });
                 _performanceController.refreshData();
               },
             ),
@@ -763,7 +769,9 @@ class _UserPerformanceDetailsScreenState
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => setState(() {}),
+            onPressed: () => setState(() {
+              _errorRetryCount++;
+            }),
             child: const Text('Retry'),
           ),
         ],
