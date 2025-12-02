@@ -65,12 +65,14 @@ service cloud.firestore {
       // STATUS/CONTENT UPDATES: Admin or task creator (status, title, description, etc.)
       allow update: if request.auth != null &&
         (request.auth.token.admin == true ||  // Admins can modify any task
-         request.auth.uid == resource.data.createdBy);  // Task creator can modify own tasks
+         request.auth.uid == resource.data.createdBy || // Task creator can modify own tasks
+         request.auth.uid == resource.data.createdById); // Legacy tasks using createdById
       
       // DELETE: Admin or task creator
       allow delete: if request.auth != null &&
         (request.auth.token.admin == true ||  // Admins can delete any task
-         request.auth.uid == resource.data.createdBy);  // Task creator can delete own tasks
+         request.auth.uid == resource.data.createdBy || // Task creator can delete own tasks
+         request.auth.uid == resource.data.createdById); // Legacy tasks using createdById
     }
     
     // Admins collection

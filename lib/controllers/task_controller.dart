@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -34,6 +35,8 @@ class TaskController extends GetxController {
   var newTaskCount = 0.obs;
   var isLoadingStats = false.obs;
   var isRefreshing = false.obs; // Added newTaskCount variable
+  final _isScrolling =
+      false.obs; // Track scroll state for performance optimization
 
   // Using UserCacheService for better caching performance
   final Map<String, String> taskTitleCache = {};
@@ -41,6 +44,44 @@ class TaskController extends GetxController {
   // Safe snackbar method
   void _safeSnackbar(String title, String message) {
     SnackbarUtils.showSnackbar(title, message);
+  }
+
+  /// Safe state update method that prevents updates during Flutter's build phase
+  /// to avoid parentDataDirty assertion errors
+  void _safeStateUpdate(VoidCallback update) {
+    // Use a simple post-frame callback to defer updates and avoid build phase conflicts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      update();
+    });
+  }
+
+  /// Safe async state update method that prevents updates during Flutter's build phase
+  /// and properly handles async operations to avoid parentDataDirty assertion errors.
+  ///
+  /// This method:
+  /// 1. Defers the async operation to after the current frame
+  /// 2. Catches and logs any errors that occur during the async operation
+  /// 3. Returns a Future that completes when the operation is done
+  Future<T?> _safeAsyncStateUpdate<T>(Future<T> Function() asyncUpdate) async {
+    final completer = Completer<T?>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final result = await asyncUpdate();
+        completer.complete(result);
+      } catch (e, stackTrace) {
+        debugPrint('_safeAsyncStateUpdate error: $e');
+        debugPrint('Stack trace: $stackTrace');
+        completer.complete(null);
+      }
+    });
+
+    return completer.future;
+  }
+
+  /// Pause heavy operations during scroll for better performance
+  void setScrollState(bool isScrolling) {
+    _isScrolling(isScrolling);
   }
 
   // Helper method to validate and clean avatar URLs
@@ -78,29 +119,35 @@ class TaskController extends GetxController {
     if (task.createdByName == null || task.createdByName!.isEmpty) {
       try {
         final creatorName = await _getUserName(task.createdById);
-        // Update the task with new creator name
-        final updatedTask = task.withCreatedByName(creatorName);
-        // Replace in the tasks list
-        final index = tasks.indexWhere((t) => t.taskId == task.taskId);
-        if (index != -1) {
-          tasks[index] = updatedTask;
-        }
-        debugPrint(
-            '_populateCreatedByName: Updated task ${task.taskId} createdByName to: $creatorName');
-        // Trigger UI update after updating the name
-        tasks.refresh();
+        // Update the task with new creator name using safe async state update
+        await _safeAsyncStateUpdate(() async {
+          final updatedTask = task.withCreatedByName(creatorName);
+          // Replace in the tasks list
+          final index = tasks.indexWhere((t) => t.taskId == task.taskId);
+          if (index != -1) {
+            tasks[index] = updatedTask;
+          }
+          debugPrint(
+              '_populateCreatedByName: Updated task ${task.taskId} createdByName to: $creatorName');
+          // Trigger UI update after updating the name
+          tasks.refresh();
+          return true;
+        });
       } catch (e) {
         debugPrint(
             '_populateCreatedByName: Error getting creator name for ${task.createdById}: $e');
-        // Update the task with unknown user name
-        final updatedTask = task.withCreatedByName('Unknown User');
-        // Replace in the tasks list
-        final index = tasks.indexWhere((t) => t.taskId == task.taskId);
-        if (index != -1) {
-          tasks[index] = updatedTask;
-        }
-        // Trigger UI update even on error
-        tasks.refresh();
+        // Update the task with unknown user name using safe async state update
+        await _safeAsyncStateUpdate(() async {
+          final updatedTask = task.withCreatedByName('Unknown User');
+          // Replace in the tasks list
+          final index = tasks.indexWhere((t) => t.taskId == task.taskId);
+          if (index != -1) {
+            tasks[index] = updatedTask;
+          }
+          // Trigger UI update even on error
+          tasks.refresh();
+          return true;
+        });
       }
     } else {
       debugPrint(
@@ -280,9 +327,12 @@ class TaskController extends GetxController {
             return task;
           }));
 
-          // Update the tasks list
-          tasks.assignAll(updatedTasks);
-          tasks.refresh();
+          // Update the tasks list safely using async state update to avoid parentDataDirty assertion errors
+          await _safeAsyncStateUpdate(() async {
+            tasks.assignAll(updatedTasks);
+            tasks.refresh();
+            return true;
+          });
           debugPrint('TaskController: Tasks updated via real-time listener');
         },
         onError: (error) {
@@ -1090,8 +1140,7 @@ class TaskController extends GetxController {
     }
   }
 
-  Future<void> updateTask(
-      String taskId, String title, String description, String status) async {
+  Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
     try {
       isLoading(true);
       final currentUser = authController.auth.currentUser;
@@ -1101,35 +1150,95 @@ class TaskController extends GetxController {
       }
 
       final task = tasks.firstWhere((t) => t.taskId == taskId);
-      if (!task.canEdit(currentUser.uid,
-          isAdmin: authController.isCurrentUserAdmin)) {
+
+      // ✅ HARDENED: Enhanced permission check with detailed logging
+      final canEdit = task.canEdit(currentUser.uid,
+          isAdmin: authController.isCurrentUserAdmin);
+
+      if (!canEdit) {
+        debugPrint('updateTask: Permission denied for user ${currentUser.uid}');
+        debugPrint('  isAdmin: ${authController.isCurrentUserAdmin}');
+        debugPrint('  userRole: ${authController.userRole.value}');
+        debugPrint('  task creator: ${task.createdBy}');
         _safeSnackbar("Error", "You do not have permission to edit this task");
         return;
       }
+
+      // Ensure lastModified is always updated
+      updates['lastModified'] = DateTime.now().toIso8601String();
+
       // Update task in Firebase
-      await _firebaseService.updateTask(taskId, {
-        "title": title,
-        "description": description,
-        "status": status,
-        "lastModified": DateTime.now().toIso8601String(),
-      });
+      await _firebaseService.updateTask(taskId, updates);
 
       // Update local task list
       int taskIndex = tasks.indexWhere((task) => task.taskId == taskId);
       if (taskIndex != -1) {
-        Task updatedTask = tasks[taskIndex].copyWith(
-          core: tasks[taskIndex].core.copyWith(
-                title: title,
-                description: description,
-                status: status,
-              ),
-          metadata: tasks[taskIndex].metadata?.copyWith(
-                    lastModified: DateTime.now(),
-                  ) ??
-              TaskMetadata(lastModified: DateTime.now()),
-        );
-        tasks[taskIndex] = updatedTask;
-        tasks.refresh();
+        // Create updated task by applying all updates
+        Task updatedTask = tasks[taskIndex];
+
+        // Apply core updates
+        if (updates.containsKey('title') ||
+            updates.containsKey('description') ||
+            updates.containsKey('status') ||
+            updates.containsKey('priority') ||
+            updates.containsKey('dueDate') ||
+            updates.containsKey('category') ||
+            updates.containsKey('tags')) {
+          updatedTask = updatedTask.copyWith(
+            core: updatedTask.core.copyWith(
+              title: updates['title'] ?? updatedTask.title,
+              description: updates['description'] ?? updatedTask.description,
+              status: updates['status'] ?? updatedTask.status,
+              priority: updates['priority'] ?? updatedTask.priority,
+              dueDate: updates['dueDate'] != null
+                  ? (updates['dueDate'] is int
+                      ? DateTime.fromMillisecondsSinceEpoch(updates['dueDate'])
+                      : DateTime.parse(updates['dueDate'].toString()))
+                  : updatedTask.dueDate,
+              category: updates['category'] ?? updatedTask.category,
+              tags: updates['tags'] != null
+                  ? List<String>.from(updates['tags'])
+                  : updatedTask.tags,
+            ),
+          );
+        }
+
+        // Apply metadata updates
+        if (updates.keys.any((key) =>
+            key.startsWith('assigned') ||
+            key == 'comments' ||
+            key == 'approvalStatus' ||
+            key == 'approvalReason' ||
+            key == 'attachmentUrls' ||
+            key == 'completedByUserIds' ||
+            key == 'lastModified')) {
+          updatedTask = updatedTask.copyWith(
+            metadata: updatedTask.metadata?.copyWith(
+                  assignedReporterId: updates['assignedReporterId'] ??
+                      updatedTask.assignedReporterId,
+                  assignedCameramanId: updates['assignedCameramanId'] ??
+                      updatedTask.assignedCameramanId,
+                  assignedDriverId: updates['assignedDriverId'] ??
+                      updatedTask.assignedDriverId,
+                  assignedLibrarianId: updates['assignedLibrarianId'] ??
+                      updatedTask.assignedLibrarianId,
+                  lastModified: updates['lastModified'] != null
+                      ? DateTime.parse(updates['lastModified'].toString())
+                      : DateTime.now(),
+                ) ??
+                TaskMetadata(
+                  lastModified: updates['lastModified'] != null
+                      ? DateTime.parse(updates['lastModified'].toString())
+                      : DateTime.now(),
+                ),
+          );
+        }
+
+        // Use safe state update to avoid parentDataDirty assertion errors
+        _safeStateUpdate(() {
+          tasks[taskIndex] = updatedTask;
+          tasks.refresh();
+        });
       }
       _safeSnackbar("Success", "Task updated successfully");
       calculateNewTaskCount(); // Calculate new task count after updating task
@@ -1185,9 +1294,11 @@ class TaskController extends GetxController {
         'reason': 'Administrative deletion via TaskController',
       });
 
-      // Remove from local task list
-      tasks.removeWhere((task) => task.taskId == taskId);
-      tasks.refresh();
+      // Remove from local task list using safe state update
+      _safeStateUpdate(() {
+        tasks.removeWhere((task) => task.taskId == taskId);
+        tasks.refresh();
+      });
 
       _safeSnackbar("Success", "Task permanently deleted by admin");
       calculateNewTaskCount();
@@ -1225,8 +1336,11 @@ class TaskController extends GetxController {
               ),
           core: tasks[taskIndex].core.copyWith(status: 'archived'),
         );
-        tasks[taskIndex] = archivedTask;
-        tasks.refresh();
+        // Use safe state update to avoid parentDataDirty assertion errors
+        _safeStateUpdate(() {
+          tasks[taskIndex] = archivedTask;
+          tasks.refresh();
+        });
       }
 
       _safeSnackbar("Success", "Task archived successfully");
@@ -1250,8 +1364,11 @@ class TaskController extends GetxController {
                 status: newStatus,
               ),
         );
-        tasks[taskIndex] = updatedTask;
-        tasks.refresh();
+        // Use safe state update to avoid parentDataDirty assertion errors
+        _safeStateUpdate(() {
+          tasks[taskIndex] = updatedTask;
+          tasks.refresh();
+        });
       }
       _safeSnackbar("Success", "Task status updated");
       calculateNewTaskCount(); // Calculate new task count after updating task status
@@ -1456,8 +1573,11 @@ class TaskController extends GetxController {
             ? task.core.copyWith(status: 'Completed')
             : task.core,
       );
-      tasks[taskIndex] = updatedTask;
-      tasks.refresh();
+      // Use safe state update to avoid parentDataDirty assertion errors
+      _safeStateUpdate(() {
+        tasks[taskIndex] = updatedTask;
+        tasks.refresh();
+      });
     }
   }
 
@@ -1629,8 +1749,11 @@ class TaskController extends GetxController {
                 comments: [...tasks[index].comments, comment],
               ),
         );
-        tasks[index] = updatedTask;
-        tasks.refresh();
+        // Use safe state update to avoid parentDataDirty assertion errors
+        _safeStateUpdate(() {
+          tasks[index] = updatedTask;
+          tasks.refresh();
+        });
       }
     } catch (e) {
       _safeSnackbar("Error", "Failed to add comment: ${e.toString()}");
@@ -1838,7 +1961,11 @@ class TaskController extends GetxController {
         return task;
       }));
 
-      tasks.assignAll(relevantTasks);
+      // Update tasks list safely using async state update
+      await _safeAsyncStateUpdate(() async {
+        tasks.assignAll(relevantTasks);
+        return true;
+      });
       errorMessage.value = '';
     } catch (e) {
       debugPrint('fetchRelevantTasksForUser: error = $e');
@@ -1889,8 +2016,12 @@ class TaskController extends GetxController {
           return task;
         }));
 
-        tasks.assignAll(firebaseTasks);
-        tasks.refresh();
+        // Update tasks list safely using async state update to avoid parentDataDirty assertion errors
+        await _safeAsyncStateUpdate(() async {
+          tasks.assignAll(firebaseTasks);
+          tasks.refresh();
+          return true;
+        });
         debugPrint(
             'loadInitialTasks: Loaded ${tasks.length} tasks into controller');
       } else {
@@ -1994,14 +2125,17 @@ class TaskController extends GetxController {
                 lastModified: now,
               ),
         );
-        tasks[taskIndex] = updatedTask;
+        // Use safe state update to avoid parentDataDirty assertion errors
+        _safeStateUpdate(() {
+          tasks[taskIndex] = updatedTask;
+          tasks.refresh();
+        });
         debugPrint(
             'approveTask: Updated task approvalStatus: ${updatedTask.approvalStatus}');
         debugPrint(
             'approveTask: Updated task isApproved: ${updatedTask.isApproved}');
         debugPrint(
             'approveTask: Updated task canBeAssigned: ${updatedTask.canBeAssigned}');
-        tasks.refresh();
         debugPrint(
             'approveTask: Task list refreshed, total tasks: ${tasks.length}');
 
@@ -2091,12 +2225,15 @@ class TaskController extends GetxController {
                 lastModified: now,
               ),
         );
-        tasks[taskIndex] = updatedTask;
-        tasks.refresh();
+        // Use safe state update to avoid parentDataDirty assertion errors
+        _safeStateUpdate(() {
+          tasks[taskIndex] = updatedTask;
+          tasks.refresh();
+        });
 
         // Send notification to task creator
         if (updatedTask.createdById.isNotEmpty) {
-          await sendTaskApprovalNotification(
+          await Get.find<NotificationController>().sendTaskApprovalNotification(
             updatedTask.createdById,
             updatedTask.title,
             'rejected',

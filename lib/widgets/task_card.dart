@@ -78,7 +78,6 @@ class TaskCard extends StatelessWidget {
           onTap: onTap,
           child: Semantics(
             label: "Task card: $title, status $status, created by $creatorName",
-            container: true,
             child: Container(
               padding: EdgeInsets.all(isLargeScreen ? 24.w : 16.w),
               decoration: BoxDecoration(

@@ -303,10 +303,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
     final String creatorName = _getCreatorNameSync();
     final String assignedReporterName = _getAssignedReporterNameSync();
 
-    final bool isOwner =
-        authController.user.value?.uid == widget.task.createdBy;
-    final bool isAdmin = authController.isCurrentUserAdmin;
-    final bool canManageTask = isOwner || isAdmin;
+    // Note: isOwner check is now INSIDE Obx for reactive updates
+    // This was moved to ensure it refreshes when auth state changes
 
     return Card(
       elevation: 4,
@@ -380,16 +378,47 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                 ],
               ),
             ),
-            if (canManageTask)
-              Positioned(
+            Obx(() {
+              // ✅ FIXED: Move permission checks INSIDE Obx to ensure reactive updates
+              final currentUserIdReactive =
+                  authController.auth.currentUser?.uid;
+              final isOwnerReactive = currentUserIdReactive != null &&
+                  widget.task.isCreator(currentUserIdReactive);
+
+              // ✅ Use isAdmin.value directly for reactive detection
+              final isAdminDirect = authController.isAdmin.value;
+              final userRoleLower = authController.userRole.value.toLowerCase();
+              final isAdminByRole = userRoleLower == 'admin' ||
+                  userRoleLower == 'administrator' ||
+                  userRoleLower == 'superadmin';
+
+              final isAdmin = isAdminDirect || isAdminByRole;
+              final bool canManage = isOwnerReactive || isAdmin;
+
+              // 🔍 DEBUG LOGGING
+              debugPrint(
+                  '[TaskCard] canManage=$canManage, isOwner=$isOwnerReactive, isAdmin=$isAdmin');
+              debugPrint(
+                  '[TaskCard] isAdminDirect=$isAdminDirect, userRole=$userRoleLower, isAdminByRole=$isAdminByRole');
+
+              if (!canManage) {
+                debugPrint('[TaskCard] ❌ Hiding menu - canManage is false');
+                return const SizedBox.shrink();
+              }
+
+              debugPrint('[TaskCard] ✅ Showing menu');
+              return Positioned(
                 top: 4,
                 right: 4,
                 child: PopupMenuButton<String>(
-                  onSelected: (value) {
+                  onSelected: (value) async {
                     if (value == 'edit') {
                       TaskActions.editTask(context, widget.task);
                     } else if (value == 'delete') {
-                      _showDeleteConfirmation(context);
+                      final confirmed = await _showDeleteConfirmation(context);
+                      if (confirmed == true) {
+                        await TaskActions.deleteTask(widget.task);
+                      }
                     } else if (value == 'assign') {
                       TaskActions.assignTask(context, widget.task);
                     } else if (value == 'comment') {
@@ -404,10 +433,11 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                       value: 'edit',
                       child: Text('Edit'),
                     ),
-                    const PopupMenuItem<String>(
-                      value: 'assign',
-                      child: Text('Assign Task'),
-                    ),
+                    if (isAdmin)
+                      const PopupMenuItem<String>(
+                        value: 'assign',
+                        child: Text('Assign Task'),
+                      ),
                     const PopupMenuItem<String>(
                       value: 'comment',
                       child: Text('Add Comment'),
@@ -424,7 +454,8 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
                   ],
                   icon: Icon(Icons.more_vert, color: textColor),
                 ),
-              ),
+              );
+            }),
           ],
         ),
       ),

@@ -52,7 +52,8 @@ class TaskCore {
       taskId: map['taskId'] ?? map['id']?.toString() ?? '',
       title: map['title'] ?? '',
       description: map['description'] ?? '',
-      createdBy: map['createdBy'] ?? 'Unknown',
+      // Fallback to createdById for backward compatibility
+      createdBy: map['createdBy'] ?? map['createdById'] ?? 'Unknown',
       createdByName: map['createdByName'],
       status: map['status'] ?? 'Pending',
       timestamp: parseDate(map['timestamp']) ?? DateTime.now(),
