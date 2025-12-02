@@ -155,7 +155,9 @@ class PendingTasksDialog {
                     final userInfo = userCache[creatorId];
                     if (userInfo == null && creatorId != 'Unknown') {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
-                        getUserNameAndRole(creatorId, () => setState(() {}));
+                        getUserNameAndRole(creatorId, () {
+                          // userCache is modified directly, no setState needed
+                        });
                       });
                     }
                     final creatorName = userInfo?["name"] ?? 'Unknown';

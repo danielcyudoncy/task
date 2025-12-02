@@ -27,6 +27,8 @@ class TaskCardWidget extends StatefulWidget {
 }
 
 class _TaskCardWidgetState extends State<TaskCardWidget> {
+  String? _cachedReporterName;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +38,11 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
   String _getAssignedReporterNameSync() {
     try {
       if (widget.task.assignedReporterId == null) return 'Not Assigned';
+
+      // Use cached name first if available
+      if (_cachedReporterName != null) {
+        return _cachedReporterName!;
+      }
 
       final userCacheService = Get.find<UserCacheService>();
       final cachedName =
@@ -136,7 +143,9 @@ class _TaskCardWidgetState extends State<TaskCardWidget> {
             .getUserName(widget.task.assignedReporterId!)
             .then((name) {
           if (mounted && name != 'Unknown User') {
-            setState(() {});
+            setState(() {
+              _cachedReporterName = name;
+            });
           }
         }).catchError((e) {
           debugPrint('Error refreshing reporter name: $e');

@@ -151,7 +151,9 @@ class TaskDetailDialog {
             final userInfo = userCache[creatorId];
             if (userInfo == null && creatorId != 'Unknown') {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                getUserNameAndRole(creatorId, () => setState(() {}));
+                getUserNameAndRole(creatorId, () {
+                  // userCache is modified directly, no setState needed
+                });
               });
             }
             // First try to get createdByName from the task document, then fall back to userCache
