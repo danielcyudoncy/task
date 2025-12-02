@@ -514,12 +514,22 @@ class Task {
   }
 
   /// Checks if the given user can edit this task
-  bool canEdit(String userId) {
+  /// Admin users can edit any task, creators can edit their own tasks
+  bool canEdit(String userId, {bool isAdmin = false}) {
+    // Admin users can edit any task
+    if (isAdmin) return true;
+
+    // Task creators can edit their own tasks
     return isCreator(userId);
   }
 
   /// Checks if the given user can delete this task
-  bool canDelete(String userId) {
+  /// Admin users can delete any task, creators can delete their own tasks
+  bool canDelete(String userId, {bool isAdmin = false}) {
+    // Admin users can delete any task
+    if (isAdmin) return true;
+
+    // Task creators can delete their own tasks
     return isCreator(userId);
   }
 

@@ -84,11 +84,46 @@ class AuthController extends GetxController {
   ];
   bool get isLoggedIn => currentUser != null;
 
-  // Helper method to reliably check admin role
+  // ✅ HARDENED: Reliably check admin role from multiple sources with proper reactive dependencies
+  // Checks Firebase custom claims first (most reliable), then falls back to role checks
+  // GetX tracks all reactive variables to trigger Obx rebuilds when any change
   bool get isCurrentUserAdmin {
-    return isAdmin.value ||
-        userRole.value == 'Admin' ||
-        userData['role'] == 'Admin';
+    // ✅ Explicitly depend on all reactive variables for proper GetX tracking
+    user.value; // Track user auth state changes
+    isAdmin.value; // Track Firebase custom claim (primary)
+    userRole.value; // Track role state (secondary)
+    userData.refresh(); // Ensure userData changes are tracked (tertiary)
+
+    // 🔍 DEBUG: Log what we're checking
+    debugPrint(
+        '[isCurrentUserAdmin] Checking: isAdmin.value=${isAdmin.value}, userRole=${userRole.value}');
+
+    // PRIMARY CHECK: Firebase custom claim (server-set, most reliable)
+    if (isAdmin.value == true) {
+      debugPrint('[isCurrentUserAdmin] ✅ Admin via Firebase custom claim');
+      return true;
+    }
+
+    // SECONDARY CHECK: User role from state
+    const adminRoles = {'admin', 'administrator', 'superadmin'};
+    final roleLower = userRole.value.trim().toLowerCase();
+    if (adminRoles.contains(roleLower)) {
+      debugPrint('[isCurrentUserAdmin] ✅ Admin via userRole: $roleLower');
+      return true;
+    }
+
+    // TERTIARY CHECK: User data object role (fallback)
+    final userDataRoleLower =
+        (userData['role'] ?? '').toString().trim().toLowerCase();
+    if (adminRoles.contains(userDataRoleLower)) {
+      debugPrint(
+          '[isCurrentUserAdmin] ✅ Admin via userData role: $userDataRoleLower');
+      return true;
+    }
+
+    // If any check passes, user is admin
+    debugPrint('[isCurrentUserAdmin] ❌ NOT admin');
+    return false;
   }
 
   // Inactivity timer for automatic session management
@@ -111,7 +146,9 @@ class AuthController extends GetxController {
 
   void setUserRole(String role) {
     userRole.value = role;
-    isAdmin.value = role == 'Admin';
+    final roleLower = role.toLowerCase();
+    const adminRoles = {'admin', 'administrator', 'superadmin'};
+    isAdmin.value = adminRoles.contains(roleLower);
     canCreateTasks.value = true;
   }
 
@@ -183,12 +220,6 @@ class AuthController extends GetxController {
       _handlePresence(false);
       resetUserData();
     });
-
-    // NOTE: single authStateChanges listener is used above. Avoid adding
-    // duplicate listeners which can cause race conditions and unexpected
-    // sign-outs during login. Additional sign-in/sign-out handling should
-    // be performed inside the primary listener above (which does async
-    // initialization work).
   }
 
   // ignore: unused_element
@@ -361,14 +392,24 @@ class AuthController extends GetxController {
 
       // Always fetch fresh data from Firestore before navigation
       debugPrint("AuthController: Fetching fresh user data from Firestore");
-      final userDoc = await _firestore
-          .collection("users")
-          .doc(_auth.currentUser!.uid)
-          .get();
+      final uid = _auth.currentUser!.uid;
+      debugPrint("AuthController: Current user UID: $uid");
+
+      final userDoc = await _firestore.collection("users").doc(uid).get();
+      debugPrint(
+          "AuthController: userDoc.exists = ${userDoc.exists}, hasData = ${userDoc.data() != null}");
+
       if (userDoc.exists) {
         debugPrint("AuthController: Fresh user document exists, updating data");
         final data = userDoc.data()!;
-        _updateUserDataFromMap(data);
+        debugPrint("AuthController: Document data keys: ${data.keys.toList()}");
+        debugPrint("AuthController: Document role value: ${data['role']}");
+
+        // Use safe async state update to prevent parentDataDirty assertion errors
+        await _safeAsyncStateUpdate(() async {
+          _updateUserDataFromMap(data);
+          return true;
+        });
         // Optionally update cache
         final userCacheService = Get.find<UserCacheService>();
         await userCacheService.updateCurrentUserData(data);
@@ -389,7 +430,11 @@ class AuthController extends GetxController {
       final cachedData = await userCacheService.getCurrentUserData();
       if (cachedData != null) {
         debugPrint("AuthController: Using cached data as fallback");
-        _updateUserDataFromMap(cachedData);
+        // Use safe async state update to prevent parentDataDirty assertion errors
+        await _safeAsyncStateUpdate(() async {
+          _updateUserDataFromMap(cachedData);
+          return true;
+        });
       } else {
         resetUserData();
         rethrow;
@@ -401,24 +446,63 @@ class AuthController extends GetxController {
 
   // Helper method to update user data from a map
   void _updateUserDataFromMap(Map<String, dynamic> data) {
+    debugPrint(
+        "AuthController: _updateUserDataFromMap called with data keys: ${data.keys.toList()}");
+    debugPrint("AuthController: role field value: ${data['role']}");
+
     fullName.value = data['fullName'] ?? '';
     profilePic.value = data['photoUrl'] ?? '';
     phoneNumber.value = data['phoneNumber'] ?? '';
     userRole.value = data['role'] ?? '';
+
+    debugPrint(
+        "AuthController: After assignment - userRole.value = ${userRole.value}");
     setUserRole(userRole.value);
+    debugPrint(
+        "AuthController: After setUserRole - isAdmin.value = ${isAdmin.value}");
+
     isProfileComplete.value = data['profileComplete'] ?? false;
     userData.assignAll(data);
+
+    // Load ID token claims to check for admin status
+    _loadIdTokenClaims();
+  }
+
+  /// Load Firebase ID token claims to check for admin status
+  Future<void> _loadIdTokenClaims() async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        final idTokenResult = await currentUser.getIdTokenResult();
+        final claims = idTokenResult.claims;
+
+        if (claims != null && claims.containsKey('admin')) {
+          final adminClaim = claims['admin'];
+          isAdmin.value = adminClaim == true || adminClaim == 'true';
+          debugPrint(
+              "AuthController: Admin status from claims: ${isAdmin.value}");
+        } else {
+          isAdmin.value = false;
+          debugPrint("AuthController: No admin claim found in ID token");
+        }
+      }
+    } catch (e) {
+      debugPrint("AuthController: Error loading ID token claims: $e");
+      isAdmin.value = false;
+    }
   }
 
   void resetUserData() {
-    user.value = null;
-    userRole.value = '';
-    fullName.value = '';
-    profilePic.value = '';
-    isProfileComplete.value = false;
-    isRoleLoaded.value = false;
-    _inactivityTimer?.cancel();
-    debugPrint("AuthController: User data reset");
+    _safeStateUpdate(() {
+      user.value = null;
+      userRole.value = '';
+      fullName.value = '';
+      profilePic.value = '';
+      isProfileComplete.value = false;
+      isRoleLoaded.value = false;
+      _inactivityTimer?.cancel();
+      debugPrint("AuthController: User data reset");
+    });
   }
 
   /// Hide sensitive UI data when app backgrounds (keeps Firebase session active)
@@ -517,6 +601,39 @@ class AuthController extends GetxController {
 
   void setBuildPhase(bool inBuildPhase) {
     // This method is kept for compatibility but no longer used
+  }
+
+  /// Safe state update method that prevents updates during Flutter's build phase
+  /// to avoid parentDataDirty assertion errors
+  void _safeStateUpdate(VoidCallback update) {
+    // Use a simple post-frame callback to defer updates and avoid build phase conflicts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      update();
+    });
+  }
+
+  /// Safe async state update method that prevents updates during Flutter's build phase
+  /// and properly handles async operations to avoid parentDataDirty assertion errors.
+  ///
+  /// This method:
+  /// 1. Defers the async operation to after the current frame
+  /// 2. Catches and logs any errors that occur during the async operation
+  /// 3. Returns a Future that completes when the operation is done
+  Future<T?> _safeAsyncStateUpdate<T>(Future<T> Function() asyncUpdate) async {
+    final completer = Completer<T?>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final result = await asyncUpdate();
+        completer.complete(result);
+      } catch (e, stackTrace) {
+        debugPrint('_safeAsyncStateUpdate error: $e');
+        debugPrint('Stack trace: $stackTrace');
+        completer.complete(null);
+      }
+    });
+
+    return completer.future;
   }
 
   void resetLoadingState() {
@@ -635,6 +752,8 @@ class AuthController extends GetxController {
           await FirebaseFunctions.instance.httpsCallable('setAdminClaim').call({
             'uid': user.uid,
           });
+          // Force refresh ID token so Firestore rules see the new admin claim
+          await FirebaseAuth.instance.currentUser?.getIdToken(true);
         } catch (e) {
           debugPrint("Error setting admin claim: $e");
           // Continue even if claim setting fails
@@ -704,6 +823,8 @@ class AuthController extends GetxController {
         await FirebaseFunctions.instance.httpsCallable('setAdminClaim').call({
           'uid': credential.user!.uid,
         });
+        // Force refresh ID token so Firestore rules see the new admin claim
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
       } catch (e) {
         debugPrint("Error setting admin claim: $e");
         // Continue even if claim setting fails

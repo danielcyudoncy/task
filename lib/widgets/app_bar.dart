@@ -26,6 +26,7 @@ class AppBarWidget extends StatelessWidget {
             child: Semantics(
               label: "Open Menu",
               button: true,
+              excludeSemantics: true,
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -47,6 +48,7 @@ class AppBarWidget extends StatelessWidget {
             child: Semantics(
               label: "Go to profile",
               button: true,
+              excludeSemantics: true,
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(

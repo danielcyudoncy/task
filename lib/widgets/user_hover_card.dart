@@ -50,6 +50,7 @@ class UserHoverCard extends StatelessWidget {
           child: ListTile(
             leading: Semantics(
               label: 'User Avatar',
+              excludeSemantics: true,
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -93,6 +94,7 @@ class UserHoverCard extends StatelessWidget {
                 Semantics(
                   label: "Assign Task",
                   button: true,
+                  excludeSemantics: true,
                   child: IconButton(
                     icon: const Icon(Icons.assignment, color: Colors.blue),
                     onPressed: onAssignTask,
@@ -101,6 +103,7 @@ class UserHoverCard extends StatelessWidget {
                 Semantics(
                   label: "Delete User",
                   button: true,
+                  excludeSemantics: true,
                   child: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
