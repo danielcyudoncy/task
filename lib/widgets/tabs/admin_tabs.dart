@@ -10,6 +10,8 @@ import '../../models/report_completion_info.dart';
 import '../dialogs/task_approval_dialog.dart';
 import '../report_completion_dialog.dart';
 import '../ui_helpers.dart';
+import '../../models/task.dart';
+import '../task_action_utility.dart';
 
 class TasksTab extends StatefulWidget {
   final Map<String, Map<String, String>> userCache;
@@ -117,9 +119,15 @@ class _TasksTabState extends State<TasksTab> {
     final authController = Get.find<AuthController>();
     final currentUserId = authController.auth.currentUser?.uid;
     final userRole = authController.userRole.value;
+    final isAdmin = authController.isAdmin.value;
+    final isCreator = currentUserId != null &&
+        ((doc?['createdBy']?.toString() == currentUserId) ||
+            (doc?['createdById']?.toString() == currentUserId));
     final isAssignedUser = _isUserAssignedToTask(doc, currentUserId);
-    final canCompleteTask =
-        widget.taskType == 'pending' && isAssignedUser && currentUserId != null;
+    final canManage = isAdmin || isCreator;
+    final canCompleteTask = widget.taskType == 'pending' &&
+        currentUserId != null &&
+        (isAssignedUser || canManage);
 
     // Debug logging
 
@@ -189,6 +197,70 @@ class _TasksTabState extends State<TasksTab> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    if (doc != null && canManage)
+                      PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          final taskId = doc['id'] ?? doc['taskId'] ?? '';
+                          if (taskId.isEmpty) return;
+                          // Build Task object from doc for TaskActions
+                          final map = Map<String, dynamic>.from(doc);
+                          map['taskId'] = taskId;
+                          final taskObj = Task.fromMap(map);
+
+                          if (value == 'edit') {
+                            TaskActions.editTask(context, taskObj);
+                          } else if (value == 'delete') {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete Task'),
+                                content: const Text(
+                                    'Are you sure you want to delete this task?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.of(ctx).pop(true),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              await TaskActions.deleteTask(taskObj);
+                              Get.snackbar('Success', 'Task deleted',
+                                  snackPosition: SnackPosition.BOTTOM);
+                            }
+                          } else if (value == 'complete') {
+                            // Use existing completion logic via TaskActions for admin/creator
+                            TaskActions.completeTask(taskObj);
+                          }
+                        },
+                        itemBuilder: (BuildContext context) {
+                          final items = <PopupMenuEntry<String>>[
+                            const PopupMenuItem<String>(
+                              value: 'edit',
+                              child: Text('Edit'),
+                            ),
+                            const PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                          ];
+                          if ((status.toString().toLowerCase() != 'completed')) {
+                            items.add(const PopupMenuItem<String>(
+                              value: 'complete',
+                              child: Text('Complete'),
+                            ));
+                          }
+                          return items;
+                        },
+                        icon: Icon(Icons.more_vert,
+                            color: Theme.of(context).colorScheme.onPrimary),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),

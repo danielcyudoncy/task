@@ -534,7 +534,10 @@ class Task {
   }
 
   /// Checks if the given user can mark this task as complete
-  bool canMarkComplete(String userId) {
+  bool canMarkComplete(String userId, {bool isAdmin = false}) {
+    // Admin users can mark any task as complete
+    if (isAdmin) return true;
+
     // Creator can always mark their own task as complete
     if (isCreator(userId)) return true;
 
@@ -543,8 +546,8 @@ class Task {
   }
 
   /// Marks the task as complete for the given user
-  void markComplete(String userId) {
-    if (!canMarkComplete(userId)) {
+  void markComplete(String userId, {bool isAdmin = false}) {
+    if (!canMarkComplete(userId, isAdmin: isAdmin)) {
       throw Exception(
           'User does not have permission to mark this task as complete');
     }
@@ -560,8 +563,8 @@ class Task {
   }
 
   /// Unmarks the task as complete for the given user
-  void unmarkComplete(String userId) {
-    if (!canMarkComplete(userId)) {
+  void unmarkComplete(String userId, {bool isAdmin = false}) {
+    if (!canMarkComplete(userId, isAdmin: isAdmin)) {
       throw Exception(
           'User does not have permission to unmark this task as complete');
     }

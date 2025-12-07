@@ -1388,8 +1388,12 @@ class TaskController extends GetxController {
     try {
       isLoading(true);
 
+      // Get current user admin status
+      final isAdmin = authController.isAdmin.value;
+
       // Get and validate task
-      final task = await _getAndValidateTaskForCompletion(taskId, userId);
+      final task = await _getAndValidateTaskForCompletion(taskId, userId,
+          isAdmin: isAdmin);
       if (task == null) return;
 
       // Prepare completion data
@@ -1423,8 +1427,8 @@ class TaskController extends GetxController {
   }
 
   /// Get and validate task for completion
-  Future<Task?> _getAndValidateTaskForCompletion(
-      String taskId, String userId) async {
+  Future<Task?> _getAndValidateTaskForCompletion(String taskId, String userId,
+      {bool isAdmin = false}) async {
     final taskDoc =
         await FirebaseFirestore.instance.collection('tasks').doc(taskId).get();
 
@@ -1437,8 +1441,8 @@ class TaskController extends GetxController {
     taskData['taskId'] = taskId;
     final task = Task.fromMap(taskData);
 
-    // Check if user is assigned to this task
-    if (!task.assignedUserIds.contains(userId)) {
+    // Check if user is assigned to this task OR is admin
+    if (!isAdmin && !task.assignedUserIds.contains(userId)) {
       _safeSnackbar("Error", "You are not assigned to this task");
       return null;
     }
