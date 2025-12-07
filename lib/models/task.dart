@@ -216,7 +216,10 @@ class Task {
     return isCreator(userId) || isAdmin;
   }
 
-  bool canMarkComplete(String userId) {
+  bool canMarkComplete(String userId, {bool isAdmin = false}) {
+    // Admin users can mark any task as complete
+    if (isAdmin) return true;
+
     if (isCreator(userId)) return true;
     return assignedUserIds.contains(userId);
   }
