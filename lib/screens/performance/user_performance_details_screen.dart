@@ -1,5 +1,4 @@
 // screens/performance/user_performance_details_screen.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -24,41 +23,6 @@ class UserPerformanceDetailsScreen extends StatefulWidget {
   @override
   State<UserPerformanceDetailsScreen> createState() =>
       _UserPerformanceDetailsScreenState();
-}
-
-// Performance calculation cache
-class _PerformanceCache {
-  static final Map<String, PerformanceMetrics> _cache = {};
-
-  static PerformanceMetrics? get(
-      String userId, List<QueryDocumentSnapshot> tasks) {
-    final key = '$userId-${tasks.length}-${tasks.hashCode}';
-    return _cache[key];
-  }
-
-  static void set(String userId, List<QueryDocumentSnapshot> tasks,
-      PerformanceMetrics metrics) {
-    final key = '$userId-${tasks.length}-${tasks.hashCode}';
-    _cache[key] = metrics;
-  }
-
-  static void clear() {
-    _cache.clear();
-  }
-}
-
-class PerformanceMetrics {
-  final double completionRate;
-  final double performanceScore;
-  final String performanceGrade;
-  final Map<String, int> taskStatistics;
-
-  PerformanceMetrics({
-    required this.completionRate,
-    required this.performanceScore,
-    required this.performanceGrade,
-    required this.taskStatistics,
-  });
 }
 
 class _UserPerformanceDetailsScreenState
@@ -93,479 +57,8 @@ class _UserPerformanceDetailsScreenState
   @override
   void initState() {
     super.initState();
-    // Don't refresh data immediately - let the controller handle its own data loading
-    // The controller will already have data from previous loads
-  }
-
-  @override
-  void dispose() {
-    _PerformanceCache.clear();
-    super.dispose();
-  }
-
-  // Optimized performance calculation using caching and isolates
-  Future<PerformanceMetrics> _calculatePerformanceMetricsCached(
-    List<QueryDocumentSnapshot> tasks,
-  ) async {
-    // Check cache first
-    final cached = _PerformanceCache.get(widget.userId, tasks);
-    if (cached != null) {
-      return cached;
-    }
-
-    // Use isolate for heavy computation if available
-    try {
-      final metrics = await compute(_calculatePerformanceMetrics, tasks);
-      _PerformanceCache.set(widget.userId, tasks, metrics);
-      return metrics;
-    } catch (e) {
-      // Fallback to main thread if isolate fails
-      return _calculatePerformanceMetricsSync(tasks);
-    }
-  }
-
-  // Heavy computation moved to isolate
-  static PerformanceMetrics _calculatePerformanceMetrics(
-      List<QueryDocumentSnapshot> tasks) {
-    if (tasks.isEmpty) {
-      return PerformanceMetrics(
-        completionRate: 0.0,
-        performanceScore: 0.0,
-        performanceGrade: 'N/A',
-        taskStatistics: {
-          'completed': 0,
-          'inProgress': 0,
-          'pending': 0,
-          'overdue': 0,
-        },
-      );
-    }
-
-    int completedTasks = 0;
-    int inProgressTasks = 0;
-    int pendingTasks = 0;
-    int overdueTasks = 0;
-    int totalScore = 0;
-    final maxPossibleScore = tasks.length * 10;
-
-    for (final task in tasks) {
-      final data = task.data() as Map<String, dynamic>?;
-      final status = data?['status'] as String? ?? '';
-
-      // Count task status
-      switch (status) {
-        case 'Completed':
-          completedTasks++;
-          totalScore += 10; // Full points
-          break;
-        case 'In Progress':
-          inProgressTasks++;
-          totalScore += 7; // 70% for in-progress
-          break;
-        case 'Pending':
-        case 'Assigned':
-          pendingTasks++;
-          totalScore += 3; // 30% for pending
-          break;
-      }
-
-      // Check for overdue tasks
-      try {
-        final dueDateValue = data?['dueDate'];
-        DateTime? dueDate;
-        if (dueDateValue is Timestamp) {
-          dueDate = dueDateValue.toDate();
-        } else if (dueDateValue is String) {
-          dueDate = DateTime.tryParse(dueDateValue);
-        }
-
-        if (dueDate != null &&
-            status != 'Completed' &&
-            dueDate.isBefore(DateTime.now())) {
-          overdueTasks++;
-        }
-      } catch (e) {
-        // Ignore parsing errors
-      }
-    }
-
-    final completionRate = (completedTasks / tasks.length) * 100.0;
-    final performanceScore = (totalScore / maxPossibleScore) * 10.0;
-    final performanceGrade = _calculateGrade(completionRate);
-
-    return PerformanceMetrics(
-      completionRate: completionRate,
-      performanceScore: performanceScore,
-      performanceGrade: performanceGrade,
-      taskStatistics: {
-        'completed': completedTasks,
-        'inProgress': inProgressTasks,
-        'pending': pendingTasks,
-        'overdue': overdueTasks,
-      },
-    );
-  }
-
-  // Synchronous fallback for main thread
-  PerformanceMetrics _calculatePerformanceMetricsSync(
-      List<QueryDocumentSnapshot> tasks) {
-    return _calculatePerformanceMetrics(tasks);
-  }
-
-  static String _calculateGrade(double completionRate) {
-    if (completionRate >= 90) return 'A+';
-    if (completionRate >= 80) return 'A';
-    if (completionRate >= 70) return 'B+';
-    if (completionRate >= 60) return 'B';
-    if (completionRate >= 50) return 'C+';
-    if (completionRate >= 40) return 'C';
-    return 'D';
-  }
-
-  // Optimized method to get user tasks with minimal processing
-  Future<List<QueryDocumentSnapshot>> _getUserTasks() async {
-    final quarterDates = _quarterDates[widget.quarter]!;
-    final snapshot = await _firestore
-        .collection('tasks')
-        .where('timestamp',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(quarterDates['start']!))
-        .where('timestamp',
-            isLessThanOrEqualTo: Timestamp.fromDate(quarterDates['end']!))
-        .get();
-
-    // Filter tasks for this user (done once here instead of every build)
-    final assignmentFields = [
-      'assignedReporterId',
-      'assignedCameramanId',
-      'assignedDriverId',
-      'assignedLibrarianId',
-    ];
-
-    final userTaskDocs = snapshot.docs.where((doc) {
-      final data = doc.data();
-      return assignmentFields.any((field) {
-            final assignedUserId = data[field] as String?;
-            return assignedUserId == widget.userId;
-          }) ||
-          data['assignedTo'] == widget.userId;
-    }).toList();
-
-    return userTaskDocs;
-  }
-
-  Widget _buildUserInfoCard(
-    BuildContext context,
-    String? photoUrl,
-    String displayName,
-    String userRole,
-    String? email,
-    String? phone,
-    Map<String, DateTime> quarterDates,
-    DateFormat dateFormat,
-  ) {
-    return Card(
-      color: _getCardBackgroundColor(context),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: _getAvatarBackgroundColor(context),
-              child: photoUrl != null && photoUrl.isNotEmpty
-                  ? ClipOval(
-                      child: CachedNetworkImage(
-                        imageUrl: photoUrl,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) =>
-                            const CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                        errorWidget: (context, url, error) => const Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  : const Icon(Icons.person, size: 40, color: Colors.grey),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: _getAccentTextColor(context),
-                        ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getRoleBadgeBackgroundColor(context),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      userRole,
-                      style: TextStyle(
-                        color: _getRoleBadgeTextColor(context),
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ),
-                  if (email != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      email,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _getAccentTextColor(context),
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (phone != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      phone,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(
-                    'Q${widget.quarter} ${quarterDates['start']!.year}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _getAccentTextColor(context),
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                  Text(
-                    '${dateFormat.format(quarterDates['start']!)} - ${dateFormat.format(quarterDates['end']!)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: _getAccentTextColor(context),
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPerformanceSection(
-    BuildContext context,
-    List<QueryDocumentSnapshot> userTasks,
-    PerformanceMetrics? metrics,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Performance Overview',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: _getPerformanceOverviewHeaderColor(context),
-                fontFamily: 'Raleway',
-              ),
-        ),
-        const SizedBox(height: 8),
-        if (metrics != null)
-          _buildPerformanceOverviewOptimized(context, userTasks, metrics)
-        else
-          const CircularProgressIndicator(),
-      ],
-    );
-  }
-
-  Widget _buildPerformanceOverviewOptimized(
-    BuildContext context,
-    List<QueryDocumentSnapshot> userTasks,
-    PerformanceMetrics metrics,
-  ) {
-    return Card(
-      color: _getCardBackgroundColor(context),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatistic('Total Tasks', '${userTasks.length}'),
-                _buildStatistic(
-                    'Completed', '${metrics.taskStatistics['completed']}'),
-                _buildStatistic('Completion Rate',
-                    '${metrics.completionRate.toStringAsFixed(1)}%'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            LinearProgressIndicator(
-              value:
-                  userTasks.isNotEmpty ? (metrics.completionRate / 100) : 0.0,
-              minHeight: 10,
-              backgroundColor: _getStatisticBarColor(
-                  context, _getPerformanceColor(metrics.completionRate)),
-              color: _getPerformanceColor(metrics.completionRate),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Performance Score: ${metrics.performanceScore.toStringAsFixed(1)}/10',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: _getPerformanceOverviewTextColor(context),
-                        ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getGradeColor(metrics.performanceGrade),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Grade: ${metrics.performanceGrade}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTaskStatisticsOptimized(
-    BuildContext context,
-    PerformanceMetrics metrics,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Task Statistics',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: _getTaskStatisticsHeaderColor(context),
-                fontFamily: 'Raleway',
-              ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          color: _getCardBackgroundColor(context),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildStatisticRow(
-                    'Completed',
-                    metrics.taskStatistics['completed'] ?? 0,
-                    metrics.taskStatistics['completed']! +
-                        metrics.taskStatistics['inProgress']! +
-                        metrics.taskStatistics['pending']! +
-                        metrics.taskStatistics['overdue']!,
-                    Colors.green),
-                _buildStatisticRow(
-                    'In Progress',
-                    metrics.taskStatistics['inProgress'] ?? 0,
-                    metrics.taskStatistics['completed']! +
-                        metrics.taskStatistics['inProgress']! +
-                        metrics.taskStatistics['pending']! +
-                        metrics.taskStatistics['overdue']!,
-                    Colors.blue),
-                _buildStatisticRow(
-                    'Pending',
-                    metrics.taskStatistics['pending'] ?? 0,
-                    metrics.taskStatistics['completed']! +
-                        metrics.taskStatistics['inProgress']! +
-                        metrics.taskStatistics['pending']! +
-                        metrics.taskStatistics['overdue']!,
-                    Colors.orange),
-                _buildStatisticRow(
-                    'Overdue',
-                    metrics.taskStatistics['overdue'] ?? 0,
-                    metrics.taskStatistics['completed']! +
-                        metrics.taskStatistics['inProgress']! +
-                        metrics.taskStatistics['pending']! +
-                        metrics.taskStatistics['overdue']!,
-                    Colors.red),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecentActivityOptimized(
-    BuildContext context,
-    List<QueryDocumentSnapshot> userTasks,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Recent Activity',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: _getRecentActivityHeaderColor(context),
-                fontFamily: 'Raleway',
-              ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          color: _getCardBackgroundColor(context),
-          child: ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: userTasks.length,
-            itemBuilder: (context, index) {
-              final task = userTasks[index];
-              final data = task.data() as Map<String, dynamic>? ?? {};
-              final title = data['title'] as String? ?? 'No Title';
-              final status = data['status'] as String? ?? 'Unknown';
-
-              return ListTile(
-                title: Text(
-                  title,
-                  style: TextStyle(color: _getRecentActivityTextColor(context)),
-                ),
-                subtitle: Text(
-                  'Status: $status',
-                  style: TextStyle(color: _getRecentActivityTextColor(context)),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right,
-                  color: _getRecentActivityTextColor(context),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+    // Refresh performance data when screen loads
+    _performanceController.refreshData();
   }
 
   @override
@@ -588,9 +81,10 @@ class _UserPerformanceDetailsScreenState
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Loading...',
-                    maxLines: 1,
-                    softWrap: false,
                     style: TextStyle(color: _getAccentTextColor(context)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
                   ),
                 );
               }
@@ -600,8 +94,9 @@ class _UserPerformanceDetailsScreenState
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${widget.userName}\'s Q${widget.quarter} Performance',
+                    "${widget.userName}'s Q${widget.quarter} Performance",
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     softWrap: false,
                   ),
                 );
@@ -612,23 +107,24 @@ class _UserPerformanceDetailsScreenState
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${widget.userName}\'s Q${widget.quarter} Performance',
+                    "${widget.userName}'s Q${widget.quarter} Performance",
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     softWrap: false,
                   ),
                 );
               }
 
               final userData = snapshot.data!.data() as Map<String, dynamic>?;
-              final displayName =
-                  userData?['displayName']?.toString() ?? widget.userName;
+              final displayName = userData?['displayName']?.toString() ?? widget.userName;
 
               return FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '$displayName - Q${widget.quarter} Performance',
+                  "$displayName's Q${widget.quarter} Performance",
                   maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   softWrap: false,
                 ),
               );
@@ -677,8 +173,16 @@ class _UserPerformanceDetailsScreenState
             final String? email = userData['email'] as String?;
             final String? phone = userData['phone'] as String?;
 
-            return FutureBuilder<List<QueryDocumentSnapshot>>(
-              future: _getUserTasks(),
+            return StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('tasks')
+                  .where('timestamp',
+                      isGreaterThanOrEqualTo: Timestamp.fromDate(
+                          _quarterDates[widget.quarter]!['start']!))
+                  .where('timestamp',
+                      isLessThanOrEqualTo: Timestamp.fromDate(
+                          _quarterDates[widget.quarter]!['end']!))
+                  .snapshots(),
               builder: (context, taskSnapshot) {
                 if (taskSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -689,54 +193,429 @@ class _UserPerformanceDetailsScreenState
                       'Error loading tasks: ${taskSnapshot.error}');
                 }
 
-                final userTasks = taskSnapshot.data ?? [];
+                // Filter tasks for this user
+                final assignmentFields = [
+                  'assignedReporterId',
+                  'assignedCameramanId',
+                  'assignedDriverId',
+                  'assignedLibrarianId',
+                ];
 
-                return FutureBuilder<PerformanceMetrics>(
-                  future: _calculatePerformanceMetricsCached(userTasks),
-                  builder: (context, metricsSnapshot) {
-                    if (metricsSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                final allTasks = taskSnapshot.hasData
+                    ? taskSnapshot.data!.docs
+                    : <QueryDocumentSnapshot>[];
+                final userTasks = allTasks.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  return assignmentFields.any((field) {
+                        final assignedUserId = data[field] as String?;
+                        return assignedUserId == widget.userId;
+                      }) ||
+                      data['assignedTo'] == widget.userId;
+                }).toList();
 
-                    final metrics = metricsSnapshot.data;
-
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // User Info Card
-                          _buildUserInfoCard(context, photoUrl, displayName,
-                              userRole, email, phone, quarterDates, dateFormat),
-
-                          const SizedBox(height: 16),
-
-                          // Performance Overview
-                          _buildPerformanceSection(context, userTasks, metrics),
-
-                          const SizedBox(height: 24),
-
-                          // Task Statistics
-                          if (metrics != null)
-                            _buildTaskStatisticsOptimized(context, metrics),
-
-                          const SizedBox(height: 24),
-
-                          // Recent Activity (optimized to show only latest 10)
-                          _buildRecentActivityOptimized(
-                              context, userTasks.take(10).toList()),
-
-                          const SizedBox(height: 24),
-                        ],
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // User Info Card
+                      Card(
+                        color: _getCardBackgroundColor(context),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 30,
+                                backgroundColor:
+                                    _getAvatarBackgroundColor(context),
+                                child: photoUrl != null && photoUrl.isNotEmpty
+                                    ? ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: photoUrl,
+                                          width: 60,
+                                          height: 60,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) =>
+                                              const CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                          errorWidget: (context, url, error) =>
+                                              const Icon(
+                                            Icons.person,
+                                            size: 40,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(Icons.person,
+                                        size: 40, color: Colors.grey),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: _getAccentTextColor(context),
+                                          ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: _getRoleBadgeBackgroundColor(
+                                            context),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        userRole,
+                                        style: TextStyle(
+                                          color:
+                                              _getRoleBadgeTextColor(context),
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12.sp,
+                                        ),
+                                      ),
+                                    ),
+                                    if (email != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        email,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color:
+                                                  _getAccentTextColor(context),
+                                            ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                    if (phone != null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        phone,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                    ],
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Q${widget.quarter} ${quarterDates['start']!.year}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: _getAccentTextColor(context),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                    ),
+                                    Text(
+                                      '${dateFormat.format(quarterDates['start']!)} - ${dateFormat.format(quarterDates['end']!)}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: _getAccentTextColor(context),
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 16),
+
+                      // Performance Overview
+                      Text(
+                        'Performance Overview',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: _getPerformanceOverviewHeaderColor(context),
+                            fontFamily: 'Raleway'),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildPerformanceOverview(userTasks),
+
+                      const SizedBox(height: 24),
+
+                      // Task Statistics
+                      Text(
+                        'Task Statistics',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: _getTaskStatisticsHeaderColor(context),
+                            fontFamily: 'Raleway'),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildTaskStatistics(userTasks),
+
+                      const SizedBox(height: 24),
+
+                      // Recent Activity
+                      Text(
+                        'Recent Activity',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: _getRecentActivityHeaderColor(context),
+                              fontFamily: 'Raleway',
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildRecentActivity(userTasks),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 );
               },
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildPerformanceOverview(List<QueryDocumentSnapshot> tasks) {
+    // Get user performance data from controller if available
+    final Map<String, dynamic>? userPerformanceData = () {
+      final matches = _performanceController.userPerformanceData
+          .where((user) => user['userId'] == widget.userId);
+      return matches.isNotEmpty ? matches.first : null;
+    }();
+
+    final completedTasks = tasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'Completed';
+    }).toList();
+
+    final completionRate =
+        tasks.isNotEmpty ? (completedTasks.length / tasks.length) * 100.0 : 0.0;
+    final performanceScore = _calculatePerformanceScore(tasks);
+
+    // Use performance grade from controller if available
+    final performanceGrade = userPerformanceData?['performanceGrade'] ??
+        _calculatePerformanceGrade(completionRate);
+
+    return Card(
+      color: _getCardBackgroundColor(context),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatistic('Total Tasks', '${tasks.length}'),
+                _buildStatistic('Completed', '${completedTasks.length}'),
+                _buildStatistic(
+                    'Completion Rate', '${completionRate.toStringAsFixed(1)}%'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            LinearProgressIndicator(
+              value: tasks.isNotEmpty ? (completionRate / 100) : 0.0,
+              minHeight: 10,
+              color: _getPerformanceColor(completionRate),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Performance Score: ${performanceScore.toStringAsFixed(1)}/10',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: _getPerformanceOverviewTextColor(context),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getGradeColor(performanceGrade),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Grade: $performanceGrade',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskStatistics(List<QueryDocumentSnapshot> userTasks) {
+    // Calculate task statistics from the provided userTasks
+
+    final completedTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'Completed';
+    }).toList();
+
+    final inProgressTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'In Progress';
+    }).toList();
+
+    final pendingTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      return data?['status'] == 'Pending' || data?['status'] == 'Assigned';
+    }).toList();
+
+    final overdueTasks = userTasks.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+      DateTime? dueDate;
+      try {
+        final dueDateValue = data?['dueDate'];
+        if (dueDateValue is Timestamp) {
+          dueDate = dueDateValue.toDate();
+        } else if (dueDateValue is String) {
+          dueDate = DateTime.tryParse(dueDateValue);
+        }
+      } catch (e) {
+        dueDate = null;
+      }
+      final status = data?['status'] as String?;
+      return dueDate != null &&
+          status != 'Completed' &&
+          dueDate.isBefore(DateTime.now());
+    }).toList();
+
+    return Card(
+      color: _getCardBackgroundColor(context),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildStatisticRow('Completed', completedTasks.length,
+                userTasks.length, Colors.green),
+            _buildStatisticRow('In Progress', inProgressTasks.length,
+                userTasks.length, Colors.blue),
+            _buildStatisticRow('Pending', pendingTasks.length, userTasks.length,
+                Colors.orange),
+            _buildStatisticRow(
+                'Overdue', overdueTasks.length, userTasks.length, Colors.red),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity(List<QueryDocumentSnapshot> userTasks) {
+    // Display recent activity from the provided userTasks
+
+    if (userTasks.isEmpty) {
+      return Card(
+        color: _getCardBackgroundColor(context),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Text(
+              'No recent activity found',
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Sort tasks by updatedAt in descending order
+    final sortedTasks = List<QueryDocumentSnapshot>.from(userTasks);
+    sortedTasks.sort((a, b) {
+      final aData = a.data() as Map<String, dynamic>;
+      final bData = b.data() as Map<String, dynamic>;
+
+      DateTime aUpdatedAt = DateTime(1970);
+      DateTime bUpdatedAt = DateTime(1970);
+
+      try {
+        final aValue = aData['updatedAt'];
+        if (aValue is Timestamp) {
+          aUpdatedAt = aValue.toDate();
+        } else if (aValue is String) {
+          aUpdatedAt = DateTime.tryParse(aValue) ?? DateTime(1970);
+        }
+      } catch (e) {
+        aUpdatedAt = DateTime(1970);
+      }
+
+      try {
+        final bValue = bData['updatedAt'];
+        if (bValue is Timestamp) {
+          bUpdatedAt = bValue.toDate();
+        } else if (bValue is String) {
+          bUpdatedAt = DateTime.tryParse(bValue) ?? DateTime(1970);
+        }
+      } catch (e) {
+        bUpdatedAt = DateTime(1970);
+      }
+
+      return bUpdatedAt.compareTo(aUpdatedAt);
+    });
+
+    return Card(
+      color: _getCardBackgroundColor(context),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: sortedTasks.length,
+        itemBuilder: (context, index) {
+          final task = sortedTasks[index];
+          final data = task.data() as Map<String, dynamic>? ?? {};
+          final title = data['title'] as String? ?? 'No Title';
+          final status = data['status'] as String? ?? 'Unknown';
+          DateTime? updatedAt;
+          try {
+            final updatedAtValue = data['updatedAt'];
+            if (updatedAtValue is Timestamp) {
+              updatedAt = updatedAtValue.toDate();
+            } else if (updatedAtValue is String) {
+              updatedAt = DateTime.tryParse(updatedAtValue);
+            }
+          } catch (e) {
+            updatedAt = null;
+          }
+
+          return ListTile(
+            title: Text(
+              title,
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
+            ),
+            subtitle: Text(
+              'Status: $status',
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
+            ),
+            trailing: Text(
+              updatedAt != null
+                  ? DateFormat('MMM d, y').format(updatedAt)
+                  : 'N/A',
+              style: TextStyle(color: _getRecentActivityTextColor(context)),
+            ),
+          );
+        },
       ),
     );
   }
@@ -772,11 +651,16 @@ class _UserPerformanceDetailsScreenState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '$label: $count',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: _getTaskStatisticsTextColor(context),
-                    ),
+              Expanded(
+                child: Text(
+                  '$label: $count',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _getTaskStatisticsTextColor(context),
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
               ),
               Text(
                 '${percentage.toStringAsFixed(1)}%',
@@ -792,11 +676,82 @@ class _UserPerformanceDetailsScreenState
             backgroundColor: _getStatisticBarColor(context, color),
             color: color,
             minHeight: 6,
-            borderRadius: BorderRadius.circular(3),
           ),
         ],
       ),
     );
+  }
+
+  double _calculatePerformanceScore(List<QueryDocumentSnapshot> tasks) {
+    if (tasks.isEmpty) return 0.0;
+
+    int totalScore = 0;
+    int maxPossibleScore = tasks.length * 10; // Max 10 points per task
+
+    for (final task in tasks) {
+      final data = task.data() as Map<String, dynamic>;
+      final status = data['status'] as String? ?? '';
+      DateTime? dueDate;
+      DateTime? completedAt;
+
+      try {
+        final dueDateValue = data['dueDate'];
+        if (dueDateValue is Timestamp) {
+          dueDate = dueDateValue.toDate();
+        } else if (dueDateValue is String) {
+          dueDate = DateTime.tryParse(dueDateValue);
+        }
+      } catch (e) {
+        dueDate = null;
+      }
+
+      try {
+        final completedAtValue = data['completedAt'];
+        if (completedAtValue is Timestamp) {
+          completedAt = completedAtValue.toDate();
+        } else if (completedAtValue is String) {
+          completedAt = DateTime.tryParse(completedAtValue);
+        }
+      } catch (e) {
+        completedAt = null;
+      }
+
+      // Base score based on status
+      int taskScore = 0;
+
+      switch (status) {
+        case 'Completed':
+          taskScore = 10; // Full points for completed tasks
+          break;
+        case 'In Progress':
+          taskScore = 7; // 70% for in-progress tasks
+          break;
+        case 'Pending':
+        case 'Assigned':
+          taskScore = 3; // 30% for pending/assigned tasks
+          break;
+        default:
+          taskScore = 0; // No points for other statuses
+      }
+
+      // Bonus points for early completion
+      if (status == 'Completed' && dueDate != null && completedAt != null) {
+        if (completedAt.isBefore(dueDate)) {
+          taskScore += 2; // 2 bonus points for early completion
+        } else if (completedAt.isAfter(dueDate)) {
+          taskScore =
+              (taskScore * 0.8).round(); // 20% penalty for late completion
+        }
+      }
+
+      // Ensure score is within 0-10 range
+      taskScore = taskScore.clamp(0, 10);
+      totalScore += taskScore;
+    }
+
+    // Calculate final score as a percentage of max possible score
+    final double finalScore = (totalScore / maxPossibleScore) * 10;
+    return finalScore;
   }
 
   Color _getPerformanceColor(double percentage) {
@@ -821,6 +776,16 @@ class _UserPerformanceDetailsScreenState
       default:
         return Colors.grey;
     }
+  }
+
+  String _calculatePerformanceGrade(double completionRate) {
+    if (completionRate >= 90) return 'A+';
+    if (completionRate >= 80) return 'A';
+    if (completionRate >= 70) return 'B+';
+    if (completionRate >= 60) return 'B';
+    if (completionRate >= 50) return 'C+';
+    if (completionRate >= 40) return 'C';
+    return 'D';
   }
 
   Widget _buildErrorWidget(String message) {
