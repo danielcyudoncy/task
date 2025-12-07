@@ -299,7 +299,7 @@ class _UserPerformanceDetailsScreenState
                 children: [
                   Text(
                     displayName,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: _getAccentTextColor(context),
                         ),
@@ -374,7 +374,7 @@ class _UserPerformanceDetailsScreenState
       children: [
         Text(
           'Performance Overview',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: _getPerformanceOverviewHeaderColor(context),
                 fontFamily: 'Raleway',
               ),
@@ -468,7 +468,7 @@ class _UserPerformanceDetailsScreenState
       children: [
         Text(
           'Task Statistics',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: _getTaskStatisticsHeaderColor(context),
                 fontFamily: 'Raleway',
               ),
@@ -529,7 +529,7 @@ class _UserPerformanceDetailsScreenState
       children: [
         Text(
           'Recent Activity',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: _getRecentActivityHeaderColor(context),
                 fontFamily: 'Raleway',
               ),
@@ -583,28 +583,55 @@ class _UserPerformanceDetailsScreenState
             future: _firestore.collection('users').doc(widget.userId).get(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Text(
-                  'Loading...',
-                  style: TextStyle(color: _getAccentTextColor(context)),
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Loading...',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: TextStyle(color: _getAccentTextColor(context)),
+                  ),
                 );
               }
 
               if (snapshot.hasError) {
-                return Text(
-                    '${widget.userName}\'s Q${widget.quarter} Performance');
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${widget.userName}\'s Q${widget.quarter} Performance',
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                );
               }
 
               if (!snapshot.hasData || !snapshot.data!.exists) {
-                return Text(
-                    '${widget.userName}\'s Q${widget.quarter} Performance');
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${widget.userName}\'s Q${widget.quarter} Performance',
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                );
               }
 
               final userData = snapshot.data!.data() as Map<String, dynamic>?;
               final displayName =
                   userData?['displayName']?.toString() ?? widget.userName;
 
-              return Center(
-                  child: Text('$displayName - Q${widget.quarter} Performance'));
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '$displayName - Q${widget.quarter} Performance',
+                  maxLines: 1,
+                  softWrap: false,
+                ),
+              );
             },
           ),
           actions: [
