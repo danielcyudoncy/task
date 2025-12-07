@@ -19,8 +19,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace 'com.example.task'
     compileSdk = 36
-    ndkVersion = "26.1.10909125"
-    // ndkVersion = "27.0.12077973"
+    ndkVersion = "27.0.12077973"
     // Force consistent Play Core versions to avoid conflicts
     configurations.all {
         resolutionStrategy {
@@ -38,7 +37,7 @@ android {
     defaultConfig {
         applicationId = "com.example.task"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
         multiDexEnabled true
@@ -48,13 +47,13 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
         coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 
     signingConfigs {
@@ -127,8 +126,5 @@ dependencies {
     // Play Core library for app splitting and dynamic delivery - using consistent versions
     implementation 'com.google.android.play:core:1.10.3'
     implementation 'com.google.android.play:core-ktx:1.8.1'
-    
-    // Fix for GoogleApiManager security issues
-    implementation 'com.google.android.gms:play-services-basement:18.3.0'
-    implementation 'com.google.android.gms:play-services-base:18.4.0'
-}}
+}
+}

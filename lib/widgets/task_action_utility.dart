@@ -281,6 +281,7 @@ class TaskActions {
       final authController = Get.find<AuthController>();
       final currentUserId = authController.auth.currentUser?.uid;
       final userRole = authController.userRole.value;
+      final isAdmin = authController.isAdmin.value; // Add admin check
 
       if (currentUserId == null) {
         SnackbarUtils.showError("User not authenticated");
@@ -288,8 +289,17 @@ class TaskActions {
       }
 
       debugPrint(
-          'CompleteTask - User Role: $userRole, CurrentUserId: $currentUserId');
+          'CompleteTask - User Role: $userRole, CurrentUserId: $currentUserId, isAdmin: $isAdmin');
       debugPrint('Task AssignedReporterId: ${task.assignedReporterId}');
+
+      // Allow admin users to complete any task
+      if (isAdmin) {
+        debugPrint('Admin user completing task');
+        await taskController.markTaskCompletedByUser(
+            task.taskId, currentUserId);
+        SnackbarUtils.showSuccess("Task marked as completed by admin");
+        return;
+      }
 
       // If user is a reporter, show completion dialog
       if (userRole == "Reporter" && task.assignedReporterId == currentUserId) {
