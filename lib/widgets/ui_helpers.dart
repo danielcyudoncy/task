@@ -8,10 +8,10 @@ class UIHelpers {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withAlpha(1),
+        color: color.withValues(alpha: 1 / 255.0),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withAlpha(3),
+          color: color.withValues(alpha: 3 / 255.0),
           width: 1,
         ),
       ),
@@ -73,8 +73,8 @@ class UIHelpers {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withAlpha(1)
-              : Colors.grey.withAlpha(2),
+              ? Colors.white.withValues(alpha: 1 / 255.0)
+              : Colors.grey.withValues(alpha: 2 / 255.0),
         ),
       ),
       child: Column(
@@ -85,7 +85,8 @@ class UIHelpers {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: (iconColor ?? const Color(0xFF4A90E2)).withAlpha(1),
+                  color: (iconColor ?? const Color(0xFF4A90E2))
+                      .withValues(alpha: 1 / 255.0),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -153,10 +154,10 @@ class UIHelpers {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: tagColor.withAlpha(1),
+        color: tagColor.withValues(alpha: 1 / 255.0),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: tagColor.withAlpha(3),
+          color: tagColor.withValues(alpha: 3 / 255.0),
         ),
       ),
       child: Text(
@@ -176,10 +177,10 @@ class UIHelpers {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withAlpha(1),
+        color: color.withValues(alpha: 1 / 255.0),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: color.withAlpha(3),
+          color: color.withValues(alpha: 3 / 255.0),
         ),
       ),
       child: Text(
@@ -200,10 +201,10 @@ class UIHelpers {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withAlpha(1),
+        color: color.withValues(alpha: 1 / 255.0),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: color.withAlpha(3),
+          color: color.withValues(alpha: 3 / 255.0),
         ),
       ),
       child: Text(

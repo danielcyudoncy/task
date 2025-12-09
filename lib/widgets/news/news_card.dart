@@ -20,7 +20,7 @@ class NewsCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.only(bottom: 16.h),
       elevation: 4,
-      shadowColor: Colors.black.withAlpha((0.1 * 255).round()),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -242,7 +242,7 @@ class NewsCarouselCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha((0.12 * 255).round()),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -284,12 +284,12 @@ class NewsCarouselCard extends StatelessWidget {
                     Text(
                       source,
                       style: TextStyle(
-                        color: Colors.white.withAlpha((0.85 * 255).round()),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontWeight: FontWeight.w600,
                         fontSize: 14.sp,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withAlpha((0.4 * 255).round()),
+                            color: Colors.black.withValues(alpha: 0.4),
                             blurRadius: 4,
                           ),
                         ],
@@ -304,7 +304,7 @@ class NewsCarouselCard extends StatelessWidget {
                         fontSize: 17.sp,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withAlpha((0.5 * 255).round()),
+                            color: Colors.black.withValues(alpha: 0.5),
                             blurRadius: 6,
                           ),
                         ],
@@ -316,7 +316,7 @@ class NewsCarouselCard extends StatelessWidget {
                     Text(
                       timeAgo,
                       style: TextStyle(
-                        color: Colors.white.withAlpha((0.7 * 255).round()),
+                        color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w400,
                       ),
