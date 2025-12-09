@@ -426,7 +426,7 @@ class _UserPerformanceDetailsScreenState
             const SizedBox(height: 16),
             LinearProgressIndicator(
               value: tasks.isNotEmpty ? (completionRate / 100) : 0.0,
-              minHeight: 10,
+              minHeight: 8,
               color: _getPerformanceColor(completionRate),
             ),
             const SizedBox(height: 8),
@@ -436,7 +436,7 @@ class _UserPerformanceDetailsScreenState
                 Expanded(
                   child: Text(
                     'Performance Score: ${performanceScore.toStringAsFixed(1)}/10',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: _getPerformanceOverviewTextColor(context),
                     ),
                     maxLines: 1,
