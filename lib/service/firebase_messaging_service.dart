@@ -2,7 +2,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseMessagingService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -27,8 +26,8 @@ class FirebaseMessagingService {
       _showNotification(message);
     });
 
-    // ✅ Handle background messages
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // Note: Background message handler is registered centrally in bootstrap.dart to avoid duplicate registration warnings
+    // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
   // ✅ Show Notification
@@ -69,14 +68,15 @@ class FirebaseMessagingService {
 }
 
 // ✅ Background Message Handler (Needs to be a top-level function)
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Initialize Firebase if it hasn't been initialized yet
-  if (!Firebase.apps.isNotEmpty) {
-    await Firebase.initializeApp();
-  }
-
-  if (kDebugMode) {
-    debugPrint("Handling background message: ${message.messageId}");
-  }
-}
+// Removed duplicate background handler to avoid multiple registrations across the app. The single source of truth is in core/bootstrap.dart.
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   // Initialize Firebase if it hasn't been initialized yet
+//   if (!Firebase.apps.isNotEmpty) {
+//     await Firebase.initializeApp();
+//   }
+//
+//   if (kDebugMode) {
+//     debugPrint("Handling background message: ${message.messageId}");
+//   }
+// }

@@ -88,13 +88,13 @@ class AuthController extends GetxController {
   // Checks Firebase custom claims first (most reliable), then falls back to role checks
   // GetX tracks all reactive variables to trigger Obx rebuilds when any change
   bool get isCurrentUserAdmin {
-    // ✅ Explicitly depend on all reactive variables for proper GetX tracking
+    // Track reactive dependencies without causing side-effects
     user.value; // Track user auth state changes
     isAdmin.value; // Track Firebase custom claim (primary)
     userRole.value; // Track role state (secondary)
-    userData.refresh(); // Ensure userData changes are tracked (tertiary)
+    final _ = userData['role']; // Read RxMap to register dependency without refresh
 
-    // 🔍 DEBUG: Log what we're checking
+    // DEBUG: Log what we're checking
     debugPrint(
         '[isCurrentUserAdmin] Checking: isAdmin.value=${isAdmin.value}, userRole=${userRole.value}');
 

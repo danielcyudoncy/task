@@ -159,7 +159,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     'Welcome, ${_authController.currentUser?.email ?? 'User'},',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: _getTitleTextColor(context),
                         ),
                   ),
