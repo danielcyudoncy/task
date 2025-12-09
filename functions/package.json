@@ -15,12 +15,16 @@
   "main": "index.js",
   "dependencies": {
     "firebase-admin": "^12.6.0",
-    "firebase-functions": "^6.0.1"
+    "firebase-functions": "^6.0.1",
+    "glob": "^11.1.0"
   },
   "devDependencies": {
-    "eslint": "^8.15.0",
+    "eslint": "^8.57.0",
     "eslint-config-google": "^0.14.0",
-    "firebase-functions-test": "^3.1.0"
+    "firebase-functions-test": "^3.1.1",
+    "jest": "^30.0.0",
+    "@jest/core": "^30.0.0",
+    "jest-config": "^30.0.0"
   },
   "private": true
 }
