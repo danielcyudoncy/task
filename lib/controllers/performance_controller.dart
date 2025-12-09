@@ -1,10 +1,45 @@
 // controllers/performance_controller.dart
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/task.dart';
 
 class PerformanceController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  /// Safe state update method that prevents updates during Flutter's build phase
+  /// to avoid parentDataDirty assertion errors
+  void _safeStateUpdate(VoidCallback update) {
+    // Use a simple post-frame callback to defer updates and avoid build phase conflicts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      update();
+    });
+  }
+
+  /// Safe async state update method that prevents updates during Flutter's build phase
+  /// and properly handles async operations to avoid parentDataDirty assertion errors.
+  ///
+  /// This method:
+  /// 1. Defers the async operation to after the current frame
+  /// 2. Catches and logs any errors that occur during the async operation
+  /// 3. Returns a Future that completes when the operation is done
+  Future<T?> _safeAsyncStateUpdate<T>(Future<T> Function() asyncUpdate) async {
+    final completer = Completer<T?>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final result = await asyncUpdate();
+        completer.complete(result);
+      } catch (e, stackTrace) {
+        debugPrint('_safeAsyncStateUpdate error: $e');
+        debugPrint('Stack trace: $stackTrace');
+        completer.complete(null);
+      }
+    });
+
+    return completer.future;
+  }
 
   // Observable variables
   final isLoading = false.obs;
@@ -24,17 +59,24 @@ class PerformanceController extends GetxController {
 
   Future<void> fetchUserPerformanceData() async {
     try {
-      isLoading.value = true;
+      _safeStateUpdate(() {
+        isLoading.value = true;
+      });
 
       // Fetch all users
       final usersSnapshot = await _firestore.collection('users').get();
       final users = usersSnapshot.docs;
+
       // Count users excluding librarians
-      totalUsers.value = users.where((doc) {
+      final userCount = users.where((doc) {
         final userData = doc.data();
         final userRole = userData['role'] ?? 'Unknown';
         return userRole != 'Librarian';
       }).length;
+
+      _safeStateUpdate(() {
+        totalUsers.value = userCount;
+      });
 
       // Fetch all tasks
       final tasksSnapshot = await _firestore.collection('tasks').get();
@@ -105,19 +147,25 @@ class PerformanceController extends GetxController {
               withAssigned.length
           : 0.0;
 
-      userPerformanceData.value = performanceList;
-      // Expose both new metrics
-      averageCompletionRateWeighted.value = weightedAvg;
-      averageCompletionRateExcludingZero.value = meanExcludingZero;
-      // Backwards-compatible default now uses weighted average
-      averageCompletionRate.value = weightedAvg;
-      topPerformers.value = performanceList.take(5).toList();
+      // Use safe state updates for all observable assignments
+      await _safeAsyncStateUpdate(() async {
+        userPerformanceData.value = performanceList;
+        // Expose both new metrics
+        averageCompletionRateWeighted.value = weightedAvg;
+        averageCompletionRateExcludingZero.value = meanExcludingZero;
+        // Backwards-compatible default now uses weighted average
+        averageCompletionRate.value = weightedAvg;
+        topPerformers.value = performanceList.take(5).toList();
+        return true;
+      });
     } catch (e, stackTrace) {
       Get.log('PerformanceController: fetchUserPerformanceData error: $e',
           isError: true);
       Get.log(stackTrace.toString(), isError: true);
     } finally {
-      isLoading.value = false;
+      _safeStateUpdate(() {
+        isLoading.value = false;
+      });
     }
   }
 
