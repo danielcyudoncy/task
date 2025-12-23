@@ -119,13 +119,9 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('users').where('role', whereNotIn: [
-          'admin',
-          'reporter',
-          'cameraman',
-          'driver',
-          'librarian'
-        ]).snapshots(),
+        stream: _firestore
+            .collection('users')
+            .where('role', whereNotIn: ['Admin', 'Librarian']).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(

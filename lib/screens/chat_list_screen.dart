@@ -1,4 +1,4 @@
-// views/chat_list_screen.dart
+// screens/chat_list_screen.dart
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -41,7 +41,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 delegate: ChatSearchDelegate(currentUserId),
               );
               if (result != null) {
-                // You may want to navigate to chat here
+                final receiverId = result['uid'];
+                final name = result['name'];
+                final avatar = result['avatar'];
+                final conversationId =
+                    await findOrCreateConversation(currentUserId, receiverId);
+                openChatScreen(receiverId, name, avatar, conversationId);
               }
             },
           ),
@@ -543,9 +548,33 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return DateFormat('MMM dd').format(date);
     }
   }
+
+  Future<String> findOrCreateConversation(
+      String userId1, String userId2) async {
+    final participants = [userId1, userId2]..sort();
+    final query = await FirebaseFirestore.instance
+        .collection('conversations')
+        .where('participants', isEqualTo: participants)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return query.docs.first.id;
+    } else {
+      final docRef =
+          FirebaseFirestore.instance.collection('conversations').doc();
+      await docRef.set({
+        'participants': participants,
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'unreadCount': {userId1: 0, userId2: 0},
+        'pinnedUsers': [],
+      });
+      return docRef.id;
+    }
+  }
 }
 
-class ChatSearchDelegate extends SearchDelegate<String> {
+class ChatSearchDelegate extends SearchDelegate<Map<String, dynamic>> {
   final String currentUserId;
   ChatSearchDelegate(this.currentUserId);
 
@@ -560,7 +589,7 @@ class ChatSearchDelegate extends SearchDelegate<String> {
   @override
   Widget? buildLeading(BuildContext context) => IconButton(
         icon: const Icon(Icons.arrow_back),
-        onPressed: () => close(context, ''),
+        onPressed: () => close(context, {}),
       );
 
   @override
@@ -619,7 +648,11 @@ class ChatSearchDelegate extends SearchDelegate<String> {
               ),
               title: Text(name),
               onTap: () {
-                close(context, uid);
+                close(context, {
+                  'uid': uid,
+                  'name': name,
+                  'avatar': avatar,
+                });
               },
             );
           },
