@@ -77,13 +77,7 @@ class ManageUsersScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Obx(() => DropdownButton<String>(
                       value: manageUsersController.selectedRole.value,
-                      items: <String>[
-                        'All',
-                        'Admin',
-                        'Reporter',
-                        'Cameraman',
-                        'Driver'
-                      ]
+                      items: <String>['All', 'Reporter', 'Cameraman', 'Driver']
                           .map((role) => DropdownMenuItem(
                                 value: role,
                                 child: Text(role,

@@ -126,8 +126,12 @@ class ManageUsersController extends GetxController {
       usersList.value = newUsers;
       // Default filtered list: apply current role filter
       filteredUsersList.assignAll(usersList);
+      // Apply initial filtering to exclude admin and librarian
+      searchUsers(currentSearchQuery.value);
       debugPrint(
           '[ManageUsersController] Total users count: ${usersList.length}');
+      debugPrint(
+          '[ManageUsersController] Filtered users count: ${filteredUsersList.length}');
       isHovered.assignAll(List.filled(usersList.length, false));
       isLoading.value = false;
     });
@@ -339,18 +343,13 @@ class ManageUsersController extends GetxController {
               (user['role'] ?? '').toString().toLowerCase() != 'librarian' &&
               (user['role'] ?? '').toString().toLowerCase() != 'admin')
           .toList();
-    } else if (selectedRole.value == 'Admin') {
-      // Show only admins when Admin filter is selected
-      baseList = usersList
-          .where((user) =>
-              (user['role'] ?? '').toString().toLowerCase() == 'admin')
-          .toList();
     } else {
-      // Show users with the selected role (exclude librarians unless explicitly selected)
+      // Show users with the selected role (exclude librarians and admins)
       baseList = usersList
           .where((user) =>
               (user['role'] ?? '').toString() == selectedRole.value &&
-              (user['role'] ?? '').toString().toLowerCase() != 'librarian')
+              (user['role'] ?? '').toString().toLowerCase() != 'librarian' &&
+              (user['role'] ?? '').toString().toLowerCase() != 'admin')
           .toList();
     }
 
