@@ -63,8 +63,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     performanceController = Get.put(PerformanceController());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      adminController.fetchDashboardData();
-      adminController.fetchStatistics();
+      // Only fetch if data isn't already loaded
+      if (adminController.taskSnapshotDocs.isEmpty) {
+        adminController.fetchDashboardData();
+      }
+      if (adminController.statistics.isEmpty) {
+        adminController.fetchStatistics();
+      }
       // No need to manually fetch users; ManageUsersController now uses a real-time stream.
 
       // Pre-warm the ManageUsersController if it exists
