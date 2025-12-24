@@ -71,6 +71,7 @@ class AdminController extends GetxController {
     ever(AuthController.to.user, (User? user) {
       if (user != null) {
         fetchDashboardData();
+        fetchUserCount();
 
         if (AuthController.to.isAdmin.value) {
           startRealtimeUpdates();
@@ -94,6 +95,7 @@ class AdminController extends GetxController {
     // Only initialize admin data when the currently signed-in user is an admin.
     if (_auth.currentUser != null) {
       fetchDashboardData();
+      fetchUserCount();
       if (AuthController.to.isAdmin.value) {
         startRealtimeUpdates();
         // Initialize admin-specific data only for admins
@@ -479,6 +481,19 @@ class AdminController extends GetxController {
       }
     } finally {
       isStatsLoading(false);
+    }
+  }
+
+  Future<void> fetchUserCount() async {
+    try {
+      final userSnapshot = await _firestore.collection('users').get();
+      final userDocs = userSnapshot.docs;
+      totalUsers.value = userDocs.where((doc) {
+        final userData = doc.data();
+        return userData['role'] != 'Librarian' && userData['role'] != 'Admin';
+      }).length;
+    } catch (e) {
+      debugPrint('Error fetching user count: $e');
     }
   }
 

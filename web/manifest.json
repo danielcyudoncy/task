@@ -1,6 +1,6 @@
 {
-    "name": "task",
-    "short_name": "task",
+    "name": "Delegō",
+    "short_name": "Delegō",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
