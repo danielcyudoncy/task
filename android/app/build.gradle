@@ -1,12 +1,8 @@
 plugins {
     id "com.android.application"
-
-    // FlutterFire configuration
+    id "org.jetbrains.kotlin.android"
     id "com.google.gms.google-services"
-
-    id "kotlin-android"
-
-    // Flutter plugin (must be last)
+    id "com.google.firebase.crashlytics"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -20,26 +16,13 @@ android {
     namespace 'com.example.task'
     compileSdk = 36
     ndkVersion = "27.0.12077973"
-    // Force consistent Play Core versions to avoid conflicts
-    configurations.all {
-        resolutionStrategy {
-            force 'com.google.android.play:core:1.10.3'
-            force 'com.google.android.play:core-ktx:1.8.1'
-            force 'com.google.android.play:core-common:2.0.3'
-            force 'com.google.android.play:app-update:2.1.0'
-            force 'com.google.android.play:app-update-ktx:2.1.0'
-        }
-        exclude group: 'com.google.android.play', module: 'app-update'
-        exclude group: 'com.google.android.play', module: 'app-update-ktx'
-        exclude group: 'com.google.android.play', module: 'core-common'
-    }
 
     defaultConfig {
         applicationId = "com.example.task"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode 1
+        versionName "1.0"
         multiDexEnabled true
     }
 
@@ -74,9 +57,9 @@ android {
         }
     }
 
-
-flutter {
-    source = "../.."
+    flutter {
+        source = "../.."
+    }
 }
 
 dependencies {
@@ -84,40 +67,16 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:32.7.0')
 
     // Firebase services
-    implementation('com.google.firebase:firebase-auth') {
-        exclude group: 'com.google.android.play', module: 'app-update'
-        exclude group: 'com.google.android.play', module: 'app-update-ktx'
-        exclude group: 'com.google.android.play', module: 'core-common'
-    }
-    implementation('com.google.firebase:firebase-firestore') {
-        exclude group: 'com.google.android.play', module: 'app-update'
-        exclude group: 'com.google.android.play', module: 'app-update-ktx'
-        exclude group: 'com.google.android.play', module: 'core-common'
-    }
-    implementation('com.google.firebase:firebase-database') {
-        exclude group: 'com.google.android.play', module: 'app-update'
-        exclude group: 'com.google.android.play', module: 'app-update-ktx'
-        exclude group: 'com.google.android.play', module: 'core-common'
-    }
-    implementation('com.google.firebase:firebase-messaging') {
-        exclude group: 'com.google.android.play', module: 'app-update'
-        exclude group: 'com.google.android.play', module: 'app-update-ktx'
-        exclude group: 'com.google.android.play', module: 'core-common'
-    }
-    implementation('com.google.firebase:firebase-storage') {
-        exclude group: 'com.google.android.play', module: 'app-update'
-        exclude group: 'com.google.android.play', module: 'app-update-ktx'
-        exclude group: 'com.google.android.play', module: 'core-common'
-    }
+    implementation('com.google.firebase:firebase-auth')
+    implementation('com.google.firebase:firebase-firestore')
+    implementation('com.google.firebase:firebase-database')
+    implementation('com.google.firebase:firebase-messaging')
+    implementation('com.google.firebase:firebase-storage')
 
     // Required for Google Play Services integration
     implementation 'com.google.android.gms:play-services-base:18.4.0'
     implementation 'com.google.android.gms:play-services-basement:18.3.0'
-
-    // Required for Google Sign-In with proper compatibility
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
-
-    // Additional Google Play Services for better compatibility
     implementation 'com.google.android.gms:play-services-tasks:18.1.0'
     implementation 'com.google.android.gms:play-services-auth-api-phone:17.8.0'
 
@@ -127,8 +86,6 @@ dependencies {
     // Enable Java 8+ APIs
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 
-    // Play Core library for app splitting and dynamic delivery - using consistent versions
-    implementation 'com.google.android.play:core:1.10.3'
-    implementation 'com.google.android.play:core-ktx:1.8.1'
-}
+    // Play Core library for app splitting and dynamic delivery (using KTX version only)
+    // implementation 'com.google.android.play:core-ktx:1.8.1'  // Already included via plugin
 }
