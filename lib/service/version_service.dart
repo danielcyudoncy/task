@@ -7,9 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 class VersionService {
   static const String _lastUpdateCheckKey = 'last_update_check';
   static const String _skipVersionKey = 'skip_version';
-
-  // Replace with your actual API endpoint or Firebase Remote Config
   static const String _versionCheckUrl = 'https://your-api.com/version-check';
+  static const String _githubOwner = 'danielcyudoncy';
+  static const String _githubRepo = 'delego';
+  static const String _githubApiUrl =
+      'https://api.github.com/repos/$_githubOwner/$_githubRepo/releases/latest';
+  static const String _githubReleaseUrl =
+      'https://github.com/$_githubOwner/$_githubRepo/releases/latest';
+
+  static String get githubReleaseUrl => _githubReleaseUrl;
 
   /// Get current app version
   static Future<String> getCurrentVersion() async {
@@ -34,7 +40,6 @@ class VersionService {
         final prefs = await SharedPreferences.getInstance();
         final skippedVersion = prefs.getString(_skipVersionKey);
 
-        // Don't show update if user has skipped this version
         if (skippedVersion == latestVersion) {
           return null;
         }
@@ -48,6 +53,41 @@ class VersionService {
       }
 
       return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<UpdateInfo?> checkGitHubRelease() async {
+    try {
+      final currentVersion = await getCurrentVersion();
+      final response = await http
+          .get(Uri.parse(_githubApiUrl))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        return null;
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      final tagName = data['tag_name'] as String?;
+      final body = data['body'] as String?;
+
+      if (tagName == null || tagName.isEmpty) {
+        return null;
+      }
+
+      final latestVersion = _normalizeGitHubTag(tagName);
+      if (!_isVersionNewer(latestVersion, currentVersion)) {
+        return null;
+      }
+
+      return UpdateInfo(
+        currentVersion: currentVersion,
+        latestVersion: latestVersion,
+        isForced: _isForceUpdate(latestVersion, currentVersion),
+        releaseNotes: body,
+      );
     } catch (e) {
       return null;
     }
@@ -94,6 +134,16 @@ class VersionService {
     } catch (e) {
       return 'Bug fixes and performance improvements.';
     }
+  }
+
+  static String _normalizeGitHubTag(String tag) {
+    if (tag.isEmpty) {
+      return tag;
+    }
+    if (tag.startsWith('v') || tag.startsWith('V')) {
+      return tag.substring(1);
+    }
+    return tag;
   }
 
   /// Compare version strings (e.g., "1.2.3" vs "1.2.4")

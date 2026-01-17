@@ -115,9 +115,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   .where('isOnline', isEqualTo: true)
                   .snapshots(),
               builder: (context, snapshot) {
+                // DEBUG: Log stream state
+
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
+
                 final users = snapshot.data!.docs
                     .where((doc) => doc['uid'] != currentUserId)
                     .toList();

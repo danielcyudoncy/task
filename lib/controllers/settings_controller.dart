@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../utils/localization/app_localizations.dart';
 import '../utils/constants/app_constants.dart';
 
@@ -23,6 +24,8 @@ class SettingsController extends GetxController {
   final isLocationEnabled = false.obs;
   final isTargetedAdsEnabled = false.obs;
   final isBiometricEnabled = false.obs;
+
+  final appVersion = ''.obs;
 
   SettingsController(this.audioPlayer);
 
@@ -52,12 +55,23 @@ class SettingsController extends GetxController {
   void onInit() {
     super.onInit();
     loadSettings(); // this also triggers Firestore sync if needed
+    _loadAppVersion();
   }
 
   @override
   void onClose() {
     audioPlayer.dispose();
     super.onClose();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      appVersion.value =
+          '${packageInfo.version} (${packageInfo.buildNumber})';
+    } catch (e) {
+      appVersion.value = '';
+    }
   }
 
   Future<void> loadSettings() async {

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'version_service.dart';
 import 'android_update_service.dart';
 import 'ios_update_service.dart';
@@ -32,12 +33,17 @@ class UpdateService {
     bool forceUpdate = false,
   }) async {
     try {
-      // Check if we should perform update check
       if (!forceCheck && !await _shouldCheckForUpdate()) {
         return;
       }
 
-      // Update last check timestamp
+      if (showDialog) {
+        final gitHubUpdate = await VersionService.checkGitHubRelease();
+        if (gitHubUpdate != null) {
+          await _showGitHubUpdateDialog(gitHubUpdate);
+        }
+      }
+
       await _updateLastCheckTime();
 
       if (Platform.isAndroid) {
@@ -208,6 +214,69 @@ class UpdateService {
 
     if (!prefs.containsKey(_autoUpdateEnabledKey)) {
       await prefs.setBool(_autoUpdateEnabledKey, true);
+    }
+  }
+
+  static Future<void> _showGitHubUpdateDialog(UpdateInfo updateInfo) async {
+    await Get.dialog(
+      AlertDialog(
+        title: const Text('GitHub Update Available'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'A new version (${updateInfo.latestVersion}) is available on GitHub.',
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Current version: ${updateInfo.currentVersion}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            if (updateInfo.releaseNotes != null &&
+                updateInfo.releaseNotes!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  updateInfo.releaseNotes!,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+            },
+            child: const Text('Later'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Get.back();
+              await _openGitHubReleases();
+            },
+            child: const Text('View on GitHub'),
+          ),
+        ],
+      ),
+      barrierDismissible: true,
+    );
+  }
+
+  static Future<void> _openGitHubReleases() async {
+    try {
+      final uri = Uri.parse(VersionService.githubReleaseUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        _showUpdateError();
+      }
+    } catch (e) {
+      _showUpdateError();
     }
   }
 

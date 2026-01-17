@@ -1,4 +1,4 @@
-// views/settings_screen.dart
+// screens/settings_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -232,6 +232,8 @@ class SettingsScreen extends StatelessWidget {
                       saveButton(settingsController),
                       const SizedBox(height: 30),
                       nextPageButton(),
+                      const SizedBox(height: 8),
+                      appVersionText(context),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -254,6 +256,23 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
       );
+
+  Widget appVersionText(BuildContext context) {
+    final textColor = _getTextColor(context);
+    return Obx(() {
+      final version = settingsController.appVersion.value;
+      if (version.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return Text(
+        'App version $version',
+        style: TextStyle(
+          color: textColor,
+          fontSize: 13.sp,
+        ),
+      );
+    });
+  }
 
   Widget settingsSwitchTile(
     BuildContext context,
