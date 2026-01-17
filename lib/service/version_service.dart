@@ -140,8 +140,11 @@ class VersionService {
     if (tag.isEmpty) {
       return tag;
     }
-    if (tag.startsWith('v') || tag.startsWith('V')) {
-      return tag.substring(1);
+    for (var i = 0; i < tag.length; i++) {
+      final code = tag.codeUnitAt(i);
+      if (code >= 48 && code <= 57) {
+        return tag.substring(i);
+      }
     }
     return tag;
   }
