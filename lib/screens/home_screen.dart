@@ -13,6 +13,7 @@ import '../controllers/auth_controller.dart';
 import '../controllers/task_controller.dart';
 import '../controllers/notification_controller.dart';
 import 'package:task/widgets/user_dashboard_cards_widget.dart';
+import 'package:task/screens/created_tasks_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/constants/app_styles.dart';
@@ -239,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         }
                                       },
                                       onTasksCreatedTap: () {
-                                        // Display-only card - no navigation needed
+                                        Get.to(() => const CreatedTasksScreen());
                                       },
                                       onNewsFeedTap: () {
                                         Get.toNamed('/news');

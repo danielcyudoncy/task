@@ -175,7 +175,7 @@ class TaskController extends GetxController {
   String filterStatus = 'All';
   String sortBy = 'Newest';
 
-  StreamSubscription<QuerySnapshot>? _taskStreamSubscription;
+  StreamSubscription? _taskStreamSubscription;
   StreamSubscription<QuerySnapshot>? _legacyTaskStreamSubscription;
 
   @override
@@ -341,9 +341,89 @@ class TaskController extends GetxController {
       );
     } else {
       debugPrint(
-          'TaskController: Skipping real-time listener for non-admin user to avoid permission errors');
-      // For non-admins, rely on manual refreshes or other methods
+          'TaskController: Starting real-time listener for non-admin user');
+      final userId = AuthController.to.currentUser?.uid;
+      if (userId != null) {
+        _startNonAdminRealtimeListener(userId);
+      }
     }
+  }
+
+  // Start real-time listener for non-admin users
+  void _startNonAdminRealtimeListener(String userId) {
+    debugPrint(
+        'TaskController: Starting non-admin real-time listener for userId: \$userId');
+
+    // Define the streams matching fetchRelevantTasksForUser logic
+    final streams = [
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('createdBy', isEqualTo: userId)
+          .snapshots(),
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedReporterId', isEqualTo: userId)
+          .snapshots(),
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedCameramanId', isEqualTo: userId)
+          .snapshots(),
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedDriverId', isEqualTo: userId)
+          .snapshots(),
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedLibrarianId', isEqualTo: userId)
+          .snapshots(),
+      FirebaseFirestore.instance
+          .collection('tasks')
+          .where('assignedTo', isEqualTo: userId)
+          .snapshots(),
+    ];
+
+    // Combine streams using Rx.combineLatest (imported as rx)
+    // We use CombineLatestStream.list to get a List<QuerySnapshot>
+    _taskStreamSubscription = rx.CombineLatestStream.list(streams).listen(
+      (List<QuerySnapshot> snapshots) async {
+        if (AuthController.to.currentUser == null) return;
+
+        debugPrint(
+            'TaskController: Non-admin real-time update received from \${snapshots.length} streams');
+
+        // Merge and deduplicate results
+        final allDocs = <String, Map<String, dynamic>>{};
+        for (var snapshot in snapshots) {
+          for (var doc in snapshot.docs) {
+            allDocs[doc.id] = (doc.data() as Map<String, dynamic>);
+          }
+        }
+
+        debugPrint(
+            'TaskController: Non-admin unique tasks found: \${allDocs.length}');
+
+        // Convert to Task objects
+        final updatedTasks = await Future.wait(allDocs.entries.map((e) async {
+          final data = e.value;
+          data['taskId'] = e.key;
+          final task = Task.fromMap(data);
+          await _populateCreatedByName(task);
+          return task;
+        }));
+
+        // Update the tasks list safely using async state update
+        await _safeAsyncStateUpdate(() async {
+          tasks.assignAll(updatedTasks);
+          tasks.refresh();
+          return true;
+        });
+        debugPrint(
+            'TaskController: Non-admin tasks updated via real-time listener');
+      },
+      onError: (error) {
+        debugPrint('TaskController: Non-admin real-time listener error: \$error');
+      },
+    );
   }
 
   // Refresh tasks list

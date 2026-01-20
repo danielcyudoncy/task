@@ -154,16 +154,22 @@ class TasksSection extends StatelessWidget {
               'TasksSection: total tasks in controller = ${tasks.length}');
           final taskMap = {for (var task in tasks) task.taskId: task};
           final notCompletedTasks = taskMap.values.where((t) {
-            final isRelevant = (t.createdById == userId ||
-                t.assignedTo == userId ||
-                t.assignedReporterId == userId ||
-                t.assignedCameramanId == userId ||
-                t.assignedDriverId == userId ||
-                t.assignedLibrarianId == userId);
-            final isNotCompleted = t.status.toLowerCase() != "completed";
-            debugPrint(
-                'TasksSection: task ${t.taskId} - createdById=${t.createdById}, assignedTo=${t.assignedTo}, assignedReporterId=${t.assignedReporterId}, assignedCameramanId=${t.assignedCameramanId}, assignedDriverId=${t.assignedDriverId}, assignedLibrarianId=${t.assignedLibrarianId}, status=${t.status}, isRelevant=$isRelevant, isNotCompleted=$isNotCompleted');
-            return isNotCompleted && isRelevant;
+            // Check relevance
+            final isCreator = t.createdById == userId;
+            final isAssignee = t.allAssignedUserIds.contains(userId);
+
+            if (!isCreator && !isAssignee) return false;
+
+            // If global status is completed, it's definitely not "Not Completed"
+            if (t.status.toLowerCase() == "completed") return false;
+
+            // If I am an assignee, check if I have personally completed it
+            if (isAssignee) {
+              if (t.completedByUserIds.contains(userId)) return false;
+            }
+
+            // Otherwise, it is pending/in-progress
+            return true;
           }).toList();
           debugPrint(
               'TasksSection: notCompletedTasks count = ${notCompletedTasks.length}');
@@ -185,20 +191,20 @@ class TasksSection extends StatelessWidget {
           final taskMap = {for (var task in tasks) task.taskId: task};
 
           final completedTasks = taskMap.values.where((t) {
-            // Check if user is related to this task
-            final isUserRelated = t.createdById == userId ||
-                t.assignedTo == userId ||
-                t.assignedReporterId == userId ||
-                t.assignedCameramanId == userId ||
-                t.assignedDriverId == userId ||
-                t.assignedLibrarianId == userId;
+            // Check relevance
+            final isCreator = t.createdById == userId;
+            final isAssignee = t.allAssignedUserIds.contains(userId);
 
-            if (!isUserRelated) return false;
+            if (!isCreator && !isAssignee) return false;
 
-            // Check if task is truly completed using new multi-user logic
+            // 1. If I am an assignee and I have completed it
+            if (isAssignee && t.completedByUserIds.contains(userId)) {
+              return true;
+            }
+
+            // 2. If the task is globally completed (for creators or legacy tasks)
             if (t.status.toLowerCase() == "completed") {
-              // Use the helper property from Task model to check if all assigned users completed
-              return t.isCompletedByAllAssignedUsers;
+              return true;
             }
 
             return false;
