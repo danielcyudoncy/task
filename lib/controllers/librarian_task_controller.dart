@@ -129,11 +129,21 @@ class LibrarianTaskController extends GetxController {
         final title = (task['title'] ?? '').toString().toLowerCase();
         final desc = (task['description'] ?? '').toString().toLowerCase();
         final tags = (task['tags'] ?? []).join(',').toLowerCase();
+        final createdByName = (task['createdByName'] ?? '').toString().toLowerCase();
+        final assignedReporterName = (task['assignedReporterName'] ?? task['assignedReporter'] ?? '').toString().toLowerCase();
+        final assignedCameramanName = (task['assignedCameramanName'] ?? task['assignedCameraman'] ?? '').toString().toLowerCase();
+        final assignedDriverName = (task['assignedDriverName'] ?? task['assignedDriver'] ?? '').toString().toLowerCase();
+        final assignedLibrarianName = (task['assignedLibrarianName'] ?? task['assignedLibrarian'] ?? '').toString().toLowerCase();
         final queryLower = query.toLowerCase();
 
         return title.contains(queryLower) ||
             desc.contains(queryLower) ||
-            tags.contains(queryLower);
+            tags.contains(queryLower) ||
+            createdByName.contains(queryLower) ||
+            assignedReporterName.contains(queryLower) ||
+            assignedCameramanName.contains(queryLower) ||
+            assignedDriverName.contains(queryLower) ||
+            assignedLibrarianName.contains(queryLower);
       }).toList();
     } finally {
       isSearching.value = false;

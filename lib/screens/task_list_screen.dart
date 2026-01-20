@@ -176,6 +176,11 @@ class _TaskListScreenState extends State<TaskListScreen> {
       tasks = tasks.where((task) {
         return task.title.toLowerCase().contains(searchQuery) ||
             task.description.toLowerCase().contains(searchQuery) ||
+            (task.createdByName?.toLowerCase().contains(searchQuery) ?? false) ||
+            (task.assignedReporter?.toLowerCase().contains(searchQuery) ?? false) ||
+            (task.assignedCameraman?.toLowerCase().contains(searchQuery) ?? false) ||
+            (task.assignedDriver?.toLowerCase().contains(searchQuery) ?? false) ||
+            (task.assignedLibrarian?.toLowerCase().contains(searchQuery) ?? false) ||
             (task.category ?? '').toLowerCase().contains(searchQuery) ||
             (task.tags).any((tag) => tag.toLowerCase().contains(searchQuery));
       }).toList();

@@ -208,6 +208,11 @@ class _LibrarianDashboardScreenState extends State<LibrarianDashboardScreen>
         tasks = tasks.where((task) {
           return task.title.toLowerCase().contains(query) ||
               task.description.toLowerCase().contains(query) ||
+              (task.createdByName?.toLowerCase().contains(query) ?? false) ||
+              (task.assignedReporter?.toLowerCase().contains(query) ?? false) ||
+              (task.assignedCameraman?.toLowerCase().contains(query) ?? false) ||
+              (task.assignedDriver?.toLowerCase().contains(query) ?? false) ||
+              (task.assignedLibrarian?.toLowerCase().contains(query) ?? false) ||
               (task.category?.toLowerCase().contains(query) ?? false) ||
               task.tags.any((tag) => tag.toLowerCase().contains(query));
         }).toList();

@@ -67,6 +67,7 @@ class _AllTaskScreenState extends State<AllTaskScreen> {
           task.title.toLowerCase().contains(searchLower) ||
           task.description.toLowerCase().contains(searchLower) ||
           task.createdBy.toLowerCase().contains(searchLower) ||
+          (task.createdByName?.toLowerCase().contains(searchLower) ?? false) ||
           task.status.toLowerCase().contains(searchLower) ||
           (task.assignedReporter?.toLowerCase().contains(searchLower) ??
               false) ||
