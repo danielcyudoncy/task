@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:task/controllers/auth_controller.dart';
 import 'package:task/utils/constants/app_colors.dart';
-import 'notification_badge.dart';
+
 
 class UserNavBar extends StatelessWidget {
   final int currentIndex;
@@ -27,7 +27,6 @@ class UserNavBar extends StatelessWidget {
     final tabs = [
       {'icon': Icons.person, 'title': 'Profile', 'route': '/profile'},
       {'icon': Icons.list, 'title': 'Tasks', 'route': '/all-tasks'},
-      {'icon': Icons.notifications, 'title': 'Notifications', 'route': '/notifications', 'hasBadge': true},
     ];
 
     // Add Performance tab only for specific roles
@@ -74,24 +73,6 @@ class UserNavBar extends StatelessWidget {
       items: availableTabs.map((tab) {
         final icon = tab['icon'] as IconData;
         final title = tab['title'] as String;
-        final hasBadge = tab['hasBadge'] as bool? ?? false;
-        
-        if (hasBadge) {
-          return TabItem(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(icon),
-                Positioned(
-                  right: -8,
-                  top: -8,
-                  child: const NotificationBadge(),
-                ),
-              ],
-            ),
-            title: title,
-          );
-        }
         
         return TabItem(icon: icon, title: title);
       }).toList(),

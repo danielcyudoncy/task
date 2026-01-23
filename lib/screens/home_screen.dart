@@ -115,6 +115,18 @@ class _HomeScreenState extends State<HomeScreen>
       drawer: authController.userRole.value == 'Librarian'
           ? const LibrarianAppDrawer()
           : const AppDrawer(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Get.toNamed('/create-task'),
+        backgroundColor: isDark
+            ? Theme.of(context).colorScheme.onPrimary
+            : Theme.of(context).colorScheme.primary,
+        child: Icon(
+          Icons.add,
+          color: isDark
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.onPrimary,
+        ),
+      ),
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(

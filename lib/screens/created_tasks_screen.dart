@@ -180,7 +180,7 @@ class _CreatedTasksScreenState extends State<CreatedTasksScreen> {
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha:0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -220,7 +220,7 @@ class _CreatedTasksScreenState extends State<CreatedTasksScreen> {
                   shape: BoxShape.circle,
                 ),
                 todayDecoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.3),
+                  color: colorScheme.primary.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 selectedDecoration: BoxDecoration(
@@ -335,7 +335,7 @@ class _CreatedTasksScreenState extends State<CreatedTasksScreen> {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
+                      color: colorScheme.primary.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Obx(() => Text(

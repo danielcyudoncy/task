@@ -1,5 +1,6 @@
 // service/presence_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:get/get.dart';
@@ -15,18 +16,44 @@ class PresenceService extends GetxService {
   String get status => _status.value;
   bool get isInitialized => _isInitialized;
 
+  StreamSubscription? _connectionSubscription;
+
   @override
   Future<void> onInit() async {
     super.onInit();
-    await _initializePresence();
+    // Listen to auth state changes
+    FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user != null) {
+        if (_currentUserId != user.uid) {
+          // User changed or logged in
+          await _cleanup();
+          await _initializePresence();
+        }
+      } else {
+        // User logged out
+        await _cleanup();
+        _currentUserId = null;
+        _isInitialized = false;
+        _status.value = 'offline';
+      }
+    });
+  }
+
+  Future<void> _cleanup() async {
+    await _connectionSubscription?.cancel();
+    if (_isInitialized && _userStatusRef != null) {
+      try {
+        await _userStatusRef!.onDisconnect().cancel();
+        await setOffline();
+      } catch (e) {
+        Get.log('PresenceService cleanup error: $e', isError: true);
+      }
+    }
   }
 
   Future<void> _initializePresence() async {
     try {
       Get.log('PresenceService: Starting initialization...');
-
-      // Wait for auth to be ready
-      await FirebaseAuth.instance.authStateChanges().firstWhere((user) => true);
 
       _currentUserId = FirebaseAuth.instance.currentUser?.uid;
       if (_currentUserId == null) {
@@ -53,7 +80,6 @@ class PresenceService extends GetxService {
     } catch (e) {
       Get.log('PresenceService initialization failed: $e', isError: true);
       _isInitialized = false;
-      // Don't rethrow - let the service continue without presence
     }
   }
 
@@ -64,7 +90,7 @@ class PresenceService extends GetxService {
       return;
     }
 
-    _presenceRef!.onValue.listen((event) async {
+    _connectionSubscription = _presenceRef!.onValue.listen((event) async {
       final isConnected = event.snapshot.value as bool? ?? false;
       Get.log('PresenceService: Connection status changed: $isConnected');
       if (isConnected) {

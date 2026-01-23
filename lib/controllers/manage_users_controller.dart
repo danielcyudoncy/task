@@ -337,19 +337,13 @@ class ManageUsersController extends GetxController {
 
     // First apply role filter
     if (selectedRole.value == 'All') {
-      // Default: show non-admin, non-librarian users
-      baseList = usersList
-          .where((user) =>
-              (user['role'] ?? '').toString().toLowerCase() != 'librarian' &&
-              (user['role'] ?? '').toString().toLowerCase() != 'admin')
-          .toList();
+      // Show all users
+      baseList = usersList.toList();
     } else {
-      // Show users with the selected role (exclude librarians and admins)
+      // Show users with the selected role
       baseList = usersList
           .where((user) =>
-              (user['role'] ?? '').toString() == selectedRole.value &&
-              (user['role'] ?? '').toString().toLowerCase() != 'librarian' &&
-              (user['role'] ?? '').toString().toLowerCase() != 'admin')
+              (user['role'] ?? '').toString() == selectedRole.value)
           .toList();
     }
 

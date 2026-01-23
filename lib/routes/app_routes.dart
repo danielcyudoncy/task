@@ -4,7 +4,6 @@ import 'package:task/routes/middleware.dart';
 import 'package:task/routes/profile_complete_middleware.dart';
 import 'package:task/screens/admin_dashboard_screen.dart';
 import 'package:task/screens/all_task_screen.dart';
-import 'package:task/screens/chat_list_screen.dart';
 import 'package:task/screens/forget_password_screen.dart';
 import 'package:task/screens/home_screen.dart';
 import 'package:task/features/librarian/screens/librarian_dashboard_screen.dart';
@@ -24,8 +23,8 @@ import 'package:task/screens/task_list_screen.dart';
 import 'package:task/screens/onboarding_screen.dart';
 import 'package:task/screens/user_list_screen.dart';
 import 'package:task/screens/news_screen.dart';
-import 'package:task/screens/all_users_chat_screen.dart';
-import 'package:task/screens/user_chat_list_screen.dart';
+import 'package:task/screens/admin_user_chat_screen.dart';
+import 'package:task/screens/none_admin_chat_list_screen.dart';
 import 'package:task/screens/notification_fix_screen.dart';
 import 'package:task/screens/email_link_signin_screen.dart';
 import 'package:task/screens/app_lock_screen.dart';
@@ -167,13 +166,6 @@ class AppRoutes {
       transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
-      name: "/chat-list",
-      page: () => const ChatListScreen(),
-      middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
-      transition: Transition.rightToLeft,
-      transitionDuration: const Duration(milliseconds: 200),
-    ),
-    GetPage(
       name: "/user-list",
       page: () => const UserListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
@@ -204,14 +196,14 @@ class AppRoutes {
     ),
     GetPage(
       name: "/user-chat-list",
-      page: () => const UserChatListScreen(),
+      page: () => const NoneAdminChatListScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 200),
     ),
     GetPage(
       name: "/admin-chat",
-      page: () => const AllUsersChatScreen(),
+      page: () => const AdminUserChatScreen(),
       middlewares: [AuthMiddleware(), ProfileCompleteMiddleware()],
       transition: Transition.fade,
       transitionDuration: const Duration(milliseconds: 300),

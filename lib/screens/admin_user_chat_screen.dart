@@ -1,4 +1,4 @@
-// screens/all_users_chat_screen.dart
+// screens/admin_user_chat_screen.dart
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,16 +14,16 @@ import 'chat_screen.dart';
 import 'wallpaper_screen.dart';
 import '../controllers/wallpaper_controller.dart';
 
-class AllUsersChatScreen extends StatefulWidget {
+class AdminUserChatScreen extends StatefulWidget {
   final String? chatBackground;
 
-  const AllUsersChatScreen({super.key, this.chatBackground});
+  const AdminUserChatScreen({super.key, this.chatBackground});
 
   @override
-  State<AllUsersChatScreen> createState() => _AllUsersChatScreenState();
+  State<AdminUserChatScreen> createState() => _AdminUserChatScreenState();
 }
 
-class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
+class _AdminUserChatScreenState extends State<AdminUserChatScreen> {
   final AuthController authController = Get.find<AuthController>();
   String searchQuery = '';
   bool isRefreshing = false;
@@ -307,7 +307,7 @@ class _AllUsersChatScreenState extends State<AllUsersChatScreen> {
                     Get.back();
                   },
                 ),
-                title: Text('Chat With Users',
+                title: Text('DelegoChat',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,

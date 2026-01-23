@@ -89,20 +89,38 @@ class ChatConversation {
   final String id;
   final List<String> participants;
   final DateTime updatedAt;
+  final Map<String, dynamic>? lastMessage;
+  final Map<String, int> unreadCounts;
 
   ChatConversation({
     required this.id,
     required this.participants,
     required this.updatedAt,
+    this.lastMessage,
+    this.unreadCounts = const {},
   });
 
   factory ChatConversation.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
+    
+    // Parse unread counts safely
+    final unreadMap = data['unreadCount'] as Map<String, dynamic>? ?? {};
+    final parsedUnreadCounts = <String, int>{};
+    unreadMap.forEach((key, value) {
+      if (value is int) {
+        parsedUnreadCounts[key] = value;
+      } else if (value is num) {
+        parsedUnreadCounts[key] = value.toInt();
+      }
+    });
+
     return ChatConversation(
       id: doc.id,
       participants:
           (data['participants'] as List?)?.whereType<String>().toList() ?? [],
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastMessage: data['lastMessage'] as Map<String, dynamic>?,
+      unreadCounts: parsedUnreadCounts,
     );
   }
 }
