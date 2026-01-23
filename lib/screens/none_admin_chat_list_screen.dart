@@ -9,8 +9,6 @@ import 'package:task/models/chat_model.dart';
 import 'package:task/screens/chat_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:task/utils/constants/app_fonts_family.dart';
-import 'package:task/utils/constants/app_constants.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class NoneAdminChatListScreen extends StatefulWidget {
   const NoneAdminChatListScreen({super.key});
@@ -311,6 +309,18 @@ class _NoneAdminChatListScreenState extends State<NoneAdminChatListScreen> with 
     String lastMessage = '',
     int unreadCount = 0,
   }) {
+    // Determine if we should use the emulator based on the environment flag
+    const useEmulator =
+        bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+
+    FirebaseDatabase database;
+    if (useEmulator) {
+      database = FirebaseDatabase.instance;
+    } else {
+      // Use the default instance to ensure consistency with Firebase.initializeApp
+      database = FirebaseDatabase.instance;
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -400,12 +410,7 @@ class _NoneAdminChatListScreenState extends State<NoneAdminChatListScreen> with 
                       right: 0,
                       bottom: 0,
                       child: StreamBuilder<DatabaseEvent>(
-                        stream: FirebaseDatabase.instanceFor(
-                          app: Firebase.app(),
-                          databaseURL: ExternalUrls.firebaseRtdbUrl,
-                        )
-                            .ref('status/${user['uid']}/status')
-                            .onValue,
+                        stream: database.ref('status/${user['uid']}/status').onValue,
                         builder: (context, snapshot) {
                           final isOnline = snapshot.hasData &&
                               snapshot.data!.snapshot.value == 'online';

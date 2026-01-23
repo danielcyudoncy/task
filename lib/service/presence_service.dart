@@ -1,10 +1,8 @@
 // service/presence_service.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:get/get.dart';
-import 'package:task/utils/constants/app_constants.dart';
 
 class PresenceService extends GetxService {
   DatabaseReference? _presenceRef;
@@ -63,11 +61,20 @@ class PresenceService extends GetxService {
 
       Get.log('PresenceService: Initializing database connection...');
 
-      // Initialize with correct database URL
-      final database = FirebaseDatabase.instanceFor(
-        app: Firebase.app(),
-        databaseURL: ExternalUrls.firebaseRtdbUrl,
-      );
+      // Determine if we should use the emulator based on the environment flag
+      const useEmulator =
+          bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+
+      FirebaseDatabase database;
+      if (useEmulator) {
+        database = FirebaseDatabase.instance;
+        Get.log('PresenceService: Using Emulator Database instance');
+      } else {
+        // Use the default instance to ensure consistency with Firebase.initializeApp
+        database = FirebaseDatabase.instance;
+        Get.log(
+            'PresenceService: Using Default Database instance at ${database.app.options.databaseURL}');
+      }
 
       _presenceRef = database.ref('.info/connected');
       _userStatusRef = database.ref('status/$_currentUserId');
@@ -95,6 +102,8 @@ class PresenceService extends GetxService {
       Get.log('PresenceService: Connection status changed: $isConnected');
       if (isConnected) {
         await _establishPresence();
+        // Force an immediate update
+        await setOnline();
       } else {
         _status.value = 'offline';
       }
@@ -171,10 +180,12 @@ class PresenceService extends GetxService {
 
     try {
       Get.log('PresenceService: Setting user online...');
+      // Write to both status and lastSeen to ensure the node is created
       await _userStatusRef!.update({
         'status': 'online',
         'lastSeen': ServerValue.timestamp,
         'userId': _currentUserId,
+        'email': currentUser.email, // Helpful for debugging
       });
       _status.value = 'online';
       Get.log('PresenceService: User set to online successfully');

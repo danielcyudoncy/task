@@ -145,6 +145,7 @@ class FirebaseConstants {
   static const int authPort = 8002;
   static const int functionsPort = 8001;
   static const int storagePort = 8005;
+  static const int databasePort = 8004;
 
   // Default database URL (can be overridden by environment)
   static const String defaultDatabaseUrl =

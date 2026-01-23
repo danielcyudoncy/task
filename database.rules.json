@@ -1,9 +1,11 @@
 {
   "rules": {
     "status": {
+      ".read": true,
+      ".write": true,
       "$userId": {
-        ".read": "auth != null",
-        ".write": "auth != null && auth.uid == $userId"
+        ".read": true,
+        ".write": true
       }
     },
     "typing_status": {
