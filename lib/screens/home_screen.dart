@@ -14,7 +14,7 @@ import '../controllers/task_controller.dart';
 import '../controllers/notification_controller.dart';
 import 'package:task/widgets/user_dashboard_cards_widget.dart';
 import 'package:task/screens/created_tasks_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:task/service/presence_service.dart' as ps;
 
 import '../utils/constants/app_styles.dart';
 
@@ -34,7 +34,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  int _onlineUsersRetryCount = 0;
 
   @override
   void initState() {
@@ -169,95 +168,41 @@ class _HomeScreenState extends State<HomeScreen>
                             padding: EdgeInsets.symmetric(
                                 horizontal: 16.w, vertical: 8.h),
                             constraints: const BoxConstraints(maxWidth: 500),
-                            child: StreamBuilder<QuerySnapshot>(
-                              key: ValueKey(_onlineUsersRetryCount),
-                              stream: FirebaseFirestore.instance
-                                  .collection('users')
-                                  .where('isOnline', isEqualTo: true)
-                                  .snapshots(),
-                              builder: (context, onlineSnapshot) {
-                                // Handle online users stream errors with fallback UI
-                                if (onlineSnapshot.hasError) {
-                                  return SizedBox(
-                                    height: 200,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.wifi_off,
-                                            size: 48, color: Colors.grey),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Unable to load online users',
-                                          style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 14),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              _onlineUsersRetryCount++;
-                                            });
-                                          },
-                                          child: const Text('Retry'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                                final onlineUsersCount =
-                                    onlineSnapshot.data?.docs.length ?? 0;
-
-                                return StreamBuilder<int>(
-                                  stream: taskController
-                                      .assignedTasksCountStream(userId),
-                                  builder: (context, createdSnapshot) {
-                                    // Handle task count stream errors
-                                    if (createdSnapshot.hasError) {
-                                      // Could implement proper error logging here
+                            child: Builder(
+                              builder: (context) {
+                                final presenceService =
+                                    Get.isRegistered<ps.PresenceService>()
+                                        ? Get.find<ps.PresenceService>()
+                                        : Get.put(ps.PresenceService());
+                                
+                                return UserDashboardCardsWidget(
+                                  assignedTasksCount: notificationController
+                                      .taskAssignmentUnreadCount,
+                                  onlineUsersStream: (() async* {
+                                    yield presenceService.onlineUsersCount.value;
+                                    yield* presenceService.onlineUsersCount.stream;
+                                  })(),
+                                  tasksCreatedStream: taskController
+                                      .createdTasksCountStream(userId),
+                                  newsFeedStream: Stream.value(3),
+                                  onAssignedTasksTap: () {
+                                    // Display-only card - no navigation needed
+                                  },
+                                  onOnlineUsersTap: () {
+                                    final authController =
+                                        Get.find<AuthController>();
+                                    if (authController.userRole.value ==
+                                        'Admin') {
+                                      Get.toNamed('/admin-chat');
+                                    } else {
+                                      Get.toNamed('/user-chat-list');
                                     }
-
-                                    // Show loading indicator while data is loading
-                                    if (onlineSnapshot.connectionState ==
-                                            ConnectionState.waiting ||
-                                        createdSnapshot.connectionState ==
-                                            ConnectionState.waiting) {
-                                      return const SizedBox(
-                                        height: 200,
-                                        child: Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      );
-                                    }
-
-                                    return UserDashboardCardsWidget(
-                                      assignedTasksCount: notificationController
-                                          .taskAssignmentUnreadCount,
-                                      onlineUsersStream:
-                                          Stream.value(onlineUsersCount),
-                                      tasksCreatedStream: taskController
-                                          .createdTasksCountStream(userId),
-                                      newsFeedStream: Stream.value(3),
-                                      onAssignedTasksTap: () {
-                                        // Display-only card - no navigation needed
-                                      },
-                                      onOnlineUsersTap: () {
-                                        final authController =
-                                            Get.find<AuthController>();
-                                        if (authController.userRole.value ==
-                                            'Admin') {
-                                          Get.toNamed('/admin-chat');
-                                        } else {
-                                          Get.toNamed('/user-chat-list');
-                                        }
-                                      },
-                                      onTasksCreatedTap: () {
-                                        Get.to(() => const CreatedTasksScreen());
-                                      },
-                                      onNewsFeedTap: () {
-                                        Get.toNamed('/news');
-                                      },
-                                    );
+                                  },
+                                  onTasksCreatedTap: () {
+                                    Get.to(() => const CreatedTasksScreen());
+                                  },
+                                  onNewsFeedTap: () {
+                                    Get.toNamed('/news');
                                   },
                                 );
                               },

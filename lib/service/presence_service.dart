@@ -10,15 +10,22 @@ class PresenceService extends GetxService {
   final RxString _status = 'offline'.obs;
   String? _currentUserId;
   bool _isInitialized = false;
+  late FirebaseDatabase _database; // Instance variable
 
   String get status => _status.value;
   bool get isInitialized => _isInitialized;
+  
+  // Global online users count
+  final RxInt onlineUsersCount = 0.obs;
+  StreamSubscription? _onlineUsersSubscription;
 
   StreamSubscription? _connectionSubscription;
 
   @override
   Future<void> onInit() async {
     super.onInit();
+    _initializeDatabase(); // Initialize database instance first
+    
     // Listen to auth state changes
     FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (user != null) {
@@ -35,6 +42,60 @@ class PresenceService extends GetxService {
         _status.value = 'offline';
       }
     });
+  }
+
+  void _initializeDatabase() {
+    try {
+      // Determine if we should use the emulator based on the environment flag
+      const useEmulator =
+          bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+
+      if (useEmulator) {
+        _database = FirebaseDatabase.instance;
+        Get.log('PresenceService: Using Emulator Database instance');
+      } else {
+        // Use the default instance to ensure consistency with Firebase.initializeApp
+        _database = FirebaseDatabase.instance;
+        Get.log(
+            'PresenceService: Using Default Database instance at ${_database.app.options.databaseURL}');
+      }
+      
+      _startListeningToOnlineUsers();
+    } catch (e) {
+      Get.log('PresenceService: Database initialization failed: $e', isError: true);
+    }
+  }
+
+  void _startListeningToOnlineUsers() {
+    _onlineUsersSubscription?.cancel();
+    
+    try {
+      final statusRef = _database.ref('status');
+      _onlineUsersSubscription = statusRef.onValue.listen((event) {
+        if (event.snapshot.value != null) {
+          try {
+            final data = event.snapshot.value;
+            int count = 0;
+            if (data is Map) {
+              data.forEach((key, value) {
+                if (value is Map && value['status'] == 'online') {
+                  count++;
+                }
+              });
+            }
+            onlineUsersCount.value = count;
+          } catch (e) {
+            Get.log('PresenceService: Error parsing online users data: $e', isError: true);
+          }
+        } else {
+          onlineUsersCount.value = 0;
+        }
+      }, onError: (error) {
+         Get.log('PresenceService: Error listening to online users: $error', isError: true);
+      });
+    } catch (e) {
+      Get.log('PresenceService: Failed to setup online users listener: $e', isError: true);
+    }
   }
 
   Future<void> _cleanup() async {
@@ -61,23 +122,10 @@ class PresenceService extends GetxService {
 
       Get.log('PresenceService: Initializing database connection...');
 
-      // Determine if we should use the emulator based on the environment flag
-      const useEmulator =
-          bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
-
-      FirebaseDatabase database;
-      if (useEmulator) {
-        database = FirebaseDatabase.instance;
-        Get.log('PresenceService: Using Emulator Database instance');
-      } else {
-        // Use the default instance to ensure consistency with Firebase.initializeApp
-        database = FirebaseDatabase.instance;
-        Get.log(
-            'PresenceService: Using Default Database instance at ${database.app.options.databaseURL}');
-      }
-
-      _presenceRef = database.ref('.info/connected');
-      _userStatusRef = database.ref('status/$_currentUserId');
+      // Database is already initialized in _initializeDatabase
+      
+      _presenceRef = _database.ref('.info/connected');
+      _userStatusRef = _database.ref('status/$_currentUserId');
 
       Get.log('PresenceService: Setting up connection listener...');
       _setupConnectionListener();
