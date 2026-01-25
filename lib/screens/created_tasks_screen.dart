@@ -170,193 +170,204 @@ class _CreatedTasksScreenState extends State<CreatedTasksScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Modern Calendar
-          Container(
-            margin: EdgeInsets.only(bottom: 16.h),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF292B3A) : Colors.white,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha:0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                // Modern Calendar
+                Container(
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF292B3A) : Colors.white,
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha:0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TableCalendar(
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: _focusedDay,
+                    calendarFormat: _calendarFormat,
+                    selectedDayPredicate: (day) {
+                      return isSameDay(_selectedDay, day);
+                    },
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                      _filterTasks();
+                    },
+                    onFormatChanged: (format) {
+                      if (_calendarFormat != format) {
+                        setState(() {
+                          _calendarFormat = format;
+                        });
+                      }
+                    },
+                    onPageChanged: (focusedDay) {
+                      _focusedDay = focusedDay;
+                    },
+                    eventLoader: _getTasksForDay,
+                    calendarStyle: CalendarStyle(
+                      // Use markers to show dots for days with tasks
+                      markerSize: 6,
+                      markerDecoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      todayDecoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      selectedDecoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      defaultTextStyle: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      weekendTextStyle: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                    calendarBuilders: CalendarBuilders(
+                      // Custom builder for days with tasks to make text blue as requested
+                      defaultBuilder: (context, day, focusedDay) {
+                        final hasTasks = _getTasksForDay(day).isNotEmpty;
+                        if (hasTasks) {
+                          return Center(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                // Optional: Add a subtle background or border
+                              ),
+                              child: Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                  color: Colors.blue, // "date will be blue in color"
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.sp,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return null; // Use default
+                      },
+                    ),
+                    headerStyle: HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                      titleTextStyle: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      leftChevronIcon: Icon(
+                        Icons.chevron_left,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      rightChevronIcon: Icon(
+                        Icons.chevron_right,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
                 ),
-              ],
-            ),
-            child: TableCalendar(
-              firstDay: DateTime.utc(2020, 1, 1),
-              lastDay: DateTime.utc(2030, 12, 31),
-              focusedDay: _focusedDay,
-              calendarFormat: _calendarFormat,
-              selectedDayPredicate: (day) {
-                return isSameDay(_selectedDay, day);
-              },
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-                _filterTasks();
-              },
-              onFormatChanged: (format) {
-                if (_calendarFormat != format) {
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                }
-              },
-              onPageChanged: (focusedDay) {
-                _focusedDay = focusedDay;
-              },
-              eventLoader: _getTasksForDay,
-              calendarStyle: CalendarStyle(
-                // Use markers to show dots for days with tasks
-                markerSize: 6,
-                markerDecoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  shape: BoxShape.circle,
+
+                // Search Bar
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search in ${_selectedDay != null ? DateFormat('MMM d').format(_selectedDay!) : 'all tasks'}...',
+                      hintStyle: TextStyle(
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF292B3A) : Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 12.h,
+                        horizontal: 16.w,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+                      ),
+                    ),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
                 ),
-                todayDecoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                ),
-                selectedDecoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                defaultTextStyle: TextStyle(
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-                weekendTextStyle: TextStyle(
-                  color: isDark ? Colors.white70 : Colors.black54,
-                ),
-              ),
-              calendarBuilders: CalendarBuilders(
-                // Custom builder for days with tasks to make text blue as requested
-                defaultBuilder: (context, day, focusedDay) {
-                  final hasTasks = _getTasksForDay(day).isNotEmpty;
-                  if (hasTasks) {
-                    return Center(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          // Optional: Add a subtle background or border
-                        ),
-                        child: Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            color: Colors.blue, // "date will be blue in color"
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16.sp,
+                
+                // Selected Date Header
+                if (_selectedDay != null)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            DateFormat('EEEE, MMMM d, y').format(_selectedDay!),
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
-                    );
-                  }
-                  return null; // Use default
-                },
-              ),
-              headerStyle: HeaderStyle(
-                formatButtonVisible: false,
-                titleCentered: true,
-                titleTextStyle: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-                leftChevronIcon: Icon(
-                  Icons.chevron_left,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-                rightChevronIcon: Icon(
-                  Icons.chevron_right,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-            ),
-          ),
-
-          // Search Bar
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search in ${_selectedDay != null ? DateFormat('MMM d').format(_selectedDay!) : 'all tasks'}...',
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF292B3A) : Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 12.h,
-                  horizontal: 16.w,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
-                ),
-              ),
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-          
-          // Selected Date Header
-          if (_selectedDay != null)
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    DateFormat('EEEE, MMMM d, y').format(_selectedDay!),
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : Colors.black87,
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withValues(alpha:0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Obx(() => Text(
+                            '${_filteredTasks.length} Tasks',
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.sp,
+                            ),
+                          )),
+                        ),
+                      ],
                     ),
                   ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha:0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Obx(() => Text(
-                      '${_filteredTasks.length} Tasks',
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
-                      ),
-                    )),
-                  ),
-                ],
-              ),
+              ],
             ),
+          ),
 
           // Task List
-          Expanded(
-            child: Obx(() {
-              if (_filteredTasks.isEmpty) {
-                if (_searchQuery.value.isNotEmpty) {
-                  return Center(
+          Obx(() {
+            if (_filteredTasks.isEmpty) {
+              if (_searchQuery.value.isNotEmpty) {
+                return SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -371,31 +382,38 @@ class _CreatedTasksScreenState extends State<CreatedTasksScreen> {
                         ),
                       ],
                     ),
-                  );
-                }
-                return EmptyStateWidget(
+                  ),
+                );
+              }
+              return SliverFillRemaining(
+                hasScrollBody: false,
+                child: EmptyStateWidget(
                   title: "No Tasks",
                   message: "No tasks created on ${DateFormat('MMM d').format(_selectedDay!)}",
                   icon: Icons.event_busy,
-                );
-              }
-
-              return ListView.builder(
-                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
-                itemCount: _filteredTasks.length,
-                itemBuilder: (context, index) {
-                  final task = _filteredTasks[index];
-                  return MinimalTaskCard(
-                    key: ValueKey(task.taskId),
-                    task: task,
-                    isDark: isDark,
-                    onTap: () => _showTaskDetail(task),
-                    enableSwipeToDelete: false,
-                  );
-                },
+                ),
               );
-            }),
-          ),
+            }
+
+            return SliverPadding(
+              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final task = _filteredTasks[index];
+                    return MinimalTaskCard(
+                      key: ValueKey(task.taskId),
+                      task: task,
+                      isDark: isDark,
+                      onTap: () => _showTaskDetail(task),
+                      enableSwipeToDelete: false,
+                    );
+                  },
+                  childCount: _filteredTasks.length,
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );
