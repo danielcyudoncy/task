@@ -76,9 +76,13 @@ class PresenceService extends GetxService {
           try {
             final data = event.snapshot.value;
             int count = 0;
+            // Get current user ID directly from FirebaseAuth to ensure accuracy
+            final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+            
             if (data is Map) {
               data.forEach((key, value) {
-                if (value is Map && value['status'] == 'online') {
+                // Check if user is online AND is not the current user
+                if (key != currentUserId && value is Map && value['status'] == 'online') {
                   count++;
                 }
               });

@@ -195,7 +195,50 @@ Future<void> _initializeCoreServices() async {
   await _initializeService(() => BiometricService(), 'BiometricService');
   Get.put(AppLockController(), permanent: true);
 
+  // Setup notification navigation
+  _setupNotificationNavigation();
+
   SnackbarUtils.markAppAsReady();
+}
+
+void _setupNotificationNavigation() {
+  // Handle notification tap when app is in background but opened
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    debugPrint("bootstrap: onMessageOpenedApp: ${message.data}");
+    _handleNotificationNavigation(message);
+  });
+
+  // Handle notification tap when app is terminated and opened
+  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    if (message != null) {
+      debugPrint("bootstrap: getInitialMessage: ${message.data}");
+      _handleNotificationNavigation(message);
+    }
+  });
+}
+
+void _handleNotificationNavigation(RemoteMessage message) {
+  final data = message.data;
+  final type = data['type'];
+
+  if (type == 'chat_message') {
+    final conversationId = data['conversationId'];
+    if (conversationId != null) {
+      // Delay navigation slightly to ensure app is ready
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Get.toNamed('/user-chat-list',
+            arguments: {'conversationId': conversationId});
+      });
+    }
+  } else if (type == 'task_assigned') {
+    final taskId = data['taskId'];
+    if (taskId != null) {
+      // Delay navigation slightly to ensure app is ready
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Get.toNamed('/tasks', arguments: {'taskId': taskId});
+      });
+    }
+  }
 }
 
 void _setupErrorHandling() {

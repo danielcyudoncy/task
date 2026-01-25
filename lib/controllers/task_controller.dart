@@ -956,7 +956,7 @@ class TaskController extends GetxController {
       });
 
       // Push notification
-      await sendTaskNotification(userId, taskTitle);
+      await sendTaskNotification(userId, taskTitle, taskId);
 
       // Show local in-app notification
       try {

@@ -20,6 +20,7 @@ import 'package:task/service/firebase_storage_service.dart';
 import 'package:task/utils/snackbar_utils.dart';
 import 'package:task/service/user_cache_service.dart';
 import 'package:task/service/fcm_helper.dart';
+import 'package:task/service/fcm_service.dart';
 import 'package:task/utils/constants/app_constants.dart';
 
 class AuthController extends GetxController {
@@ -1350,6 +1351,10 @@ class AuthController extends GetxController {
           .doc(userId)
           .collection('notifications')
           .add(notification);
+
+      // Send push notification
+      await sendTaskNotification(userId, taskTitle, taskId);
+
       debugPrint(
           "AuthController: Task assignment notification sent to $userName");
     } catch (e) {

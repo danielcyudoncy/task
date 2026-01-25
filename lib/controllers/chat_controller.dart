@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:task/models/chat_model.dart';
 
+import 'package:task/controllers/auth_controller.dart';
+import 'package:task/service/fcm_service.dart';
+
 class ChatController extends GetxController {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
@@ -90,6 +93,53 @@ class ChatController extends GetxController {
       );
 
       await batch.commit();
+
+      // Send push notification to recipient
+      try {
+        // Get conversation details to find the recipient
+        final conversationDoc = await _firestore
+            .collection('conversations')
+            .doc(conversationId)
+            .get();
+
+        if (conversationDoc.exists) {
+          final data = conversationDoc.data();
+          if (data != null && data.containsKey('participants')) {
+            final participants = List<String>.from(data['participants']);
+            final recipientId = participants.firstWhere(
+              (id) => id != currentUserId,
+              orElse: () => '',
+            );
+
+            if (recipientId.isNotEmpty) {
+              // Get sender name
+              String senderName = 'New Message';
+              try {
+                if (Get.isRegistered<AuthController>()) {
+                  final authController = Get.find<AuthController>();
+                  if (authController.fullName.value.isNotEmpty) {
+                    senderName = authController.fullName.value;
+                  } else if (authController.currentUser?.displayName != null &&
+                      authController.currentUser!.displayName!.isNotEmpty) {
+                    senderName = authController.currentUser!.displayName!;
+                  }
+                }
+              } catch (_) {}
+
+              // Send notification
+              await sendChatNotification(
+                recipientId: recipientId,
+                senderName: senderName,
+                messageContent: content,
+                conversationId: conversationId,
+              );
+            }
+          }
+        }
+      } catch (e) {
+        Get.log('ChatController: Error sending notification - $e');
+      }
+
       return true;
     } catch (e) {
       Get.log('ChatController: sendMessage error - $e');

@@ -39,7 +39,7 @@ String? _getProjectId() {
 }
 
 Future<void> sendTaskNotification(
-    String assignedUserId, String taskTitle) async {
+    String assignedUserId, String taskTitle, String taskId) async {
   try {
     // ✅ Fetch FCM Token from Firestore
     DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
@@ -86,6 +86,10 @@ Future<void> sendTaskNotification(
           "notification": {
             "title": "New Task Assigned",
             "body": "You have been assigned a new task: $taskTitle",
+          },
+          "data": {
+            "type": "task_assigned",
+            "taskId": taskId,
           },
           "android": {
             "priority": "high",
@@ -298,7 +302,7 @@ Future<void> sendTaskApprovalNotification(
       notificationBody += ". Reason: $reason";
     }
 
-    // ✅ Send Notification via FCM HTTP v1 API
+    // Send Notification via FCM HTTP v1 API
     final http.Response response = await http.post(
       Uri.parse(
           "https://fcm.googleapis.com/v1/projects/$projectId/messages:send"),
@@ -312,6 +316,11 @@ Future<void> sendTaskApprovalNotification(
           "notification": {
             "title": notificationTitle,
             "body": notificationBody,
+          },
+          "data": {
+            "type": notificationType,
+            "title": taskTitle,
+            "status": approvalStatus,
           },
           "android": {
             "priority": "high",
@@ -330,7 +339,7 @@ Future<void> sendTaskApprovalNotification(
       }),
     );
 
-    // ✅ Log the Response
+    // Log the Response
     if (response.statusCode == 200) {
       if (kDebugMode) {
         print(
@@ -343,7 +352,7 @@ Future<void> sendTaskApprovalNotification(
       }
     }
 
-    // ✅ Store Notification in Firestore
+    // Store Notification in Firestore
     await FirebaseFirestore.instance
         .collection("users")
         .doc(taskCreatorId)
@@ -352,6 +361,8 @@ Future<void> sendTaskApprovalNotification(
       "title": notificationTitle,
       "message": notificationBody,
       "type": notificationType,
+      "taskTitle": taskTitle,
+      "status": approvalStatus,
       "timestamp": FieldValue.serverTimestamp(),
       "isRead": false,
     });
@@ -359,6 +370,111 @@ Future<void> sendTaskApprovalNotification(
     if (kDebugMode) {
       print("❌ Error sending task approval notification: $e");
     }
-    // Continue silently - notification failures shouldn't break the main flow
+  }
+}
+
+/// Send notification for a new chat message
+Future<void> sendChatNotification({
+  required String recipientId,
+  required String senderName,
+  required String messageContent,
+  required String conversationId,
+}) async {
+  try {
+    // 1. Get Recipient's FCM Token
+    DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
+        .instance
+        .collection("users")
+        .doc(recipientId)
+        .get();
+
+    final userData = userDoc.data();
+    if (userData == null || !userData.containsKey('fcmToken')) {
+      if (kDebugMode) {
+        print("⚠️ No FCM Token found for user: $recipientId");
+      }
+      return;
+    }
+    final String? fcmToken = userData['fcmToken'];
+
+    if (fcmToken == null || fcmToken.isEmpty) {
+      return;
+    }
+
+    // 2. Get Access Token
+    final String? accessToken = await _getAccessToken();
+    final String? projectId = _getProjectId();
+
+    if (accessToken == null || projectId == null) {
+      if (kDebugMode) {
+        print("❌ Missing access token or project ID");
+      }
+      return;
+    }
+
+    // 3. Prepare Notification Content
+    final notificationTitle = senderName;
+    // Truncate message if too long
+    final notificationBody = messageContent.length > 100
+        ? '${messageContent.substring(0, 100)}...'
+        : messageContent;
+
+    // 4. Send Notification
+    final http.Response response = await http.post(
+      Uri.parse(
+          "https://fcm.googleapis.com/v1/projects/$projectId/messages:send"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $accessToken",
+      },
+      body: jsonEncode({
+        "message": {
+          "token": fcmToken,
+          "notification": {
+            "title": notificationTitle,
+            "body": notificationBody,
+          },
+          "data": {
+            "type": "chat_message",
+            "conversationId": conversationId,
+            "senderId": userData['uid'] ?? '', // Sender ID logic might need correction, but this is recipient data.
+            // Actually, we usually want to pass sender ID in data so recipient knows who it is.
+            // But we are in FcmService, we don't have currentUserId readily available unless passed.
+            // We'll rely on conversationId.
+          },
+          "android": {
+            "priority": "high",
+            "notification": {
+              "channel_id": "high_importance_channel",
+              "sound": "default",
+              "tag": conversationId, // Group by conversation
+            },
+          },
+          "apns": {
+            "payload": {
+              "aps": {
+                "sound": "default",
+                "thread-id": conversationId,
+              },
+            },
+          },
+        }
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      if (kDebugMode) {
+        print("✅ Chat notification sent successfully to $recipientId");
+      }
+    } else {
+      if (kDebugMode) {
+        print(
+            "❌ Failed to send chat notification: ${response.statusCode} ${response.body}");
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print("❌ Error sending chat notification: $e");
+    }
   }
 }

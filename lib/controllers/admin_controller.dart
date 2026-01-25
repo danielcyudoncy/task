@@ -14,6 +14,7 @@ import 'package:task/service/fcm_service.dart';
 import 'package:task/service/enhanced_notification_service.dart';
 import 'package:task/service/user_cache_service.dart';
 import 'package:task/service/audit_service.dart';
+import 'package:task/service/presence_service.dart';
 
 class AdminController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -54,9 +55,9 @@ class AdminController extends GetxController {
   // Warning 2: Use final for RxMap
   final RxMap<String, dynamic> statistics = <String, dynamic>{}.obs;
 
-  // Warning 3: Proper nullable type annotation
   StreamSubscription<QuerySnapshot>? _dashboardMetricsSubscription;
   StreamSubscription<QuerySnapshot>? _tasksSubscription;
+  StreamSubscription<int>? _onlineUsersSubscription;
 
   // Warning 4: Add const where applicable
   void _safeSnackbar(String title, String message) {
@@ -90,6 +91,8 @@ class AdminController extends GetxController {
         _dashboardMetricsSubscription = null;
         _tasksSubscription?.cancel();
         _tasksSubscription = null;
+        _onlineUsersSubscription?.cancel();
+        _onlineUsersSubscription = null;
         clearAdminData();
       }
     });
@@ -110,6 +113,17 @@ class AdminController extends GetxController {
   void startRealtimeUpdates() {
     _dashboardMetricsSubscription?.cancel();
     _tasksSubscription?.cancel();
+    _onlineUsersSubscription?.cancel();
+
+    // Ensure PresenceService is available and listen to it
+    final presenceService = Get.isRegistered<PresenceService>()
+        ? Get.find<PresenceService>()
+        : Get.put(PresenceService());
+        
+    _onlineUsersSubscription = presenceService.onlineUsersCount.listen((userCount) {
+      onlineUsers.value = userCount;
+      statistics['online'] = userCount;
+    });
 
     // 1. Listen to dashboard metrics (counts)
     _dashboardMetricsSubscription = _firestore
@@ -422,11 +436,17 @@ class AdminController extends GetxController {
       // Assign statistics based on fetched data
       totalTasks.value = taskDocs.length;
 
-      final onlineUsersSnapshot = await _firestore
-          .collection('users')
-          .where('isOnline', isEqualTo: true)
-          .get();
-      onlineUsers.value = onlineUsersSnapshot.docs.length;
+      // Use PresenceService for initial online users count if available
+      if (Get.isRegistered<PresenceService>()) {
+        onlineUsers.value = Get.find<PresenceService>().onlineUsersCount.value;
+      } else {
+        // Fallback to Firestore if service not ready (though startRealtimeUpdates should handle this)
+        final onlineUsersSnapshot = await _firestore
+            .collection('users')
+            .where('isOnline', isEqualTo: true)
+            .get();
+        onlineUsers.value = onlineUsersSnapshot.docs.length;
+      }
 
       final conversationsSnapshot =
           await _firestore.collection('conversations').get();
@@ -970,7 +990,7 @@ class AdminController extends GetxController {
       });
 
       // Send push notification via FCM
-      await sendTaskNotification(userId, taskTitle);
+      await sendTaskNotification(userId, taskTitle, taskId);
 
       // Show local in-app notification
       try {
